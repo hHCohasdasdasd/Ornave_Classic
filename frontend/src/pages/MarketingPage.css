@@ -1,0 +1,366 @@
+/* Marketing Page - High-Tech HUD Aesthetic */
+.mkt-page {
+  background: var(--tech-bg, #050505);
+  min-height: 100vh;
+  color: var(--tech-text-main, #ffffff);
+  position: relative;
+}
+
+.mkt-page::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(40, 30, 20, 0.01),
+    rgba(40, 30, 20, 0.01) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
+.mkt-page__search-banner {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--tech-border, #ffffff);
+  padding: 24px 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.mkt-page__search-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.mkt-search {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.mkt-search__field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  padding: 12px 24px;
+  transition: all 0.2s ease;
+}
+
+.mkt-search__field:focus-within {
+  border-color: var(--tech-blue, #3b82f6);
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.3));
+}
+
+.mkt-search__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
+  color: #fff;
+  outline: none;
+  font-family: inherit;
+}
+
+.mkt-search__input::placeholder {
+  color: var(--tech-text-dim, #94a3b8);
+}
+
+.mkt-search__btn {
+  background: var(--tech-blue, #3b82f6);
+  color: #000;
+  border: none;
+  padding: 12px 32px;
+  font-size: 0.8rem;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.mkt-search__btn:hover {
+  background: #fff;
+}
+
+/* Container */
+.mkt-page__container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+/* Stats */
+.mkt-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.mkt-stat {
+  background: var(--tech-card-bg, #0f0f0f);
+  border: 1px solid var(--tech-border, #ffffff);
+  padding: 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mkt-stat::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--tech-blue, #3b82f6);
+}
+
+.mkt-stat__icon {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  filter: grayscale(1) brightness(1.5);
+}
+
+.mkt-stat__value {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -1px;
+}
+
+.mkt-stat__label {
+  font-size: 0.7rem;
+  color: var(--tech-text-dim, #94a3b8);
+  font-weight: 700;
+}
+
+/* Tabs */
+.mkt-page__tabs {
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid var(--tech-border, #ffffff);
+  margin-bottom: 40px;
+}
+
+.mkt-page__tab {
+  background: none;
+  border: none;
+  color: var(--tech-text-dim, #94a3b8);
+  font-size: 0.8rem;
+  font-weight: 900;
+  padding: 16px 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.mkt-page__tab:hover {
+  color: #fff;
+}
+
+.mkt-page__tab--active {
+  color: var(--tech-blue, #3b82f6);
+}
+
+.mkt-page__tab--active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--tech-blue, #3b82f6);
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.5));
+}
+
+/* Campaign Cards */
+.mkt-campaigns-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mkt-campaign-card {
+  background: var(--tech-card-bg, #0f0f0f);
+  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  padding: 32px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.mkt-campaign-card:hover {
+  border-color: var(--tech-blue, #3b82f6);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+.mkt-campaign-card__main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.mkt-campaign-card__name {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.mkt-campaign-card__type {
+  font-size: 0.75rem;
+  color: var(--tech-blue, #3b82f6);
+  font-weight: 700;
+}
+
+/* Status Badges */
+.mkt-status {
+  padding: 4px 12px;
+  font-size: 0.65rem;
+  font-weight: 900;
+  border: 1px solid currentColor;
+}
+
+.mkt-status--active { color: var(--tech-accent-emerald, #10b981); }
+.mkt-status--paused { color: var(--tech-accent-gold, #fbbf24); }
+.mkt-status--draft  { color: var(--tech-text-dim, #94a3b8); }
+.mkt-status--completed { color: var(--tech-blue, #3b82f6); }
+
+/* Metrics */
+.mkt-campaign-card__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.mkt-metric__value {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #fff;
+}
+
+.mkt-metric__value--budget {
+  font-size: 1rem;
+}
+
+.mkt-metric__label {
+  font-size: 0.65rem;
+  color: var(--tech-text-dim, #94a3b8);
+  margin-top: 4px;
+  font-weight: 700;
+}
+
+/* Budget Progress */
+.mkt-campaign-card__progress-wrap {
+  height: 4px;
+  background: rgba(40, 30, 20, 0.05);
+  margin-bottom: 24px;
+}
+
+.mkt-campaign-card__progress-bar {
+  height: 100%;
+  background: var(--tech-blue, #3b82f6);
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.5));
+}
+
+/* Actions */
+.mkt-campaign-card__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.mkt-btn {
+  background: transparent;
+  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  color: var(--tech-text-dim, #94a3b8);
+  padding: 8px 20px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mkt-btn:hover {
+  border-color: #fff;
+  color: #fff;
+  background: rgba(40, 30, 20, 0.05);
+}
+
+.mkt-btn--launch {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--tech-blue, #3b82f6);
+  color: var(--tech-blue, #3b82f6);
+}
+
+.mkt-btn--launch:hover {
+  background: var(--tech-blue, #3b82f6);
+  color: #000;
+}
+
+/* Placeholder */
+.mkt-placeholder {
+  text-align: center;
+  padding: 100px 32px;
+  background: var(--tech-card-bg, #0f0f0f);
+  border: 1px solid var(--tech-border, #ffffff);
+  position: relative;
+}
+
+.mkt-placeholder__icon {
+  font-size: 3rem;
+  margin-bottom: 24px;
+  filter: grayscale(1) brightness(1.5);
+}
+
+.mkt-placeholder__title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 16px;
+}
+
+.mkt-placeholder__text {
+  font-size: 0.9rem;
+  color: var(--tech-text-dim, #94a3b8);
+  margin: 0 auto 32px;
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+.mkt-placeholder__btn {
+  background: var(--tech-blue, #3b82f6);
+  color: #000;
+  border: none;
+  padding: 16px 40px;
+  font-size: 0.9rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mkt-placeholder__btn:hover {
+  background: #fff;
+}
+
+@media (max-width: 1024px) {
+  .mkt-stats { grid-template-columns: repeat(2, 1fr); }
+  .mkt-campaign-card__metrics { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .mkt-stats { grid-template-columns: 1fr; }
+  .mkt-campaign-card__metrics { grid-template-columns: 1fr; }
+}

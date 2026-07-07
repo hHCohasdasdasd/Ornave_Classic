@@ -1,0 +1,423 @@
+/* Billing Page - High-Tech HUD Aesthetic */
+.billing-page {
+  background: var(--tech-bg, #050505);
+  min-height: 100vh;
+  color: var(--tech-text-main, #ffffff);
+  position: relative;
+}
+
+.billing-page::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(40, 30, 20, 0.01),
+    rgba(40, 30, 20, 0.01) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
+.billing-page__container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+.billing-page__header {
+  margin-bottom: 40px;
+}
+
+.billing-page__title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 8px;
+}
+
+.billing-page__subtitle {
+  font-size: 0.8rem;
+  color: var(--tech-text-dim, #94a3b8);
+  margin: 0;
+}
+
+/* Tabs */
+.billing-page__tabs {
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  margin-bottom: 40px;
+}
+
+.billing-page__tab {
+  background: none;
+  border: none;
+  color: var(--tech-text-dim, #94a3b8);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 12px 20px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.billing-page__tab:hover {
+  color: #fff;
+}
+
+.billing-page__tab--active {
+  color: var(--tech-blue, #3b82f6);
+  border-bottom-color: var(--tech-blue, #3b82f6);
+  text-shadow: 0 0 8px var(--tech-blue-glow, rgba(59, 130, 246, 0.3));
+}
+
+/* Overview */
+.billing-overview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.billing-section-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.billing-section-title::before {
+  content: ">";
+  color: var(--tech-blue, #3b82f6);
+}
+
+/* Plan Card */
+.billing-plan-card {
+  background: var(--tech-card-bg, #0f0f0f);
+  border: 1px solid var(--tech-border, #ffffff);
+  padding: 32px;
+  position: relative;
+}
+
+.billing-plan-card::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--tech-blue, #3b82f6);
+}
+
+.billing-plan-card__badge {
+  display: inline-block;
+  background: var(--tech-blue, #3b82f6);
+  color: #000;
+  border-radius: 10px;
+  padding: 2px 12px;
+  font-size: 0.65rem;
+  font-weight: 900;
+  margin-bottom: 20px;
+}
+
+.billing-plan-card__name {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.billing-plan-card__price {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.billing-plan-card__price span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--tech-text-dim, #94a3b8);
+}
+
+.billing-plan-card__renews {
+  font-size: 0.7rem;
+  color: var(--tech-accent-gold, #fbbf24);
+  margin-bottom: 24px;
+  font-weight: 700;
+}
+
+.billing-plan-card__features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.billing-feature {
+  font-size: 0.75rem;
+  color: var(--tech-text-dim, #94a3b8);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.billing-feature::before {
+  content: "";
+  color: var(--tech-blue, #3b82f6);
+  font-weight: 900;
+}
+
+.billing-plan-card__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Usage */
+.billing-usage {
+  background: var(--tech-card-bg, #0f0f0f);
+  border: 1px solid var(--tech-border, #ffffff);
+  padding: 32px;
+  position: relative;
+}
+
+.billing-usage::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--tech-blue, #3b82f6);
+}
+
+.billing-usage-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.billing-usage-item__label {
+  font-size: 0.7rem;
+  color: var(--tech-text-dim, #94a3b8);
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+
+.billing-usage-item__bar-wrap {
+  height: 8px;
+  background: rgba(40, 30, 20, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  border: 1px solid rgba(40, 30, 20, 0.1);
+}
+
+.billing-usage-item__bar {
+  height: 100%;
+  background: var(--tech-blue, #3b82f6);
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.5));
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.billing-usage-item__count {
+  font-size: 0.65rem;
+  color: #fff;
+  font-weight: 800;
+  text-align: right;
+}
+
+/* Buttons */
+.billing-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.billing-btn--primary {
+  background: var(--tech-blue, #3b82f6);
+  color: #000;
+}
+
+.billing-btn--primary:hover {
+  background: #fff;
+}
+
+.billing-btn--secondary {
+  background: transparent;
+  border: 1px solid var(--tech-border, #ffffff);
+  color: #fff;
+}
+
+.billing-btn--secondary:hover {
+  background: #fff;
+  color: #000;
+}
+
+.billing-btn--danger {
+  background: transparent;
+  border: 1px solid var(--tech-accent-rose, #f43f5e);
+  color: var(--tech-accent-rose, #f43f5e);
+}
+
+.billing-btn--danger:hover {
+  background: var(--tech-accent-rose, #f43f5e);
+  color: #000;
+}
+
+/* Invoices Table */
+.billing-invoices {
+  overflow-x: auto;
+  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg, #0f0f0f);
+}
+
+.billing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.billing-table th {
+  text-align: left;
+  padding: 16px 20px;
+  color: var(--tech-blue, #3b82f6);
+  font-weight: 800;
+  border-bottom: 1px solid var(--tech-border, #ffffff);
+}
+
+.billing-table td {
+  padding: 16px 20px;
+  color: #fff;
+  border-bottom: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.1));
+}
+
+.billing-table tr:hover td {
+  background: rgba(40, 30, 20, 0.03);
+}
+
+.billing-table__id {
+  color: var(--tech-text-dim, #94a3b8) !important;
+}
+
+.billing-table__amount {
+  font-weight: 800;
+  color: var(--tech-accent-emerald, #10b981) !important;
+}
+
+.billing-status {
+  border-radius: 10px;
+  padding: 2px 10px;
+  font-size: 0.6rem;
+  font-weight: 900;
+}
+
+.billing-status--paid {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--tech-accent-emerald, #10b981);
+  border: 1px solid var(--tech-accent-emerald, #10b981);
+}
+
+.billing-status--pending {
+  background: rgba(251, 191, 36, 0.2);
+  color: var(--tech-accent-gold, #fbbf24);
+  border: 1px solid var(--tech-accent-gold, #fbbf24);
+}
+
+.billing-status--failed {
+  background: rgba(244, 63, 94, 0.2);
+  color: var(--tech-accent-rose, #f43f5e);
+  border: 1px solid var(--tech-accent-rose, #f43f5e);
+}
+
+.billing-download-btn {
+  background: transparent;
+  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.3));
+  color: #fff;
+  border-radius: 10px;
+  padding: 4px 12px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.billing-download-btn:hover {
+  border-color: #fff;
+  background: #fff;
+  color: #000;
+}
+
+/* Payment Card */
+.billing-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.billing-payment-card {
+  background: var(--tech-card-bg, #0f0f0f);
+  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border-radius: 10px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+}
+
+.billing-payment-card--default {
+  border-color: var(--tech-blue, #3b82f6);
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.1));
+}
+
+.billing-payment-card__icon {
+  font-size: 1.5rem;
+  filter: grayscale(1) brightness(2);
+}
+
+.billing-payment-card__details {
+  flex: 1;
+}
+
+.billing-payment-card__name {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.billing-payment-card__expiry {
+  font-size: 0.7rem;
+  color: var(--tech-text-dim, #94a3b8);
+  margin-top: 4px;
+}
+
+.billing-payment-card__badge {
+  background: var(--tech-blue, #3b82f6);
+  color: #000;
+  border-radius: 10px;
+  padding: 2px 10px;
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+@media (max-width: 700px) {
+  .billing-overview {
+    grid-template-columns: 1fr;
+  }
+}

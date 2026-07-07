@@ -1,0 +1,145 @@
+.carousel {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.carousel__container {
+  position: relative;
+  height: 280px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.carousel__track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.carousel__slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+  padding: 40px;
+  text-align: center;
+}
+
+.carousel__slide--active {
+  opacity: 1;
+}
+
+.carousel__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 600px;
+  position: relative;
+  z-index: 2;
+}
+
+.carousel__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: var(--tech-accent-gold);
+  margin-bottom: 4px;
+}
+
+.carousel__title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.carousel__description {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.carousel__control {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-text);
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel__control:hover {
+  background: var(--tech-blue);
+  color: #fff;
+  border-color: var(--tech-blue);
+}
+
+.carousel__control--prev {
+  left: 12px;
+}
+
+.carousel__control--next {
+  right: 12px;
+}
+
+.carousel__dots {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.carousel__dot {
+  width: 24px;
+  height: 2px;
+  background: var(--color-border);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.carousel__dot:hover {
+  background: var(--color-muted);
+}
+
+.carousel__dot--active {
+  background: var(--tech-accent-gold);
+  width: 32px;
+}
+
+@media (max-width: 768px) {
+  .carousel__container {
+    height: 220px;
+  }
+
+  .carousel__title {
+    font-size: 20px;
+  }
+
+  .carousel__description {
+    font-size: 0.8rem;
+  }
+}

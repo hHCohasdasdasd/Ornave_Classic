@@ -1,0 +1,232 @@
+.tech-hero {
+  display: flex;
+  flex-direction: column;
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: var(--radius-card, 14px);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  padding: 0;
+}
+
+.tech-hero__banner {
+  height: 200px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--tech-bg);
+  border-bottom: 1px solid var(--tech-border-dim);
+}
+
+.tech-hero__banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.tech-hero__banner-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), transparent 60%);
+}
+
+.tech-hero__banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.2), var(--tech-card-bg));
+  z-index: 1;
+}
+
+.tech-hero__content-wrapper {
+  display: flex;
+  gap: 2.5rem;
+  padding: 2.5rem;
+  position: relative;
+  z-index: 5;
+}
+
+.tech-hero__biometric {
+  flex-shrink: 0;
+}
+
+.tech-hero__avatar-frame {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 3px solid var(--tech-card-bg);
+  box-shadow: 0 0 0 1px var(--tech-border);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tech-blue);
+  overflow: hidden;
+}
+
+.tech-hero--premium {
+  border-color: var(--tech-accent-gold);
+}
+
+.tech-hero__avatar-frame--premium {
+  box-shadow: 0 0 0 2px var(--tech-accent-gold);
+}
+
+.tech-hero__avatar-frame--firm {
+  border-radius: 16px;
+  box-shadow: 0 0 0 1px var(--tech-blue);
+}
+
+.tech-hero__avatar {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #fff;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tech-hero__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tech-hero__data {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.tech-hero__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--tech-border-dim);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.tech-hero__name {
+  font-size: 2rem;
+  margin: 0;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.tech-hero__accent {
+  color: var(--tech-blue);
+}
+
+.tech-hero__cmd-btn {
+  background: var(--tech-blue);
+  border: 1px solid var(--tech-blue);
+  border-radius: var(--radius-button, 10px);
+  color: #fff;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tech-hero__cmd-btn:hover {
+  background: var(--color-primary-hover, #082e22);
+}
+
+.tech-hero__headline {
+  color: rgba(40, 30, 20, 0.85);
+  margin: 0.5rem 0 1.5rem 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.tech-hero__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tech-metric {
+  background: rgba(40, 30, 20, 0.03);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--tech-border-dim);
+}
+
+.tech-metric__label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--tech-text-dim);
+  margin-bottom: 0.3rem;
+}
+
+.tech-metric__value {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.tech-hero__links {
+  display: flex;
+  gap: 2rem;
+  margin-top: auto;
+}
+
+.tech-link {
+  font-size: 0.85rem;
+  color: var(--tech-text-dim);
+  text-decoration: none;
+  transition: all 0.2s;
+  border-bottom: 1px solid transparent;
+}
+
+.tech-link:hover {
+  color: var(--color-text);
+  border-bottom-color: var(--color-text);
+}
+
+@media (max-width: 768px) {
+  .tech-hero__content-wrapper {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    gap: 1.5rem;
+  }
+
+  .tech-hero__metrics {
+    grid-template-columns: 1fr;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .tech-hero__header {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    border-bottom: none;
+  }
+
+  .tech-hero__banner {
+    height: 100px;
+  }
+
+  .tech-hero__name {
+    font-size: 1.8rem;
+  }
+}
