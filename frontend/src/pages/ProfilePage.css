@@ -86,6 +86,44 @@
   background: linear-gradient(90deg, var(--tech-border-dim), transparent);
 }
 
+.profile-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.profile-section__header .profile-section__title {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.profile-section__subtitle {
+  font-size: 0.75rem;
+  color: var(--tech-text-dim);
+  margin: -18px 0 20px;
+}
+
+.profile-section__icon-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--tech-border-dim);
+  color: var(--tech-text-dim);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-section__icon-btn:hover {
+  color: var(--color-text);
+  border-color: var(--tech-accent-gold);
+  background: rgba(198, 161, 91, 0.08);
+}
+
 /* Humanizing Accents & Section Customization — restrained heritage palette,
    one hue per section instead of bright SaaS colors */
 .profile-section--experience .profile-section__title::before { color: #8ba378; text-shadow: 0 0 10px rgba(139, 163, 120, 0.3); }

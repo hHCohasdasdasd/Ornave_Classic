@@ -5,6 +5,37 @@
   color: var(--tech-text-main);
 }
 
+.feed-filter-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  margin: 20px 0;
+  background: rgba(198, 161, 91, 0.06);
+  border: 1px solid rgba(198, 161, 91, 0.2);
+  color: var(--tech-text-main);
+  font-size: 0.85rem;
+}
+
+.feed-filter-indicator__clear {
+  background: transparent;
+  border: 1px solid var(--tech-border);
+  color: var(--tech-accent-gold);
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.feed-filter-indicator__clear:hover {
+  background: var(--tech-accent-gold);
+  color: #14140f;
+  border-color: var(--tech-accent-gold);
+}
+
 .personal-home::before {
   content: "";
   position: fixed;
