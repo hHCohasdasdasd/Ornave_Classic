@@ -165,14 +165,16 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
     return `${d}d`;
   };
 
+  // Restrained heritage palette for post-type flair — champagne gold, muted
+  // sage, slate-bronze, wine, warm greige — instead of the prior saturated mix.
   const TYPE_META: Record<string, { label: string; color: string }> = {
-    post:         { label: 'Post',         color: '#b8955f' },
-    connection:   { label: 'Connection',   color: '#0d6b5f' },
-    transaction:  { label: 'Transaction',  color: '#8a6d3f' },
-    announcement: { label: 'Announcement', color: '#5b4a6f' },
-    mention:      { label: 'Mention',      color: '#4a6670' },
+    post:         { label: 'Post',         color: '#c6a15b' },
+    connection:   { label: 'Connection',   color: '#8ba378' },
+    transaction:  { label: 'Transaction',  color: '#8a7f68' },
+    announcement: { label: 'Announcement', color: '#9b4a46' },
+    mention:      { label: 'Mention',      color: '#a79e8c' },
   };
-  const typeMeta = TYPE_META[item.type] ?? { label: 'Update', color: '#6b6558' };
+  const typeMeta = TYPE_META[item.type] ?? { label: 'Update', color: '#8a7f68' };
   const isVideo = item.mediaUrl && (item.mediaUrl.match(/\.(mp4|webm|ogg)$/) || item.mediaUrl.includes('mov_bbb'));
 
   return (
@@ -213,7 +215,7 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
                 <span className="feed-item__author-name" onClick={navigateToProfile} style={{ cursor: 'pointer' }}>
                   {item.author.firstName} {item.author.lastName}
                 </span>
-                <span style={{ color: '#878a8c', fontSize: '0.7rem' }}>·</span>
+                <span style={{ color: 'var(--color-muted)', fontSize: '0.7rem' }}>·</span>
                 <span className="feed-item__time">{getTimeAgo(item.timestamp)}</span>
                 <span
                   className="feed-item__flair"

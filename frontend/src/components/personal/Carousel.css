@@ -92,7 +92,7 @@
 
 .carousel__control:hover {
   background: var(--tech-blue);
-  color: #fff;
+  color: #14140f;
   border-color: var(--tech-blue);
 }
 

@@ -136,10 +136,10 @@ export const TalentInsightsPage: React.FC = () => {
           <div className="ti-funnel">
             {[
               { stage: 'Applied', count: 1284, color: 'var(--tech-blue)' },
-              { stage: 'Screened', count: 340, color: '#1d5c46' },
-              { stage: 'Interview', count: 97, color: '#2f9e73' },
-              { stage: 'Offer', count: 22, color: '#b8955f' },
-              { stage: 'Hired', count: 6, color: '#d4af6a' },
+              { stage: 'Screened', count: 340, color: '#b5ab92' },
+              { stage: 'Interview', count: 97, color: '#c2a878' },
+              { stage: 'Offer', count: 22, color: '#cbb37e' },
+              { stage: 'Hired', count: 6, color: '#c6a15b' },
             ].map((step, _i, arr) => (
               <div key={step.stage} className="ti-funnel__step">
                 <div className="ti-funnel__bar-wrap">

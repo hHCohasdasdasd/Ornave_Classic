@@ -16,8 +16,8 @@
   height: 100%;
   background: repeating-linear-gradient(
     0deg,
-    rgba(40, 30, 20, 0.01),
-    rgba(40, 30, 20, 0.01) 1px,
+    rgba(246, 243, 237, 0.01),
+    rgba(246, 243, 237, 0.01) 1px,
     transparent 1px,
     transparent 4px
   );
@@ -73,7 +73,7 @@
   gap: 10px;
   margin-bottom: 30px;
   padding: 8px;
-  background: rgba(40, 30, 20, 0.03);
+  background: rgba(246, 243, 237, 0.03);
   border: 1px solid var(--tech-border-dim);
 }
 
@@ -95,7 +95,7 @@
 
 .profile-edit-tab.active {
   background: var(--color-primary);
-  color: #fff;
+  color: #14140f;
   font-weight: 800;
 }
 
@@ -142,7 +142,7 @@
 .form-group textarea,
 .form-group select {
   width: 100%;
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
   border: 1px solid var(--tech-border-dim);
   color: var(--color-text);
   padding: 14px 18px;
@@ -156,7 +156,7 @@
 .form-group select:focus {
   outline: none;
   border-color: var(--tech-blue);
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(231, 223, 201, 0.05);
   box-shadow: 0 0 15px var(--tech-blue-glow);
 }
 
@@ -169,7 +169,7 @@
 }
 
 .photo-card {
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
   border: 1px solid var(--tech-border-dim);
   padding: 24px;
   text-align: center;
@@ -224,16 +224,16 @@
 }
 
 .btn-primary {
-  background: var(--tech-blue);
-  color: #fff;
-  border-color: var(--tech-blue);
-  box-shadow: 0 0 10px var(--tech-blue-glow);
+  background: var(--color-primary);
+  color: #14140f;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 10px rgba(198, 161, 91, 0.25);
 }
 
 .btn-primary:hover {
   background: var(--color-primary-hover);
-  color: #fff;
-  box-shadow: 0 0 20px rgba(40, 30, 20, 0.4);
+  color: #14140f;
+  box-shadow: 0 0 20px rgba(198, 161, 91, 0.35);
   transform: translateY(-2px);
 }
 
@@ -258,7 +258,7 @@
 
 .btn-add:hover {
   background: var(--tech-blue);
-  color: #fff;
+  color: #14140f;
   box-shadow: 0 0 15px var(--tech-blue-glow);
 }
 
@@ -270,7 +270,7 @@
 }
 
 .enhancement-card {
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
   border: 1px solid var(--tech-border-dim);
   padding: 30px;
   text-align: center;
@@ -303,7 +303,7 @@
 }
 
 .section-card {
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
   border: 1px solid var(--tech-border-dim);
   display: flex;
   align-items: center;
@@ -357,8 +357,8 @@
 }
 
 .tech-input {
-  background: rgba(40, 30, 20, 0.03) !important;
-  border: 1px solid rgba(40, 30, 20, 0.1) !important;
+  background: rgba(246, 243, 237, 0.03) !important;
+  border: 1px solid rgba(246, 243, 237, 0.1) !important;
   border-radius: 10px !important;
   color: var(--color-text) !important;
   padding: 12px 16px !important;
@@ -370,16 +370,16 @@
 .tech-input:focus {
   outline: none !important;
   border-color: var(--tech-blue) !important;
-  background: rgba(59, 130, 246, 0.05) !important;
+  background: rgba(231, 223, 201, 0.05) !important;
   box-shadow: 0 0 15px var(--tech-blue-glow) !important;
 }
 
 .tech-input::placeholder {
-  color: rgba(40, 30, 20, 0.15);
+  color: rgba(246, 243, 237, 0.15);
 }
 
 select.tech-input option {
-  background: #0a0a0c;
+  background: var(--color-bg);
   color: var(--color-text);
 }
 
@@ -394,19 +394,19 @@ textarea.tech-input {
 }
 
 .modal-actions .btn-primary {
-  background: var(--tech-blue);
-  color: #fff;
+  background: var(--color-primary);
+  color: #14140f;
   border: none;
-  box-shadow: 0 0 20px var(--tech-blue-glow);
+  box-shadow: 0 0 20px rgba(198, 161, 91, 0.25);
 }
 
 .modal-actions .btn-primary:hover {
   background: var(--color-primary-hover);
-  box-shadow: 0 0 30px rgba(40, 30, 20, 0.2);
+  box-shadow: 0 0 30px rgba(198, 161, 91, 0.3);
 }
 
 .modal-actions .btn-secondary {
-  border: 1px solid rgba(40, 30, 20, 0.1);
+  border: 1px solid rgba(246, 243, 237, 0.1);
 }
 
 /* Message Display */
@@ -415,19 +415,19 @@ textarea.tech-input {
   margin-bottom: 25px;
   border-left: 4px solid transparent;
   font-size: 0.85rem;
-  background: rgba(40, 30, 20, 0.03);
+  background: rgba(246, 243, 237, 0.03);
 }
 
 .form-message.error {
-  border-color: #f43f5e;
-  color: #f43f5e;
-  background: rgba(244, 63, 94, 0.05);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: rgba(155, 74, 70, 0.08);
 }
 
 .form-message.success {
-  border-color: #10b981;
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.05);
+  border-color: #8ba378;
+  color: #a8c191;
+  background: rgba(139, 163, 120, 0.08);
 }
 
 .form-row {

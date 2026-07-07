@@ -30,7 +30,7 @@ const carouselSlides: CarouselSlide[] = [
     title: 'Welcome to Ornave',
     description: 'Connect with professionals and firms in your network. Share insights, collaborate, and grow together.',
     icon: <IconLaurel size={40} />,
-    bgColor: 'linear-gradient(135deg, rgba(11, 61, 46, 0.5) 0%, rgba(20, 20, 15, 0.6) 100%)',
+    bgColor: 'linear-gradient(135deg, rgba(155, 74, 70, 0.5) 0%, rgba(20, 20, 15, 0.6) 100%)',
   },
   {
     id: 'slide-2',
@@ -44,14 +44,14 @@ const carouselSlides: CarouselSlide[] = [
     title: 'Share Your Updates',
     description: 'Post updates, news, and achievements to keep your network informed and engaged.',
     icon: <IconEdit size={40} />,
-    bgColor: 'linear-gradient(135deg, rgba(11, 61, 46, 0.5) 0%, rgba(184, 149, 95, 0.3) 100%)',
+    bgColor: 'linear-gradient(135deg, rgba(155, 74, 70, 0.5) 0%, rgba(184, 149, 95, 0.3) 100%)',
   },
   {
     id: 'slide-4',
     title: 'Manage Connections',
     description: 'Accept or decline connection requests and nurture meaningful professional relationships.',
     icon: <IconUsers size={40} />,
-    bgColor: 'linear-gradient(135deg, rgba(20, 20, 15, 0.6) 0%, rgba(11, 61, 46, 0.4) 100%)',
+    bgColor: 'linear-gradient(135deg, rgba(20, 20, 15, 0.6) 0%, rgba(155, 74, 70, 0.4) 100%)',
   },
 ];
 
@@ -379,7 +379,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
             ) : (
               <div className="discovery-section__list">
                 {isSearchingResults && (
-                  <div style={{ padding: '10px 15px', borderBottom: '1px solid var(--tech-border)', background: 'rgba(59, 130, 246, 0.05)', fontSize: '0.7rem', color: 'var(--tech-blue)', fontWeight: 800 }}>
+                  <div style={{ padding: '10px 15px', borderBottom: '1px solid var(--tech-border)', background: 'var(--tech-blue-glow)', fontSize: '0.7rem', color: 'var(--tech-blue)', fontWeight: 800 }}>
                     SEARCH_QUERY_ACTIVE: {searchQuery.toUpperCase()}
                   </div>
                 )}

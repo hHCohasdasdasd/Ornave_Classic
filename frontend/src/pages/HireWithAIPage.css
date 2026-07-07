@@ -1,8 +1,8 @@
-/* Hire With AI Page - High-Tech HUD Aesthetic */
+/* Hire With AI Page - Private Club Aesthetic */
 .hire-ai-page {
-  background: var(--tech-bg, #050505);
+  background: var(--tech-bg, #111111);
   min-height: 100vh;
-  color: var(--tech-text-main, #ffffff);
+  color: var(--tech-text-main, #f6f3ed);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -17,8 +17,8 @@
   height: 100%;
   background: repeating-linear-gradient(
     0deg,
-    rgba(40, 30, 20, 0.01),
-    rgba(40, 30, 20, 0.01) 1px,
+    rgba(246, 243, 237, 0.01),
+    rgba(246, 243, 237, 0.01) 1px,
     transparent 1px,
     transparent 4px
   );
@@ -37,8 +37,8 @@
 
 /* Sidebar */
 .hire-ai-sidebar {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg, #181818);
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   padding: 32px;
   display: flex;
   flex-direction: column;
@@ -53,13 +53,13 @@
   left: -4px;
   width: 8px;
   height: 8px;
-  background: var(--tech-blue, #3b82f6);
+  background: var(--tech-blue, #e7dfc9);
 }
 
 .hire-ai-sidebar__title {
   font-size: 0.8rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   margin: 20px 0 10px;
   display: flex;
   align-items: center;
@@ -68,14 +68,14 @@
 
 .hire-ai-sidebar__title::before {
   content: "";
-  color: var(--tech-accent-gold, #fbbf24);
+  color: var(--tech-accent-gold, #c6a15b);
   font-size: 0.6rem;
 }
 
 .hire-ai-sidebar__prompt {
   background: transparent;
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
-  color: var(--tech-text-dim, #94a3b8);
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
+  color: var(--tech-text-dim, #a79e8c);
   padding: 12px 16px;
   text-align: left;
   font-size: 0.75rem;
@@ -86,14 +86,14 @@
 }
 
 .hire-ai-sidebar__prompt:hover {
-  border-color: var(--tech-blue, #3b82f6);
-  color: #fff;
-  background: rgba(59, 130, 246, 0.05);
+  border-color: var(--tech-blue, #e7dfc9);
+  color: var(--color-text, #f6f3ed);
+  background: rgba(231, 223, 201, 0.05);
 }
 
 .hire-ai-sidebar__divider {
   height: 1px;
-  background: var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  background: var(--tech-border-dim, rgba(246, 243, 237, 0.08));
   margin: 16px 0;
 }
 
@@ -102,7 +102,7 @@
   align-items: center;
   gap: 12px;
   font-size: 0.75rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   margin-bottom: 12px;
   font-weight: 700;
 }
@@ -113,8 +113,8 @@
 
 /* Chat Area */
 .hire-ai-chat {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg, #181818);
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   display: flex;
   flex-direction: column;
   position: relative;
@@ -128,39 +128,39 @@
   right: -4px;
   width: 8px;
   height: 8px;
-  background: var(--tech-blue, #3b82f6);
+  background: var(--tech-blue, #e7dfc9);
 }
 
 .hire-ai-chat__header {
   padding: 20px 32px;
-  border-bottom: 1px solid var(--tech-border, #ffffff);
+  border-bottom: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   display: flex;
   align-items: center;
   gap: 20px;
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
 }
 
 .hire-ai-chat__avatar {
   width: 48px;
   height: 48px;
-  background: #000;
-  border: 1px solid var(--tech-blue, #3b82f6);
+  background: var(--color-bg, #111111);
+  border: 1px solid var(--tech-blue, #e7dfc9);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
-  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.5));
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(231, 223, 201, 0.25));
 }
 
 .hire-ai-chat__name {
   font-size: 0.9rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
 }
 
 .hire-ai-chat__status {
   font-size: 0.65rem;
-  color: var(--tech-accent-emerald, #10b981);
+  color: var(--tech-accent-emerald, #8ba378);
   font-weight: 800;
   margin-top: 4px;
 }
@@ -189,8 +189,8 @@
 .hire-ai-msg__avatar {
   width: 36px;
   height: 36px;
-  background: #000;
-  border: 1px solid var(--tech-blue, #3b82f6);
+  background: var(--color-bg, #111111);
+  border: 1px solid var(--tech-blue, #e7dfc9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -199,8 +199,8 @@
 }
 
 .hire-ai-msg__bubble {
-  background: rgba(40, 30, 20, 0.05);
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.1));
+  background: rgba(246, 243, 237, 0.04);
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.06));
   padding: 16px 20px;
   position: relative;
   font-size: 0.85rem;
@@ -208,12 +208,12 @@
 }
 
 .hire-ai-msg--assistant .hire-ai-msg__bubble {
-  border-left: 3px solid var(--tech-blue, #3b82f6);
+  border-left: 3px solid var(--tech-blue, #e7dfc9);
 }
 
 .hire-ai-msg--user .hire-ai-msg__bubble {
-  background: rgba(59, 130, 246, 0.1);
-  border-right: 3px solid var(--tech-blue, #3b82f6);
+  background: rgba(231, 223, 201, 0.1);
+  border-right: 3px solid var(--tech-blue, #e7dfc9);
 }
 
 .hire-ai-msg__line {
@@ -234,7 +234,7 @@
 .hire-ai-typing-dot {
   width: 6px;
   height: 6px;
-  background: var(--tech-blue, #3b82f6);
+  background: var(--tech-blue, #e7dfc9);
   animation: typing 1.4s infinite;
 }
 
@@ -249,18 +249,18 @@
 /* Input Area */
 .hire-ai-chat__input-area {
   padding: 24px 32px;
-  border-top: 1px solid var(--tech-border, #ffffff);
+  border-top: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   display: flex;
   gap: 16px;
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
 }
 
 .hire-ai-chat__input {
   flex: 1;
   background: rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
   padding: 16px 24px;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   font-family: inherit;
   font-size: 0.9rem;
   outline: none;
@@ -268,13 +268,13 @@
 }
 
 .hire-ai-chat__input:focus {
-  border-color: var(--tech-blue, #3b82f6);
-  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.3));
+  border-color: var(--tech-blue, #e7dfc9);
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(231, 223, 201, 0.2));
 }
 
 .hire-ai-chat__send {
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue, #e7dfc9);
+  color: #14140f;
   border: none;
   width: 56px;
   height: 56px;
@@ -287,7 +287,7 @@
 }
 
 .hire-ai-chat__send:hover:not(:disabled) {
-  background: #fff;
+  background: var(--color-text, #f6f3ed);
 }
 
 .hire-ai-chat__send:disabled {

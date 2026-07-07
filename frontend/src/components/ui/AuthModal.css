@@ -5,8 +5,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,14 +15,16 @@
 }
 
 .auth-modal {
-  background: white;
+  background: var(--color-card);
+  color: var(--color-card-text);
   width: 90%;
   max-width: 400px;
-  border-radius: 16px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
   padding: 32px;
   position: relative;
   text-align: center;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-card);
   animation: modalScaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -41,31 +43,33 @@
   top: 16px;
   right: 16px;
   font-size: 24px;
-  color: #666;
+  color: var(--color-muted);
   cursor: pointer;
   line-height: 1;
   transition: color 0.2s;
 }
 
 .auth-modal__close:hover {
-  color: #000;
+  color: var(--color-text);
 }
 
 .auth-modal__icon {
-  font-size: 48px;
+  font-size: 40px;
   margin-bottom: 16px;
+  color: var(--tech-accent-gold);
 }
 
 .auth-modal__title {
-  font-size: 24px;
-  font-weight: 800;
-  color: #000;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text);
   margin: 0 0 8px 0;
 }
 
 .auth-modal__message {
   font-size: 15px;
-  color: #1a1a1a;
+  color: var(--color-muted);
   font-weight: 500;
   margin-bottom: 24px;
   line-height: 1.5;

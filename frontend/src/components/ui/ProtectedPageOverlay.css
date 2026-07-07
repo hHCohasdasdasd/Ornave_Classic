@@ -35,7 +35,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -50,13 +50,15 @@
 }
 
 .protected-page-overlay__card {
-  background: white;
-  border-radius: 16px;
+  background: var(--color-card);
+  color: var(--color-card-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   padding: 40px;
   max-width: 400px;
   width: 90%;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-card);
   animation: cardSlideUp 0.4s ease;
   pointer-events: auto;
 }
@@ -79,16 +81,17 @@
 }
 
 .protected-page-overlay__title {
-  font-size: 24px;
+  font-family: var(--font-display);
+  font-size: 26px;
   font-weight: 700;
-  color: #000000;
+  color: var(--color-text);
   margin-bottom: 12px;
   line-height: 1.3;
 }
 
 .protected-page-overlay__description {
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--color-muted);
   margin-bottom: 28px;
   line-height: 1.5;
 }
@@ -113,36 +116,36 @@
 }
 
 .protected-page-overlay__btn--primary {
-  background: #000000;
-  color: white;
+  background: var(--tech-accent-gold);
+  color: #14140f;
 }
 
 .protected-page-overlay__btn--primary:hover {
-  background: #1a1a1a;
+  background: #d8be84;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.protected-page-overlay__btn--secondary {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border-dark);
+}
+
+.protected-page-overlay__btn--secondary:hover {
+  background: rgba(246, 243, 237, 0.06);
   transform: translateY(-2px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.protected-page-overlay__btn--secondary {
-  background: #f0f0f0;
-  color: #000000;
-  border: 1px solid #e0e0e0;
-}
-
-.protected-page-overlay__btn--secondary:hover {
-  background: #e8e8e8;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
 .protected-page-overlay__footer {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-muted);
   margin: 0;
 }
 
 .protected-page-overlay__footer a {
-  color: #000000;
+  color: var(--tech-accent-gold);
   font-weight: 600;
   text-decoration: none;
   transition: color 0.2s ease;
@@ -150,5 +153,5 @@
 
 .protected-page-overlay__footer a:hover {
   text-decoration: underline;
-  color: #333333;
+  color: #d8be84;
 }

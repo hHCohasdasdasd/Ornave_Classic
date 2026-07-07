@@ -84,16 +84,16 @@ export const UserStorePage: React.FC = () => {
   const cartTotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
   return (
-    <div className="user-store" style={{ minHeight: '100vh', background: '#000' }}>
+    <div className="user-store" style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
       <Navbar />
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px', display: 'grid', gridTemplateColumns: '1fr 350px', gap: '30px' }}>
         <div>
-          <h1 style={{ color: '#fff', marginBottom: '10px' }}>Store</h1>
-          <p style={{ color: '#aaa', marginBottom: '30px' }}>
+          <h1 style={{ color: 'var(--color-text)', marginBottom: '10px' }}>Store</h1>
+          <p style={{ color: 'var(--color-muted)', marginBottom: '30px' }}>
             {companyId ? `Browsing items from company store` : 'Discover items from across the network'}
           </p>
           {isLoading ? (
-            <p style={{ color: '#fff' }}>Loading products...</p>
+            <p style={{ color: 'var(--color-text)' }}>Loading products...</p>
           ) : (
             <div className="grid">
               {products.map(product => (
@@ -102,7 +102,7 @@ export const UserStorePage: React.FC = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <h3>{product.name}</h3>
                     {!companyId && product.company && (
-                      <span style={{ fontSize: '12px', background: '#333', color: '#fff', padding: '2px 8px', borderRadius: '4px' }}>
+                      <span style={{ fontSize: '12px', background: 'rgba(246, 243, 237, 0.08)', color: 'var(--color-text)', padding: '2px 8px', borderRadius: '4px' }}>
                         {product.company.name}
                       </span>
                     )}
@@ -141,7 +141,7 @@ export const UserStorePage: React.FC = () => {
                       <div style={{ textAlign: 'right' }}>
                         <div>${(item.product.price * item.quantity).toFixed(2)}</div>
                         <button 
-                          style={{ background: 'none', border: 'none', color: '#ff4444', fontSize: '12px', cursor: 'pointer', padding: 0 }}
+                          style={{ background: 'none', border: 'none', color: 'var(--color-danger)', fontSize: '12px', cursor: 'pointer', padding: 0 }}
                           onClick={() => removeFromCart(item.product.id)}
                         >
                           Remove
@@ -150,7 +150,7 @@ export const UserStorePage: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <div style={{ borderTop: '1px solid #ddd', paddingTop: '15px', marginBottom: '20px' }}>
+                <div style={{ borderTop: '1px solid var(--color-border-dark)', paddingTop: '15px', marginBottom: '20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}>
                     <span>Total</span>
                     <span>${cartTotal.toFixed(2)}</span>

@@ -198,7 +198,7 @@ export const FirmsPage: React.FC = () => {
                 />
               </div>
               <div className="firms-search__field">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="#c7ceda">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="#a79e8c">
                   <path d="M8 1C4.1 1 1 4.1 1 8s3.1 7 7 7 7-3.1 7-7-3.1-7-7-7zm0 13c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6zm3-9H8V5h3v1z"/>
                 </svg>
                 <input
@@ -258,7 +258,7 @@ export const FirmsPage: React.FC = () => {
 
             <div className="firms-sidebar__premium">
               <div className="premium-badge">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="#915907">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="#c6a15b">
                   <path d="M8 2L10 6H14L11 9L12 13L8 10.5L4 13L5 9L2 6H6L8 2Z"/>
                 </svg>
                 Premium
@@ -343,7 +343,7 @@ export const FirmsPage: React.FC = () => {
                         <p className="follow-card__industry">{request.industry}</p>
                         <p className="follow-card__description">{request.description}</p>
                         <p className="follow-card__employees">
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="rgba(0,0,0,0.6)">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="rgba(246,243,237,0.6)">
                             <path d="M8 8C9.66 8 11 6.66 11 5C11 3.34 9.66 2 8 2C6.34 2 5 3.34 5 5C5 6.66 6.34 8 8 8ZM8 9.5C5.66 9.5 1 10.67 1 13V14H15V13C15 10.67 10.34 9.5 8 9.5Z"/>
                           </svg>
                           {request.employees.toLocaleString()} employees
@@ -390,7 +390,7 @@ export const FirmsPage: React.FC = () => {
                     <p className="firm-card__description">{suggestion.description}</p>
                     {suggestion.commonConnectionName && (
                       <p className="firm-card__connections">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="rgba(0,0,0,0.6)">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="rgba(246,243,237,0.6)">
                           <path d="M8 8C9.66 8 11 6.66 11 5C11 3.34 9.66 2 8 2C6.34 2 5 3.34 5 5C5 6.66 6.34 8 8 8ZM8 9.5C5.66 9.5 1 10.67 1 13V14H15V13C15 10.67 10.34 9.5 8 9.5Z"/>
                         </svg>
                         {suggestion.commonConnections} people you know work here
@@ -429,7 +429,7 @@ export const FirmsPage: React.FC = () => {
                       </div>
                       <h3 className="popular-firm-card__name">
                         {firm.name}
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="#b8955f">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="#c6a15b">
                           <path d="M8 1L10 6H15L11 9L12.5 14L8 11L3.5 14L5 9L1 6H6L8 1Z"/>
                         </svg>
                       </h3>

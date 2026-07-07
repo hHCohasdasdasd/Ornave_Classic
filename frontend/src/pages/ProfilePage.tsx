@@ -970,15 +970,15 @@ export const ProfilePage: React.FC = () => {
                                           alignItems: 'center',
                                           gap: '15px',
                                           padding: '10px',
-                                          background: 'rgba(59, 130, 246, 0.05)',
-                                          border: '1px solid rgba(59, 130, 246, 0.2)',
+                                          background: 'rgba(231, 223, 201, 0.05)',
+                                          border: '1px solid rgba(231, 223, 201, 0.2)',
                                           transition: 'all 0.3s'
                                         }}
                                       >
                                         <div className="firm-mini-hex" style={{
                                           width: '40px',
                                           height: '40px',
-                                          background: '#000',
+                                          background: 'var(--color-bg)',
                                           border: '1px solid var(--tech-blue)',
                                           clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
                                           display: 'flex',
@@ -991,7 +991,7 @@ export const ProfilePage: React.FC = () => {
                                           ) : '🏢'}
                                         </div>
                                         <div style={{ flexGrow: 1, minWidth: 0 }}>
-                                          <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                          <div style={{ color: 'var(--color-text)', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {firm.name}
                                           </div>
                                           <div style={{ color: 'var(--tech-blue)', fontSize: '0.65rem', letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.8 }}>

@@ -52,7 +52,7 @@ export const PurchasedServicesPage: React.FC = () => {
                   </h2>
                   <p style={{ color: 'var(--tech-text-dim)', marginTop: '4px' }}>Firms you are doing business with</p>
                 </div>
-                <div className="network-stat__value" style={{ background: 'var(--tech-blue)', color: '#000' }}>
+                <div className="network-stat__value" style={{ background: 'var(--tech-blue)', color: '#14140f' }}>
                   {orders.length} ENTITIES
                 </div>
               </div>
@@ -67,8 +67,8 @@ export const PurchasedServicesPage: React.FC = () => {
                   {orders.map(order => (
                     <div key={order.id} className="invite-card" style={{ borderLeft: '4px solid var(--tech-blue)', position: 'relative' }}>
                       <div className="tech-corner-top-right"></div>
-                      <div className="invite-card__avatar" style={{ 
-                        background: '#000', 
+                      <div className="invite-card__avatar" style={{
+                        background: 'var(--color-bg)',
                         border: '1px solid var(--tech-blue)',
                         display: 'flex',
                         alignItems: 'center',
@@ -80,8 +80,8 @@ export const PurchasedServicesPage: React.FC = () => {
                       </div>
                       <div className="invite-card__content">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <h3 className="invite-card__name" style={{ color: '#fff' }}>{order.company?.name}</h3>
-                          <span className="tech-tag" style={{ background: order.status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(184, 149, 95, 0.15)', color: order.status === 'COMPLETED' ? '#10b981' : '#b8955f', borderColor: 'currentColor' }}>
+                          <h3 className="invite-card__name" style={{ color: 'var(--color-text)' }}>{order.company?.name}</h3>
+                          <span className="tech-tag" style={{ background: order.status === 'COMPLETED' ? 'rgba(139, 163, 120, 0.15)' : 'rgba(198, 161, 91, 0.15)', color: order.status === 'COMPLETED' ? '#8ba378' : '#c6a15b', borderColor: 'currentColor' }}>
                             {order.status}
                           </span>
                         </div>

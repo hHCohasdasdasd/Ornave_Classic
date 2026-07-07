@@ -767,7 +767,7 @@ export const ProfileConnections: React.FC<{ connections: any[], isLoading?: bool
             return (
               <div key={conn.id || i} className={`connection-hud-item ${isFirm ? 'connection-hud-item--firm' : 'connection-hud-item--user'}`} style={isFirm ? {
                 borderLeft: '4px solid var(--tech-blue)',
-                background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, transparent 100%)'
+                background: 'linear-gradient(90deg, rgba(231, 223, 201, 0.05) 0%, transparent 100%)'
               } : {}}>
                 <div className="connection-hud-item__avatar" style={isFirm ? {
                   clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
@@ -780,23 +780,23 @@ export const ProfileConnections: React.FC<{ connections: any[], isLoading?: bool
                       {isFirm ? '🏢' : (conn.name?.split(' ').map((n: string) => n[0]).join('') || 'U')}
                     </div>
                   )}
-                  <div className="connection-hud-item__type-indicator" style={{ backgroundColor: isFirm ? 'var(--tech-blue)' : '#10b981' }}></div>
+                  <div className="connection-hud-item__type-indicator" style={{ backgroundColor: isFirm ? 'var(--tech-blue)' : 'var(--color-primary)' }}></div>
                 </div>
                 <div className="connection-hud-item__info">
                   <div className="connection-hud-item__title-row">
-                    <h4 
-                      className="connection-hud-item__name" 
+                    <h4
+                      className="connection-hud-item__name"
                       onClick={() => navigate(`/profile?view=${conn.id || conn.name.toLowerCase().replace(' ', '-')}`)}
-                      style={{ color: isFirm ? 'var(--tech-blue)' : '#fff' }}
+                      style={{ color: isFirm ? 'var(--tech-blue)' : 'var(--color-text)' }}
                     >
                       {conn.name}
                     </h4>
-                    {isFirm && <span className="firm-verified-badge" style={{ background: 'var(--tech-blue)', color: '#000' }}>Company</span>}
-                    {!isFirm && <span className="firm-verified-badge" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', borderColor: '#10b981' }}>Connection</span>}
+                    {isFirm && <span className="firm-verified-badge" style={{ background: 'var(--tech-blue)', color: '#14140f' }}>Company</span>}
+                    {!isFirm && <span className="firm-verified-badge" style={{ background: 'rgba(198, 161, 91, 0.2)', color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}>Connection</span>}
                   </div>
                   <p className="connection-hud-item__headline">{conn.headline}</p>
                   <div className="connection-hud-item__meta">
-                    <span className="tech-tag" style={{ borderColor: isFirm ? 'var(--tech-blue)' : 'rgba(16, 185, 129, 0.5)', color: isFirm ? 'var(--tech-blue)' : '#10b981' }}>
+                    <span className="tech-tag" style={{ borderColor: isFirm ? 'var(--tech-blue)' : 'rgba(198, 161, 91, 0.5)', color: isFirm ? 'var(--tech-blue)' : 'var(--color-primary)' }}>
                       {isFirm ? 'Company' : 'Individual'}
                     </span>
                     <span className="tech-tag">{conn.location || 'Global'}</span>
@@ -804,18 +804,18 @@ export const ProfileConnections: React.FC<{ connections: any[], isLoading?: bool
                 </div>
                 <div className="connection-hud-item__actions">
                   {isFirm && (
-                    <button 
-                      className="btn-sm-primary" 
-                      style={{ background: 'var(--tech-blue)', border: 'none', marginRight: '8px', color: '#000', fontWeight: 800 }}
+                    <button
+                      className="btn-sm-primary"
+                      style={{ background: 'var(--tech-blue)', border: 'none', marginRight: '8px', color: '#14140f', fontWeight: 800 }}
                       onClick={() => navigate(`/purchased-services/${conn.id}`)}
                     >
                       OVERVIEW
                     </button>
                   )}
-                  <button 
+                  <button
                     className={isFirm ? "btn-sm-firm" : "btn-sm-primary"}
                     onClick={() => navigate(`/messages?to=${conn.id}`)}
-                    style={!isFirm ? { borderColor: '#10b981', color: '#10b981' } : {}}
+                    style={!isFirm ? { borderColor: 'var(--color-primary)', color: 'var(--color-primary)' } : {}}
                   >
                     {isFirm ? 'Enquire' : 'Message'}
                   </button>

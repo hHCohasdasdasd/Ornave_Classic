@@ -334,7 +334,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
             />
             <div className="create-post-modal__char-counter">
               <svg className="char-progress" width="24" height="24">
-                <circle cx="12" cy="12" r="10" fill="none" stroke="#e0e0e0" strokeWidth="2" />
+                <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(246, 243, 237, 0.15)" strokeWidth="2" />
                 <circle 
                   cx="12" 
                   cy="12" 

@@ -326,26 +326,26 @@ export const MessagingPage: React.FC = () => {
                     />
                     <div className="message-actions">
                       <button className="message-action" title="Attach image">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#0b3d2e">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#a79e8c">
                           <path d="M16 1H4C2.9 1 2 1.9 2 3V17C2 18.1 2.9 19 4 19H16C17.1 19 18 18.1 18 17V3C18 1.9 17.1 1 16 1ZM16 17H4V3H16V17ZM13.5 11.5L9.5 7L5.5 12V13H7.5L9.5 10.5L13.5 14Z"/>
                         </svg>
                       </button>
                       <button className="message-action" title="Attach link">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#0b3d2e">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#a79e8c">
                           <path d="M9 3C5.13 3 2 6.13 2 10C2 13.87 5.13 17 9 17C12.87 17 16 13.87 16 10M15 9H9V11H15V9Z"/>
                         </svg>
                       </button>
                       <button className="message-action" title="Attach GIF">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#0b3d2e">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#a79e8c">
                           <text x="4" y="14" fontSize="12" fontWeight="bold">GIF</text>
                         </svg>
                       </button>
                       <button className="message-action" title="Add emoji">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#0b3d2e">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#a79e8c">
                           <circle cx="10" cy="10" r="8"/>
-                          <circle cx="7" cy="8" r="1.5" fill="#0b3d2e"/>
-                          <circle cx="13" cy="8" r="1.5" fill="#0b3d2e"/>
-                          <path d="M7 12C7 13 8 14 10 14C12 14 13 13 13 12" stroke="#0b3d2e" fill="none"/>
+                          <circle cx="7" cy="8" r="1.5" fill="#a79e8c"/>
+                          <circle cx="13" cy="8" r="1.5" fill="#a79e8c"/>
+                          <path d="M7 12C7 13 8 14 10 14C12 14 13 13 13 12" stroke="#a79e8c" fill="none"/>
                         </svg>
                       </button>
                     </div>

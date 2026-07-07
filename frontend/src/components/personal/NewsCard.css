@@ -33,7 +33,7 @@
   gap: 5px;
   font-size: 0.7rem;
   font-weight: 700;
-  color: #c0392b;
+  color: var(--color-danger);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -42,7 +42,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #c0392b;
+  background: var(--color-danger);
   animation: livePulse 1.4s ease-in-out infinite;
 }
 
@@ -63,7 +63,7 @@
 .news-card__ticker-label {
   font-size: 0.6rem;
   font-weight: 800;
-  color: #fff;
+  color: #14140f;
   background: var(--color-primary);
   padding: 2px 6px;
   border-radius: 4px;
@@ -105,21 +105,21 @@
 }
 
 .news-card__item:hover {
-  background: rgba(199, 84, 0, 0.04);
+  background: rgba(198, 161, 91, 0.04);
 }
 
 .news-card__item--new {
-  background: rgba(199, 84, 0, 0.06);
+  background: rgba(198, 161, 91, 0.06);
   animation: flashIn 0.5s ease;
 }
 
 @keyframes flashIn {
   0% {
-    background: rgba(199, 84, 0, 0.2);
+    background: rgba(198, 161, 91, 0.2);
     transform: translateX(-6px);
   }
   100% {
-    background: rgba(199, 84, 0, 0.06);
+    background: rgba(198, 161, 91, 0.06);
     transform: translateX(0);
   }
 }
@@ -146,8 +146,8 @@
 .news-card__new-badge {
   font-size: 0.6rem;
   font-weight: 800;
-  color: #fff;
-  background: #c0392b;
+  color: var(--color-text);
+  background: var(--color-danger);
   padding: 1px 5px;
   border-radius: 3px;
   letter-spacing: 0.05em;
@@ -178,7 +178,7 @@
 .news-card__footer {
   padding: 10px 16px;
   font-size: 0.62rem;
-  color: rgba(92, 48, 16, 0.45);
+  color: rgba(246, 243, 237, 0.35);
   text-align: center;
   border-top: 1px solid var(--color-border);
   background: var(--color-card);

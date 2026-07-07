@@ -71,10 +71,10 @@ export const InvitesSentPage: React.FC = () => {
                             <span className="tech-label">Sent:</span> {invite.sentAt}
                           </p>
                         </div>
-                        <span style={{ 
-                          padding: '4px 12px', 
-                          background: 'rgba(255, 255, 255, 0.05)', 
-                          borderRadius: '20px', 
+                        <span style={{
+                          padding: '4px 12px',
+                          background: 'rgba(246, 243, 237, 0.05)',
+                          borderRadius: '20px',
                           fontSize: '0.75rem',
                           color: 'var(--tech-blue)',
                           border: '1px solid var(--tech-border-dim)'

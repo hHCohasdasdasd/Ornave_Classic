@@ -1,6 +1,6 @@
 .resources-page {
   min-height: 100vh;
-  background: #000000;
+  background: var(--color-bg);
 }
 
 .resources-container {
@@ -32,13 +32,13 @@
 .resources-header h1 {
   font-size: 36px;
   font-weight: 700;
-  color: rgba(0, 0, 0, 0.9);
+  color: var(--color-text);
   margin: 0 0 12px 0;
 }
 
 .resources-subtitle {
   font-size: 18px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-muted);
   margin: 0;
 }
 
@@ -49,16 +49,17 @@
 }
 
 .resource-category {
-  background: white;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .category-title {
   font-size: 24px;
   font-weight: 700;
-  color: rgba(0, 0, 0, 0.9);
+  color: var(--color-text);
   margin: 0 0 24px 0;
 }
 
@@ -69,7 +70,7 @@
 }
 
 .resource-card {
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 24px;
   text-align: center;
@@ -77,8 +78,8 @@
 }
 
 .resource-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: rgba(10, 102, 194, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border-color: rgba(231, 223, 201, 0.3);
   transform: translateY(-2px);
 }
 
@@ -90,13 +91,13 @@
 .resource-title {
   font-size: 18px;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.9);
+  color: var(--color-text);
   margin: 0 0 8px 0;
 }
 
 .resource-description {
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-muted);
   margin: 0 0 16px 0;
   line-height: 1.5;
 }
@@ -114,7 +115,7 @@
 }
 
 .resource-btn:hover {
-  background: rgba(10, 102, 194, 0.08);
+  background: rgba(231, 223, 201, 0.08);
 }
 
 .resources-footer {
@@ -122,11 +123,12 @@
 }
 
 .cta-card {
-  background: #000000;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 48px;
   text-align: center;
-  color: white;
+  color: var(--color-text);
 }
 
 .cta-card h3 {
@@ -159,20 +161,20 @@
 
 .btn-outline {
   background: transparent;
-  color: white;
-  border: 2px solid white;
+  color: var(--color-text);
+  border: 2px solid var(--color-border-dark);
 }
 
 .btn-outline:hover {
-  background: rgba(40, 30, 20, 0.1);
+  background: rgba(246, 243, 237, 0.08);
 }
 
 .btn-primary {
-  background: white;
-  color: var(--tech-blue);
+  background: var(--color-primary);
+  color: #14140f;
   border: none;
 }
 
 .btn-primary:hover {
-  background: rgba(40, 30, 20, 0.9);
+  background: var(--color-primary-hover);
 }

@@ -1,8 +1,8 @@
-/* Leads Page - High-Tech HUD Aesthetic */
+/* Leads Page - Private Club Aesthetic */
 .leads-page {
-  background: var(--tech-bg, #050505);
+  background: var(--tech-bg, #111111);
   min-height: 100vh;
-  color: var(--tech-text-main, #ffffff);
+  color: var(--tech-text-main, #f6f3ed);
   position: relative;
 }
 
@@ -15,8 +15,8 @@
   height: 100%;
   background: repeating-linear-gradient(
     0deg,
-    rgba(40, 30, 20, 0.01),
-    rgba(40, 30, 20, 0.01) 1px,
+    rgba(246, 243, 237, 0.01),
+    rgba(246, 243, 237, 0.01) 1px,
     transparent 1px,
     transparent 4px
   );
@@ -28,7 +28,7 @@
 .leads-page__search-banner {
   background: rgba(15, 15, 15, 0.9);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--tech-border, #ffffff);
+  border-bottom: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   padding: 24px 0;
   position: sticky;
   top: 0;
@@ -53,15 +53,15 @@
   align-items: center;
   gap: 12px;
   background: rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
   border-radius: 10px;
   padding: 12px 16px;
   transition: all 0.2s ease;
 }
 
 .leads-search__field:focus-within {
-  border-color: var(--tech-blue, #3b82f6);
-  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.3));
+  border-color: var(--tech-blue, #e7dfc9);
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(231, 223, 201, 0.2));
 }
 
 .leads-search__input {
@@ -69,19 +69,19 @@
   border: none;
   background: transparent;
   font-size: 0.9rem;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   outline: none;
   font-family: inherit;
 }
 
 .leads-search__input::placeholder {
-  color: rgba(40, 30, 20, 0.3);
+  color: rgba(246, 243, 237, 0.3);
   font-size: 0.7rem;
 }
 
 .leads-search__btn {
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue, #e7dfc9);
+  color: #14140f;
   border: none;
   border-radius: 10px;
   padding: 12px 24px;
@@ -93,8 +93,8 @@
 }
 
 .leads-search__btn:hover {
-  background: #fff;
-  box-shadow: 0 0 15px rgba(40, 30, 20, 0.5);
+  background: var(--color-text, #f6f3ed);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
 }
 
 /* Container */
@@ -108,14 +108,14 @@
 .leads-page__tabs {
   display: flex;
   gap: 10px;
-  border-bottom: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border-bottom: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
   margin-bottom: 32px;
 }
 
 .leads-page__tab {
   background: none;
   border: none;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   font-size: 0.75rem;
   font-weight: 800;
   padding: 12px 20px;
@@ -129,18 +129,18 @@
 }
 
 .leads-page__tab:hover {
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
 }
 
 .leads-page__tab--active {
-  color: var(--tech-blue, #3b82f6);
-  border-bottom-color: var(--tech-blue, #3b82f6);
-  text-shadow: 0 0 8px var(--tech-blue-glow, rgba(59, 130, 246, 0.3));
+  color: var(--tech-blue, #e7dfc9);
+  border-bottom-color: var(--tech-blue, #e7dfc9);
+  text-shadow: 0 0 8px var(--tech-blue-glow, rgba(231, 223, 201, 0.2));
 }
 
 .leads-page__tab-badge {
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue, #e7dfc9);
+  color: #14140f;
   font-size: 10px;
   font-weight: 900;
   border-radius: 10px;
@@ -156,8 +156,8 @@
 }
 
 .leads-stat {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg, #181818);
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -172,19 +172,19 @@
   left: -4px;
   width: 8px;
   height: 8px;
-  background: var(--tech-blue, #3b82f6);
+  background: var(--tech-blue, #e7dfc9);
   box-shadow: 0 0 8px var(--tech-blue);
 }
 
 .leads-stat__value {
   font-size: 2rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
 }
 
 .leads-stat__label {
   font-size: 0.65rem;
-  color: var(--tech-blue, #3b82f6);
+  color: var(--tech-blue, #e7dfc9);
   font-weight: 800;
   margin-top: 4px;
 }
@@ -197,17 +197,17 @@
 }
 
 .leads-empty {
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   text-align: center;
   padding: 60px 0;
   font-size: 0.9rem;
-  border: 1px dashed var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border: 1px dashed var(--tech-border-dim, rgba(246, 243, 237, 0.08));
 }
 
 /* Lead Card */
 .lead-card {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg, #181818);
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   padding: 24px;
   display: flex;
   align-items: center;
@@ -217,8 +217,8 @@
 }
 
 .lead-card:hover {
-  border-color: var(--tech-blue, #3b82f6);
-  box-shadow: 0 0 20px var(--tech-blue-glow, rgba(59, 130, 246, 0.1));
+  border-color: var(--tech-blue, #e7dfc9);
+  box-shadow: 0 0 20px var(--tech-blue-glow, rgba(231, 223, 201, 0.1));
 }
 
 .lead-card::after {
@@ -228,23 +228,23 @@
   right: -4px;
   width: 8px;
   height: 8px;
-  background: var(--tech-blue, #3b82f6);
+  background: var(--tech-blue, #e7dfc9);
 }
 
 .lead-card__avatar {
   width: 60px;
   height: 60px;
   border-radius: 10px;
-  background: #000;
-  border: 1px solid var(--tech-blue, #3b82f6);
-  color: var(--tech-blue, #3b82f6);
+  background: var(--color-bg, #111111);
+  border: 1px solid var(--tech-blue, #e7dfc9);
+  color: var(--tech-blue, #e7dfc9);
   font-size: 1.2rem;
   font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  text-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.5));
+  text-shadow: 0 0 10px var(--tech-blue-glow, rgba(231, 223, 201, 0.25));
 }
 
 .lead-card__info {
@@ -255,34 +255,34 @@
 .lead-card__name {
   font-size: 1.1rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   margin-bottom: 4px;
 }
 
 .lead-card__title {
   font-size: 0.8rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   margin-bottom: 2px;
   font-weight: 500;
 }
 
 .lead-card__company {
   font-size: 0.8rem;
-  color: var(--tech-blue, #3b82f6);
+  color: var(--tech-blue, #e7dfc9);
   margin-bottom: 8px;
   font-weight: 700;
 }
 
 .lead-card__meta {
   font-size: 0.7rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   display: flex;
   gap: 12px;
 }
 
 .lead-card__mutual {
   font-size: 0.7rem;
-  color: var(--tech-accent-gold, #fbbf24);
+  color: var(--tech-accent-gold, #c6a15b);
   margin-top: 8px;
   font-weight: 700;
 }
@@ -295,8 +295,8 @@
 
 .lead-card__save {
   background: transparent;
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
-  color: #fff;
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
+  color: var(--color-text, #f6f3ed);
   border-radius: 10px;
   padding: 8px 16px;
   font-size: 0.7rem;
@@ -308,13 +308,13 @@
 
 .lead-card__save:hover,
 .lead-card__save--saved {
-  border-color: var(--tech-blue, #3b82f6);
-  color: var(--tech-blue, #3b82f6);
+  border-color: var(--tech-blue, #e7dfc9);
+  color: var(--tech-blue, #e7dfc9);
 }
 
 .lead-card__connect {
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue, #e7dfc9);
+  color: #14140f;
   border: none;
   border-radius: 10px;
   padding: 8px 16px;
@@ -326,7 +326,7 @@
 }
 
 .lead-card__connect:hover {
-  background: #fff;
+  background: var(--color-text, #f6f3ed);
 }
 
 @media (max-width: 640px) {

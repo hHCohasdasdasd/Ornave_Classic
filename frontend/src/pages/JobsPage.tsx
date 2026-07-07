@@ -166,7 +166,7 @@ export const JobsPage: React.FC = () => {
                 />
               </div>
               <div className="jobs-search__field">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="#c7ceda">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="#a79e8c">
                   <path d="M8 1C4.1 1 1 4.1 1 8s3.1 7 7 7 7-3.1 7-7-3.1-7-7-7zm0 13c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6zm3-9H8V5h3v1z"/>
                 </svg>
                 <input

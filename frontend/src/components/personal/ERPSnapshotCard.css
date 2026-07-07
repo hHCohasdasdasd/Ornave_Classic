@@ -49,13 +49,13 @@
   text-align: center;
   padding: 10px 4px;
   border-radius: 8px;
-  background: rgba(180, 80, 0, 0.05);
+  background: rgba(198, 161, 91, 0.06);
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .erp-snapshot__stat:hover {
-  background: rgba(180, 80, 0, 0.12);
+  background: rgba(198, 161, 91, 0.12);
 }
 
 .erp-snapshot__stat-value {
@@ -96,7 +96,7 @@
   cursor: pointer;
   transition: all 0.2s;
   background: var(--color-primary);
-  color: #fff;
+  color: #14140f;
   border: none;
 }
 
@@ -111,5 +111,5 @@
 }
 
 .erp-snapshot__btn--secondary:hover {
-  background: rgba(199, 84, 0, 0.08);
+  background: rgba(198, 161, 91, 0.08);
 }

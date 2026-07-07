@@ -1,8 +1,8 @@
-/* Talent Page - High-Tech HUD Aesthetic */
+/* Talent Page - Private Club Aesthetic */
 .talent-page {
-  background: var(--tech-bg, #050505);
+  background: var(--tech-bg);
   min-height: 100vh;
-  color: var(--tech-text-main, #ffffff);
+  color: var(--tech-text-main);
   position: relative;
 }
 
@@ -15,8 +15,8 @@
   height: 100%;
   background: repeating-linear-gradient(
     0deg,
-    rgba(40, 30, 20, 0.01),
-    rgba(40, 30, 20, 0.01) 1px,
+    rgba(246, 243, 237, 0.01),
+    rgba(246, 243, 237, 0.01) 1px,
     transparent 1px,
     transparent 4px
   );
@@ -27,7 +27,7 @@
 .talent-page__search-banner {
   background: rgba(15, 15, 15, 0.9);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--tech-border, #ffffff);
+  border-bottom: 1px solid var(--tech-border);
   padding: 24px 0;
   position: sticky;
   top: 0;
@@ -52,15 +52,15 @@
   align-items: center;
   gap: 12px;
   background: rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border: 1px solid var(--tech-border-dim);
   border-radius: 10px;
   padding: 12px 16px;
   transition: all 0.2s ease;
 }
 
 .talent-search__field:focus-within {
-  border-color: var(--tech-blue, #3b82f6);
-  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.3));
+  border-color: var(--tech-blue);
+  box-shadow: 0 0 10px var(--tech-blue-glow);
 }
 
 .talent-search__input {
@@ -68,19 +68,19 @@
   border: none;
   background: transparent;
   font-size: 0.9rem;
-  color: #fff;
+  color: var(--color-text);
   outline: none;
   font-family: inherit;
 }
 
 .talent-search__input::placeholder {
-  color: rgba(40, 30, 20, 0.3);
+  color: rgba(246, 243, 237, 0.3);
   font-size: 0.7rem;
 }
 
 .talent-search__btn {
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue);
+  color: #14140f;
   border: none;
   border-radius: 10px;
   padding: 12px 24px;
@@ -92,8 +92,8 @@
 }
 
 .talent-search__btn:hover {
-  background: #fff;
-  box-shadow: 0 0 15px rgba(40, 30, 20, 0.5);
+  background: var(--color-text);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
 }
 
 .talent-page__container {
@@ -109,27 +109,27 @@
 .talent-page__title {
   font-size: 1.5rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text);
   margin: 0 0 8px;
 }
 
 .talent-page__subtitle {
   font-size: 0.8rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim);
   margin: 0;
 }
 
 .talent-page__tabs {
   display: flex;
   gap: 10px;
-  border-bottom: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border-bottom: 1px solid var(--tech-border-dim);
   margin-bottom: 32px;
 }
 
 .talent-page__tab {
   background: none;
   border: none;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim);
   font-size: 0.75rem;
   font-weight: 800;
   padding: 12px 20px;
@@ -140,18 +140,18 @@
 }
 
 .talent-page__tab:hover {
-  color: #fff;
+  color: var(--color-text);
 }
 
 .talent-page__tab--active {
-  color: var(--tech-blue, #3b82f6);
-  border-bottom-color: var(--tech-blue, #3b82f6);
-  text-shadow: 0 0 8px var(--tech-blue-glow, rgba(59, 130, 246, 0.3));
+  color: var(--tech-blue);
+  border-bottom-color: var(--tech-blue);
+  text-shadow: 0 0 8px var(--tech-blue-glow);
 }
 
 .talent-page__tab-badge {
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue);
+  color: #14140f;
   font-size: 10px;
   font-weight: 900;
   border-radius: 10px;
@@ -168,15 +168,15 @@
 .talent-empty {
   grid-column: 1 / -1;
   text-align: center;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim);
   padding: 60px 0;
   font-size: 0.9rem;
-  border: 1px dashed var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border: 1px dashed var(--tech-border-dim);
 }
 
 .talent-card {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
   padding: 24px;
   position: relative;
   transition: all 0.3s ease;
@@ -185,8 +185,8 @@
 }
 
 .talent-card:hover {
-  border-color: var(--tech-blue, #3b82f6);
-  box-shadow: 0 0 20px var(--tech-blue-glow, rgba(59, 130, 246, 0.1));
+  border-color: var(--tech-blue);
+  box-shadow: 0 0 20px var(--tech-blue-glow);
 }
 
 .talent-card::after {
@@ -196,7 +196,7 @@
   right: -4px;
   width: 8px;
   height: 8px;
-  background: var(--tech-blue, #3b82f6);
+  background: var(--tech-blue);
 }
 
 .talent-card__top {
@@ -209,16 +209,16 @@
   width: 60px;
   height: 60px;
   border-radius: 10px;
-  background: #000;
-  border: 1px solid var(--tech-blue, #3b82f6);
-  color: var(--tech-blue, #3b82f6);
+  background: var(--color-bg);
+  border: 1px solid var(--tech-blue);
+  color: var(--tech-blue);
   font-size: 1.2rem;
   font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  text-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.5));
+  text-shadow: 0 0 10px var(--tech-blue-glow);
 }
 
 .talent-card__info {
@@ -228,18 +228,18 @@
 .talent-card__name {
   font-size: 1.1rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text);
 }
 
 .talent-card__title {
   font-size: 0.8rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim);
   margin: 4px 0;
 }
 
 .talent-card__location {
   font-size: 0.7rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim);
   font-weight: 700;
 }
 
@@ -258,26 +258,26 @@
 }
 
 .talent-badge--open {
-  background: rgba(16, 185, 129, 0.2);
-  color: var(--tech-accent-emerald, #10b981);
-  border: 1px solid var(--tech-accent-emerald, #10b981);
+  background: rgba(139, 163, 120, 0.14);
+  color: #a8c191;
+  border: 1px solid rgba(139, 163, 120, 0.32);
 }
 
 .talent-badge--passive {
-  background: rgba(251, 191, 36, 0.2);
-  color: var(--tech-accent-gold, #fbbf24);
-  border: 1px solid var(--tech-accent-gold, #fbbf24);
+  background: rgba(138, 127, 104, 0.16);
+  color: #cfc4a8;
+  border: 1px solid rgba(138, 127, 104, 0.4);
 }
 
 .talent-badge--closed {
-  background: rgba(40, 30, 20, 0.08);
-  color: var(--tech-text-dim, #94a3b8);
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.1));
+  background: rgba(246, 243, 237, 0.04);
+  color: var(--tech-text-dim);
+  border: 1px solid var(--tech-border-dim);
 }
 
 .talent-card__exp {
   font-size: 0.7rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim);
   font-weight: 700;
 }
 
@@ -289,12 +289,12 @@
 }
 
 .talent-skill {
-  background: rgba(40, 30, 20, 0.05);
-  color: #fff;
+  background: rgba(246, 243, 237, 0.05);
+  color: var(--color-text);
   padding: 4px 10px;
   font-size: 0.65rem;
   font-weight: 700;
-  border: 1px solid rgba(40, 30, 20, 0.1);
+  border: 1px solid rgba(246, 243, 237, 0.1);
 }
 
 .talent-card__actions {
@@ -306,8 +306,8 @@
 .talent-card__save {
   flex: 1;
   background: transparent;
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
-  color: #fff;
+  border: 1px solid var(--tech-border-dim);
+  color: var(--color-text);
   padding: 10px;
   font-size: 0.7rem;
   font-weight: 800;
@@ -317,14 +317,14 @@
 }
 
 .talent-card__save:hover, .talent-card__save--saved {
-  border-color: var(--tech-blue, #3b82f6);
-  color: var(--tech-blue, #3b82f6);
+  border-color: var(--tech-accent-gold);
+  color: var(--tech-accent-gold);
 }
 
 .talent-card__message {
   flex: 1;
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue);
+  color: #14140f;
   border: none;
   padding: 10px;
   font-size: 0.7rem;
@@ -335,7 +335,7 @@
 }
 
 .talent-card__message:hover {
-  background: #fff;
+  background: var(--color-text);
 }
 
 @media (max-width: 640px) {

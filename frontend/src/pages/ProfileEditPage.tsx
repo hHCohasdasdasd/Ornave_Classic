@@ -648,8 +648,8 @@ export const ProfileEditPage: React.FC = () => {
           )}
 
           {activeTab === 'enhance' && (
-            <div className="edit-section" style={{ borderLeft: '4px solid #f43f5e', paddingLeft: '30px' }}>
-              <h2 style={{ color: '#f43f5e' }}>Enhance Profile</h2>
+            <div className="edit-section" style={{ borderLeft: '4px solid var(--tech-accent-gold)', paddingLeft: '30px' }}>
+              <h2 style={{ color: 'var(--tech-accent-gold)' }}>Enhance Profile</h2>
               <p className="section-description">
                 Optimize your digital presence with high-quality media and custom identifiers
               </p>
@@ -666,7 +666,7 @@ export const ProfileEditPage: React.FC = () => {
 
                 <div className="photo-card">
                   <div className="photo-preview-banner">
-                    {backgroundPhoto ? <img src={backgroundPhoto} alt="Background" className="photo-img" /> : <div style={{background: '#111', height: '100%'}}></div>}
+                    {backgroundPhoto ? <img src={backgroundPhoto} alt="Background" className="photo-img" /> : <div style={{background: 'var(--color-bg)', height: '100%'}}></div>}
                   </div>
                   <button className="btn-add" onClick={() => handlePhotoUpload('background')}>
                     {backgroundPhoto ? 'Update Banner' : 'Upload Banner'}
@@ -706,8 +706,8 @@ export const ProfileEditPage: React.FC = () => {
           )}
 
           {activeTab === 'sections' && (
-            <div className="edit-section" style={{ borderLeft: '4px solid #fbbf24', paddingLeft: '30px' }}>
-              <h2 style={{ color: '#fbbf24' }}>Profile Sections</h2>
+            <div className="edit-section" style={{ borderLeft: '4px solid #8a7f68', paddingLeft: '30px' }}>
+              <h2 style={{ color: '#8a7f68' }}>Profile Sections</h2>
               <p className="section-description">
                 Populate your professional ledger with structured experience data
               </p>
@@ -727,12 +727,12 @@ export const ProfileEditPage: React.FC = () => {
                     {/* Simplified Display of Added Items */}
                     <div style={{ paddingLeft: '20px', marginTop: '10px' }}>
                       {sec.id === 'experience' && experiences.map(exp => (
-                        <div key={exp.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', marginBottom: '5px', borderLeft: '2px solid #10b981' }}>
+                        <div key={exp.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid #8ba378' }}>
                           <div>
                             <div style={{fontSize: '0.85rem', fontWeight: 800}}>{exp.title}</div>
                             <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{exp.company}</div>
                           </div>
-                          <button style={{background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', fontWeight: 800}} onClick={() => {
+                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
                             const updated = experiences.filter(e => e.id !== exp.id);
                             setExperiences(updated);
                             localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), experiences: updated }));
@@ -740,12 +740,12 @@ export const ProfileEditPage: React.FC = () => {
                         </div>
                       ))}
                       {sec.id === 'education' && educations.map(edu => (
-                        <div key={edu.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', marginBottom: '5px', borderLeft: '2px solid #fbbf24' }}>
+                        <div key={edu.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid var(--tech-accent-gold)' }}>
                           <div>
                             <div style={{fontSize: '0.85rem', fontWeight: 800}}>{edu.school}</div>
                             <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{edu.degree}</div>
                           </div>
-                          <button style={{background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', fontWeight: 800}} onClick={() => {
+                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
                             const updated = educations.filter(e => e.id !== edu.id);
                             setEducations(updated);
                             localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), educations: updated }));
@@ -753,12 +753,12 @@ export const ProfileEditPage: React.FC = () => {
                         </div>
                       ))}
                       {sec.id === 'skills' && skills.map(skill => (
-                        <div key={skill.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', marginBottom: '5px', borderLeft: '2px solid var(--tech-accent-gold)' }}>
+                        <div key={skill.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid var(--tech-accent-gold)' }}>
                           <div>
                             <div style={{fontSize: '0.85rem', fontWeight: 800}}>{skill.name}</div>
                             <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{skill.level}</div>
                           </div>
-                          <button style={{background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', fontWeight: 800}} onClick={() => {
+                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
                             const updated = skills.filter(s => s.id !== skill.id);
                             setSkills(updated);
                             localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), skills: updated }));
@@ -766,12 +766,12 @@ export const ProfileEditPage: React.FC = () => {
                         </div>
                       ))}
                       {sec.id === 'certifications' && certifications.map(cert => (
-                        <div key={cert.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', marginBottom: '5px', borderLeft: '2px solid #a855f7' }}>
+                        <div key={cert.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid #8a7f68' }}>
                           <div>
                             <div style={{fontSize: '0.85rem', fontWeight: 800}}>{cert.name}</div>
                             <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{cert.organization}</div>
                           </div>
-                          <button style={{background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', fontWeight: 800}} onClick={() => {
+                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
                             const updated = certifications.filter(c => c.id !== cert.id);
                             setCertifications(updated);
                             localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), certifications: updated }));
@@ -779,12 +779,12 @@ export const ProfileEditPage: React.FC = () => {
                         </div>
                       ))}
                       {sec.id === 'languages' && languages.map(lang => (
-                        <div key={lang.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', marginBottom: '5px', borderLeft: '2px solid #f43f5e' }}>
+                        <div key={lang.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid #a79e8c' }}>
                           <div>
                             <div style={{fontSize: '0.85rem', fontWeight: 800}}>{lang.name}</div>
                             <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{lang.proficiency}</div>
                           </div>
-                          <button style={{background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', fontWeight: 800}} onClick={() => {
+                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
                             const updated = languages.filter(l => l.id !== lang.id);
                             setLanguages(updated);
                             localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), languages: updated }));
@@ -792,12 +792,12 @@ export const ProfileEditPage: React.FC = () => {
                         </div>
                       ))}
                       {sec.id === 'projects' && projects.map(proj => (
-                        <div key={proj.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', marginBottom: '5px', borderLeft: '2px solid #10b981' }}>
+                        <div key={proj.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid #8ba378' }}>
                           <div>
                             <div style={{fontSize: '0.85rem', fontWeight: 800}}>{proj.name}</div>
                             <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{proj.startDate} - {proj.current ? 'Present' : proj.endDate}</div>
                           </div>
-                          <button style={{background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', fontWeight: 800}} onClick={() => {
+                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
                             const updated = projects.filter(p => p.id !== proj.id);
                             setProjects(updated);
                             localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), projects: updated }));
@@ -816,24 +816,24 @@ export const ProfileEditPage: React.FC = () => {
       {/* Modals */}
       {activeModal && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)} style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}>
-          <div className="modal-content tech-modal" onClick={(e) => e.stopPropagation()} style={{ 
-            background: '#0a0a0c', 
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 0 50px rgba(0,0,0,1), inset 0 0 20px rgba(59, 130, 246, 0.1)',
+          <div className="modal-content tech-modal" onClick={(e) => e.stopPropagation()} style={{
+            background: 'var(--color-bg)',
+            border: '1px solid var(--color-border)',
+            boxShadow: '0 0 50px rgba(0,0,0,0.6), inset 0 0 20px rgba(231, 223, 201, 0.08)',
             padding: '40px',
             maxWidth: '600px',
             position: 'relative',
             overflow: 'hidden'
           }}>
             {/* Grid Background Effect */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0)', backgroundSize: '24px 24px', pointerEvents: 'none', zIndex: 0 }}></div>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(246, 243, 237, 0.03) 1px, transparent 0)', backgroundSize: '24px 24px', pointerEvents: 'none', zIndex: 0 }}></div>
 
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <h2 style={{ 
-                fontFamily: '"JetBrains Mono", monospace', 
-                fontSize: '1.5rem', 
+              <h2 style={{
+                fontFamily: '"JetBrains Mono", monospace',
+                fontSize: '1.5rem',
                 marginBottom: '30px',
-                color: '#fff',
+                color: 'var(--color-text)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '15px'

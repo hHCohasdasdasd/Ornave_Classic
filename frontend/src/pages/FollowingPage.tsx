@@ -71,7 +71,7 @@ export const FollowingPage: React.FC = () => {
                     <p className="suggestion-card__mutual">
                       <span className="tech-label">{item.type}</span>
                     </p>
-                    <button className="suggestion-card__connect connected" style={{ background: 'rgba(255, 255, 255, 0.05)' }}>
+                    <button className="suggestion-card__connect connected" style={{ background: 'rgba(246, 243, 237, 0.05)' }}>
                       Following
                     </button>
                   </div>

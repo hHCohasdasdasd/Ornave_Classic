@@ -1,8 +1,8 @@
-/* Firms Page - High-Tech HUD Aesthetic */
+/* Firms Page - Private Club Aesthetic */
 .firms-page {
-  background: var(--tech-bg, #050505);
+  background: var(--tech-bg, #111111);
   min-height: 100vh;
-  color: var(--tech-text-main, #ffffff);
+  color: var(--tech-text-main, #f6f3ed);
   position: relative;
 }
 
@@ -15,8 +15,8 @@
   height: 100%;
   background: repeating-linear-gradient(
     0deg,
-    rgba(40, 30, 20, 0.01),
-    rgba(40, 30, 20, 0.01) 1px,
+    rgba(246, 243, 237, 0.01),
+    rgba(246, 243, 237, 0.01) 1px,
     transparent 1px,
     transparent 4px
   );
@@ -27,7 +27,7 @@
 .firms-page__search-banner {
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--tech-border, #ffffff);
+  border-bottom: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   padding: 24px 0;
   position: sticky;
   top: 0;
@@ -52,14 +52,14 @@
   align-items: center;
   gap: 12px;
   background: rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
   padding: 12px 24px;
   transition: all 0.2s ease;
 }
 
 .firms-search__field:focus-within {
-  border-color: var(--tech-blue, #3b82f6);
-  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.3));
+  border-color: var(--tech-blue, #e7dfc9);
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(231, 223, 201, 0.2));
 }
 
 .firms-search__input {
@@ -67,18 +67,18 @@
   border: none;
   background: transparent;
   font-size: 0.9rem;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   outline: none;
   font-family: inherit;
 }
 
 .firms-search__input::placeholder {
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
 }
 
 .firms-search__btn {
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue, #e7dfc9);
+  color: #14140f;
   border: none;
   padding: 12px 32px;
   font-size: 0.8rem;
@@ -89,7 +89,7 @@
 }
 
 .firms-search__btn:hover {
-  background: #fff;
+  background: var(--color-text, #f6f3ed);
 }
 
 .firms-page__container {
@@ -110,8 +110,8 @@
 }
 
 .firms-sidebar__card {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg, #181818);
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   position: relative;
 }
 
@@ -122,19 +122,19 @@
   left: -4px;
   width: 8px;
   height: 8px;
-  background: var(--tech-blue, #3b82f6);
+  background: var(--tech-blue, #e7dfc9);
 }
 
 .firms-sidebar__header {
   padding: 24px;
-  border-bottom: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.1));
-  background: rgba(40, 30, 20, 0.02);
+  border-bottom: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.06));
+  background: rgba(246, 243, 237, 0.02);
 }
 
 .firms-sidebar__header h2 {
   font-size: 0.8rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   margin: 0;
 }
 
@@ -153,11 +153,11 @@
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
-  border-bottom: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.1));
+  border-bottom: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.06));
 }
 
 .firms-stat:hover {
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(246, 243, 237, 0.04);
 }
 
 .firms-stat__info {
@@ -172,33 +172,33 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #000;
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.2));
-  color: #fff;
+  background: var(--color-bg, #111111);
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
+  color: var(--color-text, #f6f3ed);
 }
 
-.firms-stat__icon--partners { color: var(--tech-blue, #3b82f6); }
-.firms-stat__icon--watching { color: #a855f7; }
+.firms-stat__icon--partners { color: var(--tech-blue, #e7dfc9); }
+.firms-stat__icon--watching { color: #8ba378; }
 
 .firms-stat__label {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
 }
 
 .firms-stat__value {
   font-size: 0.9rem;
   font-weight: 900;
-  color: #fff;
-  background: rgba(40, 30, 20, 0.05);
+  color: var(--color-text, #f6f3ed);
+  background: rgba(246, 243, 237, 0.05);
   padding: 4px 10px;
 }
 
 .firms-sidebar__more {
   width: 100%;
   border: none;
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue, #e7dfc9);
+  color: #14140f;
   font-size: 0.8rem;
   font-weight: 900;
   padding: 16px;
@@ -211,13 +211,13 @@
 }
 
 .firms-sidebar__more:hover {
-  background: #fff;
+  background: var(--color-text, #f6f3ed);
 }
 
 /* Premium Section */
 .firms-sidebar__premium {
-  background: rgba(251, 191, 36, 0.05);
-  border: 1px solid var(--tech-accent-gold, #fbbf24);
+  background: var(--color-secondary, rgba(198, 161, 91, 0.08));
+  border: 1px solid var(--tech-accent-gold, #c6a15b);
   padding: 24px;
   text-align: center;
   position: relative;
@@ -229,13 +229,13 @@
   gap: 10px;
   font-size: 0.8rem;
   font-weight: 900;
-  color: var(--tech-accent-gold, #fbbf24);
+  color: var(--tech-accent-gold, #c6a15b);
   margin-bottom: 16px;
 }
 
 .premium-text {
   font-size: 0.75rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   margin: 0 0 24px 0;
   line-height: 1.6;
   font-weight: 700;
@@ -243,8 +243,8 @@
 
 .premium-cta {
   width: 100%;
-  background: var(--tech-accent-gold, #fbbf24);
-  color: #000;
+  background: var(--tech-accent-gold, #c6a15b);
+  color: #14140f;
   border: none;
   padding: 12px;
   font-size: 0.8rem;
@@ -254,7 +254,7 @@
 }
 
 .premium-cta:hover {
-  background: #fff;
+  background: var(--color-primary-hover, #d8be84);
 }
 
 /* Main Content */
@@ -266,8 +266,8 @@
 
 /* Tabs */
 .firms-tabs {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg, #181818);
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   padding: 0 24px;
   display: flex;
   gap: 32px;
@@ -276,7 +276,7 @@
 .firms-tab {
   border: none;
   background: transparent;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   font-size: 0.8rem;
   font-weight: 900;
   padding: 20px 0;
@@ -286,11 +286,11 @@
 }
 
 .firms-tab:hover {
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
 }
 
 .firms-tab--active {
-  color: var(--tech-blue, #3b82f6);
+  color: var(--tech-blue, #e7dfc9);
 }
 
 .firms-tab--active::after {
@@ -300,14 +300,14 @@
   left: 0;
   width: 100%;
   height: 3px;
-  background: var(--tech-blue, #3b82f6);
-  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.5));
+  background: var(--tech-blue, #e7dfc9);
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(231, 223, 201, 0.25));
 }
 
 /* Sections */
 .firms-section {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg, #181818);
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   padding: 32px;
 }
 
@@ -321,14 +321,14 @@
 .firms-section__header h2 {
   font-size: 1rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   margin: 0;
 }
 
 .firms-section__link {
   border: none;
   background: transparent;
-  color: var(--tech-blue, #3b82f6);
+  color: var(--tech-blue, #e7dfc9);
   font-size: 0.75rem;
   font-weight: 900;
   cursor: pointer;
@@ -336,7 +336,7 @@
 }
 
 .firms-section__link:hover {
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
 }
 
 /* Follow Cards */
@@ -351,20 +351,20 @@
   gap: 24px;
   padding: 32px;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
   transition: all 0.2s ease;
 }
 
 .follow-card:hover {
-  border-color: var(--tech-blue, #3b82f6);
-  background: rgba(59, 130, 246, 0.05);
+  border-color: var(--tech-blue, #e7dfc9);
+  background: rgba(246, 243, 237, 0.04);
 }
 
 .follow-card__logo {
   width: 64px;
   height: 64px;
-  background: #000;
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.2));
+  background: var(--color-bg, #111111);
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -380,27 +380,27 @@
 .follow-card__name {
   font-size: 1rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   margin: 0 0 4px 0;
 }
 
 .follow-card__headline {
   font-size: 0.8rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   margin: 0 0 12px 0;
   font-weight: 700;
 }
 
 .follow-card__meta {
   font-size: 0.7rem;
-  color: var(--tech-blue, #3b82f6);
+  color: var(--tech-blue, #e7dfc9);
   font-weight: 900;
 }
 
 .follow-card__btn {
   background: transparent;
-  border: 1px solid var(--tech-border, #ffffff);
-  color: #fff;
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
+  color: var(--color-text, #f6f3ed);
   padding: 10px 24px;
   font-size: 0.8rem;
   font-weight: 900;
@@ -410,8 +410,314 @@
 }
 
 .follow-card__btn:hover {
-  background: #fff;
-  color: #000;
+  background: var(--color-text, #f6f3ed);
+  color: var(--color-bg, #111111);
+}
+
+/* Firm cards (search results / suggestions grids) — unstyled in the original
+   markup (className mismatch with the rules above), left as raw browser
+   buttons/text. Styled here to match the rest of the private-club system. */
+.firm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.firm-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 32px 20px 24px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
+  transition: all 0.2s ease;
+}
+
+.firm-card:hover {
+  border-color: var(--tech-blue, #e7dfc9);
+  background: rgba(246, 243, 237, 0.04);
+}
+
+.firm-card__dismiss {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--tech-text-dim, #a79e8c);
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.firm-card__dismiss:hover {
+  color: var(--color-text, #f6f3ed);
+}
+
+.firm-card__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-bg, #111111);
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--tech-accent-gold, #c6a15b);
+  margin-bottom: 4px;
+}
+
+.firm-card__name {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--color-text, #f6f3ed);
+  margin: 0;
+}
+
+.firm-card__industry {
+  font-size: 0.75rem;
+  color: var(--tech-text-dim, #a79e8c);
+  margin: 0;
+  font-weight: 700;
+}
+
+.firm-card__description {
+  font-size: 0.75rem;
+  color: var(--tech-text-dim, #a79e8c);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.firm-card__connections {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--tech-text-dim, #a79e8c);
+  margin: 4px 0 0;
+}
+
+.firm-card__follow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  width: 100%;
+  background: var(--tech-accent-gold, #c6a15b);
+  color: #14140f;
+  border: none;
+  padding: 10px 16px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.firm-card__follow:hover {
+  background: var(--color-primary-hover, #d8be84);
+}
+
+/* Popular companies grid — same className drift, styled to match */
+.popular-firms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.popular-firm-card {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.popular-firm-card:hover {
+  border-color: var(--tech-blue, #e7dfc9);
+  background: rgba(246, 243, 237, 0.04);
+}
+
+.popular-firm-card__cover {
+  height: 56px;
+  background: linear-gradient(135deg, rgba(198, 161, 91, 0.16) 0%, rgba(198, 161, 91, 0.03) 100%);
+  border-bottom: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
+}
+
+.popular-firm-card__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: 0 20px 24px;
+}
+
+.popular-firm-card__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-bg, #111111);
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--tech-accent-gold, #c6a15b);
+  margin-top: -28px;
+  margin-bottom: 4px;
+}
+
+.popular-firm-card__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: var(--color-text, #f6f3ed);
+  margin: 0;
+}
+
+.popular-firm-card__industry {
+  font-size: 0.75rem;
+  color: var(--tech-text-dim, #a79e8c);
+  margin: 0;
+  font-weight: 700;
+}
+
+.popular-firm-card__employees,
+.popular-firm-card__followers {
+  font-size: 0.7rem;
+  color: var(--tech-text-dim, #a79e8c);
+  margin: 0;
+}
+
+.popular-firm-card__follow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
+  color: var(--color-text, #f6f3ed);
+  padding: 10px 16px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.popular-firm-card__follow:hover {
+  background: var(--tech-accent-gold, #c6a15b);
+  border-color: var(--tech-accent-gold, #c6a15b);
+  color: #14140f;
+}
+
+/* Follow request cards — actual className used by JSX differs from the
+   .follow-card__logo/info/headline/meta/btn rules above; styled here too */
+.follow-card__avatar {
+  width: 64px;
+  height: 64px;
+  background: var(--color-bg, #111111);
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--tech-accent-gold, #c6a15b);
+  flex-shrink: 0;
+}
+
+.follow-card__content {
+  flex: 1;
+}
+
+.follow-card__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--color-text, #f6f3ed);
+  margin: 0 0 4px 0;
+}
+
+.badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--tech-accent-gold, #c6a15b);
+  color: #14140f;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.follow-card__industry {
+  font-size: 0.8rem;
+  color: var(--tech-text-dim, #a79e8c);
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+
+.follow-card__description {
+  font-size: 0.8rem;
+  color: var(--tech-text-dim, #a79e8c);
+  margin: 0 0 8px 0;
+  line-height: 1.5;
+}
+
+.follow-card__employees {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--tech-text-dim, #a79e8c);
+  margin: 0 0 16px 0;
+}
+
+.follow-card__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-ignore,
+.btn-follow {
+  padding: 10px 20px;
+  font-size: 0.8rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ignore {
+  background: transparent;
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
+  color: var(--color-text, #f6f3ed);
+}
+
+.btn-ignore:hover {
+  background: rgba(246, 243, 237, 0.06);
+}
+
+.btn-follow {
+  background: var(--tech-accent-gold, #c6a15b);
+  border: 1px solid var(--tech-accent-gold, #c6a15b);
+  color: #14140f;
+}
+
+.btn-follow:hover {
+  background: var(--color-primary-hover, #d8be84);
 }
 
 @media (max-width: 1024px) {

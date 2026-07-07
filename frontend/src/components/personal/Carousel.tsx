@@ -56,7 +56,7 @@ export const Carousel: React.FC<CarouselProps> = ({ slides }) => {
               className={`carousel__slide ${
                 index === currentIndex ? 'carousel__slide--active' : ''
               }`}
-              style={{ backgroundColor: slide.bgColor || '#1a1a2e' }}
+              style={{ backgroundColor: slide.bgColor || 'var(--color-bg-alt)' }}
             >
               <div className="carousel__content">
                 <div className="carousel__icon">{slide.icon}</div>

@@ -36,7 +36,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
               <button 
                 onClick={() => setIsExpanded(true)}
                 style={{ 
-                  background: 'rgba(59, 130, 246, 0.1)', 
+                  background: 'rgba(231, 223, 201, 0.1)', 
                   border: '1px solid var(--tech-blue)', 
                   borderRadius: '2px', 
                   padding: '4px 8px', 
@@ -51,7 +51,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
               </button>
             )}
           </div>
-          {isProminent && <span className="profile-section__badge" style={{ background: 'var(--tech-blue)', color: '#000' }}>MARKETPLACE</span>}
+          {isProminent && <span className="profile-section__badge" style={{ background: 'var(--tech-blue)', color: '#14140f' }}>MARKETPLACE</span>}
         </div>
         <div className={isProminent ? "profile-section__grid" : "profile-section__items"} style={isProminent ? {
           display: 'grid',
@@ -61,7 +61,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
         } : {}}>
           {services.map((service, index) => (
             <div key={index} className={isProminent ? "service-card--prominent card--hover" : "profile-section__item"} style={isProminent ? {
-              background: 'rgba(255, 255, 255, 0.02)',
+              background: 'rgba(246, 243, 237, 0.02)',
               border: '1px solid var(--tech-border)',
               borderRadius: '0px',
               padding: '24px',
@@ -74,7 +74,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
             } : {}}>
               <div className="profile-item__icon" style={isProminent ? { 
                 fontSize: '24px', 
-                background: '#000', 
+                background: 'var(--color-bg)', 
                 width: '50px', 
                 height: '50px', 
                 border: '1px solid var(--tech-blue)',
@@ -88,13 +88,13 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
                 {index % 3 === 0 ? '📊' : index % 3 === 1 ? '🚀' : '🛡️'}
               </div>
               <div className="profile-item__content" style={{ position: 'relative', zIndex: 1 }}>
-                <h3 className="profile-item__title" style={isProminent ? { fontSize: '1rem', fontWeight: 800, marginBottom: '10px', color: '#fff', textTransform: 'uppercase' } : {}}>{service.title}</h3>
+                <h3 className="profile-item__title" style={isProminent ? { fontSize: '1rem', fontWeight: 800, marginBottom: '10px', color: 'var(--color-text)', textTransform: 'uppercase' } : {}}>{service.title}</h3>
                 <p className="profile-item__description" style={isProminent ? { fontSize: '0.85rem', color: 'var(--tech-text-dim)', lineHeight: '1.6' } : {}}>{service.description}</p>
                 {isProminent && (
                   <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                     <button style={{
                       background: 'var(--tech-blue)',
-                      color: '#000',
+                      color: '#14140f',
                       border: 'none',
                       padding: '10px 20px',
                       fontSize: '0.75rem',
@@ -148,7 +148,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
             maxWidth: '1200px',
             margin: '0 auto',
             width: '100%',
-            backgroundColor: '#000',
+            backgroundColor: 'var(--color-bg)',
             border: '1px solid var(--tech-border)',
             padding: '40px',
             position: 'relative'
@@ -160,7 +160,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
                 position: 'absolute',
                 top: '24px',
                 right: '24px',
-                background: 'rgba(59, 130, 246, 0.1)',
+                background: 'rgba(231, 223, 201, 0.1)',
                 border: '1px solid var(--tech-blue)',
                 color: 'var(--tech-blue)',
                 width: '48px',
@@ -178,9 +178,9 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
             
             <div style={{ marginBottom: '40px', borderBottom: '1px solid var(--tech-border-dim)', paddingBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                <span style={{ background: 'var(--tech-blue)', color: '#000', padding: '4px 12px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', fontFamily: 'JetBrains Mono, monospace' }}>MODULE_CATALOG</span>
+                <span style={{ background: 'var(--tech-blue)', color: '#14140f', padding: '4px 12px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', fontFamily: 'JetBrains Mono, monospace' }}>MODULE_CATALOG</span>
               </div>
-              <h1 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '2rem', fontWeight: 800, textTransform: 'uppercase' }}>Comprehensive_Services</h1>
+              <h1 style={{ margin: '0 0 8px 0', color: 'var(--color-text)', fontSize: '2rem', fontWeight: 800, textTransform: 'uppercase' }}>Comprehensive_Services</h1>
               <p style={{ color: 'var(--tech-text-dim)', margin: 0, fontSize: '1rem', fontFamily: 'JetBrains Mono, monospace' }}>SCANNING_CAPABILITIES // UPLINK_READY</p>
             </div>
 
@@ -191,7 +191,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
             }}>
               {services.map((service, index) => (
                 <div key={index} style={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                  backgroundColor: 'rgba(246, 243, 237, 0.02)',
                   padding: '32px', 
                   display: 'flex', 
                   flexDirection: 'column',
@@ -202,7 +202,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
                   <div style={{ 
                     fontSize: '32px', 
                     marginBottom: '24px',
-                    background: '#000',
+                    background: 'var(--color-bg)',
                     width: '70px',
                     height: '70px',
                     border: '1px solid var(--tech-blue)',
@@ -214,7 +214,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
                     {index % 3 === 0 ? '📊' : index % 3 === 1 ? '🚀' : '🛡️'}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <h2 style={{ fontSize: '1.4rem', margin: '0 0 16px 0', color: '#fff', fontWeight: 800, textTransform: 'uppercase' }}>{service.title}</h2>
+                    <h2 style={{ fontSize: '1.4rem', margin: '0 0 16px 0', color: 'var(--color-text)', fontWeight: 800, textTransform: 'uppercase' }}>{service.title}</h2>
                     <p style={{ fontSize: '0.95rem', color: 'var(--tech-text-dim)', lineHeight: '1.7', marginBottom: '24px' }}>
                       {service.description}
                     </p>
@@ -231,7 +231,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
                       style={{ 
                         flex: 1,
                         background: 'var(--tech-blue)',
-                        color: '#000',
+                        color: '#14140f',
                         border: 'none',
                         padding: '14px 24px', 
                         fontSize: '14px',
@@ -261,10 +261,10 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
               ))}
             </div>
             
-            <div style={{ marginTop: '60px', textAlign: 'center', background: 'rgba(59, 130, 246, 0.03)', padding: '40px', border: '1px dashed var(--tech-blue)' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '16px', color: '#fff', textTransform: 'uppercase' }}>Ready_to_Initialize_Protocol?</h3>
+            <div style={{ marginTop: '60px', textAlign: 'center', background: 'rgba(231, 223, 201, 0.03)', padding: '40px', border: '1px dashed var(--tech-blue)' }}>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '16px', color: 'var(--color-text)', textTransform: 'uppercase' }}>Ready_to_Initialize_Protocol?</h3>
               <p style={{ color: 'var(--tech-text-dim)', marginBottom: '24px', maxWidth: '600px', margin: '0 auto 24px', fontFamily: 'JetBrains Mono, monospace' }}>Our units are on standby to optimize your operational efficiency.</p>
-              <button style={{ background: 'var(--tech-blue)', color: '#000', border: 'none', padding: '16px 40px', fontSize: '1.1rem', fontWeight: 900, cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace' }}>
+              <button style={{ background: 'var(--tech-blue)', color: '#14140f', border: 'none', padding: '16px 40px', fontSize: '1.1rem', fontWeight: 900, cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace' }}>
                 REQUEST_UPLINK
               </button>
             </div>
@@ -286,12 +286,12 @@ export const FirmTeam: React.FC<{ team: FirmTeamMember[] }> = ({ team }) => {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginTop: '12px' }}>
         {team.map((person, index) => (
-          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '0px', border: '1px solid var(--tech-border)' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '0', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', border: '1px solid var(--tech-blue)', clipPath: 'polygon(15% 0, 100% 0, 100% 85%, 85% 100%, 0 100%, 0 15%)' }}>
+          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'rgba(246, 243, 237, 0.02)', borderRadius: '0px', border: '1px solid var(--tech-border)' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '0', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', border: '1px solid var(--tech-blue)', clipPath: 'polygon(15% 0, 100% 0, 100% 85%, 85% 100%, 0 100%, 0 15%)' }}>
               {person.avatar}
             </div>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>{person.name}</div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text)' }}>{person.name}</div>
               <div style={{ fontSize: '12px', color: 'var(--tech-text-dim)', fontFamily: 'JetBrains Mono, monospace' }}>{person.role}</div>
             </div>
           </div>
@@ -310,14 +310,14 @@ export const FirmJobs: React.FC<{ jobs: FirmJob[] }> = ({ jobs }) => {
     <section className="profile-section">
       <div className="profile-section__header">
         <h2 className="profile-section__title">Open Opportunities</h2>
-        <button className="profile-section__action-btn" onClick={() => navigate('/jobs')} style={{ background: 'var(--tech-blue)', color: '#000', fontWeight: 800 }}>VIEW_ALL_JOBS</button>
+        <button className="profile-section__action-btn" onClick={() => navigate('/jobs')} style={{ background: 'var(--tech-blue)', color: '#14140f', fontWeight: 800 }}>VIEW_ALL_JOBS</button>
       </div>
       <div className="profile-section__items">
         {jobs.map((job, index) => (
-          <div key={index} className="profile-section__item" style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--tech-border)', borderRadius: '0', padding: '16px', marginBottom: '12px' }}>
-            <div className="profile-item__icon" style={{ background: '#000', border: '1px solid var(--tech-blue)', color: 'var(--tech-blue)' }}>💼</div>
+          <div key={index} className="profile-section__item" style={{ background: 'rgba(246, 243, 237, 0.02)', border: '1px solid var(--tech-border)', borderRadius: '0', padding: '16px', marginBottom: '12px' }}>
+            <div className="profile-item__icon" style={{ background: 'var(--color-bg)', border: '1px solid var(--tech-blue)', color: 'var(--tech-blue)' }}>💼</div>
             <div className="profile-item__content">
-              <h3 className="profile-item__title" style={{ color: '#fff', fontSize: '1rem', textTransform: 'uppercase' }}>{job.title}</h3>
+              <h3 className="profile-item__title" style={{ color: 'var(--color-text)', fontSize: '1rem', textTransform: 'uppercase' }}>{job.title}</h3>
               <p className="profile-item__subtitle" style={{ color: 'var(--tech-text-dim)', fontSize: '0.8rem', fontFamily: 'JetBrains Mono, monospace' }}>{job.location} • {job.type}</p>
             </div>
             <button className="btn-sm-primary" style={{ marginLeft: 'auto', background: 'transparent', border: '1px solid var(--tech-blue)', color: 'var(--tech-blue)' }}>APPLY_MODULE</button>
@@ -339,10 +339,10 @@ export const FirmLocations: React.FC<{ locations: FirmLocation[] }> = ({ locatio
       </div>
       <div className="profile-section__items">
         {locations.map((loc, index) => (
-          <div key={index} className="profile-section__item" style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--tech-border)', borderRadius: '0', padding: '16px', marginBottom: '12px' }}>
-            <div className="profile-item__icon" style={{ background: '#000', border: '1px solid var(--tech-blue)', color: 'var(--tech-blue)' }}>📍</div>
+          <div key={index} className="profile-section__item" style={{ background: 'rgba(246, 243, 237, 0.02)', border: '1px solid var(--tech-border)', borderRadius: '0', padding: '16px', marginBottom: '12px' }}>
+            <div className="profile-item__icon" style={{ background: 'var(--color-bg)', border: '1px solid var(--tech-blue)', color: 'var(--tech-blue)' }}>📍</div>
             <div className="profile-item__content">
-              <h3 className="profile-item__title" style={{ color: '#fff', fontSize: '1rem', textTransform: 'uppercase' }}>{loc.city} ({loc.type})</h3>
+              <h3 className="profile-item__title" style={{ color: 'var(--color-text)', fontSize: '1rem', textTransform: 'uppercase' }}>{loc.city} ({loc.type})</h3>
               <p className="profile-item__description" style={{ color: 'var(--tech-text-dim)', fontSize: '0.85rem' }}>{loc.address}</p>
             </div>
           </div>
@@ -362,15 +362,15 @@ export const FirmInsights: React.FC<{ insights: FirmInsightsData }> = ({ insight
         <h2 className="profile-section__title">Firm Analytics</h2>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '12px' }}>
-        <div style={{ padding: '20px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid var(--tech-border)', position: 'relative' }}>
+        <div style={{ padding: '20px', background: 'rgba(231, 223, 201, 0.05)', border: '1px solid var(--tech-border)', position: 'relative' }}>
           <div className="tech-corner-top-right" style={{ width: '8px', height: '8px' }}></div>
           <div style={{ fontSize: '10px', color: 'var(--tech-blue)', fontWeight: 800, marginBottom: '8px', fontFamily: 'JetBrains Mono, monospace' }}>EMPLOYEE_GROWTH</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#fff' }}>{insights.employeeGrowth} <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 800 }}>+ TRENDING</span></div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-text)' }}>{insights.employeeGrowth} <span style={{ fontSize: '12px', color: '#8ba378', fontWeight: 800 }}>+ TRENDING</span></div>
         </div>
-        <div style={{ padding: '20px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid var(--tech-border)', position: 'relative' }}>
+        <div style={{ padding: '20px', background: 'rgba(231, 223, 201, 0.05)', border: '1px solid var(--tech-border)', position: 'relative' }}>
           <div className="tech-corner-top-right" style={{ width: '8px', height: '8px' }}></div>
           <div style={{ fontSize: '10px', color: 'var(--tech-blue)', fontWeight: 800, marginBottom: '8px', fontFamily: 'JetBrains Mono, monospace' }}>AVG_TENURE</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#fff' }}>{insights.avgTenure}</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-text)' }}>{insights.avgTenure}</div>
         </div>
       </div>
     </section>
@@ -394,29 +394,29 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
   // Color mapping for roles
   const getRoleColor = (role: string) => {
     const r = role.toUpperCase();
-    if (r.includes('CEO')) return '#4c51bf';
-    if (r.includes('FINANCE') || r.includes('CFO')) return '#38a169';
-    if (r.includes('HUMAN') || r.includes('CHRO')) return '#d53f8c';
-    if (r.includes('TECH') || r.includes('CTO')) return '#3182ce';
-    return '#718096';
+    if (r.includes('CEO')) return '#c6a15b';
+    if (r.includes('FINANCE') || r.includes('CFO')) return '#8ba378';
+    if (r.includes('HUMAN') || r.includes('CHRO')) return '#8a7f68';
+    if (r.includes('TECH') || r.includes('CTO')) return '#e7dfc9';
+    return '#a79e8c';
   };
 
   return (
     <section className="profile-section" style={{ overflow: 'visible' }}>
       <div className="profile-section__header">
         <h2 className="profile-section__title">Company Network</h2>
-        <span style={{ fontSize: '12px', color: '#718096', fontWeight: 500 }}>Interactive Org Chart</span>
+        <span style={{ fontSize: '12px', color: 'var(--color-muted)', fontWeight: 500 }}>Interactive Org Chart</span>
       </div>
-      
-      <div className="firm-network-container enhanced-network" style={{ 
-        position: 'relative', 
-        height: '500px', 
-        background: '#f8fafc', 
-        borderRadius: '20px', 
+
+      <div className="firm-network-container enhanced-network" style={{
+        position: 'relative',
+        height: '500px',
+        background: 'var(--color-bg)',
+        borderRadius: '20px',
         marginTop: '16px',
         overflow: 'hidden',
-        border: '1px solid #e2e8f0',
-        boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.02)'
+        border: '1px solid var(--color-border)',
+        boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.15)'
       }}>
         {/* Background Grid Decoration */}
         <div className="network-grid-overlay"></div>
@@ -433,18 +433,18 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
           transform: 'translate(-50%, -50%)',
           width: '120px',
           height: '120px',
-          background: 'white',
+          background: 'var(--color-card)',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          border: '4px solid #4c51bf',
-          boxShadow: '0 0 30px rgba(76, 81, 191, 0.2), 0 10px 25px rgba(0,0,0,0.1)',
+          border: '4px solid var(--tech-accent-gold)',
+          boxShadow: '0 0 30px rgba(198, 161, 91, 0.25), 0 10px 25px rgba(0,0,0,0.4)',
           zIndex: 20
         }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '24px', marginBottom: '2px' }}>🏢</div>
-            <div style={{ color: '#1a202c', fontWeight: 800, fontSize: '14px', lineHeight: '1.2' }}>{firmName}</div>
+            <div style={{ color: 'var(--color-text)', fontWeight: 800, fontSize: '14px', lineHeight: '1.2' }}>{firmName}</div>
           </div>
         </div>
 
@@ -452,8 +452,8 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
         <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
           <defs>
             <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#4c51bf" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="#cbd5e0" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="#c6a15b" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#e7dfc9" stopOpacity="0.1" />
             </linearGradient>
           </defs>
           {team.map((_, index) => {
@@ -472,7 +472,7 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
                   strokeWidth="2"
                   className="network-line"
                 />
-                <circle cx={`${x2}%`} cy={`${y2}%`} r="3" fill="#4c51bf" opacity="0.5" />
+                <circle cx={`${x2}%`} cy={`${y2}%`} r="3" fill="#c6a15b" opacity="0.5" />
               </g>
             );
           })}
@@ -497,16 +497,16 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
                 transform: 'translate(-50%, -50%)',
                 width: `${size}px`,
                 height: `${size}px`,
-                background: 'white',
+                background: 'var(--color-card)',
                 borderRadius: '50%',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.02)',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.2)',
                 zIndex: 15,
                 padding: '10px',
-                border: `1.5px solid #edf2f7`,
+                border: `1.5px solid rgba(246, 243, 237, 0.12)`,
                 transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                 cursor: person.profileSlug ? 'pointer' : 'default'
               }}
@@ -527,8 +527,8 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
               <div style={{ 
                 fontSize: '11px', 
                 fontWeight: 800, 
-                textAlign: 'center', 
-                color: '#2d3748', 
+                textAlign: 'center',
+                color: 'var(--color-text)',
                 lineHeight: '1.1',
                 marginBottom: '2px'
               }}>
@@ -553,7 +553,7 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
                 height: '8px',
                 borderRadius: '50%',
                 background: color,
-                border: '2px solid white'
+                border: '2px solid var(--color-card)'
               }}></div>
             </div>
           );
@@ -596,7 +596,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
             <button 
               onClick={() => setIsExpanded(true)}
               style={{ 
-                background: 'rgba(59, 130, 246, 0.1)', 
+                background: 'rgba(231, 223, 201, 0.1)', 
                 border: '1px solid var(--tech-blue)', 
                 borderRadius: '0px', 
                 padding: '4px 8px', 
@@ -616,7 +616,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
             style={{ 
               display: user?.userType === 'COMPANY_USER' && user?.id === companyId ? 'block' : 'none',
               background: 'var(--tech-blue)',
-              color: '#000',
+              color: '#14140f',
               fontWeight: 800
             }}
           >
@@ -632,7 +632,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
           {products.slice(0, 3).map(product => (
             <div key={product.id} style={{ 
               padding: '12px', 
-              background: 'rgba(255, 255, 255, 0.02)', 
+              background: 'rgba(246, 243, 237, 0.02)', 
               border: '1px solid var(--tech-border)',
               position: 'relative'
             }}>
@@ -644,7 +644,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
                   style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '0px', marginBottom: '8px', border: '1px solid var(--tech-border-dim)' }} 
                 />
               )}
-              <h3 style={{ fontSize: '13px', margin: '0 0 4px 0', color: '#fff', textTransform: 'uppercase' }}>{product.name}</h3>
+              <h3 style={{ fontSize: '13px', margin: '0 0 4px 0', color: 'var(--color-text)', textTransform: 'uppercase' }}>{product.name}</h3>
               <p style={{ fontSize: '11px', color: 'var(--tech-text-dim)', margin: '0 0 8px 0', height: '32px', overflow: 'hidden' }}>
                 {product.description}
               </p>
@@ -691,7 +691,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
             maxWidth: '1200px',
             margin: '0 auto',
             width: '100%',
-            backgroundColor: '#000',
+            backgroundColor: 'var(--color-bg)',
             border: '1px solid var(--tech-border)',
             padding: '40px',
             position: 'relative'
@@ -703,7 +703,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
                 position: 'absolute',
                 top: '20px',
                 right: '20px',
-                background: 'rgba(59, 130, 246, 0.1)',
+                background: 'rgba(231, 223, 201, 0.1)',
                 border: '1px solid var(--tech-blue)',
                 color: 'var(--tech-blue)',
                 width: '40px',
@@ -720,7 +720,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
             </button>
             
             <div style={{ marginBottom: '40px', borderBottom: '1px solid var(--tech-border-dim)', paddingBottom: '20px' }}>
-              <h1 style={{ margin: '0 0 8px 0', color: '#fff', textTransform: 'uppercase', letterSpacing: '2px' }}>Inventory_Core_Access</h1>
+              <h1 style={{ margin: '0 0 8px 0', color: 'var(--color-text)', textTransform: 'uppercase', letterSpacing: '2px' }}>Inventory_Core_Access</h1>
               <p style={{ color: 'var(--tech-text-dim)', margin: 0, fontFamily: 'JetBrains Mono, monospace', fontSize: '0.9rem' }}>LINK_ESTABLISHED // SCANNING_CATALOG...</p>
             </div>
 
@@ -731,7 +731,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
             }}>
               {products.map(product => (
                 <div key={product.id} style={{ 
-                  background: 'rgba(255, 255, 255, 0.02)', 
+                  background: 'rgba(246, 243, 237, 0.02)', 
                   border: '1px solid var(--tech-border)',
                   padding: '24px', 
                   display: 'flex', 
@@ -747,7 +747,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
                     />
                   )}
                   <div style={{ flex: 1 }}>
-                    <h2 style={{ fontSize: '1.2rem', margin: '0 0 10px 0', color: '#fff', textTransform: 'uppercase' }}>{product.name}</h2>
+                    <h2 style={{ fontSize: '1.2rem', margin: '0 0 10px 0', color: 'var(--color-text)', textTransform: 'uppercase' }}>{product.name}</h2>
                     <p style={{ fontSize: '0.85rem', color: 'var(--tech-text-dim)', lineHeight: '1.5', marginBottom: '24px' }}>
                       {product.description}
                     </p>
@@ -762,7 +762,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
                         padding: '12px 24px', 
                         fontSize: '13px', 
                         background: 'var(--tech-blue)', 
-                        color: '#000', 
+                        color: '#14140f', 
                         border: 'none', 
                         fontWeight: 900,
                         cursor: 'pointer',
@@ -794,19 +794,19 @@ export const FirmPortfolio: React.FC<{ portfolio: FirmPortfolioItem[] }> = ({ po
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px', marginTop: '16px' }}>
         {portfolio.map((item, index) => (
-          <div key={index} style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--tech-border)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <div key={index} style={{ background: 'rgba(246, 243, 237, 0.02)', border: '1px solid var(--tech-border)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
             <div className="tech-corner-top-right" style={{ width: '12px', height: '12px' }}></div>
             {item.imageUrl && (
               <img src={item.imageUrl} alt={item.title} style={{ width: '100%', height: '180px', objectFit: 'cover', opacity: 0.8, borderBottom: '1px solid var(--tech-border-dim)' }} />
             )}
             <div style={{ padding: '24px' }}>
               <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--tech-blue)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'JetBrains Mono, monospace' }}>{item.category}</span>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '12px 0', color: '#fff', textTransform: 'uppercase' }}>{item.title}</h3>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '12px 0', color: 'var(--color-text)', textTransform: 'uppercase' }}>{item.title}</h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--tech-text-dim)', lineHeight: '1.6', marginBottom: '20px' }}>{item.description}</p>
               {item.result && (
-                <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '16px', borderLeft: '3px solid #10b981' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 800, color: '#10b981', marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }}>OUTCOME_REPORT</div>
-                  <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>{item.result}</div>
+                <div style={{ background: 'rgba(139, 163, 120, 0.08)', padding: '16px', borderLeft: '3px solid #8ba378' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 800, color: '#8ba378', marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }}>OUTCOME_REPORT</div>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--color-text)', fontWeight: 600 }}>{item.result}</div>
                 </div>
               )}
             </div>
@@ -838,14 +838,14 @@ export const FirmResources: React.FC<{ resources: FirmResource[] }> = ({ resourc
       </div>
       <div className="profile-section__items">
         {resources.map((resource, index) => (
-          <div key={index} className="profile-section__item" style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--tech-border)', padding: '16px', marginBottom: '12px', borderRadius: '0' }}>
-            <div className="profile-item__icon" style={{ fontSize: '24px', background: '#000', border: '1px solid var(--tech-blue)', width: '50px', height: '50px' }}>
+          <div key={index} className="profile-section__item" style={{ background: 'rgba(246, 243, 237, 0.02)', border: '1px solid var(--tech-border)', padding: '16px', marginBottom: '12px', borderRadius: '0' }}>
+            <div className="profile-item__icon" style={{ fontSize: '24px', background: 'var(--color-bg)', border: '1px solid var(--tech-blue)', width: '50px', height: '50px' }}>
               {getTypeIcon(resource.type)}
             </div>
             <div className="profile-item__content" style={{ flex: 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h3 className="profile-item__title" style={{ color: '#fff', fontSize: '1rem', textTransform: 'uppercase' }}>{resource.title}</h3>
+                  <h3 className="profile-item__title" style={{ color: 'var(--color-text)', fontSize: '1rem', textTransform: 'uppercase' }}>{resource.title}</h3>
                   <p className="profile-item__description" style={{ color: 'var(--tech-text-dim)', fontSize: '0.85rem' }}>{resource.description}</p>
                 </div>
                 <button style={{ 
@@ -883,7 +883,7 @@ export const FirmSubscriptions: React.FC<{ subscriptions: FirmSubscription[] }> 
           <div key={index} style={{ 
             padding: '32px', 
             position: 'relative',
-            background: plan.isPopular ? 'rgba(59, 130, 246, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+            background: plan.isPopular ? 'rgba(231, 223, 201, 0.08)' : 'rgba(246, 243, 237, 0.02)',
             border: plan.isPopular ? '2px solid var(--tech-blue)' : '1px solid var(--tech-border)',
             borderRadius: '14px'
           }}>
@@ -893,7 +893,7 @@ export const FirmSubscriptions: React.FC<{ subscriptions: FirmSubscription[] }> 
                 top: '-14px',
                 left: '20px',
                 background: 'var(--tech-blue)',
-                color: '#fff',
+                color: '#14140f',
                 padding: '4px 12px',
                 borderRadius: '999px',
                 fontSize: '0.75rem',
@@ -903,7 +903,7 @@ export const FirmSubscriptions: React.FC<{ subscriptions: FirmSubscription[] }> 
               </div>
             )}
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px', color: '#fff' }}>{plan.name}</h3>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px', color: 'var(--color-text)' }}>{plan.name}</h3>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
                 <span style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--tech-blue)' }}>${plan.price}</span>
                 <span style={{ color: 'var(--tech-text-dim)', fontSize: '14px', fontFamily: 'JetBrains Mono, monospace' }}>/{plan.interval === 'MONTHLY' ? 'MO' : 'YR'}</span>
@@ -919,7 +919,7 @@ export const FirmSubscriptions: React.FC<{ subscriptions: FirmSubscription[] }> 
             <button style={{
               width: '100%',
               background: plan.isPopular ? 'var(--tech-blue)' : 'transparent',
-              color: plan.isPopular ? '#000' : 'var(--tech-blue)',
+              color: plan.isPopular ? '#14140f' : 'var(--tech-blue)',
               border: plan.isPopular ? 'none' : '1px solid var(--tech-blue)',
               padding: '16px',
               fontSize: '14px',

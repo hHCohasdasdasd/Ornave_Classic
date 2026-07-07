@@ -60,7 +60,7 @@ export const MarketingPage: React.FC = () => {
         <div className="mkt-page__search-container">
           <div className="mkt-search">
             <div className="mkt-search__field">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="#c7ceda" strokeWidth="2"/><path d="m21 21-4.35-4.35" stroke="#c7ceda" strokeWidth="2" strokeLinecap="round"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="#a79e8c" strokeWidth="2"/><path d="m21 21-4.35-4.35" stroke="#a79e8c" strokeWidth="2" strokeLinecap="round"/></svg>
               <input
                 type="text"
                 placeholder="Search campaigns..."

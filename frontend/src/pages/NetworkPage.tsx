@@ -278,7 +278,7 @@ export const NetworkPage: React.FC = () => {
                 </button>
                 <button className="network-stat" onClick={() => navigate('/purchased-services')}>
                   <div className="network-stat__info">
-                    <div className="network-stat__icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--tech-blue)' }}>
+                    <div className="network-stat__icon" style={{ background: 'var(--tech-blue-glow)', color: 'var(--tech-blue)' }}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
                         <line x1="3" y1="6" x2="21" y2="6"></line>

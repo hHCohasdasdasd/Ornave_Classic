@@ -1,8 +1,8 @@
-/* Talent Insights Page - High-Tech HUD Aesthetic */
+/* Talent Insights Page - Private Club Aesthetic */
 .ti-page {
-  background: var(--tech-bg, #050505);
+  background: var(--tech-bg);
   min-height: 100vh;
-  color: var(--tech-text-main, #ffffff);
+  color: var(--tech-text-main);
   position: relative;
 }
 
@@ -15,8 +15,8 @@
   height: 100%;
   background: repeating-linear-gradient(
     0deg,
-    rgba(40, 30, 20, 0.01),
-    rgba(40, 30, 20, 0.01) 1px,
+    rgba(246, 243, 237, 0.01),
+    rgba(246, 243, 237, 0.01) 1px,
     transparent 1px,
     transparent 4px
   );
@@ -41,13 +41,13 @@
 .ti-page__title {
   font-size: 1.5rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text);
   margin: 0 0 8px;
 }
 
 .ti-page__subtitle {
   font-size: 0.8rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim);
   margin: 0;
 }
 
@@ -55,15 +55,15 @@
 .ti-range-tabs {
   display: flex;
   gap: 2px;
-  background: rgba(40, 30, 20, 0.05);
+  background: rgba(246, 243, 237, 0.04);
   padding: 2px;
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border: 1px solid var(--tech-border-dim);
 }
 
 .ti-range-tab {
   background: none;
   border: none;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim);
   font-size: 0.65rem;
   font-weight: 800;
   padding: 8px 16px;
@@ -73,12 +73,12 @@
 }
 
 .ti-range-tab:hover {
-  color: #fff;
+  color: var(--color-text);
 }
 
 .ti-range-tab--active {
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue);
+  color: #14140f;
 }
 
 /* Stat Cards */
@@ -90,8 +90,8 @@
 }
 
 .ti-stat-card {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
   padding: 24px;
   position: relative;
   display: flex;
@@ -105,7 +105,7 @@
   left: -4px;
   width: 8px;
   height: 8px;
-  background: var(--tech-blue, #3b82f6);
+  background: var(--tech-blue);
 }
 
 .ti-stat-card__icon {
@@ -117,13 +117,13 @@
 .ti-stat-card__value {
   font-size: 1.8rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text);
   margin-bottom: 4px;
 }
 
 .ti-stat-card__label {
   font-size: 0.65rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim);
   font-weight: 800;
   margin-bottom: 12px;
 }
@@ -134,11 +134,11 @@
 }
 
 .ti-stat-card__change--up {
-  color: var(--tech-accent-emerald, #10b981);
+  color: #a8c191;
 }
 
 .ti-stat-card__change--down {
-  color: var(--tech-accent-rose, #f43f5e);
+  color: var(--tech-accent-rose);
 }
 
 /* Content Grid */
@@ -150,8 +150,8 @@
 }
 
 .ti-section {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
   padding: 32px;
   position: relative;
 }
@@ -163,7 +163,7 @@
 .ti-section__title {
   font-size: 0.85rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text);
   margin: 0 0 24px;
   display: flex;
   align-items: center;
@@ -172,7 +172,7 @@
 
 .ti-section__title::before {
   content: ">";
-  color: var(--tech-blue, #3b82f6);
+  color: var(--tech-blue);
 }
 
 /* Table */
@@ -185,19 +185,19 @@
 .ti-table th {
   text-align: left;
   padding: 12px 16px;
-  color: var(--tech-blue, #3b82f6);
+  color: var(--tech-blue);
   font-weight: 800;
-  border-bottom: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border-bottom: 1px solid var(--tech-border-dim);
 }
 
 .ti-table td {
   padding: 16px;
-  color: #fff;
-  border-bottom: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.05));
+  color: var(--color-text);
+  border-bottom: 1px solid var(--tech-border-dim);
 }
 
 .ti-table tr:hover td {
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
 }
 
 .ti-table__role {
@@ -206,7 +206,7 @@
 }
 
 .ti-table__rate {
-  color: var(--tech-accent-gold, #fbbf24);
+  color: var(--tech-blue);
   font-weight: 900;
 }
 
@@ -226,7 +226,7 @@
 .ti-activity-item__icon {
   font-size: 1.1rem;
   filter: grayscale(1) brightness(1.5);
-  background: rgba(40, 30, 20, 0.05);
+  background: rgba(246, 243, 237, 0.05);
   width: 36px;
   height: 36px;
   display: flex;
@@ -237,14 +237,14 @@
 
 .ti-activity-item__event {
   font-size: 0.75rem;
-  color: #fff;
+  color: var(--color-text);
   font-weight: 700;
   margin-bottom: 4px;
 }
 
 .ti-activity-item__time {
   font-size: 0.65rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim);
 }
 
 /* Funnel */
@@ -263,13 +263,13 @@
 .ti-funnel__bar-wrap {
   flex: 1;
   height: 24px;
-  background: rgba(40, 30, 20, 0.03);
-  border: 1px solid rgba(40, 30, 20, 0.1);
+  background: rgba(246, 243, 237, 0.03);
+  border: 1px solid rgba(246, 243, 237, 0.1);
 }
 
 .ti-funnel__bar {
   height: 100%;
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 15px rgba(198, 161, 91, 0.15);
   transition: width 1s ease;
 }
 
@@ -283,7 +283,7 @@
 }
 
 .ti-funnel__count {
-  color: var(--tech-blue, #3b82f6);
+  color: var(--tech-blue);
 }
 
 @media (max-width: 1024px) {

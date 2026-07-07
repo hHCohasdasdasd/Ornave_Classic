@@ -16,8 +16,8 @@
   height: 100%;
   background: repeating-linear-gradient(
     0deg,
-    rgba(40, 30, 20, 0.01),
-    rgba(40, 30, 20, 0.01) 1px,
+    rgba(246, 243, 237, 0.01),
+    rgba(246, 243, 237, 0.01) 1px,
     transparent 1px,
     transparent 4px
   );
@@ -63,7 +63,7 @@
 }
 
 .profile-card:hover, .profile-section:hover {
-  box-shadow: 0 0 20px rgba(40, 30, 20, 0.1);
+  box-shadow: 0 0 20px rgba(246, 243, 237, 0.1);
   border-color: var(--tech-blue);
 }
 
@@ -86,49 +86,50 @@
   background: linear-gradient(90deg, var(--tech-border-dim), transparent);
 }
 
-/* Humanizing Accents & Section Customization */
-.profile-section--experience .profile-section__title::before { color: #10b981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
-.profile-section--experience .profile-section__title::after { background: linear-gradient(90deg, rgba(16, 185, 129, 0.3), transparent); }
-.profile-section--experience .profile-item__icon { color: #10b981; }
-.profile-section--experience { 
-  border-left: 4px solid #10b981; 
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.05), transparent); 
-  box-shadow: -10px 0 30px rgba(16, 185, 129, 0.05);
+/* Humanizing Accents & Section Customization — restrained heritage palette,
+   one hue per section instead of bright SaaS colors */
+.profile-section--experience .profile-section__title::before { color: #8ba378; text-shadow: 0 0 10px rgba(139, 163, 120, 0.3); }
+.profile-section--experience .profile-section__title::after { background: linear-gradient(90deg, rgba(139, 163, 120, 0.25), transparent); }
+.profile-section--experience .profile-item__icon { color: #8ba378; }
+.profile-section--experience {
+  border-left: 4px solid #8ba378;
+  background: linear-gradient(90deg, rgba(139, 163, 120, 0.05), transparent);
+  box-shadow: -10px 0 30px rgba(139, 163, 120, 0.05);
 }
 
-.profile-section--education .profile-section__title::before { color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.4); }
-.profile-section--education .profile-section__title::after { background: linear-gradient(90deg, rgba(251, 191, 36, 0.3), transparent); }
-.profile-section--education .profile-item__icon { color: #fbbf24; }
-.profile-section--education { 
-  border-left: 4px solid #fbbf24; 
-  background: linear-gradient(90deg, rgba(251, 191, 36, 0.05), transparent);
-  box-shadow: -10px 0 30px rgba(251, 191, 36, 0.05);
+.profile-section--education .profile-section__title::before { color: var(--tech-accent-gold); text-shadow: 0 0 10px rgba(198, 161, 91, 0.3); }
+.profile-section--education .profile-section__title::after { background: linear-gradient(90deg, rgba(198, 161, 91, 0.3), transparent); }
+.profile-section--education .profile-item__icon { color: var(--tech-accent-gold); }
+.profile-section--education {
+  border-left: 4px solid var(--tech-accent-gold);
+  background: linear-gradient(90deg, rgba(198, 161, 91, 0.05), transparent);
+  box-shadow: -10px 0 30px rgba(198, 161, 91, 0.05);
 }
 
-.profile-section--skills .profile-section__title::before { color: #3b82f6; text-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
-.profile-section--skills .profile-section__title::after { background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), transparent); }
-.profile-section--skills .profile-skill__level { color: #3b82f6; border-color: #3b82f6; }
-.profile-section--skills { 
-  border-left: 4px solid #3b82f6; 
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.05), transparent);
-  box-shadow: -10px 0 30px rgba(59, 130, 246, 0.05);
+.profile-section--skills .profile-section__title::before { color: #8a7f68; text-shadow: 0 0 10px rgba(138, 127, 104, 0.3); }
+.profile-section--skills .profile-section__title::after { background: linear-gradient(90deg, rgba(138, 127, 104, 0.3), transparent); }
+.profile-section--skills .profile-skill__level { color: #8a7f68; border-color: #8a7f68; }
+.profile-section--skills {
+  border-left: 4px solid #8a7f68;
+  background: linear-gradient(90deg, rgba(138, 127, 104, 0.05), transparent);
+  box-shadow: -10px 0 30px rgba(138, 127, 104, 0.05);
 }
 
-.profile-section--analytics .profile-section__title::before { color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.4); }
-.profile-section--analytics .profile-section__title::after { background: linear-gradient(90deg, rgba(244, 63, 94, 0.3), transparent); }
-.profile-section--analytics .profile-analytics__item svg { color: #f43f5e; opacity: 1; filter: drop-shadow(0 0 5px rgba(244, 63, 94, 0.4)); }
-.profile-section--analytics { 
-  border-left: 4px solid #f43f5e; 
-  background: linear-gradient(90deg, rgba(244, 63, 94, 0.05), transparent);
-  box-shadow: -10px 0 30px rgba(244, 63, 94, 0.05);
+.profile-section--analytics .profile-section__title::before { color: var(--color-danger); text-shadow: 0 0 10px rgba(155, 74, 70, 0.3); }
+.profile-section--analytics .profile-section__title::after { background: linear-gradient(90deg, rgba(155, 74, 70, 0.3), transparent); }
+.profile-section--analytics .profile-analytics__item svg { color: var(--color-danger); opacity: 1; filter: drop-shadow(0 0 5px rgba(155, 74, 70, 0.3)); }
+.profile-section--analytics {
+  border-left: 4px solid var(--color-danger);
+  background: linear-gradient(90deg, rgba(155, 74, 70, 0.05), transparent);
+  box-shadow: -10px 0 30px rgba(155, 74, 70, 0.05);
 }
 
-.profile-section--activity .profile-section__title::before { color: #a855f7; text-shadow: 0 0 10px rgba(168, 85, 247, 0.4); }
-.profile-section--activity .profile-section__title::after { background: linear-gradient(90deg, rgba(168, 85, 247, 0.3), transparent); }
-.profile-section--activity { 
-  border-left: 4px solid #a855f7; 
-  background: linear-gradient(90deg, rgba(168, 85, 247, 0.05), transparent);
-  box-shadow: -10px 0 30px rgba(168, 85, 247, 0.05);
+.profile-section--activity .profile-section__title::before { color: var(--color-muted); text-shadow: 0 0 10px rgba(167, 158, 140, 0.3); }
+.profile-section--activity .profile-section__title::after { background: linear-gradient(90deg, rgba(167, 158, 140, 0.3), transparent); }
+.profile-section--activity {
+  border-left: 4px solid var(--color-muted);
+  background: linear-gradient(90deg, rgba(167, 158, 140, 0.05), transparent);
+  box-shadow: -10px 0 30px rgba(167, 158, 140, 0.05);
 }
 
 /* Specific Section Layouts - Wider not Longer */
@@ -139,7 +140,7 @@
   gap: 10px;
   margin: 40px 0;
   padding: 8px;
-  background: rgba(40, 30, 20, 0.03);
+  background: rgba(246, 243, 237, 0.03);
   border: 1px solid var(--tech-border);
 }
 
@@ -161,7 +162,7 @@
 
 .profile-nav-tab.active {
   background: var(--color-primary);
-  color: #fff;
+  color: #14140f;
   font-weight: 800;
 }
 
@@ -223,7 +224,7 @@
 }
 
 .profile-skill__item {
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
   border: 1px solid var(--tech-border-dim);
   padding: 14px 18px;
   display: flex;
@@ -234,7 +235,7 @@
 
 .profile-skill__item:hover {
   border-color: var(--color-text);
-  background: rgba(40, 30, 20, 0.05);
+  background: rgba(246, 243, 237, 0.05);
 }
 
 .profile-skill__name {
@@ -263,7 +264,7 @@
   justify-content: space-between;
   margin-bottom: 10px;
   padding: 10px 12px;
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
   border: 1px solid var(--tech-border-dim);
 }
 
@@ -302,7 +303,7 @@
 
 .news-mini-item {
   border-left: 2px solid var(--tech-blue);
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
   padding: 12px;
   margin-bottom: 10px;
 }
@@ -349,16 +350,16 @@
 }
 
 .btn-primary {
-  background: var(--tech-blue);
-  color: #fff;
-  border-color: var(--tech-blue);
-  box-shadow: 0 0 10px var(--tech-blue-glow);
+  background: var(--color-primary);
+  color: #14140f;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 10px rgba(198, 161, 91, 0.25);
 }
 
 .btn-primary:hover {
   background: var(--color-primary-hover);
-  color: #fff;
-  box-shadow: 0 0 20px rgba(40, 30, 20, 0.4);
+  color: #14140f;
+  box-shadow: 0 0 20px rgba(198, 161, 91, 0.35);
 }
 
 .btn-outline-primary {
@@ -388,12 +389,12 @@
 
 .btn-outline-danger {
   background: transparent;
-  color: #ff4444;
-  border-color: #ff4444;
+  color: var(--color-danger);
+  border-color: var(--color-danger);
 }
 
 .btn-outline-danger:hover {
-  background: #ff4444;
+  background: var(--color-danger);
   color: var(--color-text);
 }
 
@@ -497,7 +498,7 @@
 
 .bento-services {
   border-left: 4px solid var(--tech-blue);
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.05), transparent);
+  background: linear-gradient(90deg, rgba(231, 223, 201, 0.05), transparent);
 }
 
 .bento-services .profile-card:hover {
@@ -505,24 +506,24 @@
   box-shadow: 0 0 20px var(--tech-blue-glow);
 }
 
-.bento-about { 
+.bento-about {
   border-left: 4px solid var(--tech-blue);
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.05), transparent);
+  background: linear-gradient(90deg, rgba(231, 223, 201, 0.05), transparent);
 }
 
-.bento-analytics { 
-  border-left: 4px solid var(--tech-accent-rose); 
-  background: linear-gradient(90deg, rgba(244, 63, 94, 0.05), transparent);
+.bento-analytics {
+  border-left: 4px solid var(--tech-accent-rose);
+  background: linear-gradient(90deg, rgba(155, 74, 70, 0.05), transparent);
 }
 
-.bento-interests { 
-  border-left: 4px solid var(--tech-accent-gold); 
-  background: linear-gradient(90deg, rgba(251, 191, 36, 0.05), transparent);
+.bento-interests {
+  border-left: 4px solid var(--tech-accent-gold);
+  background: linear-gradient(90deg, rgba(198, 161, 91, 0.05), transparent);
 }
 
-.bento-recommendations { 
-  border-left: 4px solid var(--tech-accent-emerald); 
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.05), transparent);
+.bento-recommendations {
+  border-left: 4px solid var(--tech-accent-emerald);
+  background: linear-gradient(90deg, rgba(198, 161, 91, 0.05), transparent);
 }
 
 /* Profile Analytics Horizontal Layout */
@@ -539,7 +540,7 @@
   align-items: center;
   gap: 15px;
   padding: 15px;
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
   border: 1px solid var(--tech-border-dim);
   transition: all 0.3s;
 }
@@ -627,17 +628,17 @@
 /* Connections HUD Layout */
 .profile-section--connections {
   border-left: 4px solid var(--tech-accent-emerald);
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.05), transparent);
-  box-shadow: -10px 0 30px rgba(16, 185, 129, 0.05);
+  background: linear-gradient(90deg, rgba(198, 161, 91, 0.05), transparent);
+  box-shadow: -10px 0 30px rgba(198, 161, 91, 0.05);
 }
 
 .profile-section--connections .profile-section__title::before {
   color: var(--tech-accent-emerald);
-  text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+  text-shadow: 0 0 10px rgba(198, 161, 91, 0.4);
 }
 
 .profile-section--connections .profile-section__title::after {
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.3), transparent);
+  background: linear-gradient(90deg, rgba(198, 161, 91, 0.3), transparent);
 }
 
 .profile-connections-list {
@@ -652,7 +653,7 @@
   align-items: center;
   gap: 20px;
   padding: 20px;
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
   border: 1px solid var(--tech-border-dim);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -660,9 +661,9 @@
 }
 
 .connection-hud-item:hover {
-  background: rgba(16, 185, 129, 0.05);
+  background: rgba(198, 161, 91, 0.05);
   border-color: var(--tech-accent-emerald);
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 15px rgba(198, 161, 91, 0.1);
   transform: translateX(5px);
 }
 
@@ -698,9 +699,9 @@
 }
 
 .connection-hud-item--firm:hover {
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(231, 223, 201, 0.05);
   border-color: var(--tech-blue);
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 15px rgba(231, 223, 201, 0.1);
 }
 
 .connection-hud-item--firm::before {
@@ -722,7 +723,7 @@
 
 .connection-hud-item--firm .tech-tag {
   color: var(--tech-blue);
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(231, 223, 201, 0.3);
 }
 
 .connection-hud-item--firm .connection-hud-item__name:hover {
@@ -739,7 +740,7 @@
 .firm-verified-badge {
   font-size: 0.6rem;
   font-weight: 900;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(231, 223, 201, 0.1);
   color: var(--tech-blue);
   border: 1px solid var(--tech-blue);
   padding: 1px 6px;
@@ -747,7 +748,7 @@
 
 .btn-sm-firm {
   background: var(--tech-blue);
-  color: #fff;
+  color: #14140f;
   border: none;
   padding: 8px 16px;
   font-family: inherit;
@@ -759,7 +760,7 @@
 
 .btn-sm-firm:hover {
   background: var(--color-primary-hover);
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 10px rgba(231, 223, 201, 0.5);
 }
 
 .connection-hud-item__avatar {
@@ -789,7 +790,7 @@
   right: -2px;
   width: 10px;
   height: 10px;
-  border: 2px solid #000;
+  border: 2px solid var(--color-card);
   z-index: 5;
 }
 
@@ -827,7 +828,7 @@
 .tech-tag {
   font-size: 0.65rem;
   color: var(--tech-accent-emerald);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(198, 161, 91, 0.3);
   padding: 2px 8px;
 }
 
@@ -838,7 +839,7 @@
 
 .btn-sm-primary {
   background: var(--tech-accent-emerald);
-  color: #fff;
+  color: #14140f;
   border: none;
   padding: 8px 16px;
   font-family: inherit;
@@ -850,7 +851,7 @@
 
 .btn-sm-primary:hover {
   background: var(--tech-accent-emerald);
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 10px rgba(198, 161, 91, 0.5);
 }
 
 .profile-connections-loading {
@@ -867,7 +868,7 @@
 .profile-connections-empty {
   padding: 40px;
   text-align: center;
-  background: rgba(40, 30, 20, 0.01);
+  background: rgba(246, 243, 237, 0.01);
   border: 1px dashed var(--tech-border-dim);
 }
 
@@ -892,7 +893,7 @@
 
 .profile-section__action-btn:hover {
   background: var(--color-primary);
-  color: #fff;
+  color: #14140f;
 }
 
 .profile-services__grid {
@@ -911,7 +912,7 @@
 
 .profile-service-card:hover {
   border-color: var(--color-primary);
-  box-shadow: 0 4px 16px rgba(199, 84, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(198, 161, 91, 0.15);
 }
 
 .profile-service-card__img {
@@ -961,7 +962,7 @@
 .profile-service-card__btn {
   width: 100%;
   background: var(--color-primary);
-  color: #fff;
+  color: #14140f;
   border: none;
   padding: 9px;
   border-radius: 8px;
@@ -987,6 +988,6 @@
 }
 
 .profile-service-card__btn--manage:hover {
-  background: rgba(199, 84, 0, 0.08);
+  background: rgba(198, 161, 91, 0.08);
 }
 

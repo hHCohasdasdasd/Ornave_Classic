@@ -42,7 +42,7 @@ export const FirmClientManagementPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div style={{ background: 'var(--color-bg, #18161a)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-muted, #a8a3ab)' }}>
+      <div style={{ background: 'var(--color-bg, #111111)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-muted, #a79e8c)' }}>
         <span>Loading...</span>
       </div>
     );
@@ -57,8 +57,8 @@ export const FirmClientManagementPage: React.FC = () => {
       <div className="network-main fade-in">
         {/* Firm Status Header */}
         <section className="network-section" style={{ 
-          border: '1px solid rgba(59, 130, 246, 0.4)',
-          background: 'linear-gradient(180deg, rgba(59, 130, 246, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%)',
+          border: '1px solid rgba(231, 223, 201, 0.3)',
+          background: 'linear-gradient(180deg, rgba(231, 223, 201, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%)',
           padding: '24px',
           borderRadius: '4px',
           position: 'relative', 
@@ -72,7 +72,7 @@ export const FirmClientManagementPage: React.FC = () => {
             <div style={{ 
               width: '80px', 
               height: '80px', 
-              background: '#000', 
+              background: 'var(--color-bg)',
               border: '1px solid var(--tech-blue)',
               display: 'flex',
               alignItems: 'center',
@@ -84,15 +84,15 @@ export const FirmClientManagementPage: React.FC = () => {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '8px' }}>
-                <h1 style={{ fontSize: '1.8rem', textTransform: 'uppercase', margin: 0, letterSpacing: '2px', fontWeight: 900, color: '#fff' }}>{company?.name}</h1>
+                <h1 style={{ fontSize: '1.8rem', textTransform: 'uppercase', margin: 0, letterSpacing: '2px', fontWeight: 900, color: 'var(--color-text)' }}>{company?.name}</h1>
                 <div style={{ border: '1px solid var(--tech-blue)', padding: '2px 10px', fontSize: '0.6rem', fontWeight: 800, color: 'var(--tech-blue)' }}>
                   VERIFIED_ENTITY_HUB
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '25px' }}>
-                <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.6)', fontWeight: 800 }}>TOTAL_FOLLOWERS: <span style={{ color: 'var(--tech-blue)' }}>{followers.length}</span></div>
-                <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.6)', fontWeight: 800 }}>ACTIVE_CLIENTS: <span style={{ color: 'var(--tech-blue)' }}>{new Set(orders.map(o => o.userId)).size}</span></div>
-                <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.6)', fontWeight: 800 }}>PENDING_REQUESTS: <span style={{ color: 'var(--tech-blue)' }}>0</span></div>
+                <div style={{ fontSize: '0.7rem', color: 'rgba(246, 243, 237, 0.55)', fontWeight: 800 }}>TOTAL_FOLLOWERS: <span style={{ color: 'var(--tech-blue)' }}>{followers.length}</span></div>
+                <div style={{ fontSize: '0.7rem', color: 'rgba(246, 243, 237, 0.55)', fontWeight: 800 }}>ACTIVE_CLIENTS: <span style={{ color: 'var(--tech-blue)' }}>{new Set(orders.map(o => o.userId)).size}</span></div>
+                <div style={{ fontSize: '0.7rem', color: 'rgba(246, 243, 237, 0.55)', fontWeight: 800 }}>PENDING_REQUESTS: <span style={{ color: 'var(--tech-blue)' }}>0</span></div>
               </div>
             </div>
           </div>
@@ -101,15 +101,15 @@ export const FirmClientManagementPage: React.FC = () => {
         <div className="bento-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px' }}>
           {/* Followers List */}
           <div style={{ gridColumn: 'span 7' }}>
-            <section className="network-section" style={{ height: '100%', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)', padding: '24px' }}>
+            <section className="network-section" style={{ height: '100%', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(246, 243, 237, 0.08)', padding: '24px' }}>
               <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ color: 'var(--tech-blue)', fontWeight: 900 }}>//</span> NETWORK FOLLOWERS
               </h3>
               <div className="profile-connections-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {followers.map(follower => (
                   <div key={follower.id} className="connection-hud-item" style={{ 
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    background: 'rgba(246, 243, 237, 0.02)',
+                    border: '1px solid rgba(246, 243, 237, 0.08)',
                     padding: '16px',
                     display: 'flex',
                     alignItems: 'center',
@@ -118,9 +118,9 @@ export const FirmClientManagementPage: React.FC = () => {
                     <div style={{ 
                       width: '45px', 
                       height: '45px', 
-                      background: 'rgba(16, 185, 129, 0.1)', 
+                      background: 'rgba(139, 163, 120, 0.12)',
                       borderRadius: '50%',
-                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      border: '1px solid rgba(139, 163, 120, 0.35)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -129,11 +129,11 @@ export const FirmClientManagementPage: React.FC = () => {
                       👤
                     </div>
                     <div style={{ flex: 1 }}>
-                      <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#fff' }}>{follower.name}</h4>
+                      <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text)' }}>{follower.name}</h4>
                       <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--tech-text-dim)' }}>{follower.headline}</p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <span className="tech-tag" style={{ fontSize: '0.6rem', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#10b981' }}>CORE_LINK</span>
+                      <span className="tech-tag" style={{ fontSize: '0.6rem', borderColor: 'rgba(139, 163, 120, 0.35)', color: '#8ba378' }}>CORE_LINK</span>
                       <button 
                         className="btn-sm-primary" 
                         style={{ display: 'block', marginTop: '5px', fontSize: '0.65rem', padding: '4px 12px' }}
@@ -148,23 +148,23 @@ export const FirmClientManagementPage: React.FC = () => {
 
           {/* Service Utilization / Orders */}
           <div style={{ gridColumn: 'span 5' }}>
-            <section className="network-section" style={{ height: '100%', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)', padding: '24px' }}>
+            <section className="network-section" style={{ height: '100%', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(246, 243, 237, 0.08)', padding: '24px' }}>
               <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ color: 'var(--tech-blue)', fontWeight: 900 }}>//</span> SERVICE UTILIZATION
               </h3>
               <div className="profile-connections-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {orders.length > 0 ? orders.map(order => (
                   <div key={order.id} style={{ 
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                    borderBottom: '1px solid rgba(246, 243, 237, 0.08)',
                     paddingBottom: '12px'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}>{order.items[0]?.product?.name}</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--color-text)', fontWeight: 700 }}>{order.items[0]?.product?.name}</span>
                       <span style={{ fontSize: '0.8rem', color: 'var(--tech-blue)', fontWeight: 800 }}>{order.currency} {order.totalAmount}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem' }}>
-                      <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>USER: {order.user?.firstName || 'CHUCK'} {order.user?.lastName || 'HARTWIG'}</span>
-                      <span style={{ color: order.status === 'COMPLETED' ? '#10b981' : 'var(--tech-blue)' }}>{order.status}</span>
+                      <span style={{ color: 'rgba(246, 243, 237, 0.4)' }}>USER: {order.user?.firstName || 'CHUCK'} {order.user?.lastName || 'HARTWIG'}</span>
+                      <span style={{ color: order.status === 'COMPLETED' ? '#8ba378' : 'var(--tech-blue)' }}>{order.status}</span>
                     </div>
                   </div>
                 )) : (
@@ -174,11 +174,11 @@ export const FirmClientManagementPage: React.FC = () => {
                 )}
               </div>
               
-              <div style={{ marginTop: '24px', padding: '15px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+              <div style={{ marginTop: '24px', padding: '15px', background: 'rgba(231, 223, 201, 0.05)', border: '1px solid rgba(231, 223, 201, 0.08)' }}>
                 <h4 style={{ fontSize: '0.8rem', margin: '0 0 10px 0', color: 'var(--tech-blue)' }}>REVENUE_ANALYTICS</h4>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
                   <span style={{ color: 'var(--tech-text-dim)' }}>MONTHLY_RECURRING</span>
-                  <span style={{ color: '#fff', fontWeight: 800 }}>USD {orders.reduce((acc, o) => acc + o.totalAmount, 0).toLocaleString()}</span>
+                  <span style={{ color: 'var(--color-text)', fontWeight: 800 }}>USD {orders.reduce((acc, o) => acc + o.totalAmount, 0).toLocaleString()}</span>
                 </div>
               </div>
             </section>
@@ -186,21 +186,21 @@ export const FirmClientManagementPage: React.FC = () => {
 
           {/* Client Analytics Section */}
           <div style={{ gridColumn: 'span 12', marginTop: '10px' }}>
-            <section className="network-section" style={{ background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)', padding: '24px' }}>
+            <section className="network-section" style={{ background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(246, 243, 237, 0.08)', padding: '24px' }}>
               <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ color: 'var(--tech-blue)', fontWeight: 900 }}>//</span> NETWORK GROWTH & ENGAGEMENT
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
                 {[
-                  { label: 'Avg. Retention', value: '94.2%', color: '#10b981' },
+                  { label: 'Avg. Retention', value: '94.2%', color: '#8ba378' },
                   { label: 'Engagement Rate', value: '12.5%', color: 'var(--tech-blue)' },
-                  { label: 'New Followers', value: '+124', color: '#10b981' },
-                  { label: 'Churn Risk', value: '0.8%', color: '#b8955f' }
+                  { label: 'New Followers', value: '+124', color: '#8ba378' },
+                  { label: 'Churn Risk', value: '0.8%', color: '#c6a15b' }
                 ].map(stat => (
                   <div key={stat.label} style={{ 
-                    background: 'rgba(255, 255, 255, 0.02)', 
+                    background: 'rgba(246, 243, 237, 0.02)', 
                     padding: '20px', 
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(246, 243, 237, 0.08)',
                     textAlign: 'center'
                   }}>
                     <div style={{ fontSize: '0.65rem', color: 'var(--tech-text-dim)', marginBottom: '8px', fontWeight: 800 }}>{stat.label}</div>

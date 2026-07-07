@@ -1,6 +1,6 @@
 .open-to-work-page {
   min-height: 100vh;
-  background: #000000;
+  background: var(--color-bg);
 }
 
 .open-to-work-container {
@@ -32,28 +32,29 @@
 .open-to-work-header h1 {
   font-size: 32px;
   font-weight: 700;
-  color: rgba(0, 0, 0, 0.9);
+  color: var(--color-text);
   margin: 0 0 12px 0;
 }
 
 .page-subtitle {
   font-size: 16px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-muted);
   line-height: 1.5;
   margin: 0;
 }
 
 .settings-content {
-  background: white;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .settings-section {
   padding-bottom: 32px;
   margin-bottom: 32px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .settings-section:last-of-type {
@@ -65,13 +66,13 @@
 .settings-section h2 {
   font-size: 20px;
   font-weight: 700;
-  color: rgba(0, 0, 0, 0.9);
+  color: var(--color-text);
   margin: 0 0 8px 0;
 }
 
 .section-description {
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-muted);
   margin: 0 0 16px 0;
 }
 
@@ -84,22 +85,24 @@
 .job-titles-input input {
   flex: 1;
   padding: 12px 16px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-border-dark);
   border-radius: 8px;
   font-size: 15px;
   font-family: inherit;
+  background: var(--color-input-bg);
+  color: var(--color-text);
 }
 
 .job-titles-input input:focus {
   outline: none;
   border-color: var(--tech-blue);
-  box-shadow: 0 0 0 3px rgba(11, 61, 46, 0.1);
+  box-shadow: 0 0 0 3px var(--tech-blue-glow);
 }
 
 .add-btn {
   padding: 12px 24px;
-  background: var(--tech-blue);
-  color: white;
+  background: var(--color-primary);
+  color: #14140f;
   border: none;
   border-radius: 8px;
   font-size: 15px;
@@ -109,7 +112,7 @@
 }
 
 .add-btn:hover {
-  background: #082e22;
+  background: var(--color-primary-hover);
 }
 
 .job-titles-list {
@@ -123,8 +126,8 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: rgba(11, 61, 46, 0.1);
-  color: var(--tech-blue);
+  background: rgba(198, 161, 91, 0.1);
+  color: var(--color-primary);
   border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
@@ -133,7 +136,7 @@
 .job-title-chip button {
   background: transparent;
   border: none;
-  color: var(--tech-blue);
+  color: var(--color-primary);
   font-size: 20px;
   cursor: pointer;
   padding: 0;
@@ -147,7 +150,7 @@
 }
 
 .job-title-chip button:hover {
-  background: rgba(11, 61, 46, 0.2);
+  background: rgba(198, 161, 91, 0.2);
 }
 
 .options-grid {
@@ -161,15 +164,15 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  border: 2px solid rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .checkbox-card:hover {
-  border-color: rgba(11, 61, 46, 0.3);
-  background: rgba(11, 61, 46, 0.02);
+  border-color: rgba(198, 161, 91, 0.3);
+  background: rgba(198, 161, 91, 0.02);
 }
 
 .checkbox-card input {
@@ -179,13 +182,13 @@
 }
 
 .checkbox-card input:checked + span {
-  color: var(--tech-blue);
+  color: var(--color-primary);
   font-weight: 600;
 }
 
 .checkbox-card:has(input:checked) {
-  border-color: var(--tech-blue);
-  background: rgba(11, 61, 46, 0.05);
+  border-color: var(--color-primary);
+  background: rgba(198, 161, 91, 0.05);
 }
 
 .radio-options {
@@ -199,15 +202,15 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  border: 2px solid rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .radio-card:hover {
-  border-color: rgba(11, 61, 46, 0.3);
-  background: rgba(11, 61, 46, 0.02);
+  border-color: rgba(198, 161, 91, 0.3);
+  background: rgba(198, 161, 91, 0.02);
 }
 
 .radio-card input {
@@ -217,8 +220,8 @@
 }
 
 .radio-card:has(input:checked) {
-  border-color: var(--tech-blue);
-  background: rgba(11, 61, 46, 0.05);
+  border-color: var(--color-primary);
+  background: rgba(198, 161, 91, 0.05);
 }
 
 .radio-card--large {
@@ -227,13 +230,13 @@
 
 .radio-label {
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.9);
+  color: var(--color-text);
   margin-bottom: 4px;
 }
 
 .radio-description {
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-muted);
 }
 
 .settings-actions {
@@ -242,7 +245,7 @@
   justify-content: flex-end;
   margin-top: 32px;
   padding-top: 32px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--color-border);
 }
 
 .btn-primary,
@@ -257,21 +260,21 @@
 }
 
 .btn-primary {
-  background: var(--tech-blue);
-  color: white;
+  background: var(--color-primary);
+  color: #14140f;
 }
 
 .btn-primary:hover {
-  background: #082e22;
+  background: var(--color-primary-hover);
 }
 
 .btn-secondary {
   background: transparent;
-  color: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: var(--color-muted);
+  border: 1px solid var(--color-border-dark);
 }
 
 .btn-secondary:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(0, 0, 0, 0.9);
+  background: rgba(246, 243, 237, 0.06);
+  color: var(--color-text);
 }

@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
@@ -20,12 +20,12 @@
 }
 
 .create-post-modal {
-  background: #000;
-  border: 1px solid #fff;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   width: 100%;
   max-width: 680px;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
   animation: slideUpScale 0.3s cubic-bezier(0.34, 1, 0.64, 1);
   position: relative;
   display: flex;
@@ -39,7 +39,7 @@
   left: 10px;
   font-size: 0.6rem;
   color: var(--tech-blue);
-  background: #000;
+  background: var(--color-card);
   padding: 0 5px;
   font-weight: 800;
 }
@@ -60,21 +60,21 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  border-bottom: 1px solid rgba(40, 30, 20, 0.1);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .create-post-modal__header h2 {
   font-size: 0.9rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text);
   margin: 0;
 }
 
 .create-post-modal__close {
   background: none;
-  border: 1px solid rgba(40, 30, 20, 0.1);
+  border: 1px solid var(--color-border);
   font-size: 18px;
-  color: #fff;
+  color: var(--color-text);
   cursor: pointer;
   padding: 0;
   width: 28px;
@@ -86,15 +86,15 @@
 }
 
 .create-post-modal__close:hover {
-  background: #fff;
-  color: #000;
-  border-color: #fff;
+  background: var(--tech-blue);
+  color: #14140f;
+  border-color: var(--tech-blue);
 }
 
 .create-post-modal__user-section {
   padding: 16px 24px;
   position: relative;
-  border-bottom: 1px solid rgba(40, 30, 20, 0.1);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .create-post-modal__user {
@@ -107,7 +107,7 @@
   width: 40px;
   height: 40px;
   border: 1px solid var(--tech-blue);
-  background: #000;
+  background: var(--color-bg);
 }
 
 .create-post-modal__avatar img {
@@ -130,13 +130,13 @@
 .create-post-modal__name {
   font-size: 0.85rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--color-text);
   display: block;
 }
 
 .create-post-modal__visibility-btn {
   background: transparent;
-  border: 1px solid rgba(40, 30, 20, 0.2);
+  border: 1px solid var(--color-border-dark);
   padding: 2px 8px;
   font-size: 0.6rem;
   color: var(--tech-blue);
@@ -148,8 +148,8 @@
 .create-post-modal__tabs {
   display: flex;
   padding: 0 24px;
-  border-bottom: 1px solid rgba(40, 30, 20, 0.1);
-  background: rgba(40, 30, 20, 0.02);
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(246, 243, 237, 0.02);
 }
 
 .tab-btn {
@@ -158,14 +158,14 @@
   padding: 12px 16px;
   font-size: 0.65rem;
   font-weight: 800;
-  color: rgba(40, 30, 20, 0.5);
+  color: var(--color-muted);
   cursor: pointer;
   border-bottom: 2px solid transparent;
 }
 
 .tab-btn.active {
-  color: #fff;
-  border-bottom-color: #fff;
+  color: var(--color-text);
+  border-bottom-color: var(--color-text);
 }
 
 .create-post-modal__content {
@@ -176,11 +176,11 @@
 .create-post-modal__title-input {
   width: 100%;
   border: none;
-  border-bottom: 1px solid rgba(40, 30, 20, 0.1);
+  border-bottom: 1px solid var(--color-border);
   outline: none;
   font-size: 1rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--color-text);
   padding: 8px 0;
   background: transparent;
   margin-bottom: 16px;
@@ -193,7 +193,7 @@
   resize: none;
   font-size: 0.9rem;
   line-height: 1.6;
-  color: #fff;
+  color: var(--color-text);
   background: transparent;
   font-family: inherit;
   min-height: 200px;
@@ -201,17 +201,17 @@
 
 .create-post-modal__toolbar {
   padding: 12px 24px;
-  border-top: 1px solid rgba(40, 30, 20, 0.1);
+  border-top: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(40, 30, 20, 0.02);
+  background: rgba(246, 243, 237, 0.02);
 }
 
 .toolbar-btn {
   background: transparent;
-  border: 1px solid rgba(40, 30, 20, 0.1);
-  color: #fff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
   width: 32px;
   height: 32px;
   display: flex;
@@ -228,15 +228,15 @@
 
 .create-post-modal__footer {
   padding: 16px 24px;
-  border-top: 1px solid rgba(40, 30, 20, 0.1);
+  border-top: 1px solid var(--color-border);
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
 .create-post-modal__submit {
-  background: #fff;
-  color: #000;
+  background: var(--color-primary);
+  color: #14140f;
   border: none;
   padding: 8px 24px;
   font-weight: 900;
@@ -245,8 +245,8 @@
 }
 
 .create-post-modal__submit:hover:not(:disabled) {
-  background: var(--tech-blue);
-  color: #fff;
+  background: var(--color-primary-hover);
+  color: #14140f;
 }
 
 .create-post-modal__submit:disabled {
@@ -256,8 +256,8 @@
 
 .draft-btn {
   background: transparent;
-  border: 1px solid rgba(40, 30, 20, 0.2);
-  color: rgba(40, 30, 20, 0.5);
+  border: 1px solid var(--color-border-dark);
+  color: var(--color-muted);
   padding: 8px 16px;
   font-weight: 800;
   font-size: 0.65rem;
@@ -265,9 +265,9 @@
 }
 
 .media-url-input {
-  background: #000;
-  border: 1px solid rgba(40, 30, 20, 0.2);
-  color: #fff;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-dark);
+  color: var(--color-text);
   padding: 6px 10px;
   font-size: 0.75rem;
   flex: 1;
@@ -276,8 +276,8 @@
 
 .media-add-btn {
   background: transparent;
-  border: 1px solid #fff;
-  color: #fff;
+  border: 1px solid var(--tech-blue);
+  color: var(--tech-blue);
   padding: 6px 12px;
   font-size: 0.7rem;
   font-weight: 800;
@@ -288,7 +288,7 @@
   padding: 12px 24px;
   display: flex;
   gap: 8px;
-  border-top: 1px solid rgba(40, 30, 20, 0.1);
+  border-top: 1px solid var(--color-border);
 }
 
 /* Service tab */
@@ -299,12 +299,12 @@
 
 .tab-btn--service.active {
   background: var(--tech-accent-gold) !important;
-  color: #000 !important;
+  color: #14140f !important;
 }
 
 .create-post-modal__service-picker {
   padding: 16px 24px;
-  border-top: 1px solid rgba(40, 30, 20, 0.1);
+  border-top: 1px solid var(--color-border);
 }
 
 .service-picker__hint {
@@ -342,12 +342,12 @@
 
 .service-picker__item:hover {
   border-color: var(--color-primary);
-  background: rgba(199, 84, 0, 0.04);
+  background: rgba(198, 161, 91, 0.04);
 }
 
 .service-picker__item--selected {
   border-color: var(--color-primary);
-  background: rgba(199, 84, 0, 0.08);
+  background: rgba(198, 161, 91, 0.08);
 }
 
 .service-picker__img {

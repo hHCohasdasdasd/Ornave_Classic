@@ -62,7 +62,7 @@ export const TalentPage: React.FC = () => {
         <div className="talent-page__search-container">
           <div className="talent-search">
             <div className="talent-search__field">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="#c7ceda" strokeWidth="2"/><path d="m21 21-4.35-4.35" stroke="#c7ceda" strokeWidth="2" strokeLinecap="round"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="#a79e8c" strokeWidth="2"/><path d="m21 21-4.35-4.35" stroke="#a79e8c" strokeWidth="2" strokeLinecap="round"/></svg>
               <input
                 type="text"
                 placeholder="Name, title or skill"
@@ -72,7 +72,7 @@ export const TalentPage: React.FC = () => {
               />
             </div>
             <div className="talent-search__field">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#c7ceda"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#a79e8c"/></svg>
               <input
                 type="text"
                 placeholder="Location"

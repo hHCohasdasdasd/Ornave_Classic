@@ -39,19 +39,21 @@ function formatTime(minutes: number): string {
   return `${h}h ago`;
 }
 
+// Restrained heritage palette — champagne gold, muted wine, sage, slate-bronze,
+// warm greige — instead of the prior assortment of saturated jewel tones.
 const CATEGORY_COLORS: Record<string, string> = {
-  Breaking: '#7a2731',
-  Markets: '#1f4e5f',
-  Technology: '#5b4a6f',
-  Energy: '#0b3d2e',
-  Finance: '#b8955f',
-  Logistics: '#4a6670',
-  Healthcare: '#0d6b5f',
-  Manufacturing: '#6b6558',
-  Hiring: '#6b4423',
-  ESG: '#0d6b5f',
-  Startups: '#5b4a6f',
-  Cybersecurity: '#7a2731',
+  Breaking: '#9b4a46',
+  Markets: '#8a7f68',
+  Technology: '#a8645f',
+  Energy: '#6f8a5e',
+  Finance: '#c6a15b',
+  Logistics: '#a79e8c',
+  Healthcare: '#8ba378',
+  Manufacturing: '#8a7f68',
+  Hiring: '#a3813f',
+  ESG: '#8ba378',
+  Startups: '#a8645f',
+  Cybersecurity: '#9b4a46',
 };
 
 export const NewsCard: React.FC = () => {

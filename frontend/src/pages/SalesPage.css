@@ -1,8 +1,8 @@
-/* Sales Page - High-Tech HUD Aesthetic */
+/* Sales Page - Private Club Aesthetic */
 .sales-page {
-  background: var(--tech-bg, #050505);
+  background: var(--tech-bg, #111111);
   min-height: 100vh;
-  color: var(--tech-text-main, #ffffff);
+  color: var(--tech-text-main, #f6f3ed);
   position: relative;
 }
 
@@ -15,8 +15,8 @@
   height: 100%;
   background: repeating-linear-gradient(
     0deg,
-    rgba(40, 30, 20, 0.01),
-    rgba(40, 30, 20, 0.01) 1px,
+    rgba(246, 243, 237, 0.01),
+    rgba(246, 243, 237, 0.01) 1px,
     transparent 1px,
     transparent 4px
   );
@@ -27,7 +27,7 @@
 .sales-page__search-banner {
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--tech-border, #ffffff);
+  border-bottom: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   padding: 24px 0;
   position: sticky;
   top: 0;
@@ -52,14 +52,14 @@
   align-items: center;
   gap: 12px;
   background: rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
   padding: 12px 24px;
   transition: all 0.2s ease;
 }
 
 .sales-search__field:focus-within {
-  border-color: var(--tech-blue, #3b82f6);
-  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.3));
+  border-color: var(--tech-blue, #e7dfc9);
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(231, 223, 201, 0.2));
 }
 
 .sales-search__input {
@@ -67,18 +67,18 @@
   border: none;
   background: transparent;
   font-size: 0.9rem;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   outline: none;
   font-family: inherit;
 }
 
 .sales-search__input::placeholder {
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
 }
 
 .sales-search__btn {
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue, #e7dfc9);
+  color: #14140f;
   border: none;
   padding: 12px 32px;
   font-size: 0.8rem;
@@ -89,7 +89,7 @@
 }
 
 .sales-search__btn:hover {
-  background: #fff;
+  background: var(--color-text, #f6f3ed);
 }
 
 /* Container */
@@ -108,8 +108,8 @@
 }
 
 .sales-stat {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg, #181818);
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   padding: 24px;
   position: relative;
 }
@@ -121,12 +121,12 @@
   left: -4px;
   width: 8px;
   height: 8px;
-  background: var(--tech-blue, #3b82f6);
+  background: var(--tech-blue, #e7dfc9);
 }
 
 .sales-stat__label {
   font-size: 0.7rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   margin-bottom: 8px;
   font-weight: 700;
 }
@@ -134,26 +134,26 @@
 .sales-stat__value {
   font-size: 1.8rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   letter-spacing: -1px;
 }
 
 .sales-stat__value--green {
-  color: var(--tech-accent-emerald, #10b981);
+  color: var(--tech-accent-emerald, #8ba378);
 }
 
 /* Tabs */
 .sales-page__tabs {
   display: flex;
   gap: 10px;
-  border-bottom: 1px solid var(--tech-border, #ffffff);
+  border-bottom: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   margin-bottom: 40px;
 }
 
 .sales-page__tab {
   background: none;
   border: none;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   font-size: 0.8rem;
   font-weight: 900;
   padding: 16px 24px;
@@ -163,11 +163,11 @@
 }
 
 .sales-page__tab:hover {
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
 }
 
 .sales-page__tab--active {
-  color: var(--tech-blue, #3b82f6);
+  color: var(--tech-blue, #e7dfc9);
 }
 
 .sales-page__tab--active::after {
@@ -177,8 +177,8 @@
   left: 0;
   width: 100%;
   height: 3px;
-  background: var(--tech-blue, #3b82f6);
-  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(59, 130, 246, 0.5));
+  background: var(--tech-blue, #e7dfc9);
+  box-shadow: 0 0 10px var(--tech-blue-glow, rgba(231, 223, 201, 0.25));
 }
 
 /* Kanban */
@@ -190,8 +190,8 @@
 }
 
 .sales-kanban__column {
-  background: rgba(40, 30, 20, 0.02);
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.1));
+  background: rgba(246, 243, 237, 0.02);
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.06));
   position: relative;
 }
 
@@ -200,16 +200,16 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background: rgba(40, 30, 20, 0.05);
+  background: rgba(246, 243, 237, 0.04);
   font-size: 0.75rem;
   font-weight: 900;
-  color: #fff;
-  border-bottom: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.1));
+  color: var(--color-text, #f6f3ed);
+  border-bottom: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.06));
 }
 
 .sales-kanban__col-count {
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue, #e7dfc9);
+  color: #14140f;
   padding: 2px 8px;
   font-size: 0.65rem;
 }
@@ -224,15 +224,15 @@
 
 .sales-kanban__empty {
   text-align: center;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   font-size: 0.7rem;
   padding: 32px 0;
 }
 
 /* Deal Cards */
 .sales-deal-card {
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  background: var(--tech-card-bg, #181818);
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
   padding: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -240,21 +240,21 @@
 }
 
 .sales-deal-card:hover {
-  border-color: var(--tech-blue, #3b82f6);
+  border-color: var(--tech-blue, #e7dfc9);
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .sales-deal-card__name {
   font-size: 0.85rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   margin-bottom: 4px;
 }
 
 .sales-deal-card__company {
   font-size: 0.75rem;
-  color: var(--tech-blue, #3b82f6);
+  color: var(--tech-blue, #e7dfc9);
   margin-bottom: 12px;
   font-weight: 700;
 }
@@ -262,7 +262,7 @@
 .sales-deal-card__value {
   font-size: 1rem;
   font-weight: 900;
-  color: var(--tech-accent-emerald, #10b981);
+  color: var(--tech-accent-emerald, #8ba378);
   margin-bottom: 12px;
 }
 
@@ -270,7 +270,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.65rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
 }
 
 /* Stage Badges */
@@ -281,12 +281,12 @@
   border: 1px solid currentColor;
 }
 
-.stage--prospect { color: #94a3b8; }
-.stage--qualified { color: var(--tech-blue, #3b82f6); }
-.stage--proposal { color: #a855f7; }
-.stage--negotiation { color: #f97316; }
-.stage--won { color: var(--tech-accent-emerald, #10b981); }
-.stage--lost { color: #ef4444; }
+.stage--prospect { color: #a79e8c; }
+.stage--qualified { color: var(--tech-blue, #e7dfc9); }
+.stage--proposal { color: #8a7f68; }
+.stage--negotiation { color: #c6a15b; }
+.stage--won { color: var(--tech-accent-emerald, #8ba378); }
+.stage--lost { color: #9b4a46; }
 
 /* Closed section */
 .sales-closed-section {
@@ -296,7 +296,7 @@
 .sales-section-title {
   font-size: 0.8rem;
   font-weight: 900;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   margin: 0 0 20px;
   display: flex;
   align-items: center;
@@ -307,7 +307,7 @@
   content: "";
   width: 4px;
   height: 16px;
-  background: var(--tech-blue, #3b82f6);
+  background: var(--tech-blue, #e7dfc9);
 }
 
 .sales-closed-list {
@@ -320,20 +320,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border-dim, rgba(40, 30, 20, 0.15));
+  background: var(--tech-card-bg, #181818);
+  border: 1px solid var(--tech-border-dim, rgba(246, 243, 237, 0.08));
   padding: 16px 24px;
 }
 
 .sales-closed-item__name {
   font-size: 0.85rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
 }
 
 .sales-closed-item__company {
   font-size: 0.75rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   margin-top: 4px;
 }
 
@@ -347,15 +347,15 @@
 .sales-closed-item__value {
   font-size: 1rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
 }
 
 /* Placeholder */
 .sales-placeholder {
   text-align: center;
   padding: 100px 32px;
-  background: var(--tech-card-bg, #0f0f0f);
-  border: 1px solid var(--tech-border, #ffffff);
+  background: var(--tech-card-bg, #181818);
+  border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.18));
   position: relative;
 }
 
@@ -368,21 +368,21 @@
 .sales-placeholder__title {
   font-size: 1.5rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--color-text, #f6f3ed);
   margin-bottom: 16px;
 }
 
 .sales-placeholder__text {
   font-size: 0.9rem;
-  color: var(--tech-text-dim, #94a3b8);
+  color: var(--tech-text-dim, #a79e8c);
   margin: 0 auto 32px;
   max-width: 500px;
   line-height: 1.6;
 }
 
 .sales-placeholder__btn {
-  background: var(--tech-blue, #3b82f6);
-  color: #000;
+  background: var(--tech-blue, #e7dfc9);
+  color: #14140f;
   border: none;
   padding: 16px 40px;
   font-size: 0.9rem;
@@ -392,7 +392,7 @@
 }
 
 .sales-placeholder__btn:hover {
-  background: #fff;
+  background: var(--color-text, #f6f3ed);
 }
 
 @media (max-width: 1024px) {
