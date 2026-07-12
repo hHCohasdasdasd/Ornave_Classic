@@ -21,6 +21,22 @@ userRoutes.get(
 );
 
 /**
+ * Resolve a "firstname-lastname" profile slug to a real registered user
+ * GET /api/users/by-slug/:slug
+ */
+userRoutes.get(
+  '/by-slug/:slug',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const match = await UserConnectionService.findByNameSlug(req.params.slug);
+    if (!match) {
+      return ApiResponseHandler.success(res, null, 'No matching user', 200);
+    }
+    return ApiResponseHandler.success(res, match, 'User resolved successfully', 200);
+  })
+);
+
+/**
  * Accepted connections
  * GET /api/users/connections
  */
@@ -140,6 +156,121 @@ userRoutes.delete(
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     await UserConnectionService.removeByUser(req.user!.userId, req.params.userId);
     return ApiResponseHandler.success(res, {}, 'Connection removed', 200);
+  })
+);
+
+// ============================================
+// PARTNERED — a deeper tier layered on top of an
+// existing accepted connection.
+// ============================================
+
+/**
+ * Accepted partnerships
+ * GET /api/users/partners
+ */
+userRoutes.get(
+  '/partners',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const partners = await UserConnectionService.getPartners(req.user!.userId);
+    return ApiResponseHandler.success(res, partners, 'Partners retrieved successfully', 200);
+  })
+);
+
+/**
+ * Incoming pending partnership requests
+ * GET /api/users/partners/requests
+ */
+userRoutes.get(
+  '/partners/requests',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const requests = await UserConnectionService.getIncomingPartnerRequests(req.user!.userId);
+    return ApiResponseHandler.success(res, requests, 'Partner requests retrieved successfully', 200);
+  })
+);
+
+/**
+ * Outgoing pending partnership requests
+ * GET /api/users/partners/sent
+ */
+userRoutes.get(
+  '/partners/sent',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const requests = await UserConnectionService.getOutgoingPartnerRequests(req.user!.userId);
+    return ApiResponseHandler.success(res, requests, 'Sent partner requests retrieved successfully', 200);
+  })
+);
+
+/**
+ * Partnership status with a specific user
+ * GET /api/users/partners/status/:userId
+ */
+userRoutes.get(
+  '/partners/status/:userId',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const status = await UserConnectionService.getPartnerStatus(req.user!.userId, req.params.userId);
+    return ApiResponseHandler.success(res, { status }, 'Status retrieved successfully', 200);
+  })
+);
+
+/**
+ * Propose deepening a connection to Partnered
+ * POST /api/users/partners/:userId/request
+ */
+userRoutes.post(
+  '/partners/:userId/request',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const connection = await UserConnectionService.requestPartnership(req.user!.userId, req.params.userId);
+    return ApiResponseHandler.success(res, connection, 'Partnership request sent', 201);
+  })
+);
+
+/**
+ * Accept a partnership request
+ * POST /api/users/partners/:connectionId/accept
+ */
+userRoutes.post(
+  '/partners/:connectionId/accept',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const connection = await UserConnectionService.acceptPartnership(
+      req.params.connectionId,
+      req.user!.userId
+    );
+    return ApiResponseHandler.success(res, connection, 'Partnership accepted', 200);
+  })
+);
+
+/**
+ * Reject a partnership request
+ * POST /api/users/partners/:connectionId/reject
+ */
+userRoutes.post(
+  '/partners/:connectionId/reject',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const connection = await UserConnectionService.rejectPartnership(
+      req.params.connectionId,
+      req.user!.userId
+    );
+    return ApiResponseHandler.success(res, connection, 'Partnership rejected', 200);
+  })
+);
+
+/**
+ * End a partnership (downgrade back to a regular connection)
+ * DELETE /api/users/partners/by-user/:userId
+ */
+userRoutes.delete(
+  '/partners/by-user/:userId',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    await UserConnectionService.removePartnership(req.user!.userId, req.params.userId);
+    return ApiResponseHandler.success(res, {}, 'Partnership ended', 200);
   })
 );
 

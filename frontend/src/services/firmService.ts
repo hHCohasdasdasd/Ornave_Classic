@@ -4,6 +4,7 @@ import { FirmProfileData } from '@/types/firm';
 const FOLLOWED_FIRMS_KEY = 'ornave_followed_firms';
 const REGISTERED_FIRMS_KEY = 'ornave_registered_firms';
 const FIRM_FOLLOWERS_KEY = 'ornave_firm_followers_registry';
+const PARTNERED_FIRMS_KEY = 'ornave_partnered_firms';
 
 class FirmService {
   private getStoredRegisteredFirms(): any[] {
@@ -324,6 +325,60 @@ class FirmService {
     });
 
     return allFollowers;
+  }
+
+  // ── Partnered: a deeper tier that requires already Following the firm ──
+
+  private getStoredPartners(): any[] {
+    const stored = localStorage.getItem(PARTNERED_FIRMS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  }
+
+  async getPartneredFirms(): Promise<any[]> {
+    return this.getStoredPartners();
+  }
+
+  async isPartneredWithFirm(firmId: string): Promise<boolean> {
+    return this.getStoredPartners().some(f => f.id === firmId);
+  }
+
+  /** Deepen an existing Follow into a Partnership. Requires already following the firm. */
+  async partnerFirm(firm: any): Promise<boolean> {
+    try {
+      const isFollowing = await this.isFollowing(firm.id);
+      if (!isFollowing) {
+        throw new Error('You must follow this firm before partnering with it');
+      }
+
+      const partners = this.getStoredPartners();
+      if (!partners.find(f => f.id === firm.id)) {
+        partners.push({
+          id: firm.id,
+          name: firm.name || `${firm.firstName || ''} ${firm.lastName || ''}`.trim() || firm.id,
+          headline: firm.headline || 'Professional Entity',
+          location: firm.location || 'Global',
+          type: 'firm',
+          partneredAt: new Date().toISOString(),
+        });
+        localStorage.setItem(PARTNERED_FIRMS_KEY, JSON.stringify(partners));
+        window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'firm_partner', id: firm.id } }));
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async unpartnerFirm(firmId: string): Promise<boolean> {
+    try {
+      const partners = this.getStoredPartners();
+      const updated = partners.filter(f => f.id !== firmId);
+      localStorage.setItem(PARTNERED_FIRMS_KEY, JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'firm_unpartner', id: firmId } }));
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 

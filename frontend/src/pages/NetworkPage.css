@@ -123,6 +123,11 @@
   background: rgba(138, 127, 104, 0.14);
 }
 
+.network-stat__icon--partnered {
+  color: var(--tech-accent-gold);
+  background: rgba(198, 161, 91, 0.14);
+}
+
 .network-stat__label {
   font-size: 0.9rem;
   font-weight: 500;
@@ -333,6 +338,30 @@
   background: var(--tech-blue);
   border-radius: 3px 3px 0 0;
   box-shadow: 0 0 12px var(--tech-blue-glow);
+}
+
+.network-tab__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 6px;
+  background: var(--tech-accent-gold);
+  color: #14140f;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.invite-card--partner,
+.suggestion-card--partner {
+  border-color: rgba(198, 161, 91, 0.3);
+}
+
+.suggestion-card--partner .partnered-badge {
+  margin: 8px 0;
 }
 
 /* Sections */

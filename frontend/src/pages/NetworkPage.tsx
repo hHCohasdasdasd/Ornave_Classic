@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { networkService } from '@/services/networkService';
+import { firmService } from '@/services/firmService';
 import './NetworkPage.css';
 
 interface ConnectionRequest {
@@ -13,6 +14,7 @@ interface ConnectionRequest {
   headline: string;
   mutualConnections: number;
   avatarUrl?: string;
+  isReal?: boolean;
 }
 
 interface Suggestion {
@@ -38,10 +40,13 @@ interface PopularProfile {
 export const NetworkPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'grow' | 'catchup'>('grow');
+  const [activeTab, setActiveTab] = useState<'grow' | 'catchup' | 'partnered'>('grow');
   const [invitesSent, setInvitesSent] = useState(0);
   const [connectionsCount, setConnectionsCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [partnersCount, setPartnersCount] = useState(0);
+  const [partners, setPartners] = useState<any[]>([]);
+  const [partnerRequests, setPartnerRequests] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<ConnectionRequest[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [popularProfiles, setPopularProfiles] = useState<PopularProfile[]>([]);
@@ -67,12 +72,30 @@ export const NetworkPage: React.FC = () => {
       const stats = await networkService.getNetworkStats();
       const storedConnections = await networkService.getRecentConnections();
       const storedFollows = await firmService.getFollowedFirms();
+      const [myPartners, myPartnerRequests] = await Promise.all([
+        networkService.getPartners(),
+        networkService.getPartnerRequests(),
+      ]);
 
       setConnectionsCount(storedConnections.length > 2 ? storedConnections.length + 125 : storedConnections.length);
       setFollowingCount(storedFollows.length + 7);
       setInvitesSent(3);
-      
+      setPartners(myPartners);
+      setPartnerRequests(myPartnerRequests);
+      setPartnersCount(myPartners.length);
+
+      const realRequests = await networkService.getConnectionRequests();
+
       setPendingRequests([
+        ...realRequests.map((r: any) => ({
+          id: r.id,
+          firstName: r.user?.firstName || 'Ornave',
+          lastName: r.user?.lastName || 'Member',
+          headline: r.user?.headline || 'Ornave member',
+          mutualConnections: 0,
+          avatarUrl: r.user?.profilePicture,
+          isReal: true,
+        })),
         {
           id: '1',
           firstName: 'Alex',
@@ -167,19 +190,42 @@ export const NetworkPage: React.FC = () => {
   const handleAcceptInvite = async (id: string) => {
     const request = pendingRequests.find(r => r.id === id);
     if (request) {
-      await networkService.addConnection({
-        id: request.id,
-        firstName: request.firstName,
-        lastName: request.lastName,
-        headline: request.headline,
-        location: 'Unknown'
-      });
+      if (request.isReal) {
+        await networkService.acceptConnection(id);
+      } else {
+        await networkService.addConnection({
+          id: request.id,
+          firstName: request.firstName,
+          lastName: request.lastName,
+          headline: request.headline,
+          location: 'Unknown'
+        });
+      }
       setPendingRequests(prev => prev.filter(req => req.id !== id));
     }
   };
 
-  const handleIgnoreInvite = (id: string) => {
+  const handleIgnoreInvite = async (id: string) => {
+    const request = pendingRequests.find(r => r.id === id);
+    if (request?.isReal) {
+      await networkService.rejectConnection(id);
+    }
     setPendingRequests(prev => prev.filter(req => req.id !== id));
+  };
+
+  const handleAcceptPartner = async (requestId: string) => {
+    await networkService.acceptPartnership(requestId);
+    setPartnerRequests(prev => prev.filter(req => req.id !== requestId));
+  };
+
+  const handleDeclinePartner = async (requestId: string) => {
+    await networkService.rejectPartnership(requestId);
+    setPartnerRequests(prev => prev.filter(req => req.id !== requestId));
+  };
+
+  const handleRemovePartner = async (userId: string) => {
+    await networkService.removePartnership(userId);
+    setPartners(prev => prev.filter(p => p.id !== userId));
   };
 
   const handleConnect = async (suggestion: Suggestion) => {
@@ -276,6 +322,17 @@ export const NetworkPage: React.FC = () => {
                   </div>
                   <span className="network-stat__value">{followingCount}</span>
                 </button>
+                <button className="network-stat" onClick={() => setActiveTab('partnered')}>
+                  <div className="network-stat__info">
+                    <div className="network-stat__icon network-stat__icon--partnered">
+                      <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 1.3 9.8 5l4.1.6-3 2.9.7 4.1L8 10.7 4.4 12.6l.7-4.1-3-2.9L6.2 5 8 1.3Z"/>
+                      </svg>
+                    </div>
+                    <span className="network-stat__label">Partnered</span>
+                  </div>
+                  <span className="network-stat__value">{partnersCount}</span>
+                </button>
                 <button className="network-stat" onClick={() => navigate('/purchased-services')}>
                   <div className="network-stat__info">
                     <div className="network-stat__icon" style={{ background: 'var(--tech-blue-glow)', color: 'var(--tech-blue)' }}>
@@ -357,11 +414,17 @@ export const NetworkPage: React.FC = () => {
               >
                 Grow Network
               </button>
-              <button 
+              <button
                 className={`network-tab ${activeTab === 'catchup' ? 'network-tab--active' : ''}`}
                 onClick={() => setActiveTab('catchup')}
               >
                 Catch Up
+              </button>
+              <button
+                className={`network-tab ${activeTab === 'partnered' ? 'network-tab--active' : ''}`}
+                onClick={() => setActiveTab('partnered')}
+              >
+                Partnered {partnerRequests.length > 0 && <span className="network-tab__badge">{partnerRequests.length}</span>}
               </button>
             </div>
 
@@ -532,6 +595,97 @@ export const NetworkPage: React.FC = () => {
                     </button>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Partnered Tab */}
+            {activeTab === 'partnered' && (
+              <div className="partnered-section">
+                {partnerRequests.length > 0 && (
+                  <section className="network-section">
+                    <div className="network-section__header">
+                      <h2>Partnership requests ({partnerRequests.length})</h2>
+                    </div>
+                    <div className="invite-cards">
+                      {partnerRequests.map(request => (
+                        <div key={request.id} className="invite-card invite-card--partner">
+                          <div
+                            className="invite-card__avatar"
+                            style={request.user?.profilePicture ? { backgroundImage: `url(${request.user.profilePicture})`, backgroundSize: 'cover', color: 'transparent' } : {}}
+                          >
+                            {!request.user?.profilePicture && getInitials(request.user?.firstName || '?', request.user?.lastName || '?')}
+                          </div>
+                          <div className="invite-card__content">
+                            <span className="invite-card__name">
+                              {request.user?.firstName} {request.user?.lastName}
+                              <span className="partnered-badge">
+                                <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                                  <path d="M8 1.3 9.8 5l4.1.6-3 2.9.7 4.1L8 10.7 4.4 12.6l.7-4.1-3-2.9L6.2 5 8 1.3Z"/>
+                                </svg>
+                                Wants to partner
+                              </span>
+                            </span>
+                            <p className="invite-card__headline">{request.user?.headline || 'Ornave member'}</p>
+                            <div className="invite-card__actions">
+                              <button className="btn-ignore" onClick={() => handleDeclinePartner(request.id)}>
+                                ✕ Decline
+                              </button>
+                              <button className="btn-accept" onClick={() => handleAcceptPartner(request.id)}>
+                                ✓ Accept
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                <section className="network-section">
+                  <div className="network-section__header">
+                    <h2>Your partners ({partners.length})</h2>
+                  </div>
+                  {partners.length === 0 ? (
+                    <div className="catchup-empty">
+                      <div className="catchup-empty__icon">🤝</div>
+                      <h3>No Partners Yet</h3>
+                      <p>Partnering is a deeper tier reserved for your closest connections. Visit a connection's profile and propose a partnership.</p>
+                    </div>
+                  ) : (
+                    <div className="suggestion-grid">
+                      {partners.map(partner => (
+                        <div key={partner.id} className="suggestion-card suggestion-card--partner">
+                          <div
+                            className="suggestion-card__avatar"
+                            onClick={() => handleViewProfile(partner.firstName, partner.lastName)}
+                            style={partner.profilePicture ? { cursor: 'pointer', backgroundImage: `url(${partner.profilePicture})`, backgroundSize: 'cover', color: 'transparent' } : { cursor: 'pointer' }}
+                          >
+                            {!partner.profilePicture && getInitials(partner.firstName, partner.lastName)}
+                          </div>
+                          <button
+                            className="suggestion-card__name"
+                            onClick={() => handleViewProfile(partner.firstName, partner.lastName)}
+                          >
+                            {partner.firstName} {partner.lastName}
+                          </button>
+                          <p className="suggestion-card__headline">{partner.headline || 'Ornave member'}</p>
+                          <span className="partnered-badge">
+                            <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                              <path d="M8 1.3 9.8 5l4.1.6-3 2.9.7 4.1L8 10.7 4.4 12.6l.7-4.1-3-2.9L6.2 5 8 1.3Z"/>
+                            </svg>
+                            Partnered
+                          </span>
+                          <button
+                            className="suggestion-card__connect"
+                            onClick={() => handleRemovePartner(partner.id)}
+                          >
+                            End Partnership
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
               </div>
             )}
           </main>

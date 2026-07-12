@@ -65,6 +65,7 @@ export const ProfilePage: React.FC = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [partnerStatus, setPartnerStatus] = useState('NOT_CONNECTED');
   const [connections, setConnections] = useState<any[]>([]);
   const [isLoadingConnections, setIsLoadingConnections] = useState(false);
   
@@ -335,8 +336,10 @@ export const ProfilePage: React.FC = () => {
       if (isViewingOther && viewedUser) {
         if (viewedUser.type === 'firm') {
           firmService.isFollowing(viewedUser.id).then(val => setIsFollowing(val));
+          firmService.isPartneredWithFirm(viewedUser.id).then(val => setPartnerStatus(val ? 'PARTNERED' : 'NOT_CONNECTED'));
         } else {
-          networkService.isConnected(viewedUser.id).then(val => setIsConnected(val));
+          applyConnectionStatus(viewedUser.id);
+          networkService.getPartnerStatus(viewedUser.id).then(val => setPartnerStatus(val));
         }
       }
     };
@@ -635,8 +638,25 @@ export const ProfilePage: React.FC = () => {
     // Check relationship status
     if (profile.type === 'firm') {
       firmService.isFollowing(profile.id).then(val => setIsFollowing(val));
+      firmService.isPartneredWithFirm(profile.id).then(val => setPartnerStatus(val ? 'PARTNERED' : 'NOT_CONNECTED'));
     } else {
-      networkService.isConnected(profile.id).then(val => setIsConnected(val));
+      applyConnectionStatus(profile.id);
+      networkService.getPartnerStatus(profile.id).then(val => setPartnerStatus(val));
+
+      // Most profile links are built from a "firstname-lastname" slug rather than a
+      // real user id. If this slug actually belongs to a registered account, swap in
+      // their real id so Connect/Partner/posts operate on the real person, not a fake id.
+      networkService.resolveUserBySlug(key).then((real) => {
+        if (real && real.id && real.id !== profile.id) {
+          setViewedUser((prev: any) => (prev ? { ...prev, id: real.id } : prev));
+          setIsConnected(false);
+          setIsPending(false);
+          setPartnerStatus('NOT_CONNECTED');
+          applyConnectionStatus(real.id);
+          networkService.getPartnerStatus(real.id).then(val => setPartnerStatus(val));
+          loadUserPosts(real.id);
+        }
+      });
     }
 
     // Populate mock sections for Chuck Hartwig
@@ -734,6 +754,14 @@ export const ProfilePage: React.FC = () => {
     navigate('/');
   };
 
+  /** Fetch the real connection status for a person and reflect it (connected vs. still pending). */
+  const applyConnectionStatus = (otherUserId: string) => {
+    networkService.getConnectionStatus(otherUserId).then((status) => {
+      setIsConnected(status === 'CONNECTED');
+      setIsPending(status === 'PENDING_SENT');
+    });
+  };
+
   const handleFollow = async () => {
     if (!user) {
       triggerAuthModal('Please log in to connect or follow.');
@@ -754,14 +782,46 @@ export const ProfilePage: React.FC = () => {
       if (isConnected) {
         await networkService.removeConnection(viewedUser.id);
         setIsConnected(false);
+        setPartnerStatus('NOT_CONNECTED');
       } else if (isPending) {
-        // Mock cancel
+        // Cancel our outgoing request
+        await networkService.removeConnection(viewedUser.id);
         setIsPending(false);
       } else {
-        // Mock send request/immediate connect for demo
         await networkService.addConnection(viewedUser);
-        setIsConnected(true);
-        setIsPending(false);
+        // The request may auto-accept (if the other side already requested us)
+        // or stay pending — reflect the real status rather than assuming.
+        const status = await networkService.getConnectionStatus(viewedUser.id);
+        setIsConnected(status === 'CONNECTED');
+        setIsPending(status === 'PENDING_SENT');
+      }
+    }
+  };
+
+  const handlePartner = async () => {
+    if (!user) {
+      triggerAuthModal('Please log in to partner with others.');
+      return;
+    }
+
+    const isFirm = viewedUser?.type === 'firm';
+    if (isFirm) {
+      if (partnerStatus === 'PARTNERED') {
+        await firmService.unpartnerFirm(viewedUser.id);
+        setPartnerStatus('NOT_CONNECTED');
+      } else {
+        const success = await firmService.partnerFirm(viewedUser);
+        if (success) setPartnerStatus('PARTNERED');
+      }
+    } else {
+      if (partnerStatus === 'PARTNERED' || partnerStatus === 'PENDING_SENT') {
+        await networkService.removePartnership(viewedUser.id);
+        setPartnerStatus('NONE');
+      } else if (partnerStatus === 'PENDING_RECEIVED') {
+        navigate('/network');
+      } else {
+        await networkService.requestPartnership(viewedUser.id);
+        setPartnerStatus('PENDING_SENT');
       }
     }
   };
@@ -1149,21 +1209,47 @@ export const ProfilePage: React.FC = () => {
                 ) : (
                   <div className="profile-card connect-card">
                     <div className="connect-actions">
-                      <button 
-                        className={isFollowing || isConnected || isPending ? "btn-secondary" : "btn-primary"} 
+                      <button
+                        className={isFollowing || isConnected || isPending ? "btn-secondary" : "btn-primary"}
                         onClick={handleFollow}
                       >
-                        {viewedUser?.type === 'firm' 
-                          ? (isFollowing ? 'Following' : '+ Follow') 
+                        {viewedUser?.type === 'firm'
+                          ? (isFollowing ? 'Following' : '+ Follow')
                           : (isConnected ? 'Connected' : (isPending ? 'Pending' : '+ Connect'))}
                       </button>
-                      <button 
-                        className="btn-outline-primary" 
+                      <button
+                        className="btn-outline-primary"
                         onClick={handleMessage}
                       >
                         Message
                       </button>
                     </div>
+                    {(viewedUser?.type === 'firm' ? isFollowing : isConnected) && (
+                      <button
+                        className={`btn-partner ${partnerStatus === 'PARTNERED' ? 'btn-partner--active' : ''}`}
+                        onClick={handlePartner}
+                        title={
+                          partnerStatus === 'PARTNERED'
+                            ? 'End partnership'
+                            : partnerStatus === 'PENDING_SENT'
+                            ? 'Cancel partnership request'
+                            : partnerStatus === 'PENDING_RECEIVED'
+                            ? 'Respond in your Network'
+                            : 'Propose a deeper, partnered relationship'
+                        }
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M8 1.3 9.8 5l4.1.6-3 2.9.7 4.1L8 10.7 4.4 12.6l.7-4.1-3-2.9L6.2 5 8 1.3Z"/>
+                        </svg>
+                        {partnerStatus === 'PARTNERED'
+                          ? 'Partnered'
+                          : partnerStatus === 'PENDING_SENT'
+                          ? 'Partnership Requested'
+                          : partnerStatus === 'PENDING_RECEIVED'
+                          ? 'Wants to Partner — Respond'
+                          : 'Propose Partnership'}
+                      </button>
+                    )}
                   </div>
                 )}
 

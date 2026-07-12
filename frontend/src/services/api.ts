@@ -519,6 +519,15 @@ class ApiClient {
     }
   }
 
+  async getUserBySlug(slug: string) {
+    try {
+      const response = await this.client.get<ApiResponse<any>>(`/users/by-slug/${slug}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
   async getMyConnections() {
     try {
       const response = await this.client.get<ApiResponse<any>>('/users/connections');
@@ -594,6 +603,80 @@ class ApiClient {
   async removeUserConnection(userId: string) {
     try {
       const response = await this.client.delete<ApiResponse<any>>(`/users/connections/by-user/${userId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  // ── Partnered (deeper tier on top of an accepted connection) ──
+
+  async getMyPartners() {
+    try {
+      const response = await this.client.get<ApiResponse<any>>('/users/partners');
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async getIncomingPartnerRequests() {
+    try {
+      const response = await this.client.get<ApiResponse<any>>('/users/partners/requests');
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async getOutgoingPartnerRequests() {
+    try {
+      const response = await this.client.get<ApiResponse<any>>('/users/partners/sent');
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async getUserPartnerStatus(userId: string) {
+    try {
+      const response = await this.client.get<ApiResponse<any>>(`/users/partners/status/${userId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async sendUserPartnerRequest(userId: string) {
+    try {
+      const response = await this.client.post<ApiResponse<any>>(`/users/partners/${userId}/request`, {});
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async acceptUserPartnerRequest(connectionId: string) {
+    try {
+      const response = await this.client.post<ApiResponse<any>>(`/users/partners/${connectionId}/accept`, {});
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async rejectUserPartnerRequest(connectionId: string) {
+    try {
+      const response = await this.client.post<ApiResponse<any>>(`/users/partners/${connectionId}/reject`, {});
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async removeUserPartner(userId: string) {
+    try {
+      const response = await this.client.delete<ApiResponse<any>>(`/users/partners/by-user/${userId}`);
       return response.data;
     } catch (error) {
       this.handleError(error);

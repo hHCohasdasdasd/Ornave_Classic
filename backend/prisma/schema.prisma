@@ -37,12 +37,15 @@ model User {
 }
 
 model UserConnection {
-  id           String   @id @default(cuid())
-  requesterId  String
-  addresseeId  String
-  status       String   @default("PENDING")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  requesterId        String
+  addresseeId        String
+  status             String    @default("PENDING")
+  partnerStatus      String    @default("NONE")
+  partnerRequestedBy String?
+  partneredAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
   requester    User     @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
   addressee    User     @relation("addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
 
@@ -50,6 +53,7 @@ model UserConnection {
   @@index([requesterId])
   @@index([addresseeId])
   @@index([status])
+  @@index([partnerStatus])
 }
 
 model Company {

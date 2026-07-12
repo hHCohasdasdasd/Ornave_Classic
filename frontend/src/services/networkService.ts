@@ -37,6 +37,16 @@ class NetworkService {
     return results;
   }
 
+  /** Resolve a "firstname-lastname" profile slug to a real registered user, if one exists. */
+  async resolveUserBySlug(slug: string): Promise<UserProfile | null> {
+    try {
+      const response = await apiClient.getUserBySlug(slug);
+      return response?.data || null;
+    } catch {
+      return null;
+    }
+  }
+
   async getRecentConnections(): Promise<UserProfile[]> {
     const response = await apiClient.getMyConnections();
     return (response?.data || []).map((u: any) => ({ ...u, isConnected: true }));
@@ -106,6 +116,54 @@ class NetworkService {
     } catch {
       return { connectionCount: 0, unreadMessages: 0, notifications: 0 };
     }
+  }
+
+  // ── Partnered: a deeper tier on top of an existing accepted connection ──
+
+  async getPartners(): Promise<UserProfile[]> {
+    const response = await apiClient.getMyPartners();
+    return (response?.data || []).map((u: any) => ({ ...u, isPartnered: true }));
+  }
+
+  /** Propose deepening an existing connection to Partnered. Requires an accepted connection first. */
+  async requestPartnership(profileId: string): Promise<void> {
+    await apiClient.sendUserPartnerRequest(profileId);
+    window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'partner_request', id: profileId } }));
+  }
+
+  async acceptPartnership(connectionId: string): Promise<void> {
+    await apiClient.acceptUserPartnerRequest(connectionId);
+    window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'partner_accept', id: connectionId } }));
+  }
+
+  async rejectPartnership(connectionId: string): Promise<void> {
+    await apiClient.rejectUserPartnerRequest(connectionId);
+    window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'partner_reject', id: connectionId } }));
+  }
+
+  async removePartnership(profileId: string): Promise<void> {
+    await apiClient.removeUserPartner(profileId);
+    window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'partner_remove', id: profileId } }));
+  }
+
+  /** 'NOT_CONNECTED' | 'NONE' | 'PENDING_SENT' | 'PENDING_RECEIVED' | 'PARTNERED' | 'SELF' */
+  async getPartnerStatus(profileId: string): Promise<string> {
+    try {
+      const response = await apiClient.getUserPartnerStatus(profileId);
+      return response?.data?.status || 'NOT_CONNECTED';
+    } catch {
+      return 'NOT_CONNECTED';
+    }
+  }
+
+  async getPartnerRequests(): Promise<ConnectionRequest[]> {
+    const response = await apiClient.getIncomingPartnerRequests();
+    return response?.data || [];
+  }
+
+  async getSentPartnerRequests(): Promise<ConnectionRequest[]> {
+    const response = await apiClient.getOutgoingPartnerRequests();
+    return response?.data || [];
   }
 }
 

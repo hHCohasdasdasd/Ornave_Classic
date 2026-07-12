@@ -11,6 +11,8 @@ export interface UserProfile {
   profilePicture?: string;
   mutualConnections?: number;
   isConnected?: boolean;
+  isPartnered?: boolean;
+  partneredAt?: string;
 }
 
 export interface FirmProfile {
@@ -22,6 +24,7 @@ export interface FirmProfile {
   location?: string;
   connectionCount?: number;
   isConnected?: boolean;
+  isPartnered?: boolean;
 }
 
 export interface ConnectionRequest {

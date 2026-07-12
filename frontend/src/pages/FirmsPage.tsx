@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { networkService } from '@/services/networkService';
+import { firmService } from '@/services/firmService';
 import './FirmsPage.css';
 
 interface FirmRequest {
@@ -28,7 +29,7 @@ export const FirmsPage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'discover' | 'following'>('discover');
   const [companiesFollowing, setCompaniesFollowing] = useState(0);
-  const [companiesConnected, setCompaniesConnected] = useState(0);
+  const [companiesPartnered, setCompaniesPartnered] = useState(0);
   const [followRequests, setFollowRequests] = useState<FirmRequest[]>([]);
   const [suggestions, setSuggestions] = useState<FirmSuggestion[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,11 +54,11 @@ export const FirmsPage: React.FC = () => {
 
   const loadFirmsData = async () => {
     try {
-      const stats = await networkService.getNetworkStats();
-      setCompaniesConnected(stats.connectionCount || 0);
-      
       const followed = await firmService.getFollowedFirms();
       setCompaniesFollowing(followed.length + 12); // Base + followed
+
+      const partnered = await firmService.getPartneredFirms();
+      setCompaniesPartnered(partnered.length);
       
       // Fetch real directory data
       const directoryData = await networkService.searchDirectory({});
@@ -235,7 +236,7 @@ export const FirmsPage: React.FC = () => {
                     </div>
                     <span className="firms-stat__label">My Partners</span>
                   </div>
-                  <span className="firms-stat__value">{companiesConnected}</span>
+                  <span className="firms-stat__value">{companiesPartnered}</span>
                 </button>
                 <button className="firms-stat">
                   <div className="firms-stat__info">

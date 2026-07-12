@@ -179,14 +179,230 @@ export class UserConnectionService {
   }
 
   static async getStats(userId: string) {
-    const [connectionCount, pendingCount] = await Promise.all([
+    const [connectionCount, pendingCount, partnerCount, pendingPartnerCount] = await Promise.all([
       prisma.userConnection.count({
         where: { status: 'ACCEPTED', OR: [{ requesterId: userId }, { addresseeId: userId }] },
       }),
       prisma.userConnection.count({ where: { addresseeId: userId, status: 'PENDING' } }),
+      prisma.userConnection.count({
+        where: { partnerStatus: 'ACCEPTED', OR: [{ requesterId: userId }, { addresseeId: userId }] },
+      }),
+      prisma.userConnection.count({
+        where: {
+          partnerStatus: 'PENDING',
+          partnerRequestedBy: { not: userId },
+          OR: [{ requesterId: userId }, { addresseeId: userId }],
+        },
+      }),
     ]);
 
-    return { connectionCount, pendingRequestCount: pendingCount };
+    return {
+      connectionCount,
+      pendingRequestCount: pendingCount,
+      partnerCount,
+      pendingPartnerRequestCount: pendingPartnerCount,
+    };
+  }
+
+  // ============================================
+  // PARTNERED: a deeper tier layered on top of an
+  // existing ACCEPTED connection. Either connected
+  // party can propose it; the other must accept.
+  // ============================================
+
+  /** Propose deepening an existing connection to "Partnered". Both users must already be connected. */
+  static async requestPartnership(userId: string, otherUserId: string) {
+    if (userId === otherUserId) {
+      throw new Error('Cannot partner with yourself');
+    }
+
+    const connection = await prisma.userConnection.findFirst({
+      where: {
+        status: 'ACCEPTED',
+        OR: [
+          { requesterId: userId, addresseeId: otherUserId },
+          { requesterId: otherUserId, addresseeId: userId },
+        ],
+      },
+    });
+
+    if (!connection) {
+      throw new Error('You must be connected before proposing a partnership');
+    }
+
+    if (connection.partnerStatus === 'ACCEPTED') {
+      return connection;
+    }
+
+    if (connection.partnerStatus === 'PENDING' && connection.partnerRequestedBy !== userId) {
+      // The other side already proposed — accept it instead of duplicating.
+      return prisma.userConnection.update({
+        where: { id: connection.id },
+        data: { partnerStatus: 'ACCEPTED', partneredAt: new Date() },
+      });
+    }
+
+    return prisma.userConnection.update({
+      where: { id: connection.id },
+      data: { partnerStatus: 'PENDING', partnerRequestedBy: userId },
+    });
+  }
+
+  static async acceptPartnership(connectionId: string, userId: string) {
+    const connection = await prisma.userConnection.findUnique({ where: { id: connectionId } });
+    if (!connection || (connection.requesterId !== userId && connection.addresseeId !== userId)) {
+      throw new Error('Partnership request not found');
+    }
+    if (connection.partnerStatus !== 'PENDING') {
+      throw new Error(`Cannot accept partnership with status: ${connection.partnerStatus}`);
+    }
+    if (connection.partnerRequestedBy === userId) {
+      throw new Error('You cannot accept your own partnership request');
+    }
+
+    return prisma.userConnection.update({
+      where: { id: connectionId },
+      data: { partnerStatus: 'ACCEPTED', partneredAt: new Date() },
+    });
+  }
+
+  static async rejectPartnership(connectionId: string, userId: string) {
+    const connection = await prisma.userConnection.findUnique({ where: { id: connectionId } });
+    if (!connection || (connection.requesterId !== userId && connection.addresseeId !== userId)) {
+      throw new Error('Partnership request not found');
+    }
+    if (connection.partnerStatus !== 'PENDING') {
+      throw new Error(`Cannot reject partnership with status: ${connection.partnerStatus}`);
+    }
+
+    return prisma.userConnection.update({
+      where: { id: connectionId },
+      data: { partnerStatus: 'NONE', partnerRequestedBy: null },
+    });
+  }
+
+  /** End a partnership (downgrade back to a regular connection). Either side may do this. */
+  static async removePartnership(userId: string, otherUserId: string) {
+    const connection = await prisma.userConnection.findFirst({
+      where: {
+        OR: [
+          { requesterId: userId, addresseeId: otherUserId },
+          { requesterId: otherUserId, addresseeId: userId },
+        ],
+      },
+    });
+    if (!connection) return;
+
+    await prisma.userConnection.update({
+      where: { id: connection.id },
+      data: { partnerStatus: 'NONE', partnerRequestedBy: null, partneredAt: null },
+    });
+  }
+
+  static async getPartners(userId: string) {
+    const connections = await prisma.userConnection.findMany({
+      where: {
+        partnerStatus: 'ACCEPTED',
+        OR: [{ requesterId: userId }, { addresseeId: userId }],
+      },
+      include: {
+        requester: { select: PROFILE_SELECT },
+        addressee: { select: PROFILE_SELECT },
+      },
+      orderBy: { partneredAt: 'desc' },
+    });
+
+    return connections.map((c) => ({
+      ...toUserProfile(c.requesterId === userId ? c.addressee : c.requester),
+      partneredAt: c.partneredAt,
+    }));
+  }
+
+  static async getIncomingPartnerRequests(userId: string) {
+    const requests = await prisma.userConnection.findMany({
+      where: {
+        partnerStatus: 'PENDING',
+        partnerRequestedBy: { not: userId },
+        OR: [{ requesterId: userId }, { addresseeId: userId }],
+      },
+      include: {
+        requester: { select: PROFILE_SELECT },
+        addressee: { select: PROFILE_SELECT },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return requests.map((r) => ({
+      id: r.id,
+      user: toUserProfile(r.requesterId === userId ? r.addressee : r.requester),
+      timestamp: r.updatedAt.toISOString(),
+      status: 'pending' as const,
+    }));
+  }
+
+  static async getOutgoingPartnerRequests(userId: string) {
+    const requests = await prisma.userConnection.findMany({
+      where: { partnerStatus: 'PENDING', partnerRequestedBy: userId },
+      include: {
+        requester: { select: PROFILE_SELECT },
+        addressee: { select: PROFILE_SELECT },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return requests.map((r) => ({
+      id: r.id,
+      user: toUserProfile(r.requesterId === userId ? r.addressee : r.requester),
+      timestamp: r.updatedAt.toISOString(),
+      status: 'pending' as const,
+    }));
+  }
+
+  /** 'NOT_CONNECTED' | 'NONE' | 'PENDING_SENT' | 'PENDING_RECEIVED' | 'PARTNERED' | 'SELF' */
+  static async getPartnerStatus(userId: string, otherUserId: string) {
+    if (userId === otherUserId) return 'SELF';
+
+    const connection = await prisma.userConnection.findFirst({
+      where: {
+        OR: [
+          { requesterId: userId, addresseeId: otherUserId },
+          { requesterId: otherUserId, addresseeId: userId },
+        ],
+      },
+    });
+
+    if (!connection || connection.status !== 'ACCEPTED') return 'NOT_CONNECTED';
+    if (connection.partnerStatus === 'ACCEPTED') return 'PARTNERED';
+    if (connection.partnerStatus === 'PENDING') {
+      return connection.partnerRequestedBy === userId ? 'PENDING_SENT' : 'PENDING_RECEIVED';
+    }
+    return 'NONE';
+  }
+
+  static async getPartnerCount(userId: string) {
+    return prisma.userConnection.count({
+      where: {
+        partnerStatus: 'ACCEPTED',
+        OR: [{ requesterId: userId }, { addresseeId: userId }],
+      },
+    });
+  }
+
+  /**
+   * Resolve a "firstname-lastname" profile slug (as used by /profile?view=...)
+   * to a real registered user. Used because most profile links in the app are
+   * built from a name slug rather than a real user id.
+   */
+  static async findByNameSlug(slug: string) {
+    const normalized = slug.toLowerCase().trim();
+    const users = await prisma.user.findMany({
+      where: { isActive: true },
+      select: PROFILE_SELECT,
+    });
+    const match = users.find(
+      (u) => `${u.firstName}-${u.lastName}`.toLowerCase() === normalized
+    );
+    return match ? toUserProfile(match) : null;
   }
 
   /** Suggest other individual users not already connected/pending with the given user. */
