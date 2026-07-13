@@ -764,8 +764,6 @@ export const ProfileRecommendations: React.FC<SectionProps> = ({ sectionsKey, is
     setRecommendations(getStoredSections(sectionsKey).recommendations || []);
   }, [sectionsKey]);
 
-  if (recommendations.length === 0) return null;
-
   return (
     <section className="profile-section">
       <div className="profile-section__header">
@@ -778,6 +776,17 @@ export const ProfileRecommendations: React.FC<SectionProps> = ({ sectionsKey, is
           </button>
         )}
       </div>
+      {recommendations.length === 0 ? (
+        <div className="profile-connections-empty">
+          <div className="empty-icon"><IconCard size={22} /></div>
+          <p>No recommendations yet.</p>
+          {!isViewingOther && (
+            <button className="btn-primary" onClick={() => navigate('/profile/edit?tab=sections')}>
+              Request a Recommendation
+            </button>
+          )}
+        </div>
+      ) : (
       <div className="profile-recommendations">
         {recommendations.map(rec => (
           <div key={rec.id} className="profile-recommendation">
@@ -803,6 +812,7 @@ export const ProfileRecommendations: React.FC<SectionProps> = ({ sectionsKey, is
           </div>
         ))}
       </div>
+      )}
     </section>
   );
 };

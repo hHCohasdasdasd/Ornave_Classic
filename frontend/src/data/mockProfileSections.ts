@@ -53,6 +53,15 @@ export interface MockLanguage {
   proficiency?: string;
 }
 
+export interface MockRecommendation {
+  id: string;
+  author: string;
+  authorHeadline: string;
+  authorAvatar?: string;
+  content: string;
+  date: string;
+}
+
 export interface MockProfileSections {
   experiences: MockExperience[];
   educations: MockEducation[];
@@ -61,6 +70,7 @@ export interface MockProfileSections {
   languages?: MockLanguage[];
   highlights?: MockHighlight[];
   focusAreas?: string[];
+  recommendations?: MockRecommendation[];
 }
 
 export const mockProfileSections: Record<string, MockProfileSections> = {
@@ -71,6 +81,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '$10M+', label: 'Cloud Migration Savings' },
     ],
     focusAreas: ['Enterprise Architecture', 'AI Strategy', 'Cloud Infrastructure', 'Distributed Systems'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'David Kim',
+        authorHeadline: 'Software Architect · Cloud Infrastructure',
+        authorAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=face',
+        content: "Chuck is the rare CTO who can still read a stack trace at 2am and still hold a boardroom's attention the next morning. The migration plan he designed saved us millions and several very bad weekends.",
+        date: 'Apr 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -129,6 +149,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '$200M', label: 'Annual Freight Managed' },
     ],
     focusAreas: ['Supply Chain Strategy', 'Supplier Risk', 'Nearshoring', 'Sustainability'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Omar Hassan',
+        authorHeadline: 'Global Trade & Logistics Director',
+        authorAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face',
+        content: "Alex has the sharpest eye for supplier risk I've worked with. He flagged a customs bottleneck in our EMEA lane three months before it became a crisis for everyone else.",
+        date: 'Mar 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -200,6 +230,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '12', label: 'Countries Shipped To' },
     ],
     focusAreas: ['Industrial UX', 'Design Systems', 'User Research'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'James Okafor',
+        authorHeadline: 'CTO & Co-founder · Building the future of fintech',
+        authorAvatar: 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=200&h=200&fit=crop&crop=face',
+        content: "Sarah redesigned our onboarding flow for markets where most users had never used a banking app before. Activation went up 3x. She designs for the user in front of her, not the user in the persona deck.",
+        date: 'Feb 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -259,6 +299,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '30+', label: 'Roles Redesigned' },
     ],
     focusAreas: ['Digital Transformation', 'Industry 4.0', 'Change Management'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Yuki Tanaka',
+        authorHeadline: 'Robotics Engineer · Automation Specialist',
+        authorAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face',
+        content: "Marcus is the reason our cobot rollout didn't become another failed pilot. He understood that the hardest part of automation isn't the robots, it's the people deciding whether to trust them.",
+        date: 'Jan 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -324,6 +374,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '12', label: 'Years in Climate Policy' },
     ],
     focusAreas: ['Renewable Energy', 'Climate Policy', 'ESG Strategy'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Tom Bradley',
+        authorHeadline: 'Venture Partner · Early Stage Investor',
+        authorAvatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=face',
+        content: "Elena is one of the few climate advisors who can talk IRR with a partner in the morning and permitting law with a regulator in the afternoon. Two of our portfolio companies are faster to revenue because of her.",
+        date: 'May 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -385,6 +445,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '3', label: 'Prior Exits' },
     ],
     focusAreas: ['Fintech Infrastructure', 'Emerging Markets', 'Payments'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'David Kim',
+        authorHeadline: 'Software Architect · Cloud Infrastructure',
+        authorAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=face',
+        content: "James built a payment rail that works on 2G with USSD fallback and still passes every audit I've thrown at it. That combination of pragmatism and rigor is rare in fintech infrastructure.",
+        date: 'Mar 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -443,6 +513,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '±2%', label: 'Accuracy vs. Centralized Training' },
     ],
     focusAreas: ['Federated Learning', 'Healthcare AI', 'Applied Research'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Nikolai Petrov',
+        authorHeadline: 'Cybersecurity Expert · CISO · Threat Intelligence',
+        authorAvatar: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200&h=200&fit=crop&crop=face',
+        content: "We brought Priya in to review a federated learning pipeline handling patient data across three countries. She found privacy leakage vectors our own team had missed twice. Meticulous and fast.",
+        date: 'Apr 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -510,6 +590,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '3', label: 'SaaS Companies Scaled' },
     ],
     focusAreas: ['Revenue Operations', 'Go-to-Market', 'B2B Growth'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Carlos Mendes',
+        authorHeadline: 'Sales Director EMEA · Enterprise Software',
+        authorAvatar: 'https://images.unsplash.com/photo-1463453091185-61582044d556?w=200&h=200&fit=crop&crop=face',
+        content: "Lucas rebuilt our lead scoring model and pipeline stages in a single quarter, and our sales team actually started trusting the CRM again. That alone is worth more than most GTM hires I've seen.",
+        date: 'Feb 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -567,6 +657,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '200+', label: 'Cobots Deployed' },
     ],
     focusAreas: ['Robotics Engineering', 'Mechatronics', 'Cobots'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Marcus Thorn',
+        authorHeadline: 'VP of Operations · Manufacturing & Industry 4.0',
+        authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face',
+        content: "Yuki designed a cobot cell that cut cycle time by 30% without a single safety incident during rollout. Rare to find an engineer who treats the factory floor workers as co-designers instead of end users.",
+        date: 'Jan 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -624,6 +724,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '10+', label: 'Years in Startup Finance' },
     ],
     focusAreas: ['Strategic Finance', 'Unit Economics', 'Fundraising'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Tom Bradley',
+        authorHeadline: 'Venture Partner · Early Stage Investor',
+        authorAvatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=face',
+        content: "Anna is the CFO founders wish they'd hired a year earlier. She rebuilt one portfolio company's unit economics model in a week and it directly shaped how we structured their Series B.",
+        date: 'Mar 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -684,6 +794,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: 'Gulf', label: 'Region Specialist' },
     ],
     focusAreas: ['Trade Compliance', 'Customs', 'Supply Chain Resilience'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Alex Rivera',
+        authorHeadline: 'Senior Supply Chain Consultant',
+        authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+        content: "Omar untangled a customs compliance mess across four jurisdictions that had stalled a client's expansion for months. He knows trade regulation the way most people know their own street.",
+        date: 'Feb 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -744,6 +864,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '6', label: 'Weeks: Sprint to Launch' },
     ],
     focusAreas: ['Brand Strategy', 'B2B Positioning', 'Storytelling'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Lucas Fontaine',
+        authorHeadline: 'Head of Growth · B2B SaaS · Revenue Operations',
+        authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face',
+        content: "Camille rewrote our entire positioning in a single workshop and our sales team started closing deals faster within the month, using her language verbatim. That's the mark of a brand strategist who actually understands the buyer.",
+        date: 'Apr 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -794,6 +924,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '3x', label: 'Volume Cost-Modeled Pre-Launch' },
     ],
     focusAreas: ['Cloud Architecture', 'Distributed Systems', 'SRE'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Priya Nair',
+        authorHeadline: 'Data Scientist · ML Engineer · AI Researcher',
+        authorAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face',
+        content: "David redesigned our training infrastructure so a job that took 14 hours now finishes in under two. He explains distributed systems trade-offs more clearly than anyone I've worked with, including at Google.",
+        date: 'Jan 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -863,6 +1003,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '3x', label: 'AI-Assisted Radiology Capacity' },
     ],
     focusAreas: ['Digital Health', 'Telemedicine', 'Health Informatics'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Isabella Santos',
+        authorHeadline: 'People Operations · Culture & Talent Lead',
+        authorAvatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=200&h=200&fit=crop&crop=face',
+        content: "Fatima advised our health-tech portfolio company on informatics standards that saved them a painful compliance rebuild. She translates medicine and technology fluently, which is genuinely rare.",
+        date: 'May 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -927,6 +1077,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '#41', label: 'Latest Bet: Trade Finance ERP' },
     ],
     focusAreas: ['Venture Capital', 'B2B SaaS', 'Growth Equity'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'James Okafor',
+        authorHeadline: 'CTO & Co-founder · Building the future of fintech',
+        authorAvatar: 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=200&h=200&fit=crop&crop=face',
+        content: "Tom led our Series A and never once made us feel like the emerging-market founders in the room. He asked harder questions than our other investors and then fought hardest for us at the board table.",
+        date: 'Mar 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -983,6 +1143,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: 'Global', label: 'Culture Programs Built' },
     ],
     focusAreas: ['People Operations', 'Workforce Analytics', 'Culture Design'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Sarah Chen',
+        authorHeadline: 'Product Designer · UX Lead at NovaTech',
+        authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face',
+        content: "Isabella rebuilt our performance review process from scratch after the old one was quietly making everyone miserable. Engagement scores went up two quarters in a row. She designs culture the way good PMs design products.",
+        date: 'Feb 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -1040,6 +1210,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '2', label: 'Elite Certs (CISSP / OSCP)' },
     ],
     focusAreas: ['Threat Intelligence', 'Incident Response', 'Security Governance'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'David Kim',
+        authorHeadline: 'Software Architect · Cloud Infrastructure',
+        authorAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=face',
+        content: "Nikolai ran an incident response tabletop that exposed three gaps in our infrastructure we genuinely hadn't considered. Calm under pressure and never alarmist, just precise about what actually matters.",
+        date: 'Apr 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -1102,6 +1282,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '10+', label: 'Years in E-commerce' },
     ],
     focusAreas: ['Cross-border E-commerce', 'Market Entry', 'Localization'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Omar Hassan',
+        authorHeadline: 'Global Trade & Logistics Director',
+        authorAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face',
+        content: "Mei got a mid-size manufacturer from zero to live on three Western marketplaces in under a quarter, localization and logistics included. She moves faster than most teams twice her size.",
+        date: 'Jan 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',
@@ -1166,6 +1356,16 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '12+', label: 'Years in Enterprise Sales' },
     ],
     focusAreas: ['Enterprise Sales', 'Deal Strategy', 'EMEA'],
+    recommendations: [
+      {
+        id: 'rec-1',
+        author: 'Lucas Fontaine',
+        authorHeadline: 'Head of Growth · B2B SaaS · Revenue Operations',
+        authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face',
+        content: "Carlos runs the tightest deal reviews I've sat in on. He pressure-tests every stage of the pipeline before it becomes a problem, which is exactly why his team hit 140% of quota while everyone else was explaining misses.",
+        date: 'May 2026',
+      },
+    ],
     experiences: [
       {
         id: 'exp-1',

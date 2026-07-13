@@ -421,13 +421,6 @@
   border-bottom: none;
 }
 
-/* Bento Grid */
-.bento-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 24px;
-}
-
 /* Button HUD Styling */
 .btn-primary, .btn-secondary, .btn-outline-primary, .btn-sm-outline, .btn-outline-danger {
   font-weight: 800;
@@ -571,15 +564,50 @@
   font-weight: 800;
 }
 
-/* Bento Grid Layout - Wider not Longer */
+/* Bento Grid Layout — genuine variety in card width instead of one long
+   monotonous column: About pairs with the compact Network stats, Interests
+   pairs with Recommendations, and full-width sections (Connected Services,
+   Performance) get the whole row to breathe. */
 .bento-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 24px;
+  align-items: start;
 }
 
-.bento-about, .bento-analytics, .bento-interests, .bento-recommendations, .bento-insights, .bento-stats, .bento-services {
+.bento-about {
+  grid-column: span 7;
+}
+
+.bento-analytics {
+  grid-column: span 5;
+}
+
+.bento-interests {
+  grid-column: span 6;
+}
+
+.bento-recommendations {
+  grid-column: span 6;
+}
+
+.bento-insights {
+  grid-column: span 5;
+}
+
+.bento-stats,
+.bento-services {
   grid-column: span 12;
+}
+
+@media (max-width: 900px) {
+  .bento-about,
+  .bento-analytics,
+  .bento-interests,
+  .bento-recommendations,
+  .bento-insights {
+    grid-column: span 12;
+  }
 }
 
 /* Profile Analytics Horizontal Layout */
@@ -1120,6 +1148,94 @@
   font-weight: 700;
   color: var(--tech-accent-gold);
   margin-left: auto;
+}
+
+/* ── Recommendations: testimonial cards ── */
+.profile-recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-recommendation {
+  padding: 18px;
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 14px;
+  background: rgba(246, 243, 237, 0.02);
+}
+
+.profile-recommendation__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.profile-recommendation__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--tech-border-dim);
+}
+
+.profile-recommendation__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-recommendation__avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  color: var(--tech-accent-gold);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.profile-recommendation__info {
+  min-width: 0;
+}
+
+.profile-recommendation__author {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.profile-recommendation__headline {
+  font-size: 0.76rem;
+  color: var(--tech-text-dim);
+  margin: 2px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-recommendation__date {
+  font-size: 0.7rem;
+  color: var(--tech-text-dim);
+  opacity: 0.7;
+  margin: 2px 0 0;
+}
+
+.profile-recommendation__content p {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--color-text);
+  opacity: 0.92;
+  margin: 0;
 }
 
 /* ── Connect card: actions row + save/share icon buttons + mutual connections ── */

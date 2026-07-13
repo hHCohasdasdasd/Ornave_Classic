@@ -1048,8 +1048,8 @@ export const ProfilePage: React.FC = () => {
                                   <h4 className="section-title"><span className="profile-section__title-icon"><IconCard size={16} /></span>Connected Services</h4>
                                   <div className="connected-firms-preview" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
                                     {connections.filter(c => c.type === 'firm').slice(0, 4).map(firm => (
-                                      <div 
-                                        key={firm.id} 
+                                      <div
+                                        key={firm.id}
                                         className="firm-preview-row"
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -1059,52 +1059,57 @@ export const ProfilePage: React.FC = () => {
                                           display: 'flex',
                                           alignItems: 'center',
                                           gap: '15px',
-                                          padding: '10px',
-                                          background: 'rgba(231, 223, 201, 0.05)',
-                                          border: '1px solid rgba(231, 223, 201, 0.2)',
-                                          transition: 'all 0.3s'
+                                          padding: '12px',
+                                          background: 'rgba(246, 243, 237, 0.03)',
+                                          border: '1px solid var(--tech-border-dim)',
+                                          borderRadius: '12px',
+                                          transition: 'all 0.2s ease'
                                         }}
                                       >
-                                        <div className="firm-mini-hex" style={{
+                                        <div style={{
                                           width: '40px',
                                           height: '40px',
+                                          borderRadius: '50%',
                                           background: 'var(--color-bg)',
-                                          border: '1px solid var(--tech-blue)',
-                                          clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+                                          border: '1px solid var(--tech-border-dark)',
                                           display: 'flex',
                                           alignItems: 'center',
                                           justifyContent: 'center',
-                                          flexShrink: 0
+                                          flexShrink: 0,
+                                          overflow: 'hidden',
+                                          color: 'var(--tech-accent-gold)',
+                                          fontWeight: 700,
+                                          fontSize: '0.75rem'
                                         }}>
                                           {firm.avatarUrl ? (
                                             <img src={firm.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                          ) : '🏢'}
+                                          ) : (firm.name || '?').slice(0, 2).toUpperCase()}
                                         </div>
                                         <div style={{ flexGrow: 1, minWidth: 0 }}>
-                                          <div style={{ color: 'var(--color-text)', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                          <div style={{ color: 'var(--color-text)', fontSize: '0.88rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {firm.name}
                                           </div>
-                                          <div style={{ color: 'var(--tech-blue)', fontSize: '0.65rem', letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.8 }}>
-                                            {firm.headline || 'Active B2B Node'}
+                                          <div style={{ color: 'var(--tech-text-dim)', fontSize: '0.75rem' }}>
+                                            {firm.headline || 'Connected company'}
                                           </div>
                                         </div>
-                                        <div className="tech-tag" style={{ fontSize: '0.6rem', borderColor: 'var(--tech-blue)', color: 'var(--tech-blue)' }}>LINK_OK</div>
+                                        <div className="tech-tag">Active</div>
                                       </div>
                                     ))}
                                     {connections.filter(c => c.type === 'firm').length === 0 && (
-                                      <div style={{ padding: '20px', textAlign: 'center', color: 'var(--tech-text-dim)', fontSize: '0.8rem', border: '1px dashed var(--tech-border)' }}>
-                                        NO_ACTIVE_B2B_PROTOCOLS
+                                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--tech-text-dim)', fontSize: '0.85rem', border: '1px dashed var(--tech-border-dim)', borderRadius: '12px' }}>
+                                        No connected companies yet.
                                       </div>
                                     )}
                                   </div>
                                   <div className="mini-stats-row" style={{ borderTop: '1px solid var(--tech-border-dim)', paddingTop: '15px' }}>
                                     <div className="mini-stat">
                                       <span className="mini-stat-val">{connections.filter(c => c.type === 'firm').length}</span>
-                                      <span className="mini-stat-lab">TOTAL_ENTITIES</span>
+                                      <span className="mini-stat-lab">Companies</span>
                                     </div>
                                     <div className="mini-stat">
                                       <span className="mini-stat-val">B2B</span>
-                                      <span className="mini-stat-lab">PROTOCOL</span>
+                                      <span className="mini-stat-lab">Relationship Type</span>
                                     </div>
                                   </div>
                                   <button 
