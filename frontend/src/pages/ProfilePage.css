@@ -46,10 +46,11 @@
 }
 
 .profile-page__wrapper {
-  max-width: 1900px;
+  width: 100%;
   margin: 0 auto;
-  padding: 40px clamp(20px, 3vw, 64px);
+  padding: 40px clamp(20px, 2.5vw, 56px);
   position: relative;
+  box-sizing: border-box;
 }
 
 /* Data Frames / Sections — quiet, editorial cards. No HUD brackets, no
