@@ -1077,6 +1077,9 @@ export const ProfilePage: React.FC = () => {
                                 />
                                 <ProfileRecentPosts posts={posts} />
                                 <ProfilePortfolioGallery items={mockData?.portfolio} />
+                              </div>
+
+                              <div className="dossier-col">
                                 <ProfileCompaniesList companies={dossierCompanies} />
                                 <ProfileTimeline entries={dossierTimeline} />
                                 <ProfileSkillBars skills={mockData?.skills} />
