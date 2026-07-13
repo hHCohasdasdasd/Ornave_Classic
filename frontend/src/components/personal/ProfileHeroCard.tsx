@@ -19,6 +19,7 @@ interface ProfileHeroCardProps {
   githubUrl?: string;
   type?: 'user' | 'firm';
   isPremium?: boolean;
+  focusAreas?: string[];
 }
 
 export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
@@ -33,6 +34,7 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
   githubUrl,
   type = 'user',
   isPremium = false,
+  focusAreas,
 }) => {
   const navigate = useNavigate();
   const initials = type === 'firm' ? (user?.firstName?.substring(0, 2) || 'F') : `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`;
@@ -80,6 +82,14 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
         <p className="tech-hero__headline">
           {headlineText}
         </p>
+
+        {focusAreas && focusAreas.length > 0 && (
+          <div className="tech-hero__focus-tags">
+            {focusAreas.map((tag) => (
+              <span key={tag} className="tech-hero__focus-tag">{tag}</span>
+            ))}
+          </div>
+        )}
 
         <div className="tech-hero__metrics">
           <div className="tech-metric">

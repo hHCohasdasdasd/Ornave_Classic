@@ -10,7 +10,7 @@ import { FirmProfileData } from '@/types/firm';
 import { mockProfileSections } from '@/data/mockProfileSections';
 import { IconUsers, IconUser, IconChart, IconCard } from '@/components/ui/Icons';
 import { ProfileHeroCard } from '@/components/personal/ProfileHeroCard';
-import { 
+import {
   ProfileAnalytics,
   ProfileActivity,
   ProfileInterests,
@@ -24,7 +24,9 @@ import {
   ProfileAwards,
   ProfileRecommendations,
   ProfileConnections,
-  ProfileServices
+  ProfileServices,
+  ProfileHighlights,
+  ProfileFeatured
 } from '@/components/personal/ProfileSections';
 import {
   FirmAbout,
@@ -832,9 +834,12 @@ export const ProfilePage: React.FC = () => {
                 type={profileType}
                 githubUrl={isViewingOther ? `https://github.com/${firstName?.toLowerCase() || ''}` : "https://github.com/emmawilliams"}
                 twitterUrl={isViewingOther ? `https://twitter.com/${firstName?.toLowerCase() || ''}` : "https://twitter.com/emma_supplychain"}
+                focusAreas={viewedSlugKey ? mockProfileSections[viewedSlugKey]?.focusAreas : undefined}
               />
             )}
           </div>
+
+          <ProfileHighlights highlights={viewedSlugKey ? mockProfileSections[viewedSlugKey]?.highlights : undefined} />
 
           <div className="profile-page__content-grid">
             {/* Left Content Area */}
@@ -892,7 +897,9 @@ export const ProfilePage: React.FC = () => {
                 {(user || isViewingOther) && (
                   <>
                     {activeTab === 'overview' && (
-                      <div className="tab-pane bento-grid fade-in">
+                      <>
+                        {profileType !== 'firm' && <ProfileFeatured posts={posts} />}
+                        <div className="tab-pane bento-grid fade-in">
                         {(profileType === 'firm') ? (
                           <>
                             <div className="bento-item bento-about">
@@ -1045,14 +1052,15 @@ export const ProfilePage: React.FC = () => {
                                       navigate('/purchased-services');
                                     }}
                                   >
-                                    MANAGE_SERVICE_OVERVIEW →
+                                    Manage Services →
                                   </button>
                                 </div>
                               </div>
                             )}
                           </>
                         )}
-                      </div>
+                        </div>
+                      </>
                     )}
 
                     {activeTab === 'activity' && (

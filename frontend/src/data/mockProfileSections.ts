@@ -31,6 +31,12 @@ export interface MockSkill {
   id: string;
   name: string;
   level?: string;
+  endorsements?: number;
+}
+
+export interface MockHighlight {
+  value: string;
+  label: string;
 }
 
 export interface MockCertification {
@@ -53,10 +59,18 @@ export interface MockProfileSections {
   skills: MockSkill[];
   certifications?: MockCertification[];
   languages?: MockLanguage[];
+  highlights?: MockHighlight[];
+  focusAreas?: string[];
 }
 
 export const mockProfileSections: Record<string, MockProfileSections> = {
   'chuck-hartwig': {
+    highlights: [
+      { value: '20+', label: 'Years in Enterprise Tech' },
+      { value: '150+', label: 'Engineers Led' },
+      { value: '$10M+', label: 'Cloud Migration Savings' },
+    ],
+    focusAreas: ['Enterprise Architecture', 'AI Strategy', 'Cloud Infrastructure', 'Distributed Systems'],
     experiences: [
       {
         id: 'exp-1',
@@ -109,6 +123,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'alex-rivera': {
+    highlights: [
+      { value: '40%', label: 'Delay Reduction Achieved' },
+      { value: '14', label: 'Years in Global Operations' },
+      { value: '$200M', label: 'Annual Freight Managed' },
+    ],
+    focusAreas: ['Supply Chain Strategy', 'Supplier Risk', 'Nearshoring', 'Sustainability'],
     experiences: [
       {
         id: 'exp-1',
@@ -174,6 +194,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'sarah-chen': {
+    highlights: [
+      { value: '91%', label: 'Feature Adoption (from 23%)' },
+      { value: '10+', label: 'Years in Product Design' },
+      { value: '12', label: 'Countries Shipped To' },
+    ],
+    focusAreas: ['Industrial UX', 'Design Systems', 'User Research'],
     experiences: [
       {
         id: 'exp-1',
@@ -227,6 +253,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'marcus-thorn': {
+    highlights: [
+      { value: '6', label: 'Production Sites Overseen' },
+      { value: '15', label: 'Years on Factory Floors' },
+      { value: '30+', label: 'Roles Redesigned' },
+    ],
+    focusAreas: ['Digital Transformation', 'Industry 4.0', 'Change Management'],
     experiences: [
       {
         id: 'exp-1',
@@ -286,6 +318,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'elena-rodriguez': {
+    highlights: [
+      { value: '280 MW', label: 'Solar Capacity Added (2026)' },
+      { value: '120K', label: 'Tonnes CO₂ Offset Annually' },
+      { value: '12', label: 'Years in Climate Policy' },
+    ],
+    focusAreas: ['Renewable Energy', 'Climate Policy', 'ESG Strategy'],
     experiences: [
       {
         id: 'exp-1',
@@ -341,6 +379,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'james-okafor': {
+    highlights: [
+      { value: '$12M', label: 'Series A Raised' },
+      { value: '600M', label: 'People in Target Market' },
+      { value: '3', label: 'Prior Exits' },
+    ],
+    focusAreas: ['Fintech Infrastructure', 'Emerging Markets', 'Payments'],
     experiences: [
       {
         id: 'exp-1',
@@ -393,6 +437,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'priya-nair': {
+    highlights: [
+      { value: '8', label: 'Hospitals in Published Study' },
+      { value: '4', label: 'Countries Validated Across' },
+      { value: '±2%', label: 'Accuracy vs. Centralized Training' },
+    ],
+    focusAreas: ['Federated Learning', 'Healthcare AI', 'Applied Research'],
     experiences: [
       {
         id: 'exp-1',
@@ -454,6 +504,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'lucas-fontaine': {
+    highlights: [
+      { value: '6x', label: 'Lower CAC via Referrals' },
+      { value: '€10M', label: 'ARR Scaled To' },
+      { value: '3', label: 'SaaS Companies Scaled' },
+    ],
+    focusAreas: ['Revenue Operations', 'Go-to-Market', 'B2B Growth'],
     experiences: [
       {
         id: 'exp-1',
@@ -505,6 +561,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'yuki-tanaka': {
+    highlights: [
+      { value: '8', label: 'Patents Filed' },
+      { value: '45→4 min', label: 'Robot Setup Time Cut' },
+      { value: '200+', label: 'Cobots Deployed' },
+    ],
+    focusAreas: ['Robotics Engineering', 'Mechatronics', 'Cobots'],
     experiences: [
       {
         id: 'exp-1',
@@ -556,6 +618,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'anna-kowalski': {
+    highlights: [
+      { value: '+400bps', label: 'Gross Margin Expansion' },
+      { value: '-35%', label: 'Support Tickets Reduced' },
+      { value: '10+', label: 'Years in Startup Finance' },
+    ],
+    focusAreas: ['Strategic Finance', 'Unit Economics', 'Fundraising'],
     experiences: [
       {
         id: 'exp-1',
@@ -610,6 +678,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'omar-hassan': {
+    highlights: [
+      { value: '$50M', label: 'Deal Rescued from Compliance Gap' },
+      { value: '15', label: 'Years in Trade Compliance' },
+      { value: 'Gulf', label: 'Region Specialist' },
+    ],
+    focusAreas: ['Trade Compliance', 'Customs', 'Supply Chain Resilience'],
     experiences: [
       {
         id: 'exp-1',
@@ -664,6 +738,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'camille-dupont': {
+    highlights: [
+      { value: '2x', label: 'Pipeline After Rebrand Sprint' },
+      { value: '12', label: 'Years in B2B Branding' },
+      { value: '6', label: 'Weeks: Sprint to Launch' },
+    ],
+    focusAreas: ['Brand Strategy', 'B2B Positioning', 'Storytelling'],
     experiences: [
       {
         id: 'exp-1',
@@ -708,6 +788,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'david-kim': {
+    highlights: [
+      { value: '0', label: 'Downtime on Region Migration' },
+      { value: '10+', label: 'Years at Google/AWS' },
+      { value: '3x', label: 'Volume Cost-Modeled Pre-Launch' },
+    ],
+    focusAreas: ['Cloud Architecture', 'Distributed Systems', 'SRE'],
     experiences: [
       {
         id: 'exp-1',
@@ -771,6 +857,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'fatima-al-rashid': {
+    highlights: [
+      { value: '67%', label: 'Telemedicine Adoption (from <2%)' },
+      { value: '7', label: 'Years in Digital Health' },
+      { value: '3x', label: 'AI-Assisted Radiology Capacity' },
+    ],
+    focusAreas: ['Digital Health', 'Telemedicine', 'Health Informatics'],
     experiences: [
       {
         id: 'exp-1',
@@ -829,6 +921,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'tom-bradley': {
+    highlights: [
+      { value: '40+', label: 'Companies Invested In' },
+      { value: '15+', label: 'Years in Venture Capital' },
+      { value: '#41', label: 'Latest Bet: Trade Finance ERP' },
+    ],
+    focusAreas: ['Venture Capital', 'B2B SaaS', 'Growth Equity'],
     experiences: [
       {
         id: 'exp-1',
@@ -879,6 +977,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'isabella-santos': {
+    highlights: [
+      { value: '20–30%', label: 'Attrition Reduction' },
+      { value: '3', label: 'Hypergrowth Companies' },
+      { value: 'Global', label: 'Culture Programs Built' },
+    ],
+    focusAreas: ['People Operations', 'Workforce Analytics', 'Culture Design'],
     experiences: [
       {
         id: 'exp-1',
@@ -930,6 +1034,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'nikolai-petrov': {
+    highlights: [
+      { value: '15', label: 'Years in Security' },
+      { value: '<4 hrs', label: 'Incident Detection Target' },
+      { value: '2', label: 'Elite Certs (CISSP / OSCP)' },
+    ],
+    focusAreas: ['Threat Intelligence', 'Incident Response', 'Security Governance'],
     experiences: [
       {
         id: 'exp-1',
@@ -986,6 +1096,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'mei-zhang': {
+    highlights: [
+      { value: '+34%', label: 'Cross-border Volume YoY' },
+      { value: '15', label: 'Asian Markets Navigated' },
+      { value: '10+', label: 'Years in E-commerce' },
+    ],
+    focusAreas: ['Cross-border E-commerce', 'Market Entry', 'Localization'],
     experiences: [
       {
         id: 'exp-1',
@@ -1044,6 +1160,12 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
   },
 
   'carlos-mendes': {
+    highlights: [
+      { value: '140%', label: 'of H1 2026 Quota' },
+      { value: '6–12', label: 'Stakeholders per Deal' },
+      { value: '12+', label: 'Years in Enterprise Sales' },
+    ],
+    focusAreas: ['Enterprise Sales', 'Deal Strategy', 'EMEA'],
     experiences: [
       {
         id: 'exp-1',

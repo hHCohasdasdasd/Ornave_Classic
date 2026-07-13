@@ -157,9 +157,27 @@
 
 .tech-hero__headline {
   color: var(--color-muted);
-  margin: 0.4rem 0 1.75rem 0;
+  margin: 0.4rem 0 0;
   font-size: 1.05rem;
   line-height: 1.5;
+}
+
+.tech-hero__focus-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0.9rem 0 1.75rem;
+}
+
+.tech-hero__focus-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--tech-accent-gold);
+  background: rgba(198, 161, 91, 0.08);
+  border: 1px solid rgba(198, 161, 91, 0.28);
+  border-radius: 999px;
+  padding: 5px 13px;
 }
 
 .tech-hero__metrics {

@@ -6,6 +6,7 @@ import {
   IconBriefcase, IconGraduationCap, IconTrophy, IconHandshake, IconGlobe,
   IconLink, IconSpark, IconChart, IconUsers, IconLaurel, IconCard, IconBuilding,
 } from '@/components/ui/Icons';
+import { MockHighlight } from '@/data/mockProfileSections';
 
 interface Experience {
   id: string;
@@ -88,6 +89,23 @@ interface Recommendation {
   date: string;
 }
 
+// Highlights strip — punchy, scannable facts up top instead of forcing
+// visitors to read the whole page to find out why this person matters.
+export const ProfileHighlights: React.FC<{ highlights?: MockHighlight[] }> = ({ highlights }) => {
+  if (!highlights || highlights.length === 0) return null;
+
+  return (
+    <section className="profile-highlights">
+      {highlights.map((h, i) => (
+        <div key={i} className="profile-highlights__item">
+          <span className="profile-highlights__value">{h.value}</span>
+          <span className="profile-highlights__label">{h.label}</span>
+        </div>
+      ))}
+    </section>
+  );
+};
+
 // Analytics Section
 export const ProfileAnalytics: React.FC = () => {
   const navigate = useNavigate();
@@ -160,6 +178,35 @@ interface ProfileActivityProps {
   isLoading?: boolean;
   isViewingOther?: boolean;
 }
+
+// Featured post — their single best-performing post, given the magazine-cover
+// treatment it deserves instead of making a visitor dig through the Activity
+// tab to find out this person has anything worth reading.
+export const ProfileFeatured: React.FC<{ posts?: Post[] }> = ({ posts = [] }) => {
+  const navigate = useNavigate();
+  if (!posts || posts.length === 0) return null;
+
+  const featured = [...posts].sort((a, b) => (b.reactions?.likes || 0) - (a.reactions?.likes || 0))[0];
+  if (!featured) return null;
+
+  const excerpt = featured.content.length > 280 ? `${featured.content.slice(0, 280).trim()}…` : featured.content;
+
+  return (
+    <section className="profile-featured" onClick={() => navigate(`/posts/${featured.id}`)}>
+      <div className="profile-featured__eyebrow">
+        <IconSpark size={13} />
+        Featured
+      </div>
+      {featured.title && <h2 className="profile-featured__title">{featured.title}</h2>}
+      <p className="profile-featured__excerpt">{excerpt}</p>
+      <div className="profile-featured__footer">
+        <span className="profile-featured__stat">♥ {featured.reactions?.likes ?? 0} likes</span>
+        <span className="profile-featured__stat">💬 {featured.reactions?.comments ?? 0} comments</span>
+        <span className="profile-featured__link">Read the full post →</span>
+      </div>
+    </section>
+  );
+};
 
 export const ProfileActivity: React.FC<ProfileActivityProps> = ({ posts = [], isLoading = false, isViewingOther = false }) => {
   const navigate = useNavigate();
@@ -360,13 +407,32 @@ export const ProfileEducation: React.FC<SectionProps> = ({ sectionsKey, isViewin
 };
 
 // Skills Section
+// Deterministic pseudo-count so the same skill always shows the same number
+// (rather than a fresh random one every render) without needing a backend.
+function endorsementSeed(name: string, level?: string): number {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  const base = 8 + (hash % 60);
+  return level === 'Expert' ? base + 25 : level === 'Advanced' ? base + 8 : base;
+}
+
 export const ProfileSkills: React.FC<SectionProps> = ({ sectionsKey, isViewingOther = false }) => {
   const navigate = useNavigate();
   const [skills, setSkills] = useState<Skill[]>([]);
+  const [endorsedIds, setEndorsedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setSkills(getStoredSections(sectionsKey).skills || []);
+    setEndorsedIds(new Set());
   }, [sectionsKey]);
+
+  const toggleEndorse = (id: string) => {
+    setEndorsedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   if (skills.length === 0) {
     if (isViewingOther) return null;
@@ -398,12 +464,29 @@ export const ProfileSkills: React.FC<SectionProps> = ({ sectionsKey, isViewingOt
       </div>
 
       <div className="profile-skills__grid">
-        {skills.map(skill => (
-          <div key={skill.id} className="profile-skill__item">
-            <span className="profile-skill__name">{skill.name}</span>
-            {skill.level && <span className="profile-skill__level">{skill.level}</span>}
-          </div>
-        ))}
+        {skills.map(skill => {
+          const isEndorsed = endorsedIds.has(skill.id);
+          const count = (skill.endorsements ?? endorsementSeed(skill.name, skill.level)) + (isEndorsed ? 1 : 0);
+          return (
+            <div key={skill.id} className={`profile-skill__item ${isEndorsed ? 'profile-skill__item--endorsed' : ''}`}>
+              <div className="profile-skill__main">
+                <span className="profile-skill__name">{skill.name}</span>
+                {skill.level && <span className="profile-skill__level">{skill.level}</span>}
+              </div>
+              <div className="profile-skill__footer">
+                <span className="profile-skill__endorsements">{count} endorsement{count === 1 ? '' : 's'}</span>
+                {isViewingOther && (
+                  <button
+                    className="profile-skill__endorse-btn"
+                    onClick={() => toggleEndorse(skill.id)}
+                  >
+                    {isEndorsed ? '✓ Endorsed' : '+ Endorse'}
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
