@@ -73,7 +73,10 @@ export const ProfilePage: React.FC = () => {
   const [partnerStatus, setPartnerStatus] = useState('NOT_CONNECTED');
   const [connections, setConnections] = useState<any[]>([]);
   const [isLoadingConnections, setIsLoadingConnections] = useState(false);
-  
+  const [mutualConnections, setMutualConnections] = useState<any[]>([]);
+  const [isSaved, setIsSaved] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
   const [activeTab, setActiveTab] = useState('overview');
   
   // Profile data state
@@ -97,6 +100,7 @@ export const ProfilePage: React.FC = () => {
       setIsViewingOther(false);
       setViewedUser(null);
       setViewedSlugKey(undefined);
+      setMutualConnections([]);
       if (user) {
         setFirstName(user.firstName || '');
         setLastName(user.lastName || '');
@@ -335,9 +339,11 @@ export const ProfilePage: React.FC = () => {
     const handleStateUpdate = () => {
       if (!isViewingOther) {
         loadNetworkStats();
+        loadConnections();
+      } else if (viewedUser?.type !== 'firm') {
+        loadConnections(viewedUser?.id);
       }
-      loadConnections();
-      
+
       // If we are viewing someone, update relationship status
       if (isViewingOther && viewedUser) {
         if (viewedUser.type === 'firm') {
@@ -366,11 +372,26 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  const loadConnections = async () => {
+  const loadConnections = async (targetUserId?: string) => {
     try {
       setIsLoadingConnections(true);
+
+      if (targetUserId) {
+        // Viewing someone else — show their real connections, not our own.
+        const theirs = await networkService.getConnectionsOf(targetUserId);
+        setConnections(theirs.map((c: any) => ({
+          id: c.id,
+          name: c.name || `${c.firstName} ${c.lastName}`,
+          headline: c.headline,
+          type: 'user',
+          location: c.location,
+          avatarUrl: c.profilePicture,
+        })));
+        return;
+      }
+
       await new Promise(resolve => setTimeout(resolve, 600));
-      
+
       const storedConnections = await networkService.getRecentConnections();
       const storedFollows = await firmService.getFollowedFirms();
       
@@ -630,6 +651,8 @@ export const ProfilePage: React.FC = () => {
     if (!profile.id) profile.id = key;
 
     setViewedSlugKey(key);
+    const savedProfiles = JSON.parse(localStorage.getItem('ornave_saved_profiles') || '[]');
+    setIsSaved(savedProfiles.some((s: any) => s.key === key));
     setViewedUser(profile);
     setFirstName(profile.firstName);
     setLastName(profile.lastName);
@@ -669,6 +692,10 @@ export const ProfilePage: React.FC = () => {
           applyConnectionStatus(real.id);
           networkService.getPartnerStatus(real.id).then(val => setPartnerStatus(val));
           loadUserPosts(real.id);
+          loadConnections(real.id);
+          if (user && user.id !== real.id) {
+            networkService.getMutualConnections(real.id).then(setMutualConnections);
+          }
         }
       });
     }
@@ -785,6 +812,42 @@ export const ProfilePage: React.FC = () => {
         await networkService.requestPartnership(viewedUser.id);
         setPartnerStatus('PENDING_SENT');
       }
+    }
+  };
+
+  const handleToggleSave = () => {
+    if (!user) {
+      triggerAuthModal('Please log in to save profiles.');
+      return;
+    }
+    if (!viewedUser?.id) return;
+    const saved = JSON.parse(localStorage.getItem('ornave_saved_profiles') || '[]');
+    const key = viewedSlugKey || viewedUser.id;
+    const idx = saved.findIndex((s: any) => s.key === key);
+    if (idx >= 0) {
+      saved.splice(idx, 1);
+      setIsSaved(false);
+    } else {
+      saved.push({
+        key,
+        id: viewedUser.id,
+        name: `${firstName} ${lastName}`.trim(),
+        headline,
+        avatarUrl,
+        savedAt: new Date().toISOString(),
+      });
+      setIsSaved(true);
+    }
+    localStorage.setItem('ornave_saved_profiles', JSON.stringify(saved));
+  };
+
+  const handleShareProfile = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      // Clipboard permissions can be denied — fail silently, nothing to recover.
     }
   };
 
@@ -1191,7 +1254,53 @@ export const ProfilePage: React.FC = () => {
                       >
                         Message
                       </button>
+                      <button
+                        className={`btn-icon-square ${isSaved ? 'btn-icon-square--active' : ''}`}
+                        onClick={handleToggleSave}
+                        title={isSaved ? 'Remove from saved' : 'Save profile'}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 16 16" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.4">
+                          <path d="M4 2.5h8a.5.5 0 0 1 .5.5v10.5l-4.5-3-4.5 3V3a.5.5 0 0 1 .5-.5Z" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <button
+                        className="btn-icon-square"
+                        onClick={handleShareProfile}
+                        title="Copy profile link"
+                      >
+                        {shareCopied ? (
+                          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6">
+                            <path d="M3 8.5 6.5 12 13 4.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        ) : (
+                          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+                            <circle cx="12.5" cy="3.5" r="1.8"/>
+                            <circle cx="3.5" cy="8" r="1.8"/>
+                            <circle cx="12.5" cy="12.5" r="1.8"/>
+                            <path d="M5.1 7.1 11 4.3M5.1 8.9 11 11.7"/>
+                          </svg>
+                        )}
+                      </button>
                     </div>
+
+                    {mutualConnections.length > 0 && (
+                      <div className="mutual-connections">
+                        <div className="mutual-connections__avatars">
+                          {mutualConnections.slice(0, 4).map((m, i) => (
+                            <div key={m.id || i} className="mutual-connections__avatar" style={{ zIndex: 4 - i }}>
+                              {m.profilePicture ? (
+                                <img src={m.profilePicture} alt={m.firstName} />
+                              ) : (
+                                `${m.firstName?.[0] || ''}${m.lastName?.[0] || ''}`
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <span className="mutual-connections__label">
+                          {mutualConnections.length} mutual connection{mutualConnections.length === 1 ? '' : 's'}
+                        </span>
+                      </div>
+                    )}
                     {(viewedUser?.type === 'firm' ? isFollowing : isConnected) && (
                       <button
                         className={`btn-partner ${partnerStatus === 'PARTNERED' ? 'btn-partner--active' : ''}`}

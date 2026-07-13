@@ -52,6 +52,30 @@ class NetworkService {
     return (response?.data || []).map((u: any) => ({ ...u, isConnected: true }));
   }
 
+  /** Another member's accepted connections — used when viewing their profile, not our own. */
+  async getConnectionsOf(userId: string): Promise<UserProfile[]> {
+    try {
+      const response = await apiClient.getConnectionsOfUser(userId);
+      return response?.data || [];
+    } catch {
+      return [];
+    }
+  }
+
+  /** Real users you and `otherUserId` are both connected to. */
+  async getMutualConnections(otherUserId: string): Promise<UserProfile[]> {
+    try {
+      const [mine, theirs] = await Promise.all([
+        this.getRecentConnections(),
+        this.getConnectionsOf(otherUserId),
+      ]);
+      const theirIds = new Set(theirs.map((u: any) => u.id));
+      return mine.filter((u: any) => theirIds.has(u.id));
+    } catch {
+      return [];
+    }
+  }
+
   async addConnection(profile: any): Promise<void> {
     if (!profile?.id) return;
     await apiClient.sendUserConnectionRequest(profile.id);

@@ -50,6 +50,21 @@ userRoutes.get(
 );
 
 /**
+ * Another member's accepted connections (for viewing their profile /
+ * computing mutual connections) — a distinct path from /connections/:x
+ * on purpose, so it can never collide with the static routes below.
+ * GET /api/users/connections/of/:userId
+ */
+userRoutes.get(
+  '/connections/of/:userId',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const connections = await UserConnectionService.getConnections(req.params.userId);
+    return ApiResponseHandler.success(res, connections, 'Connections retrieved successfully', 200);
+  })
+);
+
+/**
  * Connection stats (counts only — cheap for navbar badges)
  * GET /api/users/connections/stats
  */

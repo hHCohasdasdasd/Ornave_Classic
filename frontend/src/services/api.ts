@@ -537,6 +537,15 @@ class ApiClient {
     }
   }
 
+  async getConnectionsOfUser(userId: string) {
+    try {
+      const response = await this.client.get<ApiResponse<any>>(`/users/connections/of/${userId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
   async getConnectionStats() {
     try {
       const response = await this.client.get<ApiResponse<any>>('/users/connections/stats');
