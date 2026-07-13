@@ -1066,6 +1066,7 @@ export const ProfilePage: React.FC = () => {
                                   tier={mockData ? (effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Verified Member') : undefined}
                                   memberSince={earliestMockYear ? String(earliestMockYear) : undefined}
                                 />
+                                <ProfilePortfolioGallery items={mockData?.portfolio} />
                               </div>
 
                               <div className="dossier-col">
@@ -1076,7 +1077,6 @@ export const ProfilePage: React.FC = () => {
                                   onView={() => setActiveTab('experience')}
                                 />
                                 <ProfileRecentPosts posts={posts} />
-                                <ProfilePortfolioGallery items={mockData?.portfolio} />
                               </div>
 
                               <div className="dossier-col">
