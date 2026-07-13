@@ -46,9 +46,9 @@
 }
 
 .profile-page__wrapper {
-  max-width: 1300px;
+  max-width: 1900px;
   margin: 0 auto;
-  padding: 40px;
+  padding: 40px clamp(20px, 3vw, 64px);
   position: relative;
 }
 
