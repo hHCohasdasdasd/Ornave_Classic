@@ -391,18 +391,48 @@ export class UserConnectionService {
   /**
    * Resolve a "firstname-lastname" profile slug (as used by /profile?view=...)
    * to a real registered user. Used because most profile links in the app are
-   * built from a name slug rather than a real user id.
+   * built from a name slug rather than a real user id. Returns the fuller
+   * profile fields (bio/location/website) so the frontend can replace its
+   * generic placeholder profile with the person's real data.
    */
   static async findByNameSlug(slug: string) {
     const normalized = slug.toLowerCase().trim();
     const users = await prisma.user.findMany({
       where: { isActive: true },
-      select: PROFILE_SELECT,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        profile: {
+          select: {
+            headline: true,
+            avatarUrl: true,
+            bannerUrl: true,
+            bio: true,
+            address: true,
+            website: true,
+          },
+        },
+      },
     });
     const match = users.find(
       (u) => `${u.firstName}-${u.lastName}`.toLowerCase() === normalized
     );
-    return match ? toUserProfile(match) : null;
+    if (!match) return null;
+
+    return {
+      id: match.id,
+      firstName: match.firstName,
+      lastName: match.lastName,
+      email: match.email,
+      headline: match.profile?.headline || undefined,
+      profilePicture: match.profile?.avatarUrl || undefined,
+      bannerUrl: match.profile?.bannerUrl || undefined,
+      bio: match.profile?.bio || undefined,
+      location: match.profile?.address || undefined,
+      website: match.profile?.website || undefined,
+    };
   }
 
   /** Suggest other individual users not already connected/pending with the given user. */

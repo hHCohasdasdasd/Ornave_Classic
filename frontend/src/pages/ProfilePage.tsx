@@ -7,6 +7,7 @@ import { networkService } from '@/services/networkService';
 import { feedService } from '@/services/feedService';
 import { firmService } from '@/services/firmService';
 import { FirmProfileData } from '@/types/firm';
+import { mockProfileSections } from '@/data/mockProfileSections';
 import { ProfileHeroCard } from '@/components/personal/ProfileHeroCard';
 import { 
   ProfileAnalytics,
@@ -61,6 +62,7 @@ export const ProfilePage: React.FC = () => {
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isViewingOther, setIsViewingOther] = useState(false);
   const [viewedUser, setViewedUser] = useState<any>(null);
+  const [viewedSlugKey, setViewedSlugKey] = useState<string | undefined>(undefined);
   const [firmData, setFirmData] = useState<FirmProfileData | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -91,6 +93,7 @@ export const ProfilePage: React.FC = () => {
     } else {
       setIsViewingOther(false);
       setViewedUser(null);
+      setViewedSlugKey(undefined);
       if (user) {
         setFirstName(user.firstName || '');
         setLastName(user.lastName || '');
@@ -622,7 +625,8 @@ export const ProfilePage: React.FC = () => {
     }
     
     if (!profile.id) profile.id = key;
-    
+
+    setViewedSlugKey(key);
     setViewedUser(profile);
     setFirstName(profile.firstName);
     setLastName(profile.lastName);
@@ -645,10 +649,17 @@ export const ProfilePage: React.FC = () => {
 
       // Most profile links are built from a "firstname-lastname" slug rather than a
       // real user id. If this slug actually belongs to a registered account, swap in
-      // their real id so Connect/Partner/posts operate on the real person, not a fake id.
+      // their real id and real profile data (headline/bio/location/avatar) so the
+      // page shows the actual person instead of a generic placeholder.
       networkService.resolveUserBySlug(key).then((real) => {
         if (real && real.id && real.id !== profile.id) {
           setViewedUser((prev: any) => (prev ? { ...prev, id: real.id } : prev));
+          if (real.headline) setHeadline(real.headline);
+          if (real.bio) setBio(real.bio);
+          if (real.location) setLocation(real.location);
+          if (real.profilePicture) setAvatarUrl(real.profilePicture);
+          if (real.bannerUrl) setBannerUrl(real.bannerUrl);
+          if (real.website) setWebsite(real.website);
           setIsConnected(false);
           setIsPending(false);
           setPartnerStatus('NOT_CONNECTED');
@@ -659,62 +670,10 @@ export const ProfilePage: React.FC = () => {
       });
     }
 
-    // Populate mock sections for Chuck Hartwig
-    if (key === 'chuck-hartwig') {
-      const mockSections = {
-        experiences: [
-          {
-            id: 'exp-1',
-            title: 'Chief Technology Officer',
-            company: 'Nexus Flow Systems',
-            location: 'Berlin, Germany',
-            startDate: '2020-01',
-            current: true,
-            description: 'Leading the technical vision and engineering strategy for an enterprise-grade supply chain orchestration platform.'
-          },
-          {
-            id: 'exp-2',
-            title: 'VP of Engineering',
-            company: 'Global Logistic Tech',
-            location: 'London, UK',
-            startDate: '2015-06',
-            endDate: '2019-12',
-            current: false,
-            description: 'Scaled the engineering team from 20 to 150+ developers and migrated legacy infrastructure to a cloud-native microservices architecture.'
-          }
-        ],
-        educations: [
-          {
-            id: 'edu-1',
-            school: 'Technical University of Munich',
-            degree: 'Master of Science',
-            field: 'Computer Science & AI',
-            startDate: '2005-09',
-            endDate: '2007-06',
-            current: false
-          }
-        ],
-        skills: [
-          { id: 'skill-1', name: 'Enterprise Architecture', level: 'Expert' },
-          { id: 'skill-2', name: 'Artificial Intelligence', level: 'Expert' },
-          { id: 'skill-3', name: 'Distributed Systems', level: 'Expert' },
-          { id: 'skill-4', name: 'Cloud Strategy', level: 'Expert' },
-          { id: 'skill-5', name: 'Product Engineering', level: 'Advanced' }
-        ],
-        certifications: [
-          {
-            id: 'cert-1',
-            name: 'AWS Certified Solutions Architect – Professional',
-            organization: 'Amazon Web Services',
-            issueDate: '2021-03'
-          }
-        ],
-        languages: [
-          { id: 'lang-1', name: 'English', proficiency: 'Native' },
-          { id: 'lang-2', name: 'German', proficiency: 'Full Professional' }
-        ]
-      };
-      localStorage.setItem('ornave_profile_sections', JSON.stringify(mockSections));
+    // Seed this person's resume-style sections (Experience/Education/Skills/...),
+    // namespaced per-slug so browsing multiple profiles doesn't mix people up.
+    if (mockProfileSections[key]) {
+      localStorage.setItem(`ornave_profile_sections_${key}`, JSON.stringify(mockProfileSections[key]));
     }
 
     if (profile.id) {
@@ -1009,7 +968,7 @@ export const ProfilePage: React.FC = () => {
                             </div>
                             
                             <div className="bento-item bento-recommendations">
-                              <ProfileRecommendations />
+                              <ProfileRecommendations sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
                             </div>
 
                             {!isViewingOther && (
@@ -1103,19 +1062,19 @@ export const ProfilePage: React.FC = () => {
 
                     {activeTab === 'experience' && (
                       <div className="tab-pane fade-in">
-                        <ProfileExperience />
-                        <ProfileEducation />
-                        <ProfileCertifications />
-                        <ProfileLanguages />
+                        <ProfileExperience sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                        <ProfileEducation sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                        <ProfileCertifications sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                        <ProfileLanguages sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
                       </div>
                     )}
 
                     {activeTab === 'skills' && (
                       <div className="tab-pane fade-in">
-                        <ProfileSkills />
-                        <ProfileProjects />
-                        <ProfileAwards />
-                        <ProfileVolunteering />
+                        <ProfileSkills sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                        <ProfileProjects sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                        <ProfileAwards sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                        <ProfileVolunteering sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
                       </div>
                     )}
 

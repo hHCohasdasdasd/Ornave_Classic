@@ -221,22 +221,38 @@ export const ProfileActivity: React.FC<ProfileActivityProps> = ({ posts = [], is
   );
 };
 
+// Shared: resume-style sections are namespaced per viewed profile (sectionsKey,
+// typically the profile's URL slug) so that browsing multiple people's profiles
+// doesn't leak one person's data onto another's. The owner's own profile (no
+// sectionsKey passed) keeps using the original flat key for backward compat
+// with ProfileEditPage.
+function getStoredSections(sectionsKey?: string): Record<string, any> {
+  const storageKey = sectionsKey ? `ornave_profile_sections_${sectionsKey}` : 'ornave_profile_sections';
+  const stored = localStorage.getItem(storageKey);
+  if (!stored) return {};
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return {};
+  }
+}
+
+interface SectionProps {
+  sectionsKey?: string;
+  isViewingOther?: boolean;
+}
+
 // Experience Section
-export const ProfileExperience: React.FC = () => {
+export const ProfileExperience: React.FC<SectionProps> = ({ sectionsKey, isViewingOther = false }) => {
   const navigate = useNavigate();
   const [experiences, setExperiences] = useState<Experience[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('ornave_profile_sections');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setExperiences(data.experiences || []);
-      } catch {}
-    }
-  }, []);
+    setExperiences(getStoredSections(sectionsKey).experiences || []);
+  }, [sectionsKey]);
 
   if (experiences.length === 0) {
+    if (isViewingOther) return null;
     return (
       <section className="profile-section profile-section--experience">
         <div className="profile-section__header">
@@ -254,13 +270,15 @@ export const ProfileExperience: React.FC = () => {
     <section className="profile-section profile-section--experience">
       <div className="profile-section__header">
         <h2 className="profile-section__title">Experience</h2>
-        <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
-          </svg>
-        </button>
+        {!isViewingOther && (
+          <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
+            </svg>
+          </button>
+        )}
       </div>
-      
+
       <div className="profile-section__items">
         {experiences.map(exp => (
           <div key={exp.id} className="profile-section__item">
@@ -282,21 +300,16 @@ export const ProfileExperience: React.FC = () => {
 };
 
 // Education Section
-export const ProfileEducation: React.FC = () => {
+export const ProfileEducation: React.FC<SectionProps> = ({ sectionsKey, isViewingOther = false }) => {
   const navigate = useNavigate();
   const [educations, setEducations] = useState<Education[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('ornave_profile_sections');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setEducations(data.educations || []);
-      } catch {}
-    }
-  }, []);
+    setEducations(getStoredSections(sectionsKey).educations || []);
+  }, [sectionsKey]);
 
   if (educations.length === 0) {
+    if (isViewingOther) return null;
     return (
       <section className="profile-section profile-section--education">
         <div className="profile-section__header">
@@ -315,13 +328,15 @@ export const ProfileEducation: React.FC = () => {
     <section className="profile-section profile-section--education">
       <div className="profile-section__header">
         <h2 className="profile-section__title">Education</h2>
-        <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
-          </svg>
-        </button>
+        {!isViewingOther && (
+          <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
+            </svg>
+          </button>
+        )}
       </div>
-      
+
       <div className="profile-section__items">
         {educations.map(edu => (
           <div key={edu.id} className="profile-section__item">
@@ -341,21 +356,16 @@ export const ProfileEducation: React.FC = () => {
 };
 
 // Skills Section
-export const ProfileSkills: React.FC = () => {
+export const ProfileSkills: React.FC<SectionProps> = ({ sectionsKey, isViewingOther = false }) => {
   const navigate = useNavigate();
   const [skills, setSkills] = useState<Skill[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('ornave_profile_sections');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setSkills(data.skills || []);
-      } catch {}
-    }
-  }, []);
+    setSkills(getStoredSections(sectionsKey).skills || []);
+  }, [sectionsKey]);
 
   if (skills.length === 0) {
+    if (isViewingOther) return null;
     return (
       <section className="profile-section profile-section--skills">
         <div className="profile-section__header">
@@ -374,13 +384,15 @@ export const ProfileSkills: React.FC = () => {
     <section className="profile-section profile-section--skills">
       <div className="profile-section__header">
         <h2 className="profile-section__title">Skills</h2>
-        <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
-          </svg>
-        </button>
+        {!isViewingOther && (
+          <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
+            </svg>
+          </button>
+        )}
       </div>
-      
+
       <div className="profile-skills__grid">
         {skills.map(skill => (
           <div key={skill.id} className="profile-skill__item">
@@ -418,19 +430,13 @@ export const ProfileInterests: React.FC = () => {
 };
 
 // Certifications Section
-export const ProfileCertifications: React.FC = () => {
+export const ProfileCertifications: React.FC<SectionProps> = ({ sectionsKey, isViewingOther = false }) => {
   const navigate = useNavigate();
   const [certifications, setCertifications] = useState<Certification[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('ornave_profile_sections');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setCertifications(data.certifications || []);
-      } catch {}
-    }
-  }, []);
+    setCertifications(getStoredSections(sectionsKey).certifications || []);
+  }, [sectionsKey]);
 
   if (certifications.length === 0) {
     return null;
@@ -440,13 +446,15 @@ export const ProfileCertifications: React.FC = () => {
     <section className="profile-section">
       <div className="profile-section__header">
         <h2 className="profile-section__title">Licenses & Certifications</h2>
-        <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
-          </svg>
-        </button>
+        {!isViewingOther && (
+          <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
+            </svg>
+          </button>
+        )}
       </div>
-      
+
       <div className="profile-section__items">
         {certifications.map(cert => (
           <div key={cert.id} className="profile-section__item">
@@ -470,19 +478,13 @@ export const ProfileCertifications: React.FC = () => {
 };
 
 // Languages Section
-export const ProfileLanguages: React.FC = () => {
+export const ProfileLanguages: React.FC<SectionProps> = ({ sectionsKey, isViewingOther = false }) => {
   const navigate = useNavigate();
   const [languages, setLanguages] = useState<Language[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('ornave_profile_sections');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setLanguages(data.languages || []);
-      } catch {}
-    }
-  }, []);
+    setLanguages(getStoredSections(sectionsKey).languages || []);
+  }, [sectionsKey]);
 
   if (languages.length === 0) {
     return null;
@@ -492,13 +494,15 @@ export const ProfileLanguages: React.FC = () => {
     <section className="profile-section">
       <div className="profile-section__header">
         <h2 className="profile-section__title">Languages</h2>
-        <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
-          </svg>
-        </button>
+        {!isViewingOther && (
+          <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
+            </svg>
+          </button>
+        )}
       </div>
-      
+
       <div className="profile-skills__grid">
         {languages.map(lang => (
           <div key={lang.id} className="profile-skill__item">
@@ -512,21 +516,16 @@ export const ProfileLanguages: React.FC = () => {
 };
 
 // Projects Section
-export const ProfileProjects: React.FC = () => {
+export const ProfileProjects: React.FC<SectionProps> = ({ sectionsKey, isViewingOther = false }) => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('ornave_profile_sections');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setProjects(data.projects || []);
-      } catch {}
-    }
-  }, []);
+    setProjects(getStoredSections(sectionsKey).projects || []);
+  }, [sectionsKey]);
 
   if (projects.length === 0) {
+    if (isViewingOther) return null;
     return (
       <section className="profile-section">
         <div className="profile-section__header">
@@ -544,13 +543,15 @@ export const ProfileProjects: React.FC = () => {
     <section className="profile-section">
       <div className="profile-section__header">
         <h2 className="profile-section__title">Projects</h2>
-        <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
-          </svg>
-        </button>
+        {!isViewingOther && (
+          <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
+            </svg>
+          </button>
+        )}
       </div>
-      
+
       <div className="profile-projects__grid">
         {projects.map(proj => (
           <div key={proj.id} className="profile-project__card">
@@ -585,19 +586,13 @@ export const ProfileProjects: React.FC = () => {
 };
 
 // Volunteering Section
-export const ProfileVolunteering: React.FC = () => {
+export const ProfileVolunteering: React.FC<SectionProps> = ({ sectionsKey, isViewingOther = false }) => {
   const navigate = useNavigate();
   const [volunteering, setVolunteering] = useState<Volunteering[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('ornave_profile_sections');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setVolunteering(data.volunteering || []);
-      } catch {}
-    }
-  }, []);
+    setVolunteering(getStoredSections(sectionsKey).volunteering || []);
+  }, [sectionsKey]);
 
   if (volunteering.length === 0) return null;
 
@@ -605,11 +600,13 @@ export const ProfileVolunteering: React.FC = () => {
     <section className="profile-section">
       <div className="profile-section__header">
         <h2 className="profile-section__title">Volunteering</h2>
-        <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
-          </svg>
-        </button>
+        {!isViewingOther && (
+          <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
+            </svg>
+          </button>
+        )}
       </div>
       <div className="profile-section__items">
         {volunteering.map(item => (
@@ -632,19 +629,13 @@ export const ProfileVolunteering: React.FC = () => {
 };
 
 // Honors & Awards Section
-export const ProfileAwards: React.FC = () => {
+export const ProfileAwards: React.FC<SectionProps> = ({ sectionsKey, isViewingOther = false }) => {
   const navigate = useNavigate();
   const [awards, setAwards] = useState<Award[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('ornave_profile_sections');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setAwards(data.awards || []);
-      } catch {}
-    }
-  }, []);
+    setAwards(getStoredSections(sectionsKey).awards || []);
+  }, [sectionsKey]);
 
   if (awards.length === 0) return null;
 
@@ -652,11 +643,13 @@ export const ProfileAwards: React.FC = () => {
     <section className="profile-section">
       <div className="profile-section__header">
         <h2 className="profile-section__title">Honors & Awards</h2>
-        <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
-          </svg>
-        </button>
+        {!isViewingOther && (
+          <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
+            </svg>
+          </button>
+        )}
       </div>
       <div className="profile-section__items">
         {awards.map(award => (
@@ -676,19 +669,13 @@ export const ProfileAwards: React.FC = () => {
 };
 
 // Recommendations Section
-export const ProfileRecommendations: React.FC = () => {
+export const ProfileRecommendations: React.FC<SectionProps> = ({ sectionsKey, isViewingOther = false }) => {
   const navigate = useNavigate();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('ornave_profile_sections');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setRecommendations(data.recommendations || []);
-      } catch {}
-    }
-  }, []);
+    setRecommendations(getStoredSections(sectionsKey).recommendations || []);
+  }, [sectionsKey]);
 
   if (recommendations.length === 0) return null;
 
@@ -696,11 +683,13 @@ export const ProfileRecommendations: React.FC = () => {
     <section className="profile-section">
       <div className="profile-section__header">
         <h2 className="profile-section__title">Recommendations</h2>
-        <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
-          </svg>
-        </button>
+        {!isViewingOther && (
+          <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.1 1.9L14.1 3.9L12.1 1.9zM2 11.5V13.5H4L11.5 6L9.5 4L2 11.5z"/>
+            </svg>
+          </button>
+        )}
       </div>
       <div className="profile-recommendations">
         {recommendations.map(rec => (

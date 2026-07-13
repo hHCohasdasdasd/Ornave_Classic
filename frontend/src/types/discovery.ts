@@ -9,6 +9,8 @@ export interface UserProfile {
   location?: string;
   bio?: string;
   profilePicture?: string;
+  bannerUrl?: string;
+  website?: string;
   mutualConnections?: number;
   isConnected?: boolean;
   isPartnered?: boolean;
