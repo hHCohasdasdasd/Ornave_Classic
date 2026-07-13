@@ -7,6 +7,44 @@
   position: relative;
 }
 
+/* ── Editorial variant: a light, magazine-dossier take on the profile page
+   — cream page, white cards, dark charcoal text. Scoped entirely to this
+   page (individual profiles only) via local custom-property overrides, so
+   every existing component that already reads var(--tech-*) / var(--color-*)
+   repaints correctly without per-component changes. The rest of the app
+   stays on the permanent dark theme. ── */
+.profile-page--editorial {
+  --color-bg: #f7f5ee;
+  --color-bg-alt: #f1eee3;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-card-text: #1c1a17;
+  --color-text: #1c1a17;
+  --color-muted: #756c5d;
+  --color-primary: #b08a4e;
+  --color-primary-hover: #96742d;
+  --color-secondary: rgba(176, 138, 78, 0.08);
+  --color-secondary-text: #1c1a17;
+  --color-border: rgba(28, 24, 18, 0.1);
+  --color-border-dark: rgba(28, 24, 18, 0.18);
+  --color-input-bg: rgba(28, 24, 18, 0.03);
+
+  --tech-blue: #1c1a17;
+  --tech-blue-glow: rgba(28, 24, 18, 0.08);
+  --tech-accent-gold: #b08a4e;
+  --tech-accent-emerald: #b08a4e;
+  --tech-card-bg: #ffffff;
+  --tech-border: rgba(28, 24, 18, 0.1);
+  --tech-border-dark: rgba(28, 24, 18, 0.18);
+  --tech-border-dim: rgba(28, 24, 18, 0.07);
+  --tech-text-main: #1c1a17;
+  --tech-text-dim: #756c5d;
+  --tech-accent-bg: rgba(176, 138, 78, 0.1);
+  --tech-bg: #f7f5ee;
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 10px 28px rgba(28, 24, 18, 0.08);
+}
+
 .profile-page__wrapper {
   max-width: 1300px;
   margin: 0 auto;
@@ -1314,5 +1352,478 @@
 .mutual-connections__label {
   font-size: 0.78rem;
   color: var(--tech-text-dim);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Editorial dossier widgets — the light magazine-style Overview layout.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.dossier-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.36fr) 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .dossier-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dossier-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.dossier-card {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: var(--shadow-card);
+}
+
+.dossier-card__title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 14px;
+}
+
+.dossier-card__footnote {
+  font-size: 0.76rem;
+  color: var(--tech-text-dim);
+  margin: 12px 0 0;
+}
+
+.dossier-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dossier-list__item {
+  font-size: 0.88rem;
+  color: var(--color-text);
+  padding-left: 16px;
+  position: relative;
+}
+
+.dossier-list__item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tech-accent-gold);
+}
+
+.dossier-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dossier-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.86rem;
+  color: var(--color-text);
+}
+
+.dossier-row__meta {
+  color: var(--tech-text-dim);
+}
+
+.dossier-contact-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dossier-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.84rem;
+  color: var(--color-text);
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.dossier-contact-row svg {
+  color: var(--tech-accent-gold);
+  flex-shrink: 0;
+}
+
+.dossier-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--tech-accent-gold);
+  border: 1px solid var(--tech-accent-gold);
+  color: #14140f;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.dossier-cta-btn:hover {
+  opacity: 0.88;
+}
+
+.dossier-cta-btn--outline {
+  background: transparent;
+  color: var(--tech-accent-gold);
+  width: auto;
+  margin-top: 14px;
+}
+
+.dossier-badges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dossier-badges__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.84rem;
+  color: var(--color-text);
+}
+
+.dossier-badges__item svg {
+  color: var(--tech-accent-gold);
+  flex-shrink: 0;
+}
+
+/* Featured achievement */
+.dossier-featured {
+  display: grid;
+  grid-template-columns: minmax(180px, 42%) 1fr;
+  gap: 0;
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  cursor: default;
+}
+
+.dossier-featured__image {
+  min-height: 200px;
+}
+
+.dossier-featured__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dossier-featured__body {
+  padding: 26px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.dossier-featured__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tech-accent-gold);
+  margin-bottom: 10px;
+}
+
+.dossier-featured__title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 8px;
+  line-height: 1.25;
+}
+
+.dossier-featured__role {
+  font-size: 0.85rem;
+  color: var(--tech-text-dim);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .dossier-featured {
+    grid-template-columns: 1fr;
+  }
+  .dossier-featured__image {
+    min-height: 160px;
+  }
+}
+
+/* Recent posts */
+.dossier-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dossier-post {
+  padding: 14px;
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.dossier-post:hover {
+  border-color: var(--tech-border-dark);
+}
+
+.dossier-post__excerpt {
+  font-size: 0.86rem;
+  color: var(--color-text);
+  margin: 0 0 8px;
+  line-height: 1.55;
+}
+
+.dossier-post__meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.76rem;
+  color: var(--tech-text-dim);
+}
+
+/* Portfolio gallery */
+.dossier-portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .dossier-portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dossier-portfolio-item {
+  margin: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--tech-border-dim);
+}
+
+.dossier-portfolio-item img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  display: block;
+}
+
+.dossier-portfolio-item figcaption {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dossier-portfolio-item__title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.dossier-portfolio-item__meta {
+  font-size: 0.7rem;
+  color: var(--tech-text-dim);
+}
+
+/* Companies */
+.dossier-company-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dossier-company-row__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 1px solid var(--tech-border-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--tech-accent-gold);
+}
+
+.dossier-company-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dossier-company-row__name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.dossier-company-row__name svg {
+  color: var(--tech-accent-gold);
+}
+
+.dossier-company-row__meta {
+  font-size: 0.76rem;
+  color: var(--tech-text-dim);
+}
+
+/* Timeline */
+.dossier-timeline {
+  position: relative;
+  padding-left: 18px;
+}
+
+.dossier-timeline::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: var(--tech-border);
+}
+
+.dossier-timeline__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 20px;
+}
+
+.dossier-timeline__item:last-child {
+  padding-bottom: 0;
+}
+
+.dossier-timeline__dot {
+  position: absolute;
+  left: -18px;
+  top: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tech-accent-gold);
+  box-shadow: 0 0 0 2px var(--tech-card-bg);
+}
+
+.dossier-timeline__period {
+  font-size: 0.72rem;
+  color: var(--tech-text-dim);
+  letter-spacing: 0.02em;
+}
+
+.dossier-timeline__title {
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.dossier-timeline__org {
+  font-size: 0.8rem;
+  color: var(--tech-text-dim);
+}
+
+/* Skill bars */
+.dossier-skill-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dossier-skill-bar__label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.dossier-skill-bar__track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--tech-border-dim);
+  overflow: hidden;
+}
+
+.dossier-skill-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--tech-accent-gold), #d8ba7c);
+}
+
+/* Trusted connections strip */
+.dossier-trusted__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dossier-trusted__avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--color-bg);
+  border: 1px solid var(--tech-border-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--tech-accent-gold);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.dossier-trusted__avatar:hover {
+  transform: translateY(-2px);
+}
+
+.dossier-trusted__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 

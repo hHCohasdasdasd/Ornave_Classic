@@ -1,8 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@/types';
-import { IconBuilding } from '@/components/ui/Icons';
+import { IconBuilding, IconVerified } from '@/components/ui/Icons';
 import './ProfileHeroCard.css';
+
+export interface HeroStat {
+  label: string;
+  value: string | number;
+}
 
 interface ProfileHeroCardProps {
   user: User;
@@ -20,6 +25,12 @@ interface ProfileHeroCardProps {
   type?: 'user' | 'firm';
   isPremium?: boolean;
   focusAreas?: string[];
+  editorial?: boolean;
+  verified?: boolean;
+  stats?: HeroStat[];
+  memberSince?: string;
+  memberNumber?: string;
+  memberTier?: string;
 }
 
 export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
@@ -35,13 +46,19 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
   type = 'user',
   isPremium = false,
   focusAreas,
+  editorial = false,
+  verified = false,
+  stats,
+  memberSince,
+  memberNumber,
+  memberTier = 'Ornave Member',
 }) => {
   const navigate = useNavigate();
   const initials = type === 'firm' ? (user?.firstName?.substring(0, 2) || 'F') : `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`;
   const headlineText = headline?.trim() || (type === 'firm' ? 'No description yet' : 'No headline yet');
 
   return (
-    <section className={`tech-hero ${isPremium ? 'tech-hero--premium' : ''}`}>
+    <section className={`tech-hero ${isPremium ? 'tech-hero--premium' : ''} ${editorial ? 'tech-hero--editorial' : ''}`}>
       <div className="tech-hero__banner">
         {bannerUrl ? (
           <img src={bannerUrl} alt="Profile Banner" className="tech-hero__banner-img" />
@@ -49,6 +66,13 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
           <div className="tech-hero__banner-grid"></div>
         )}
         <div className="tech-hero__banner-overlay"></div>
+        {editorial && memberNumber && (
+          <div className="tech-hero__member-card">
+            <span className="tech-hero__member-card-eyebrow">Ornave</span>
+            <span className="tech-hero__member-card-tier">{memberTier}</span>
+            <span className="tech-hero__member-card-number">Member No.<br />{memberNumber}</span>
+          </div>
+        )}
       </div>
       <div className="tech-hero__content-wrapper">
         <div className="tech-hero__biometric">
@@ -71,6 +95,7 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
                 {user?.firstName || ''} <span className="tech-hero__accent">{user?.lastName || ''}</span>
               </>
             )}
+            {verified && <IconVerified size={22} className="tech-hero__verified-badge" />}
           </h1>
           {!isViewingOther && (
             <button className="tech-hero__cmd-btn" onClick={() => navigate('/profile/edit?tab=info')}>
@@ -83,6 +108,13 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
           {headlineText}
         </p>
 
+        {editorial && memberSince && (
+          <p className="tech-hero__member-since">Member since {memberSince}</p>
+        )}
+      </div>
+    </div>
+
+    <div className="tech-hero__extra">
         {focusAreas && focusAreas.length > 0 && (
           <div className="tech-hero__focus-tags">
             {focusAreas.map((tag) => (
@@ -91,26 +123,37 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
           </div>
         )}
 
-        <div className="tech-hero__metrics">
-          <div className="tech-metric">
-            <span className="tech-metric__label">Location</span>
-            <span className="tech-metric__value">{location || 'Not set'}</span>
+        {editorial && stats && stats.length > 0 ? (
+          <div className="tech-hero__stats-row">
+            {stats.map((s) => (
+              <div key={s.label} className="tech-hero__stat">
+                <span className="tech-hero__stat-value">{s.value}</span>
+                <span className="tech-hero__stat-label">{s.label}</span>
+              </div>
+            ))}
           </div>
-          <div className="tech-metric">
-            <span className="tech-metric__label">Connections</span>
-            <span className="tech-metric__value">{connectionCount}</span>
+        ) : (
+          <div className="tech-hero__metrics">
+            <div className="tech-metric">
+              <span className="tech-metric__label">Location</span>
+              <span className="tech-metric__value">{location || 'Not set'}</span>
+            </div>
+            <div className="tech-metric">
+              <span className="tech-metric__label">Connections</span>
+              <span className="tech-metric__value">{connectionCount}</span>
+            </div>
+            <div className="tech-metric">
+              <span className="tech-metric__label">Type</span>
+              <span className="tech-metric__value">{type === 'firm' ? 'Company' : 'Individual'}</span>
+            </div>
           </div>
-          <div className="tech-metric">
-            <span className="tech-metric__label">Type</span>
-            <span className="tech-metric__value">{type === 'firm' ? 'Company' : 'Individual'}</span>
-          </div>
-        </div>
+        )}
 
         <div className="tech-hero__links">
+          {location && <span className="tech-link tech-link--static">{location}</span>}
           {githubUrl && <a href={githubUrl} target="_blank" rel="noopener noreferrer" className="tech-link">GitHub</a>}
           {twitterUrl && <a href={twitterUrl} target="_blank" rel="noopener noreferrer" className="tech-link">Twitter</a>}
         </div>
-      </div>
     </div>
     </section>
   );

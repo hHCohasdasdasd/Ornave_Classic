@@ -186,3 +186,23 @@ export const IconVerified: React.FC<IconProps> = ({ size = 16, className }) => (
     <path d="M7 10.2l2 2 4-4.4" stroke="#111111" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
+
+export const IconMail: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <rect x="2.5" y="4.5" width="15" height="11" rx="1.5" />
+    <path d="M3 5.5 10 11l7-5.5" />
+  </svg>
+);
+
+export const IconPhone: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M4.5 3h2.7l1 3.4-1.7 1.4a10 10 0 0 0 4.7 4.7l1.4-1.7 3.4 1v2.7a1.5 1.5 0 0 1-1.6 1.5A13.5 13.5 0 0 1 3 5.6 1.5 1.5 0 0 1 4.5 3Z" />
+  </svg>
+);
+
+export const IconDownload: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M10 3v9.5M6.3 9 10 12.7 13.7 9" />
+    <path d="M3.5 15h13" />
+  </svg>
+);

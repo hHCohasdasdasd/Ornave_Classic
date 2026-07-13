@@ -50,6 +50,126 @@
   pointer-events: none;
 }
 
+/* ── Editorial-only additions: membership card, verified badge, stat row ── */
+.tech-hero__member-card {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: 16px 22px;
+  border-radius: 10px;
+  background: linear-gradient(155deg, #d8ba7c 0%, #b08a4e 55%, #96742d 100%);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  min-width: 150px;
+}
+
+.tech-hero__member-card-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(20, 16, 8, 0.65);
+  font-weight: 600;
+}
+
+.tech-hero__member-card-tier {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #14140f;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 2px 0 8px;
+}
+
+.tech-hero__member-card-number {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(20, 16, 8, 0.7);
+  line-height: 1.6;
+}
+
+.tech-hero__member-since {
+  font-size: 0.8rem;
+  color: var(--tech-text-dim);
+  margin: 0.1rem 0 0.6rem;
+}
+
+.tech-hero__verified-badge {
+  display: inline-block;
+  color: var(--tech-accent-gold);
+  vertical-align: middle;
+  margin-left: 8px;
+  transform: translateY(-3px);
+}
+
+.tech-hero__stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 1rem 0 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--tech-border-dim);
+}
+
+.tech-hero__stat {
+  flex: 1 1 auto;
+  min-width: 108px;
+  padding: 0 1.5rem;
+  text-align: center;
+  border-right: 1px solid var(--tech-border-dim);
+}
+
+.tech-hero__stat:first-child {
+  padding-left: 0;
+  text-align: left;
+}
+
+.tech-hero__stat:last-child {
+  border-right: none;
+}
+
+.tech-hero__stat-value {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.tech-hero__stat-label {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--tech-text-dim);
+  margin-top: 2px;
+}
+
+.tech-link--static {
+  color: var(--tech-text-dim);
+  cursor: default;
+}
+
+@media (max-width: 900px) {
+  .tech-hero__member-card {
+    display: none;
+  }
+
+  .tech-hero__stat {
+    text-align: left;
+    padding: 0 1.25rem 0 0;
+    border-right: none;
+    min-width: 45%;
+  }
+}
+
 .tech-hero__content-wrapper {
   display: flex;
   align-items: flex-end;
@@ -114,6 +234,10 @@
   display: flex;
   flex-direction: column;
   padding-bottom: 0.25rem;
+}
+
+.tech-hero__extra {
+  padding: 0 2.75rem 2rem;
 }
 
 .tech-hero__header {
@@ -267,5 +391,9 @@
 
   .tech-hero__name {
     font-size: 1.8rem;
+  }
+
+  .tech-hero__extra {
+    padding: 0 1.5rem 1.5rem;
   }
 }

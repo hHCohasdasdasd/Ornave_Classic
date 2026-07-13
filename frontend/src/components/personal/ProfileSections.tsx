@@ -6,7 +6,8 @@ import {
   IconBriefcase, IconGraduationCap, IconTrophy, IconHandshake, IconGlobe,
   IconLink, IconSpark, IconChart, IconUsers, IconLaurel, IconCard, IconBuilding,
 } from '@/components/ui/Icons';
-import { MockHighlight } from '@/data/mockProfileSections';
+import { MockHighlight, MockPortfolioItem, MockSkill as MockSkillType } from '@/data/mockProfileSections';
+import { IconMail, IconPhone, IconVerified } from '@/components/ui/Icons';
 
 interface Experience {
   id: string;
@@ -1010,5 +1011,244 @@ export const ProfileServices: React.FC<ProfileServicesProps> = ({ companyId, isO
         </div>
       )}
     </section>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// Editorial dossier widgets — the light, magazine-style Overview layout.
+// Presentation-only: they take plain derived data as props rather than a
+// sectionsKey, since the caller (ProfilePage) already has a single resolved
+// mockProfileSections record to draw from.
+// ══════════════════════════════════════════════════════════════════════════
+
+export const ProfileExpertiseList: React.FC<{ items?: string[] }> = ({ items }) => {
+  if (!items || items.length === 0) return null;
+  return (
+    <div className="dossier-card">
+      <h4 className="dossier-card__title">Expertise</h4>
+      <ul className="dossier-list">
+        {items.map((item) => (
+          <li key={item} className="dossier-list__item">{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export const ProfileLanguagesList: React.FC<{ languages?: { id: string; name: string; proficiency?: string }[] }> = ({ languages }) => {
+  if (!languages || languages.length === 0) return null;
+  return (
+    <div className="dossier-card">
+      <h4 className="dossier-card__title">Languages</h4>
+      <div className="dossier-rows">
+        {languages.map((l) => (
+          <div key={l.id} className="dossier-row">
+            <span>{l.name}</span>
+            <span className="dossier-row__meta">{l.proficiency}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export const ProfileContactCard: React.FC<{
+  website?: string;
+  phone?: string;
+  onScheduleMeeting?: () => void;
+}> = ({ website, phone, onScheduleMeeting }) => {
+  if (!website && !phone) return null;
+  return (
+    <div className="dossier-card">
+      <h4 className="dossier-card__title">Contact</h4>
+      <div className="dossier-contact-rows">
+        {phone && (
+          <div className="dossier-contact-row"><IconPhone size={15} /><span>{phone}</span></div>
+        )}
+        {website && (
+          <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className="dossier-contact-row">
+            <IconLink size={15} /><span>{website}</span>
+          </a>
+        )}
+      </div>
+      {onScheduleMeeting && (
+        <button className="dossier-cta-btn" onClick={onScheduleMeeting}>
+          <IconMail size={14} /> Schedule Meeting
+        </button>
+      )}
+    </div>
+  );
+};
+
+export const ProfileMembershipCard: React.FC<{ tier?: string; memberSince?: string }> = ({ tier, memberSince }) => {
+  if (!tier) return null;
+  const badges = ['Verified Professional', 'Executive Circle', 'Priority Support'];
+  return (
+    <div className="dossier-card">
+      <h4 className="dossier-card__title">Membership</h4>
+      <ul className="dossier-badges">
+        <li className="dossier-badges__item"><IconVerified size={15} />{tier}</li>
+        {badges.map((b) => (
+          <li key={b} className="dossier-badges__item"><IconLaurel size={15} />{b}</li>
+        ))}
+      </ul>
+      {memberSince && <p className="dossier-card__footnote">Member since {memberSince}</p>}
+    </div>
+  );
+};
+
+export const ProfileFeaturedAchievement: React.FC<{
+  image?: string;
+  title?: string;
+  role?: string;
+  onView?: () => void;
+}> = ({ image, title, role, onView }) => {
+  if (!image || !title) return null;
+  return (
+    <section className="dossier-featured">
+      <div className="dossier-featured__image"><img src={image} alt={title} /></div>
+      <div className="dossier-featured__body">
+        <span className="dossier-featured__eyebrow"><IconSpark size={13} /> Featured Achievement</span>
+        <h3 className="dossier-featured__title">{title}</h3>
+        {role && <p className="dossier-featured__role">Role: {role}</p>}
+        {onView && <button className="dossier-cta-btn dossier-cta-btn--outline" onClick={onView}>View Project</button>}
+      </div>
+    </section>
+  );
+};
+
+export const ProfileRecentPosts: React.FC<{ posts?: { id: string; content: string; reactions?: { likes: number; comments: number } }[] }> = ({ posts = [] }) => {
+  const navigate = useNavigate();
+  if (!posts || posts.length === 0) return null;
+  return (
+    <div className="dossier-card">
+      <h4 className="dossier-card__title">Recent Posts</h4>
+      <div className="dossier-posts">
+        {posts.slice(0, 3).map((p) => (
+          <div key={p.id} className="dossier-post" onClick={() => navigate(`/posts/${p.id}`)}>
+            <p className="dossier-post__excerpt">{p.content.length > 140 ? `${p.content.slice(0, 140).trim()}…` : p.content}</p>
+            <div className="dossier-post__meta">
+              <span>♥ {p.reactions?.likes ?? 0}</span>
+              <span>💬 {p.reactions?.comments ?? 0}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export const ProfilePortfolioGallery: React.FC<{ items?: MockPortfolioItem[] }> = ({ items }) => {
+  if (!items || items.length === 0) return null;
+  return (
+    <div className="dossier-card">
+      <h4 className="dossier-card__title">Portfolio Highlights</h4>
+      <div className="dossier-portfolio-grid">
+        {items.map((item) => (
+          <figure key={item.id} className="dossier-portfolio-item">
+            <img src={item.image} alt={item.title} loading="lazy" />
+            <figcaption>
+              <span className="dossier-portfolio-item__title">{item.title}</span>
+              <span className="dossier-portfolio-item__meta">{[item.location, item.year].filter(Boolean).join(' · ')}</span>
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export interface DerivedCompany { name: string; role: string; years: string }
+
+export const ProfileCompaniesList: React.FC<{ companies?: DerivedCompany[] }> = ({ companies }) => {
+  if (!companies || companies.length === 0) return null;
+  return (
+    <div className="dossier-card">
+      <h4 className="dossier-card__title">Companies</h4>
+      <div className="dossier-rows">
+        {companies.map((c) => (
+          <div key={c.name} className="dossier-company-row">
+            <div className="dossier-company-row__avatar">{c.name.slice(0, 2).toUpperCase()}</div>
+            <div className="dossier-company-row__info">
+              <span className="dossier-company-row__name">{c.name} <IconVerified size={12} /></span>
+              <span className="dossier-company-row__meta">{c.role}</span>
+              <span className="dossier-company-row__meta">{c.years}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export interface TimelineEntry { id: string; period: string; title: string; org: string }
+
+export const ProfileTimeline: React.FC<{ entries?: TimelineEntry[] }> = ({ entries }) => {
+  if (!entries || entries.length === 0) return null;
+  return (
+    <div className="dossier-card">
+      <h4 className="dossier-card__title">Experience Timeline</h4>
+      <div className="dossier-timeline">
+        {entries.map((e) => (
+          <div key={e.id} className="dossier-timeline__item">
+            <span className="dossier-timeline__dot" />
+            <span className="dossier-timeline__period">{e.period}</span>
+            <span className="dossier-timeline__title">{e.title}</span>
+            <span className="dossier-timeline__org">{e.org}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const skillLevelToPercent = (level?: string) => {
+  switch ((level || '').toLowerCase()) {
+    case 'expert': return 95;
+    case 'advanced': return 80;
+    case 'intermediate': return 60;
+    case 'beginner': return 35;
+    default: return 50;
+  }
+};
+
+export const ProfileSkillBars: React.FC<{ skills?: MockSkillType[] }> = ({ skills }) => {
+  if (!skills || skills.length === 0) return null;
+  return (
+    <div className="dossier-card">
+      <h4 className="dossier-card__title">Expertise &amp; Skills</h4>
+      <div className="dossier-skill-bars">
+        {skills.slice(0, 8).map((s) => (
+          <div key={s.id} className="dossier-skill-bar">
+            <span className="dossier-skill-bar__label">{s.name}</span>
+            <div className="dossier-skill-bar__track">
+              <div className="dossier-skill-bar__fill" style={{ width: `${skillLevelToPercent(s.level)}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export const ProfileTrustedConnections: React.FC<{ connections?: any[] }> = ({ connections = [] }) => {
+  const navigate = useNavigate();
+  if (!connections || connections.length === 0) return null;
+  return (
+    <div className="dossier-card dossier-trusted">
+      <h4 className="dossier-card__title">Trusted Connections</h4>
+      <div className="dossier-trusted__row">
+        {connections.slice(0, 10).map((c, i) => (
+          <div
+            key={c.id || i}
+            className="dossier-trusted__avatar"
+            onClick={() => c.id && navigate(`/profile?view=${c.id}`)}
+            title={c.name}
+          >
+            {c.avatarUrl ? <img src={c.avatarUrl} alt={c.name} /> : (c.name || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };

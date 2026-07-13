@@ -62,6 +62,14 @@ export interface MockRecommendation {
   date: string;
 }
 
+export interface MockPortfolioItem {
+  id: string;
+  image: string;
+  title: string;
+  location?: string;
+  year?: string;
+}
+
 export interface MockProfileSections {
   experiences: MockExperience[];
   educations: MockEducation[];
@@ -71,6 +79,7 @@ export interface MockProfileSections {
   highlights?: MockHighlight[];
   focusAreas?: string[];
   recommendations?: MockRecommendation[];
+  portfolio?: MockPortfolioItem[];
 }
 
 export const mockProfileSections: Record<string, MockProfileSections> = {
@@ -79,6 +88,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '20+', label: 'Years in Enterprise Tech' },
       { value: '150+', label: 'Engineers Led' },
       { value: '$10M+', label: 'Cloud Migration Savings' },
+    ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=450&fit=crop', title: 'Nexus Flow Cloud Migration', location: 'Berlin, Germany', year: '2023' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=450&fit=crop', title: 'Global Logistics Tech Platform Rebuild', location: 'London, UK', year: '2019' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&h=450&fit=crop', title: 'Zero-Trust Security Rollout', location: 'Berlin, Germany', year: '2021' },
     ],
     focusAreas: ['Enterprise Architecture', 'AI Strategy', 'Cloud Infrastructure', 'Distributed Systems'],
     recommendations: [
@@ -147,6 +161,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '40%', label: 'Delay Reduction Achieved' },
       { value: '14', label: 'Years in Global Operations' },
       { value: '$200M', label: 'Annual Freight Managed' },
+    ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1494412651409-8963ce7935a7?w=600&h=450&fit=crop', title: 'Fortune 500 Supply Chain Audit', location: 'Chicago, IL', year: '2025' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=600&h=450&fit=crop', title: 'Nearshoring Strategy for 3 Manufacturers', location: 'Monterrey, Mexico', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=450&fit=crop', title: 'Supplier Scorecard Program', location: 'Chicago, IL', year: '2023' },
     ],
     focusAreas: ['Supply Chain Strategy', 'Supplier Risk', 'Nearshoring', 'Sustainability'],
     recommendations: [
@@ -229,6 +248,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '10+', label: 'Years in Product Design' },
       { value: '12', label: 'Countries Shipped To' },
     ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=450&fit=crop', title: 'Robotics Monitoring Dashboard Redesign', location: 'San Francisco, CA', year: '2025' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=450&fit=crop', title: 'Factory-Floor Onboarding Flow', location: 'San Francisco, CA', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=600&h=450&fit=crop', title: 'Industrial Design System v2', location: 'San Francisco, CA', year: '2023' },
+    ],
     focusAreas: ['Industrial UX', 'Design Systems', 'User Research'],
     recommendations: [
       {
@@ -297,6 +321,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '6', label: 'Production Sites Overseen' },
       { value: '15', label: 'Years on Factory Floors' },
       { value: '30+', label: 'Roles Redesigned' },
+    ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1565043666747-69f6646db940?w=600&h=450&fit=crop', title: 'Cobot Cell Rollout, 3 Plants', location: 'Berlin, Germany', year: '2025' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&h=450&fit=crop', title: 'Collaborative Automation Program', location: 'Stuttgart, Germany', year: '2023' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=450&fit=crop', title: 'Digital Transformation Roadmap', location: 'Berlin, Germany', year: '2021' },
     ],
     focusAreas: ['Digital Transformation', 'Industry 4.0', 'Change Management'],
     recommendations: [
@@ -373,6 +402,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '120K', label: 'Tonnes CO₂ Offset Annually' },
       { value: '12', label: 'Years in Climate Policy' },
     ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600&h=450&fit=crop', title: '40th Solar Installation, 280 MW Added', location: 'Valencia, Spain', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=600&h=450&fit=crop', title: 'European Clean Energy Forum Keynote', location: 'Berlin, Germany', year: '2025' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=450&fit=crop', title: 'Single-Metric ESG Reporting Framework', location: 'Madrid, Spain', year: '2024' },
+    ],
     focusAreas: ['Renewable Energy', 'Climate Policy', 'ESG Strategy'],
     recommendations: [
       {
@@ -444,6 +478,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '600M', label: 'People in Target Market' },
       { value: '3', label: 'Prior Exits' },
     ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=600&h=450&fit=crop', title: 'Series A: $12M Payment Rails Expansion', location: 'Lagos, Nigeria', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=450&fit=crop', title: '2G/USSD Payment Infrastructure', location: 'Lagos, Nigeria', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=450&fit=crop', title: '14-Language Payment Flow Launch', location: 'Lagos, Nigeria', year: '2023' },
+    ],
     focusAreas: ['Fintech Infrastructure', 'Emerging Markets', 'Payments'],
     recommendations: [
       {
@@ -511,6 +550,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '8', label: 'Hospitals in Published Study' },
       { value: '4', label: 'Countries Validated Across' },
       { value: '±2%', label: 'Accuracy vs. Centralized Training' },
+    ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&h=450&fit=crop', title: 'Federated Learning Pipeline, 3-Country Rollout', location: 'Bangalore, India', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=450&fit=crop', title: 'Privacy-Preserving ML Training Infra', location: 'Bangalore, India', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&h=450&fit=crop', title: 'Applied Research: Logistics Forecasting', location: 'Bangalore, India', year: '2023' },
     ],
     focusAreas: ['Federated Learning', 'Healthcare AI', 'Applied Research'],
     recommendations: [
@@ -589,6 +633,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '€10M', label: 'ARR Scaled To' },
       { value: '3', label: 'SaaS Companies Scaled' },
     ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=450&fit=crop', title: 'Lead Scoring & Pipeline Rebuild', location: 'Paris, France', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=600&h=450&fit=crop', title: '0 to $10M ARR Growth Program', location: 'Paris, France', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=450&fit=crop', title: 'Go-to-Market Playbook for Seed Startups', location: 'Paris, France', year: '2022' },
+    ],
     focusAreas: ['Revenue Operations', 'Go-to-Market', 'B2B Growth'],
     recommendations: [
       {
@@ -656,6 +705,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '45→4 min', label: 'Robot Setup Time Cut' },
       { value: '200+', label: 'Cobots Deployed' },
     ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&h=450&fit=crop', title: 'Cobot Cell: 30% Cycle-Time Reduction', location: 'Tokyo, Japan', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1565043666747-69f6646db940?w=600&h=450&fit=crop', title: 'Mechatronics Patent Portfolio (8 Filed)', location: 'Tokyo, Japan', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=450&fit=crop', title: 'AI-Mechanical Systems Integration Lab', location: 'Tokyo, Japan', year: '2022' },
+    ],
     focusAreas: ['Robotics Engineering', 'Mechatronics', 'Cobots'],
     recommendations: [
       {
@@ -722,6 +776,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '+400bps', label: 'Gross Margin Expansion' },
       { value: '-35%', label: 'Support Tickets Reduced' },
       { value: '10+', label: 'Years in Startup Finance' },
+    ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=600&h=450&fit=crop', title: 'Series B Unit Economics Model', location: 'Warsaw, Poland', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=450&fit=crop', title: 'Financial Infrastructure for Hypergrowth', location: 'Warsaw, Poland', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=600&h=450&fit=crop', title: 'Fundraising Readiness Program', location: 'Warsaw, Poland', year: '2023' },
     ],
     focusAreas: ['Strategic Finance', 'Unit Economics', 'Fundraising'],
     recommendations: [
@@ -793,6 +852,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '15', label: 'Years in Trade Compliance' },
       { value: 'Gulf', label: 'Region Specialist' },
     ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1494412651409-8963ce7935a7?w=600&h=450&fit=crop', title: '4-Jurisdiction Customs Compliance Overhaul', location: 'Dubai, UAE', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=600&h=450&fit=crop', title: 'Cross-Border Trade Resilience Program', location: 'Dubai, UAE', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=600&h=450&fit=crop', title: 'Global Trade Compliance Framework', location: 'Dubai, UAE', year: '2022' },
+    ],
     focusAreas: ['Trade Compliance', 'Customs', 'Supply Chain Resilience'],
     recommendations: [
       {
@@ -863,6 +927,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '12', label: 'Years in B2B Branding' },
       { value: '6', label: 'Weeks: Sprint to Launch' },
     ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=450&fit=crop', title: 'B2B Positioning Workshop & Relaunch', location: 'Lyon, France', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=600&h=450&fit=crop', title: 'Brand Narrative Overhaul, 12 Markets', location: 'Lyon, France', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=450&fit=crop', title: 'Story-to-Pipeline Sales Enablement Kit', location: 'Lyon, France', year: '2022' },
+    ],
     focusAreas: ['Brand Strategy', 'B2B Positioning', 'Storytelling'],
     recommendations: [
       {
@@ -922,6 +991,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '0', label: 'Downtime on Region Migration' },
       { value: '10+', label: 'Years at Google/AWS' },
       { value: '3x', label: 'Volume Cost-Modeled Pre-Launch' },
+    ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=450&fit=crop', title: 'Training Infra: 14h to 2h Job Time', location: 'Seoul, South Korea', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&h=450&fit=crop', title: 'Distributed Systems Reliability Program', location: 'Seoul, South Korea', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=450&fit=crop', title: 'Resilient Cloud Architecture Rebuild', location: 'Seoul, South Korea', year: '2022' },
     ],
     focusAreas: ['Cloud Architecture', 'Distributed Systems', 'SRE'],
     recommendations: [
@@ -1002,6 +1076,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '7', label: 'Years in Digital Health' },
       { value: '3x', label: 'AI-Assisted Radiology Capacity' },
     ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&h=450&fit=crop', title: 'Health Informatics Standards Advisory', location: 'Riyadh, Saudi Arabia', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=450&fit=crop', title: 'Telemedicine Platform Compliance Rebuild', location: 'Riyadh, Saudi Arabia', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=450&fit=crop', title: 'Digital Health Equity Initiative', location: 'Riyadh, Saudi Arabia', year: '2023' },
+    ],
     focusAreas: ['Digital Health', 'Telemedicine', 'Health Informatics'],
     recommendations: [
       {
@@ -1076,6 +1155,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '15+', label: 'Years in Venture Capital' },
       { value: '#41', label: 'Latest Bet: Trade Finance ERP' },
     ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=600&h=450&fit=crop', title: '40+ Company Investment Portfolio', location: 'London, UK', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=600&h=450&fit=crop', title: 'Series A Lead: Fintech Infrastructure', location: 'London, UK', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=450&fit=crop', title: 'Climate Tech Growth Equity Fund', location: 'London, UK', year: '2022' },
+    ],
     focusAreas: ['Venture Capital', 'B2B SaaS', 'Growth Equity'],
     recommendations: [
       {
@@ -1141,6 +1225,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '20–30%', label: 'Attrition Reduction' },
       { value: '3', label: 'Hypergrowth Companies' },
       { value: 'Global', label: 'Culture Programs Built' },
+    ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=450&fit=crop', title: 'Performance Review Redesign', location: 'São Paulo, Brazil', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=450&fit=crop', title: 'Culture Design Playbook, 3 Offices', location: 'São Paulo, Brazil', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=600&h=450&fit=crop', title: 'Workforce Analytics Rollout', location: 'São Paulo, Brazil', year: '2023' },
     ],
     focusAreas: ['People Operations', 'Workforce Analytics', 'Culture Design'],
     recommendations: [
@@ -1208,6 +1297,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '15', label: 'Years in Security' },
       { value: '<4 hrs', label: 'Incident Detection Target' },
       { value: '2', label: 'Elite Certs (CISSP / OSCP)' },
+    ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&h=450&fit=crop', title: 'Incident Response Tabletop Program', location: 'Amsterdam, Netherlands', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=450&fit=crop', title: 'Enterprise Threat Intelligence Platform', location: 'Amsterdam, Netherlands', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=450&fit=crop', title: 'Security Governance Framework', location: 'Amsterdam, Netherlands', year: '2022' },
     ],
     focusAreas: ['Threat Intelligence', 'Incident Response', 'Security Governance'],
     recommendations: [
@@ -1280,6 +1374,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '+34%', label: 'Cross-border Volume YoY' },
       { value: '15', label: 'Asian Markets Navigated' },
       { value: '10+', label: 'Years in E-commerce' },
+    ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1494412651409-8963ce7935a7?w=600&h=450&fit=crop', title: '3-Marketplace Launch in One Quarter', location: 'Shanghai, China', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=600&h=450&fit=crop', title: 'Cross-Border Fulfillment Network', location: 'Shanghai, China', year: '2024' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=600&h=450&fit=crop', title: 'SME Market Entry Program, Asia-West', location: 'Shanghai, China', year: '2023' },
     ],
     focusAreas: ['Cross-border E-commerce', 'Market Entry', 'Localization'],
     recommendations: [
@@ -1354,6 +1453,11 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
       { value: '140%', label: 'of H1 2026 Quota' },
       { value: '6–12', label: 'Stakeholders per Deal' },
       { value: '12+', label: 'Years in Enterprise Sales' },
+    ],
+    portfolio: [
+      { id: 'pf-1', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=450&fit=crop', title: '140% of H1 2026 Quota', location: 'Lisbon, Portugal', year: '2026' },
+      { id: 'pf-2', image: 'https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=600&h=450&fit=crop', title: 'EMEA Deal Review Ritual Rollout', location: 'Lisbon, Portugal', year: '2025' },
+      { id: 'pf-3', image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=450&fit=crop', title: 'Enterprise Sales Team Build-out', location: 'Lisbon, Portugal', year: '2023' },
     ],
     focusAreas: ['Enterprise Sales', 'Deal Strategy', 'EMEA'],
     recommendations: [
