@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@/types';
+import { IconBuilding } from '@/components/ui/Icons';
 import './ProfileHeroCard.css';
 
 interface ProfileHeroCardProps {
@@ -53,7 +54,7 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
           <div className="tech-hero__avatar">
             {avatarUrl ? (
               <img src={avatarUrl} alt={user?.firstName} className="tech-hero__avatar-img" />
-            ) : (type === 'firm' ? '🏢' : initials)}
+            ) : (type === 'firm' ? <IconBuilding size={44} /> : initials)}
           </div>
         </div>
       </div>

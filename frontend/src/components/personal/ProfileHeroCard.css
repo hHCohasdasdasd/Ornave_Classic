@@ -3,20 +3,20 @@
   flex-direction: column;
   background: var(--tech-card-bg);
   border: 1px solid var(--tech-border);
-  border-radius: var(--radius-card, 14px);
+  border-radius: var(--radius-card, 16px);
   position: relative;
   overflow: hidden;
   margin-bottom: 2rem;
   padding: 0;
+  box-shadow: var(--shadow-card);
 }
 
 .tech-hero__banner {
-  height: 200px;
+  height: 240px;
   width: 100%;
   position: relative;
   overflow: hidden;
   background-color: var(--tech-bg);
-  border-bottom: 1px solid var(--tech-border-dim);
 }
 
 .tech-hero__banner-img {
@@ -28,31 +28,36 @@
   left: 0;
 }
 
+/* A restrained monogram + hairline pattern for people without a cover photo —
+   quiet texture rather than an empty void. */
 .tech-hero__banner-grid {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(231, 223, 201, 0.08), transparent 60%);
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 100% at 85% 0%, rgba(198, 161, 91, 0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 80% at 10% 100%, rgba(198, 161, 91, 0.07) 0%, transparent 60%),
+    repeating-linear-gradient(135deg, rgba(246, 243, 237, 0.025) 0px, rgba(246, 243, 237, 0.025) 1px, transparent 1px, transparent 40px);
 }
 
 .tech-hero__banner-overlay {
   position: absolute;
-  top: 0;
+  bottom: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.2), var(--tech-card-bg));
+  height: 55%;
+  background: linear-gradient(to bottom, transparent, var(--tech-card-bg));
   z-index: 1;
+  pointer-events: none;
 }
 
 .tech-hero__content-wrapper {
   display: flex;
-  gap: 2.5rem;
-  padding: 2.5rem;
+  align-items: flex-end;
+  gap: 2rem;
+  padding: 0 2.75rem 2.5rem;
   position: relative;
   z-index: 5;
+  margin-top: -64px;
 }
 
 .tech-hero__biometric {
@@ -60,16 +65,16 @@
 }
 
 .tech-hero__avatar-frame {
-  width: 130px;
-  height: 130px;
+  width: 152px;
+  height: 152px;
   border-radius: 50%;
-  border: 3px solid var(--tech-card-bg);
-  box-shadow: 0 0 0 1px var(--tech-border);
+  border: 4px solid var(--tech-card-bg);
+  box-shadow: 0 0 0 1px rgba(198, 161, 91, 0.4), 0 12px 28px rgba(0, 0, 0, 0.45);
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--tech-blue);
+  background: var(--tech-accent-gold);
   overflow: hidden;
 }
 
@@ -78,17 +83,18 @@
 }
 
 .tech-hero__avatar-frame--premium {
-  box-shadow: 0 0 0 2px var(--tech-accent-gold);
+  box-shadow: 0 0 0 2px var(--tech-accent-gold), 0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
 .tech-hero__avatar-frame--firm {
-  border-radius: 16px;
-  box-shadow: 0 0 0 1px var(--tech-blue);
+  border-radius: 24px;
+  box-shadow: 0 0 0 1px rgba(198, 161, 91, 0.4), 0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
 .tech-hero__avatar {
   font-size: 3rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 600;
   color: #14140f;
   width: 100%;
   height: 100%;
@@ -107,75 +113,83 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  padding-bottom: 0.25rem;
 }
 
 .tech-hero__header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  border-bottom: 1px solid var(--tech-border-dim);
-  padding-bottom: 0.75rem;
-  margin-bottom: 1rem;
+  align-items: flex-end;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0.4rem;
 }
 
 .tech-hero__name {
-  font-size: 2rem;
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  line-height: 1.1;
   margin: 0;
   color: var(--color-text);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .tech-hero__accent {
-  color: var(--tech-blue);
+  color: var(--color-text);
 }
 
 .tech-hero__cmd-btn {
-  background: var(--tech-blue);
-  border: 1px solid var(--tech-blue);
-  border-radius: var(--radius-button, 10px);
+  background: var(--tech-accent-gold);
+  border: 1px solid var(--tech-accent-gold);
+  border-radius: 999px;
   color: #14140f;
-  padding: 0.5rem 1.2rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .tech-hero__cmd-btn:hover {
-  background: var(--color-primary-hover, #082e22);
+  background: #d8be84;
+  border-color: #d8be84;
 }
 
 .tech-hero__headline {
   color: var(--color-muted);
-  margin: 0.5rem 0 1.5rem 0;
-  font-size: 1rem;
+  margin: 0.4rem 0 1.75rem 0;
+  font-size: 1.05rem;
   line-height: 1.5;
 }
 
 .tech-hero__metrics {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  display: flex;
+  gap: 2.5rem;
   margin-bottom: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--tech-border-dim);
 }
 
 .tech-metric {
-  background: rgba(246, 243, 237, 0.03);
-  border-radius: 10px;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--tech-border-dim);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
 }
 
 .tech-metric__label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--tech-text-dim);
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.4rem;
 }
 
 .tech-metric__value {
   display: block;
-  font-size: 0.95rem;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
   color: var(--color-text);
   font-weight: 600;
 }
@@ -195,8 +209,8 @@
 }
 
 .tech-link:hover {
-  color: var(--color-text);
-  border-bottom-color: var(--color-text);
+  color: var(--tech-accent-gold);
+  border-bottom-color: var(--tech-accent-gold);
 }
 
 @media (max-width: 768px) {
@@ -204,14 +218,16 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 2rem 1.5rem;
-    gap: 1.5rem;
+    padding: 0 1.5rem 2rem;
+    gap: 1.25rem;
+    margin-top: -56px;
   }
 
   .tech-hero__metrics {
-    grid-template-columns: 1fr;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
     width: 100%;
-    gap: 0.75rem;
   }
 
   .tech-hero__header {
@@ -222,8 +238,13 @@
     border-bottom: none;
   }
 
+  .tech-hero__avatar-frame {
+    width: 120px;
+    height: 120px;
+  }
+
   .tech-hero__banner {
-    height: 100px;
+    height: 130px;
   }
 
   .tech-hero__name {

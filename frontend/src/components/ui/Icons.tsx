@@ -140,3 +140,49 @@ export const IconSpark: React.FC<IconProps> = ({ size = 16, className }) => (
     <path d="M15.5 13c.3 1.4.9 2 2.3 2.3-1.4.3-2 .9-2.3 2.3-.3-1.4-.9-2-2.3-2.3 1.4-.3 2-.9 2.3-2.3Z" />
   </svg>
 );
+
+export const IconGraduationCap: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M2 7.5 10 4l8 3.5-8 3.5-8-3.5Z" />
+    <path d="M5.5 9.2v3.6c0 1 2 2.2 4.5 2.2s4.5-1.2 4.5-2.2V9.2" />
+    <path d="M17 7.5v4.5" />
+  </svg>
+);
+
+export const IconTrophy: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M6 3h8v4.5a4 4 0 0 1-8 0V3Z" />
+    <path d="M6 4H3.5a1.5 1.5 0 0 0 0 3H6M14 4h2.5a1.5 1.5 0 0 1 0 3H14" />
+    <path d="M10 11.5V14M7 17h6M7.5 14h5l.5 3h-6l.5-3Z" />
+  </svg>
+);
+
+export const IconHandshake: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M2 9.5 5.5 6l3 2 1.5-1.3a1.6 1.6 0 0 1 2.2.1l3.3 3.3" />
+    <path d="M8.5 8 12 11.3a1.3 1.3 0 0 1-1.8 1.9L8 11" />
+    <path d="M10.2 13.2 9 14.4a1.3 1.3 0 0 1-1.9-1.8" />
+    <path d="M2 9.5 5 15l1.8-1.2M18 10l-2.8 5.3-1.7-1" />
+  </svg>
+);
+
+export const IconGlobe: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <circle cx="10" cy="10" r="7.2" />
+    <path d="M2.8 10h14.4M10 2.8c2.4 2 3.7 4.6 3.7 7.2s-1.3 5.2-3.7 7.2c-2.4-2-3.7-4.6-3.7-7.2S7.6 4.8 10 2.8Z" />
+  </svg>
+);
+
+export const IconLink: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M8.5 11.5 11.5 8.5" />
+    <path d="M9 6.2 10.4 4.8a3 3 0 0 1 4.2 4.2L13.2 10.4M11 13.8 9.6 15.2a3 3 0 0 1-4.2-4.2L6.8 9.6" />
+  </svg>
+);
+
+export const IconVerified: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} fill="currentColor" stroke="none">
+    <path d="M10 1.6 12 3l2.5-.3 1 2.3 2.3 1-.3 2.5 1.4 2-1.4 2 .3 2.5-2.3 1-1 2.3L12 17l-2 1.4-2-1.4-2.5.3-1-2.3-2.3-1 .3-2.5L1.1 10l1.4-2-.3-2.5 2.3-1 1-2.3L8 1.6l2 .4Z" />
+    <path d="M7 10.2l2 2 4-4.4" stroke="#111111" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);

@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { storeService, Product } from '@/services/storeService';
 import { useAuth } from '@/context/AuthContext';
+import {
+  IconBriefcase, IconGraduationCap, IconTrophy, IconHandshake, IconGlobe,
+  IconLink, IconSpark, IconChart, IconUsers, IconLaurel, IconCard, IconBuilding,
+} from '@/components/ui/Icons';
 
 interface Experience {
   id: string;
@@ -90,7 +94,7 @@ export const ProfileAnalytics: React.FC = () => {
   return (
     <section className="profile-section profile-section--analytics">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Analytics</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconChart size={17} /></span>Analytics</h2>
         <button className="profile-section__icon-btn">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path d="M12 8C12 10.2091 10.2091 12 8 12C5.79086 12 4 10.2091 4 8C4 5.79086 5.79086 4 8 4C10.2091 4 12 5.79086 12 8Z"/>
@@ -179,7 +183,7 @@ export const ProfileActivity: React.FC<ProfileActivityProps> = ({ posts = [], is
     <section className="profile-section profile-section--activity">
       <div className="profile-section__header">
         <div>
-          <h2 className="profile-section__title">Activity</h2>
+          <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconSpark size={17} /></span>Activity</h2>
           <p className="profile-section__subtitle">{posts?.length || 0} post{posts?.length !== 1 ? 's' : ''}</p>
         </div>
         {!isViewingOther && <button className="profile-section__action-btn" onClick={() => navigate('/dashboard')}>Create a post</button>}
@@ -256,7 +260,7 @@ export const ProfileExperience: React.FC<SectionProps> = ({ sectionsKey, isViewi
     return (
       <section className="profile-section profile-section--experience">
         <div className="profile-section__header">
-          <h2 className="profile-section__title">Experience</h2>
+          <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconBriefcase size={16} /></span>Experience</h2>
         </div>
         <button className="profile-section__add-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
           <span className="profile-section__add-icon">+</span>
@@ -269,7 +273,7 @@ export const ProfileExperience: React.FC<SectionProps> = ({ sectionsKey, isViewi
   return (
     <section className="profile-section profile-section--experience">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Experience</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconBriefcase size={16} /></span>Experience</h2>
         {!isViewingOther && (
           <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -282,7 +286,7 @@ export const ProfileExperience: React.FC<SectionProps> = ({ sectionsKey, isViewi
       <div className="profile-section__items">
         {experiences.map(exp => (
           <div key={exp.id} className="profile-section__item">
-            <div className="profile-item__icon">💼</div>
+            <div className="profile-item__icon"><IconBriefcase size={16} /></div>
             <div className="profile-item__content">
               <h3 className="profile-item__title">{exp.title}</h3>
               <p className="profile-item__subtitle">{exp.company}</p>
@@ -313,7 +317,7 @@ export const ProfileEducation: React.FC<SectionProps> = ({ sectionsKey, isViewin
     return (
       <section className="profile-section profile-section--education">
         <div className="profile-section__header">
-          <h2 className="profile-section__title">Education</h2>
+          <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconGraduationCap size={17} /></span>Education</h2>
         </div>
         <p className="profile-section__helper">Enter your credentials and help recruiters find you for jobs requiring a certain degree or course of study.</p>
         <button className="profile-section__add-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
@@ -327,7 +331,7 @@ export const ProfileEducation: React.FC<SectionProps> = ({ sectionsKey, isViewin
   return (
     <section className="profile-section profile-section--education">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Education</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconGraduationCap size={17} /></span>Education</h2>
         {!isViewingOther && (
           <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -340,7 +344,7 @@ export const ProfileEducation: React.FC<SectionProps> = ({ sectionsKey, isViewin
       <div className="profile-section__items">
         {educations.map(edu => (
           <div key={edu.id} className="profile-section__item">
-            <div className="profile-item__icon">🎓</div>
+            <div className="profile-item__icon"><IconGraduationCap size={17} /></div>
             <div className="profile-item__content">
               <h3 className="profile-item__title">{edu.school}</h3>
               <p className="profile-item__subtitle">{edu.degree}{edu.field ? ` - ${edu.field}` : ''}</p>
@@ -369,7 +373,7 @@ export const ProfileSkills: React.FC<SectionProps> = ({ sectionsKey, isViewingOt
     return (
       <section className="profile-section profile-section--skills">
         <div className="profile-section__header">
-          <h2 className="profile-section__title">Skills</h2>
+          <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconLaurel size={17} /></span>Skills</h2>
         </div>
         <p className="profile-section__helper">Show your top skills — link of the opportunities you see are matched based on them.</p>
         <button className="profile-section__add-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
@@ -383,7 +387,7 @@ export const ProfileSkills: React.FC<SectionProps> = ({ sectionsKey, isViewingOt
   return (
     <section className="profile-section profile-section--skills">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Skills</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconLaurel size={17} /></span>Skills</h2>
         {!isViewingOther && (
           <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -410,7 +414,7 @@ export const ProfileInterests: React.FC = () => {
   return (
     <section className="profile-section">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Interests</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconBuilding size={16} /></span>Interests</h2>
       </div>
       
       <div className="profile-interests__tabs">
@@ -445,7 +449,7 @@ export const ProfileCertifications: React.FC<SectionProps> = ({ sectionsKey, isV
   return (
     <section className="profile-section">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Licenses & Certifications</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconTrophy size={17} /></span>Licenses & Certifications</h2>
         {!isViewingOther && (
           <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -458,7 +462,7 @@ export const ProfileCertifications: React.FC<SectionProps> = ({ sectionsKey, isV
       <div className="profile-section__items">
         {certifications.map(cert => (
           <div key={cert.id} className="profile-section__item">
-            <div className="profile-item__icon">🏆</div>
+            <div className="profile-item__icon"><IconTrophy size={16} /></div>
             <div className="profile-item__content">
               <h3 className="profile-item__title">{cert.name}</h3>
               <p className="profile-item__subtitle">{cert.organization}</p>
@@ -493,7 +497,7 @@ export const ProfileLanguages: React.FC<SectionProps> = ({ sectionsKey, isViewin
   return (
     <section className="profile-section">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Languages</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconGlobe size={17} /></span>Languages</h2>
         {!isViewingOther && (
           <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -529,7 +533,7 @@ export const ProfileProjects: React.FC<SectionProps> = ({ sectionsKey, isViewing
     return (
       <section className="profile-section">
         <div className="profile-section__header">
-          <h2 className="profile-section__title">Projects</h2>
+          <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconLink size={16} /></span>Projects</h2>
         </div>
         <button className="profile-section__add-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
           <span className="profile-section__add-icon">+</span>
@@ -542,7 +546,7 @@ export const ProfileProjects: React.FC<SectionProps> = ({ sectionsKey, isViewing
   return (
     <section className="profile-section">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Projects</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconLink size={16} /></span>Projects</h2>
         {!isViewingOther && (
           <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -599,7 +603,7 @@ export const ProfileVolunteering: React.FC<SectionProps> = ({ sectionsKey, isVie
   return (
     <section className="profile-section">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Volunteering</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconHandshake size={17} /></span>Volunteering</h2>
         {!isViewingOther && (
           <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -611,7 +615,7 @@ export const ProfileVolunteering: React.FC<SectionProps> = ({ sectionsKey, isVie
       <div className="profile-section__items">
         {volunteering.map(item => (
           <div key={item.id} className="profile-section__item">
-            <div className="profile-item__icon">🤝</div>
+            <div className="profile-item__icon"><IconHandshake size={17} /></div>
             <div className="profile-item__content">
               <h3 className="profile-item__title">{item.role}</h3>
               <p className="profile-item__subtitle">{item.organization}</p>
@@ -642,7 +646,7 @@ export const ProfileAwards: React.FC<SectionProps> = ({ sectionsKey, isViewingOt
   return (
     <section className="profile-section">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Honors & Awards</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconTrophy size={17} /></span>Honors & Awards</h2>
         {!isViewingOther && (
           <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -654,7 +658,7 @@ export const ProfileAwards: React.FC<SectionProps> = ({ sectionsKey, isViewingOt
       <div className="profile-section__items">
         {awards.map(award => (
           <div key={award.id} className="profile-section__item">
-            <div className="profile-item__icon">🎖️</div>
+            <div className="profile-item__icon"><IconTrophy size={16} /></div>
             <div className="profile-item__content">
               <h3 className="profile-item__title">{award.title}</h3>
               <p className="profile-item__subtitle">{award.issuer}</p>
@@ -682,7 +686,7 @@ export const ProfileRecommendations: React.FC<SectionProps> = ({ sectionsKey, is
   return (
     <section className="profile-section">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Recommendations</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconCard size={16} /></span>Recommendations</h2>
         {!isViewingOther && (
           <button className="profile-section__icon-btn" onClick={() => navigate('/profile/edit?tab=sections')}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -732,7 +736,7 @@ export const ProfileConnections: React.FC<{ connections: any[], isLoading?: bool
     <section className="profile-section profile-section--connections fade-in">
       <div className="profile-section__header">
         <div>
-          <h2 className="profile-section__title">Network Directory</h2>
+          <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconUsers size={16} /></span>Network Directory</h2>
           <p className="profile-section__subtitle">
             {connections.length} established {connections.length === 1 ? 'connection' : 'connections'}
           </p>
@@ -746,22 +750,15 @@ export const ProfileConnections: React.FC<{ connections: any[], isLoading?: bool
       
       {isLoading ? (
         <div className="profile-connections-loading">
-          <div className="tech-scan-line"></div>
-          <p>Scanning established links...</p>
+          <p>Loading connections…</p>
         </div>
       ) : connections.length > 0 ? (
         <div className="profile-connections-list">
           {connections.map((conn, i) => {
             const isFirm = conn.type === 'firm';
             return (
-              <div key={conn.id || i} className={`connection-hud-item ${isFirm ? 'connection-hud-item--firm' : 'connection-hud-item--user'}`} style={isFirm ? {
-                borderLeft: '4px solid var(--tech-blue)',
-                background: 'linear-gradient(90deg, rgba(231, 223, 201, 0.05) 0%, transparent 100%)'
-              } : {}}>
-                <div className="connection-hud-item__avatar" style={isFirm ? {
-                  clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-                  borderRadius: '0'
-                } : {}}>
+              <div key={conn.id || i} className={`connection-hud-item ${isFirm ? 'connection-hud-item--firm' : 'connection-hud-item--user'}`}>
+                <div className="connection-hud-item__avatar">
                   {conn.avatarUrl ? (
                     <img src={conn.avatarUrl} alt={conn.name} />
                   ) : (
@@ -769,42 +766,36 @@ export const ProfileConnections: React.FC<{ connections: any[], isLoading?: bool
                       {isFirm ? '🏢' : (conn.name?.split(' ').map((n: string) => n[0]).join('') || 'U')}
                     </div>
                   )}
-                  <div className="connection-hud-item__type-indicator" style={{ backgroundColor: isFirm ? 'var(--tech-blue)' : 'var(--color-primary)' }}></div>
+                  <div className="connection-hud-item__type-indicator"></div>
                 </div>
                 <div className="connection-hud-item__info">
                   <div className="connection-hud-item__title-row">
                     <h4
                       className="connection-hud-item__name"
                       onClick={() => navigate(`/profile?view=${conn.id || conn.name.toLowerCase().replace(' ', '-')}`)}
-                      style={{ color: isFirm ? 'var(--tech-blue)' : 'var(--color-text)' }}
                     >
                       {conn.name}
                     </h4>
-                    {isFirm && <span className="firm-verified-badge" style={{ background: 'var(--tech-blue)', color: '#14140f' }}>Company</span>}
-                    {!isFirm && <span className="firm-verified-badge" style={{ background: 'rgba(198, 161, 91, 0.2)', color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}>Connection</span>}
+                    {isFirm && <span className="firm-verified-badge">Company</span>}
                   </div>
                   <p className="connection-hud-item__headline">{conn.headline}</p>
                   <div className="connection-hud-item__meta">
-                    <span className="tech-tag" style={{ borderColor: isFirm ? 'var(--tech-blue)' : 'rgba(198, 161, 91, 0.5)', color: isFirm ? 'var(--tech-blue)' : 'var(--color-primary)' }}>
-                      {isFirm ? 'Company' : 'Individual'}
-                    </span>
+                    <span className="tech-tag">{isFirm ? 'Company' : 'Individual'}</span>
                     <span className="tech-tag">{conn.location || 'Global'}</span>
                   </div>
                 </div>
                 <div className="connection-hud-item__actions">
                   {isFirm && (
                     <button
-                      className="btn-sm-primary"
-                      style={{ background: 'var(--tech-blue)', border: 'none', marginRight: '8px', color: '#14140f', fontWeight: 800 }}
+                      className="btn-sm-firm"
                       onClick={() => navigate(`/purchased-services/${conn.id}`)}
                     >
-                      OVERVIEW
+                      Overview
                     </button>
                   )}
                   <button
                     className={isFirm ? "btn-sm-firm" : "btn-sm-primary"}
                     onClick={() => navigate(`/messages?to=${conn.id}`)}
-                    style={!isFirm ? { borderColor: 'var(--color-primary)', color: 'var(--color-primary)' } : {}}
                   >
                     {isFirm ? 'Enquire' : 'Message'}
                   </button>
@@ -815,11 +806,11 @@ export const ProfileConnections: React.FC<{ connections: any[], isLoading?: bool
         </div>
       ) : (
         <div className="profile-connections-empty">
-          <div className="empty-icon">∅</div>
-          <p>No active connections found in this sector.</p>
+          <div className="empty-icon"><IconUsers size={22} /></div>
+          <p>No connections yet.</p>
           {!isViewingOther && (
             <button className="btn-primary" onClick={() => navigate('/network')}>
-              Expand Network
+              Grow Your Network
             </button>
           )}
         </div>
@@ -874,7 +865,7 @@ export const ProfileServices: React.FC<ProfileServicesProps> = ({ companyId, isO
   return (
     <section className="profile-section">
       <div className="profile-section__header">
-        <h2 className="profile-section__title">Services</h2>
+        <h2 className="profile-section__title"><span className="profile-section__title-icon"><IconCard size={16} /></span>Services</h2>
         {isOwner && (
           <button className="profile-section__action-btn" onClick={() => navigate('/global/store')}>
             Manage

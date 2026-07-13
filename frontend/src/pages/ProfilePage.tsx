@@ -8,6 +8,7 @@ import { feedService } from '@/services/feedService';
 import { firmService } from '@/services/firmService';
 import { FirmProfileData } from '@/types/firm';
 import { mockProfileSections } from '@/data/mockProfileSections';
+import { IconUsers, IconUser, IconChart, IconCard } from '@/components/ui/Icons';
 import { ProfileHeroCard } from '@/components/personal/ProfileHeroCard';
 import { 
   ProfileAnalytics,
@@ -902,7 +903,7 @@ export const ProfilePage: React.FC = () => {
                             </div>
                             <div className="bento-item bento-stats">
                               <div className="profile-card stats-summary">
-                                <h4 className="section-title">Performance</h4>
+                                <h4 className="section-title"><span className="profile-section__title-icon"><IconChart size={16} /></span>Performance</h4>
                                 <div className="stats-grid">
                                   <div className="stat-item">
                                     <span className="stat-value">{connectionCount}</span>
@@ -924,7 +925,7 @@ export const ProfilePage: React.FC = () => {
                           <>
                             <div className="bento-item bento-about">
                               <div className="profile-card">
-                                <h4 className="section-title">About</h4>
+                                <h4 className="section-title"><span className="profile-section__title-icon"><IconUser size={16} /></span>About</h4>
                                 <p className="bio-text">{bio || "No bio available."}</p>
                               </div>
                             </div>
@@ -932,15 +933,15 @@ export const ProfilePage: React.FC = () => {
                             <div className="bento-item bento-analytics">
                               {!isViewingOther && (
                                 <div className="profile-card stats-mini">
-                                  <h4 className="section-title">System Metrics</h4>
+                                  <h4 className="section-title"><span className="profile-section__title-icon"><IconUsers size={16} /></span>Network</h4>
                                   <div className="mini-stats-row">
                                     <div className="mini-stat">
                                       <span className="mini-stat-val">{connectionCount}</span>
-                                      <span className="mini-stat-lab">P2P_LINKS</span>
+                                      <span className="mini-stat-lab">Connections</span>
                                     </div>
                                     <div className="mini-stat">
                                       <span className="mini-stat-val">{connections.filter(c => c.type === 'firm').length}</span>
-                                      <span className="mini-stat-lab">B2B_FOLLOWS</span>
+                                      <span className="mini-stat-lab">Companies Followed</span>
                                     </div>
                                   </div>
                                   <button className="profile-section__footer-btn" style={{ marginTop: '10px' }} onClick={() => navigate('/network')}>Manage Network →</button>
@@ -948,7 +949,7 @@ export const ProfilePage: React.FC = () => {
                               )}
                               {isViewingOther && (
                                 <div className="profile-card stats-mini">
-                                  <h4 className="section-title">Network</h4>
+                                  <h4 className="section-title"><span className="profile-section__title-icon"><IconUsers size={16} /></span>Network</h4>
                                   <div className="mini-stats-row">
                                     <div className="mini-stat">
                                       <span className="mini-stat-val">{connectionCount}</span>
@@ -974,7 +975,7 @@ export const ProfilePage: React.FC = () => {
                             {!isViewingOther && (
                               <div className="bento-item bento-services">
                                 <div className="profile-card stats-mini" onClick={() => navigate('/purchased-services')} style={{ cursor: 'pointer' }}>
-                                  <h4 className="section-title">Connected Services</h4>
+                                  <h4 className="section-title"><span className="profile-section__title-icon"><IconCard size={16} /></span>Connected Services</h4>
                                   <div className="connected-firms-preview" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
                                     {connections.filter(c => c.type === 'firm').slice(0, 4).map(firm => (
                                       <div 
