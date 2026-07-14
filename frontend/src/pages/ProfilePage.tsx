@@ -25,9 +25,7 @@ import {
   ProfileConnections,
   ProfileServices,
   ProfileExpertiseList,
-  ProfileLanguagesList,
   ProfileContactCard,
-  ProfileMembershipCard,
   ProfileFeaturedAchievement,
   ProfileRecentPosts,
   ProfilePortfolioGallery,
@@ -35,8 +33,10 @@ import {
   ProfileTimeline,
   ProfileSkillBars,
   ProfileTrustedConnections,
+  ProfileRecognitions,
   type DerivedCompany,
   type TimelineEntry,
+  type DerivedRecognition,
 } from '@/components/personal/ProfileSections';
 import {
   FirmAbout,
@@ -869,7 +869,7 @@ export const ProfilePage: React.FC = () => {
   })();
 
   const heroStats = mockData ? [
-    { label: 'Companies', value: new Set((mockData.experiences || []).map((e) => e.company)).size },
+    { label: 'Companies Founded', value: new Set((mockData.experiences || []).map((e) => e.company)).size },
     { label: 'Projects Completed', value: (mockData.portfolio || []).length },
     { label: 'Years in Business', value: earliestMockYear ? new Date().getFullYear() - earliestMockYear : '—' },
     { label: 'Connections', value: connectionCount },
@@ -877,7 +877,7 @@ export const ProfilePage: React.FC = () => {
     { label: 'Verified Achievements', value: (mockData.certifications || []).length },
   ] : undefined;
 
-  const memberNumber = effectiveMockKey
+  const memberNumber = (effectiveMockKey && mockData)
     ? String(Math.abs(Array.from(effectiveMockKey).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
     : undefined;
 
@@ -922,11 +922,45 @@ export const ProfilePage: React.FC = () => {
 
   const dossierExpertise = (mockData?.skills || []).map((s) => s.name);
 
-  const dossierFeatured = mockData?.portfolio && mockData.portfolio.length > 0 ? {
-    image: mockData.portfolio[0].image,
-    title: mockData.portfolio[0].title,
-    role: mockData.experiences?.find((e) => e.current)?.title || mockData.experiences?.[0]?.title,
-  } : undefined;
+  const dossierCurrentRole = mockData?.experiences?.find((e) => e.current) || mockData?.experiences?.[0];
+
+  const dossierFeaturedSlides = (mockData?.portfolio || []).map((p) => ({
+    image: p.image,
+    title: p.title,
+    role: dossierCurrentRole?.title,
+  }));
+
+  const dossierRecognitions: DerivedRecognition[] = (mockData?.certifications || []).map((c) => ({
+    id: c.id,
+    label: c.name,
+    sublabel: [c.organization, c.issueDate ? yearOf(c.issueDate) : undefined].filter(Boolean).join(' · '),
+  }));
+
+  const dossierEmail = website
+    ? `${firstName || 'contact'}@${website.replace(/^https?:\/\//, '').replace(/^www\./, '')}`.toLowerCase()
+    : undefined;
+
+  const handleDownloadVCard = () => {
+    const vcard = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `N:${lastName || ''};${firstName || ''};;;`,
+      `FN:${`${firstName} ${lastName}`.trim()}`,
+      headline ? `TITLE:${headline}` : '',
+      dossierCurrentRole?.company ? `ORG:${dossierCurrentRole.company}` : '',
+      phone ? `TEL:${phone}` : '',
+      dossierEmail ? `EMAIL:${dossierEmail}` : '',
+      website ? `URL:${website}` : '',
+      'END:VCARD',
+    ].filter(Boolean).join('\n');
+    const blob = new Blob([vcard], { type: 'text/vcard' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${firstName || 'contact'}-${lastName || ''}.vcf`.replace(/\s+/g, '-');
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <>
@@ -958,39 +992,75 @@ export const ProfilePage: React.FC = () => {
                 memberSince={earliestMockYear ? String(earliestMockYear) : undefined}
                 memberNumber={memberNumber}
                 memberTier={effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Verified Member'}
+                company={dossierCurrentRole?.company}
               />
             )}
           </div>
 
+          {profileType !== 'firm' && (
+            <nav className="dossier-tabs">
+              <div className="dossier-tabs__list">
+                {[
+                  { key: 'overview', label: 'Overview' },
+                  { key: 'experience', label: 'Timeline' },
+                  { key: 'portfolio', label: 'Portfolio' },
+                  { key: 'companies', label: 'Companies' },
+                  { key: 'connections', label: 'Network' },
+                  { key: 'recognitions', label: 'Recognitions' },
+                  { key: 'activity', label: 'Publications' },
+                ].map((t) => (
+                  <button
+                    key={t.key}
+                    className={`dossier-tabs__tab ${activeTab === t.key ? 'active' : ''}`}
+                    onClick={() => setActiveTab(t.key)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+                {!isViewingOther && (
+                  <button className="dossier-tabs__tab" onClick={() => navigate('/profile/edit')}>
+                    Settings
+                  </button>
+                )}
+              </div>
+              {!isViewingOther && (
+                <button className="dossier-tabs__edit-btn" onClick={() => navigate('/profile/edit?tab=info')}>
+                  Edit Profile
+                </button>
+              )}
+            </nav>
+          )}
+
           <div className="profile-page__content-grid">
             {/* Left Content Area */}
             <main className="profile-page__main-col">
+              {profileType === 'firm' && (
               <nav className="profile-nav-tabs">
-                <button 
+                <button
                   className={`profile-nav-tab ${activeTab === 'overview' ? 'active' : ''}`}
                   onClick={() => setActiveTab('overview')}
                 >
                   Overview
                 </button>
-                <button 
+                <button
                   className={`profile-nav-tab ${activeTab === 'activity' ? 'active' : ''}`}
                   onClick={() => setActiveTab('activity')}
                 >
                   Activity
                 </button>
-                <button 
+                <button
                   className={`profile-nav-tab ${activeTab === 'experience' ? 'active' : ''}`}
                   onClick={() => setActiveTab('experience')}
                 >
                   Experience
                 </button>
-                <button 
+                <button
                   className={`profile-nav-tab ${activeTab === 'skills' ? 'active' : ''}`}
                   onClick={() => setActiveTab('skills')}
                 >
                   Skills
                 </button>
-                <button 
+                <button
                   className={`profile-nav-tab ${activeTab === 'connections' ? 'active' : ''}`}
                   onClick={() => setActiveTab('connections')}
                 >
@@ -1013,6 +1083,7 @@ export const ProfilePage: React.FC = () => {
                   </button>
                 )}
               </nav>
+              )}
 
               <div className="profile-tab-content">
                 {(user || isViewingOther) && (
@@ -1048,129 +1119,129 @@ export const ProfilePage: React.FC = () => {
                             </div>
                           </div>
                         ) : (
-                          <>
-                            <div className="tab-pane fade-in dossier-grid">
-                              <div className="dossier-col">
-                                <div className="dossier-card">
-                                  <h4 className="dossier-card__title">About</h4>
-                                  <p className="bio-text">{bio || "No bio available."}</p>
-                                </div>
-                                <ProfileExpertiseList items={dossierExpertise} />
-                                <ProfileLanguagesList languages={mockData?.languages} />
-                                <ProfileContactCard
-                                  website={website}
-                                  phone={!isViewingOther ? phone : undefined}
-                                  onScheduleMeeting={isViewingOther ? handleMessage : undefined}
-                                />
-                                <ProfileMembershipCard
-                                  tier={mockData ? (effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Verified Member') : undefined}
-                                  memberSince={earliestMockYear ? String(earliestMockYear) : undefined}
-                                />
+                          <div className="tab-pane fade-in dossier-grid">
+                            <div className="dossier-grid__col dossier-grid__col--left">
+                              <div className="dossier-card">
+                                <h4 className="dossier-card__title">About</h4>
+                                <p className="bio-text">{bio || "No bio available."}</p>
                               </div>
-
-                              <div className="dossier-col">
-                                <ProfileFeaturedAchievement
-                                  image={dossierFeatured?.image}
-                                  title={dossierFeatured?.title}
-                                  role={dossierFeatured?.role}
-                                  onView={() => setActiveTab('experience')}
-                                />
-                                <ProfileRecentPosts posts={posts} />
-                                <ProfilePortfolioGallery items={mockData?.portfolio} />
-                              </div>
-
-                              <div className="dossier-col">
-                                <ProfileCompaniesList companies={dossierCompanies} />
-                                <ProfileTimeline entries={dossierTimeline} />
-                                <ProfileSkillBars skills={mockData?.skills} />
-                                <ProfileRecommendations sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-
-                                {!isViewingOther && (
-                                  <div className="profile-card stats-mini" onClick={() => navigate('/purchased-services')} style={{ cursor: 'pointer' }}>
-                                    <h4 className="section-title"><span className="profile-section__title-icon"><IconCard size={16} /></span>Connected Services</h4>
-                                    <div className="connected-firms-preview" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-                                      {connections.filter(c => c.type === 'firm').slice(0, 4).map(firm => (
-                                        <div
-                                          key={firm.id}
-                                          className="firm-preview-row"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/purchased-services/${firm.id}`);
-                                          }}
-                                          style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '15px',
-                                            padding: '12px',
-                                            background: 'rgba(246, 243, 237, 0.03)',
-                                            border: '1px solid var(--tech-border-dim)',
-                                            borderRadius: '12px',
-                                            transition: 'all 0.2s ease'
-                                          }}
-                                        >
-                                          <div style={{
-                                            width: '40px',
-                                            height: '40px',
-                                            borderRadius: '50%',
-                                            background: 'var(--color-bg)',
-                                            border: '1px solid var(--tech-border-dark)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexShrink: 0,
-                                            overflow: 'hidden',
-                                            color: 'var(--tech-accent-gold)',
-                                            fontWeight: 700,
-                                            fontSize: '0.75rem'
-                                          }}>
-                                            {firm.avatarUrl ? (
-                                              <img src={firm.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            ) : (firm.name || '?').slice(0, 2).toUpperCase()}
-                                          </div>
-                                          <div style={{ flexGrow: 1, minWidth: 0 }}>
-                                            <div style={{ color: 'var(--color-text)', fontSize: '0.88rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                              {firm.name}
-                                            </div>
-                                            <div style={{ color: 'var(--tech-text-dim)', fontSize: '0.75rem' }}>
-                                              {firm.headline || 'Connected company'}
-                                            </div>
-                                          </div>
-                                          <div className="tech-tag">Active</div>
-                                        </div>
-                                      ))}
-                                      {connections.filter(c => c.type === 'firm').length === 0 && (
-                                        <div style={{ padding: '24px', textAlign: 'center', color: 'var(--tech-text-dim)', fontSize: '0.85rem', border: '1px dashed var(--tech-border-dim)', borderRadius: '12px' }}>
-                                          No connected companies yet.
-                                        </div>
-                                      )}
-                                    </div>
-                                    <div className="mini-stats-row" style={{ borderTop: '1px solid var(--tech-border-dim)', paddingTop: '15px' }}>
-                                      <div className="mini-stat">
-                                        <span className="mini-stat-val">{connections.filter(c => c.type === 'firm').length}</span>
-                                        <span className="mini-stat-lab">Companies</span>
-                                      </div>
-                                      <div className="mini-stat">
-                                        <span className="mini-stat-val">B2B</span>
-                                        <span className="mini-stat-lab">Relationship Type</span>
-                                      </div>
-                                    </div>
-                                    <button
-                                      className="profile-section__footer-btn"
-                                      style={{ marginTop: '15px', width: '100%', textAlign: 'left' }}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate('/purchased-services');
-                                      }}
-                                    >
-                                      Manage Services →
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
+                              <ProfileExpertiseList items={dossierExpertise} />
+                              <ProfileContactCard
+                                email={dossierEmail}
+                                website={website}
+                                phone={!isViewingOther ? phone : undefined}
+                                onScheduleMeeting={isViewingOther ? handleMessage : undefined}
+                                onDownloadVCard={!isViewingOther ? handleDownloadVCard : undefined}
+                              />
                             </div>
 
-                            <ProfileTrustedConnections connections={connections.filter(c => c.type === 'user')} />
-                          </>
+                            <div className="dossier-grid__featured">
+                              <ProfileFeaturedAchievement
+                                slides={dossierFeaturedSlides}
+                                onView={() => setActiveTab('experience')}
+                              />
+                            </div>
+                            <div className="dossier-grid__posts">
+                              <ProfileRecentPosts posts={posts} authorName={`${firstName} ${lastName}`.trim()} authorAvatar={avatarUrl} />
+                            </div>
+                            <div className="dossier-grid__portfolio">
+                              <ProfilePortfolioGallery items={mockData?.portfolio} />
+                            </div>
+
+                            <div className="dossier-grid__col dossier-grid__col--right">
+                              <ProfileTimeline entries={dossierTimeline} />
+                              <ProfileCompaniesList companies={dossierCompanies} />
+                            </div>
+
+                            <div className="dossier-grid__bottom-row">
+                              <ProfileRecommendations sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                              <ProfileRecognitions items={dossierRecognitions} />
+                              <ProfileSkillBars skills={mockData?.skills} />
+                              <ProfileTrustedConnections connections={connections.filter(c => c.type === 'user')} />
+                            </div>
+
+                            {!isViewingOther && (
+                              <div className="dossier-grid__services profile-card stats-mini" onClick={() => navigate('/purchased-services')} style={{ cursor: 'pointer' }}>
+                                <h4 className="section-title"><span className="profile-section__title-icon"><IconCard size={16} /></span>Connected Services</h4>
+                                <div className="connected-firms-preview" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                                  {connections.filter(c => c.type === 'firm').slice(0, 4).map(firm => (
+                                    <div
+                                      key={firm.id}
+                                      className="firm-preview-row"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/purchased-services/${firm.id}`);
+                                      }}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '15px',
+                                        padding: '12px',
+                                        background: 'rgba(246, 243, 237, 0.03)',
+                                        border: '1px solid var(--tech-border-dim)',
+                                        borderRadius: '12px',
+                                        transition: 'all 0.2s ease'
+                                      }}
+                                    >
+                                      <div style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '50%',
+                                        background: 'var(--color-bg)',
+                                        border: '1px solid var(--tech-border-dark)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0,
+                                        overflow: 'hidden',
+                                        color: 'var(--tech-accent-gold)',
+                                        fontWeight: 700,
+                                        fontSize: '0.75rem'
+                                      }}>
+                                        {firm.avatarUrl ? (
+                                          <img src={firm.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (firm.name || '?').slice(0, 2).toUpperCase()}
+                                      </div>
+                                      <div style={{ flexGrow: 1, minWidth: 0 }}>
+                                        <div style={{ color: 'var(--color-text)', fontSize: '0.88rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                          {firm.name}
+                                        </div>
+                                        <div style={{ color: 'var(--tech-text-dim)', fontSize: '0.75rem' }}>
+                                          {firm.headline || 'Connected company'}
+                                        </div>
+                                      </div>
+                                      <div className="tech-tag">Active</div>
+                                    </div>
+                                  ))}
+                                  {connections.filter(c => c.type === 'firm').length === 0 && (
+                                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--tech-text-dim)', fontSize: '0.85rem', border: '1px dashed var(--tech-border-dim)', borderRadius: '12px' }}>
+                                      No connected companies yet.
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="mini-stats-row" style={{ borderTop: '1px solid var(--tech-border-dim)', paddingTop: '15px' }}>
+                                  <div className="mini-stat">
+                                    <span className="mini-stat-val">{connections.filter(c => c.type === 'firm').length}</span>
+                                    <span className="mini-stat-lab">Companies</span>
+                                  </div>
+                                  <div className="mini-stat">
+                                    <span className="mini-stat-val">B2B</span>
+                                    <span className="mini-stat-lab">Relationship Type</span>
+                                  </div>
+                                </div>
+                                <button
+                                  className="profile-section__footer-btn"
+                                  style={{ marginTop: '15px', width: '100%', textAlign: 'left' }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate('/purchased-services');
+                                  }}
+                                >
+                                  Manage Services →
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </>
                     )}
@@ -1201,11 +1272,30 @@ export const ProfilePage: React.FC = () => {
 
                     {activeTab === 'connections' && (
                       <div className="tab-pane fade-in">
-                        <ProfileConnections 
-                          connections={connections} 
-                          isLoading={isLoadingConnections} 
-                          isViewingOther={isViewingOther} 
+                        <ProfileConnections
+                          connections={connections}
+                          isLoading={isLoadingConnections}
+                          isViewingOther={isViewingOther}
                         />
+                      </div>
+                    )}
+
+                    {activeTab === 'portfolio' && (
+                      <div className="tab-pane fade-in">
+                        <ProfilePortfolioGallery items={mockData?.portfolio} />
+                      </div>
+                    )}
+
+                    {activeTab === 'companies' && (
+                      <div className="tab-pane fade-in">
+                        <ProfileCompaniesList companies={dossierCompanies} />
+                      </div>
+                    )}
+
+                    {activeTab === 'recognitions' && (
+                      <div className="tab-pane fade-in">
+                        <ProfileRecognitions items={dossierRecognitions} />
+                        <ProfileAwards sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
                       </div>
                     )}
 

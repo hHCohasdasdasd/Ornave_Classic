@@ -31,6 +31,7 @@ interface ProfileHeroCardProps {
   memberSince?: string;
   memberNumber?: string;
   memberTier?: string;
+  company?: string;
 }
 
 export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
@@ -52,6 +53,7 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
   memberSince,
   memberNumber,
   memberTier = 'Ornave Member',
+  company,
 }) => {
   const navigate = useNavigate();
   const initials = type === 'firm' ? (user?.firstName?.substring(0, 2) || 'F') : `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`;
@@ -97,7 +99,7 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
             )}
             {verified && <IconVerified size={22} className="tech-hero__verified-badge" />}
           </h1>
-          {!isViewingOther && (
+          {!isViewingOther && !editorial && (
             <button className="tech-hero__cmd-btn" onClick={() => navigate('/profile/edit?tab=info')}>
               Edit Profile
             </button>
@@ -107,6 +109,7 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
         <p className="tech-hero__headline">
           {headlineText}
         </p>
+        {company && <p className="tech-hero__company">{company}</p>}
 
         {editorial && memberSince && (
           <p className="tech-hero__member-since">Member since {memberSince}</p>
@@ -150,7 +153,7 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
         )}
 
         <div className="tech-hero__links">
-          {location && <span className="tech-link tech-link--static">{location}</span>}
+          {editorial && stats && stats.length > 0 && location && <span className="tech-link tech-link--static">{location}</span>}
           {githubUrl && <a href={githubUrl} target="_blank" rel="noopener noreferrer" className="tech-link">GitHub</a>}
           {twitterUrl && <a href={twitterUrl} target="_blank" rel="noopener noreferrer" className="tech-link">Twitter</a>}
         </div>

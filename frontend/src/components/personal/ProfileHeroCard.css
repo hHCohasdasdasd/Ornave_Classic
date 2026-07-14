@@ -11,6 +11,12 @@
   box-shadow: var(--shadow-card);
 }
 
+.tech-hero--editorial {
+  margin-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  border-bottom: none;
+}
+
 .tech-hero__banner {
   height: 240px;
   width: 100%;
@@ -280,9 +286,17 @@
 }
 
 .tech-hero__headline {
-  color: var(--color-muted);
+  color: var(--tech-accent-gold);
   margin: 0.4rem 0 0;
   font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.tech-hero__company {
+  color: var(--color-muted);
+  margin: 0.2rem 0 0;
+  font-size: 0.95rem;
   line-height: 1.5;
 }
 

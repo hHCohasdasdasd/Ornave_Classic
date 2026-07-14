@@ -1053,15 +1053,22 @@ export const ProfileLanguagesList: React.FC<{ languages?: { id: string; name: st
 };
 
 export const ProfileContactCard: React.FC<{
+  email?: string;
   website?: string;
   phone?: string;
   onScheduleMeeting?: () => void;
-}> = ({ website, phone, onScheduleMeeting }) => {
-  if (!website && !phone) return null;
+  onDownloadVCard?: () => void;
+}> = ({ email, website, phone, onScheduleMeeting, onDownloadVCard }) => {
+  if (!website && !phone && !email) return null;
   return (
     <div className="dossier-card">
       <h4 className="dossier-card__title">Contact</h4>
       <div className="dossier-contact-rows">
+        {email && (
+          <a href={`mailto:${email}`} className="dossier-contact-row">
+            <IconMail size={15} /><span>{email}</span>
+          </a>
+        )}
         {phone && (
           <div className="dossier-contact-row"><IconPhone size={15} /><span>{phone}</span></div>
         )}
@@ -1070,10 +1077,15 @@ export const ProfileContactCard: React.FC<{
             <IconLink size={15} /><span>{website}</span>
           </a>
         )}
+        {onDownloadVCard && (
+          <button className="dossier-contact-row dossier-contact-row--btn" onClick={onDownloadVCard}>
+            <IconCard size={15} /><span>Download vCard</span>
+          </button>
+        )}
       </div>
       {onScheduleMeeting && (
         <button className="dossier-cta-btn" onClick={onScheduleMeeting}>
-          <IconMail size={14} /> Schedule Meeting
+          Schedule Meeting
         </button>
       )}
     </div>
@@ -1097,35 +1109,82 @@ export const ProfileMembershipCard: React.FC<{ tier?: string; memberSince?: stri
   );
 };
 
+export interface FeaturedSlide { image: string; title: string; role?: string }
+
 export const ProfileFeaturedAchievement: React.FC<{
-  image?: string;
-  title?: string;
-  role?: string;
+  slides?: FeaturedSlide[];
   onView?: () => void;
-}> = ({ image, title, role, onView }) => {
-  if (!image || !title) return null;
+}> = ({ slides, onView }) => {
+  const [index, setIndex] = useState(0);
+  if (!slides || slides.length === 0) return null;
+  const active = slides[Math.min(index, slides.length - 1)];
+  const go = (delta: number) => setIndex((i) => (i + delta + slides.length) % slides.length);
   return (
     <section className="dossier-featured">
-      <div className="dossier-featured__image"><img src={image} alt={title} /></div>
+      <div className="dossier-featured__image">
+        <img src={active.image} alt={active.title} />
+        {slides.length > 1 && (
+          <>
+            <button className="dossier-featured__nav dossier-featured__nav--prev" onClick={() => go(-1)} aria-label="Previous">‹</button>
+            <button className="dossier-featured__nav dossier-featured__nav--next" onClick={() => go(1)} aria-label="Next">›</button>
+            <div className="dossier-featured__dots">
+              {slides.map((_, i) => (
+                <span key={i} className={`dossier-featured__dot ${i === index ? 'dossier-featured__dot--active' : ''}`} onClick={() => setIndex(i)} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
       <div className="dossier-featured__body">
         <span className="dossier-featured__eyebrow"><IconSpark size={13} /> Featured Achievement</span>
-        <h3 className="dossier-featured__title">{title}</h3>
-        {role && <p className="dossier-featured__role">Role: {role}</p>}
-        {onView && <button className="dossier-cta-btn dossier-cta-btn--outline" onClick={onView}>View Project</button>}
+        <h3 className="dossier-featured__title">{active.title}</h3>
+        {active.role && <p className="dossier-featured__role">Role: {active.role}</p>}
+        {onView && <button className="dossier-cta-btn" onClick={onView}>View Project</button>}
       </div>
     </section>
   );
 };
 
-export const ProfileRecentPosts: React.FC<{ posts?: { id: string; content: string; reactions?: { likes: number; comments: number } }[] }> = ({ posts = [] }) => {
+const formatRelativeTime = (timestamp?: string): string => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return '';
+  const diffMs = Date.now() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return 'now';
+  if (diffMins < 60) return `${diffMins}m`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) return `${diffDays}d`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+export const ProfileRecentPosts: React.FC<{
+  posts?: { id: string; content: string; timestamp?: string; reactions?: { likes: number; comments: number } }[];
+  authorName?: string;
+  authorAvatar?: string;
+}> = ({ posts = [], authorName, authorAvatar }) => {
   const navigate = useNavigate();
   if (!posts || posts.length === 0) return null;
   return (
     <div className="dossier-card">
-      <h4 className="dossier-card__title">Recent Posts</h4>
+      <div className="dossier-card__header-row">
+        <h4 className="dossier-card__title">Recent Posts</h4>
+        <span className="dossier-card__view-all">View all</span>
+      </div>
       <div className="dossier-posts">
         {posts.slice(0, 3).map((p) => (
           <div key={p.id} className="dossier-post" onClick={() => navigate(`/posts/${p.id}`)}>
+            <div className="dossier-post__header">
+              <div className="dossier-post__avatar">
+                {authorAvatar ? <img src={authorAvatar} alt={authorName} /> : (authorName || '?').charAt(0)}
+              </div>
+              <div className="dossier-post__author">
+                <span className="dossier-post__author-name">{authorName || 'Member'}</span>
+                {p.timestamp && <span className="dossier-post__time">{formatRelativeTime(p.timestamp)}</span>}
+              </div>
+            </div>
             <p className="dossier-post__excerpt">{p.content.length > 140 ? `${p.content.slice(0, 140).trim()}…` : p.content}</p>
             <div className="dossier-post__meta">
               <span>♥ {p.reactions?.likes ?? 0}</span>
@@ -1234,11 +1293,16 @@ export const ProfileSkillBars: React.FC<{ skills?: MockSkillType[] }> = ({ skill
 export const ProfileTrustedConnections: React.FC<{ connections?: any[] }> = ({ connections = [] }) => {
   const navigate = useNavigate();
   if (!connections || connections.length === 0) return null;
+  const shown = connections.slice(0, 7);
+  const overflow = connections.length - shown.length;
   return (
-    <div className="dossier-card dossier-trusted">
-      <h4 className="dossier-card__title">Trusted Connections</h4>
-      <div className="dossier-trusted__row">
-        {connections.slice(0, 10).map((c, i) => (
+    <div className="dossier-card">
+      <div className="dossier-card__header-row">
+        <h4 className="dossier-card__title">Trusted Connections</h4>
+        <span className="dossier-card__view-all">View all</span>
+      </div>
+      <div className="dossier-trusted__grid">
+        {shown.map((c, i) => (
           <div
             key={c.id || i}
             className="dossier-trusted__avatar"
@@ -1246,6 +1310,39 @@ export const ProfileTrustedConnections: React.FC<{ connections?: any[] }> = ({ c
             title={c.name}
           >
             {c.avatarUrl ? <img src={c.avatarUrl} alt={c.name} /> : (c.name || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+          </div>
+        ))}
+        {overflow > 0 && (
+          <div className="dossier-trusted__avatar dossier-trusted__avatar--overflow">+{overflow}</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export interface DerivedRecognition { id: string; label: string; sublabel: string }
+
+export const ProfileRecognitions: React.FC<{ items?: DerivedRecognition[] }> = ({ items }) => {
+  if (!items || items.length === 0) {
+    return (
+      <div className="dossier-card">
+        <h4 className="dossier-card__title">Recognitions &amp; Awards</h4>
+        <div className="dossier-recognitions__empty">No recognitions added yet.</div>
+      </div>
+    );
+  }
+  return (
+    <div className="dossier-card">
+      <div className="dossier-card__header-row">
+        <h4 className="dossier-card__title">Recognitions &amp; Awards</h4>
+        <span className="dossier-card__view-all">View all</span>
+      </div>
+      <div className="dossier-recognitions__grid">
+        {items.slice(0, 4).map((r) => (
+          <div key={r.id} className="dossier-recognitions__item">
+            <IconLaurel size={22} />
+            <span className="dossier-recognitions__label">{r.label}</span>
+            <span className="dossier-recognitions__sublabel">{r.sublabel}</span>
           </div>
         ))}
       </div>
