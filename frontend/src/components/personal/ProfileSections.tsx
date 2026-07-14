@@ -760,10 +760,15 @@ export const ProfileAwards: React.FC<SectionProps> = ({ sectionsKey, isViewingOt
 export const ProfileRecommendations: React.FC<SectionProps> = ({ sectionsKey, isViewingOther = false }) => {
   const navigate = useNavigate();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [index, setIndex] = useState(0);
 
   useEffect(() => {
     setRecommendations(getStoredSections(sectionsKey).recommendations || []);
+    setIndex(0);
   }, [sectionsKey]);
+
+  const go = (delta: number) => setIndex((i) => (i + delta + recommendations.length) % recommendations.length);
+  const active = recommendations[Math.min(index, recommendations.length - 1)];
 
   return (
     <section className="profile-section">
@@ -789,29 +794,40 @@ export const ProfileRecommendations: React.FC<SectionProps> = ({ sectionsKey, is
         </div>
       ) : (
       <div className="profile-recommendations">
-        {recommendations.map(rec => (
-          <div key={rec.id} className="profile-recommendation">
-            <div className="profile-recommendation__header">
-              <div className="profile-recommendation__avatar">
-                {rec.authorAvatar ? (
-                  <img src={rec.authorAvatar} alt={rec.author} />
-                ) : (
-                  <div className="profile-recommendation__avatar-placeholder">
-                    {rec.author.charAt(0)}
-                  </div>
-                )}
-              </div>
-              <div className="profile-recommendation__info">
-                <h4 className="profile-recommendation__author">{rec.author}</h4>
-                <p className="profile-recommendation__headline">{rec.authorHeadline}</p>
-                <p className="profile-recommendation__date">{rec.date}</p>
-              </div>
+        <div className="profile-recommendation">
+          {recommendations.length > 1 && (
+            <button className="profile-recommendation__nav profile-recommendation__nav--prev" onClick={() => go(-1)} aria-label="Previous">‹</button>
+          )}
+          <div className="profile-recommendation__header">
+            <div className="profile-recommendation__avatar">
+              {active.authorAvatar ? (
+                <img src={active.authorAvatar} alt={active.author} />
+              ) : (
+                <div className="profile-recommendation__avatar-placeholder">
+                  {active.author.charAt(0)}
+                </div>
+              )}
             </div>
-            <div className="profile-recommendation__content">
-              <p>"{rec.content}"</p>
+            <div className="profile-recommendation__info">
+              <h4 className="profile-recommendation__author">{active.author}</h4>
+              <p className="profile-recommendation__headline">{active.authorHeadline}</p>
+              <p className="profile-recommendation__date">{active.date}</p>
             </div>
           </div>
-        ))}
+          <div className="profile-recommendation__content">
+            <p>"{active.content}"</p>
+          </div>
+          {recommendations.length > 1 && (
+            <>
+              <button className="profile-recommendation__nav profile-recommendation__nav--next" onClick={() => go(1)} aria-label="Next">›</button>
+              <div className="profile-recommendation__dots">
+                {recommendations.map((_, i) => (
+                  <span key={i} className={`profile-recommendation__dot ${i === index ? 'profile-recommendation__dot--active' : ''}`} onClick={() => setIndex(i)} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
       )}
     </section>
@@ -1161,7 +1177,7 @@ const formatRelativeTime = (timestamp?: string): string => {
 };
 
 export const ProfileRecentPosts: React.FC<{
-  posts?: { id: string; content: string; timestamp?: string; reactions?: { likes: number; comments: number } }[];
+  posts?: { id: string; content: string; timestamp?: string; reactions?: { likes: number; comments: number }; mediaUrl?: string }[];
   authorName?: string;
   authorAvatar?: string;
 }> = ({ posts = [], authorName, authorAvatar }) => {
@@ -1184,11 +1200,31 @@ export const ProfileRecentPosts: React.FC<{
                 <span className="dossier-post__author-name">{authorName || 'Member'}</span>
                 {p.timestamp && <span className="dossier-post__time">{formatRelativeTime(p.timestamp)}</span>}
               </div>
+              <button
+                className="dossier-post__menu-btn"
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Post options"
+              >
+                ⋯
+              </button>
             </div>
-            <p className="dossier-post__excerpt">{p.content.length > 140 ? `${p.content.slice(0, 140).trim()}…` : p.content}</p>
+            <div className={`dossier-post__body ${p.mediaUrl ? 'dossier-post__body--with-media' : ''}`}>
+              <p className="dossier-post__excerpt">{p.content.length > 140 ? `${p.content.slice(0, 140).trim()}…` : p.content}</p>
+              {p.mediaUrl && (
+                <div className="dossier-post__thumb"><img src={p.mediaUrl} alt="" /></div>
+              )}
+            </div>
             <div className="dossier-post__meta">
               <span>♥ {p.reactions?.likes ?? 0}</span>
               <span>💬 {p.reactions?.comments ?? 0}</span>
+              <span className="dossier-post__share">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+                  <circle cx="12.5" cy="3.5" r="1.8"/>
+                  <circle cx="3.5" cy="8" r="1.8"/>
+                  <circle cx="12.5" cy="12.5" r="1.8"/>
+                  <path d="M5.1 7.1 11 4.3M5.1 8.9 11 11.7"/>
+                </svg>
+              </span>
             </div>
           </div>
         ))}

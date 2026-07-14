@@ -104,6 +104,14 @@ export const mockProfileSections: Record<string, MockProfileSections> = {
         content: "Chuck is the rare CTO who can still read a stack trace at 2am and still hold a boardroom's attention the next morning. The migration plan he designed saved us millions and several very bad weekends.",
         date: 'Apr 2026',
       },
+      {
+        id: 'rec-2',
+        author: 'Anna Kowalski',
+        authorHeadline: 'CFO · Strategic Finance · Venture-backed Startups',
+        authorAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
+        content: "I've sat through a lot of infrastructure cost reviews with Chuck. He's the only technologist I've worked with who talks about cloud spend in the same breath as unit economics, not just uptime.",
+        date: 'Mar 2026',
+      },
     ],
     experiences: [
       {

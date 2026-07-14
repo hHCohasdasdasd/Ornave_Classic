@@ -63,6 +63,7 @@ interface Post {
     likes: number;
     comments: number;
   };
+  mediaUrl?: string;
 }
 
 // Slugs of firms that only exist as hardcoded demo filler elsewhere in the
@@ -216,6 +217,7 @@ export const ProfilePage: React.FC = () => {
         content: item.content,
         timestamp: item.timestamp,
         reactions: item.reactions,
+        mediaUrl: item.mediaUrl,
       })));
     } catch (error) {
       console.error('Failed to load user posts:', error);
@@ -991,7 +993,7 @@ export const ProfilePage: React.FC = () => {
                 stats={heroStats}
                 memberSince={earliestMockYear ? String(earliestMockYear) : undefined}
                 memberNumber={memberNumber}
-                memberTier={effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Verified Member'}
+                memberTier={effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Gold Member'}
                 company={dossierCurrentRole?.company}
               />
             )}
@@ -1124,6 +1126,7 @@ export const ProfilePage: React.FC = () => {
                               <div className="dossier-card">
                                 <h4 className="dossier-card__title">About</h4>
                                 <p className="bio-text">{bio || "No bio available."}</p>
+                                <span className="dossier-card__link" onClick={() => setActiveTab('experience')}>View full profile ›</span>
                               </div>
                               <ProfileExpertiseList items={dossierExpertise} />
                               <ProfileContactCard

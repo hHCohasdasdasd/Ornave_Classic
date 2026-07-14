@@ -7,6 +7,7 @@ import {
   IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel, IconMoon, IconSun,
   IconBuilding, IconBriefcase, IconSearch, IconUsers, IconCard, IconUser, IconChart, IconSpark,
 } from './Icons';
+import { mockProfileSections } from '@/data/mockProfileSections';
 
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -160,6 +161,16 @@ export const Navbar: React.FC = () => {
     navigate(user && user.id !== 'guest' ? '/home' : '/');
   };
 
+  // Same tier derivation as the profile hero card: only shown once we know
+  // this account has real editorial content behind it (mockProfileSections),
+  // so a fresh/empty account doesn't get a fabricated "Gold Member" badge.
+  const memberTier = (() => {
+    if (!user || user.id === 'guest' || user.userType === 'COMPANY_USER') return undefined;
+    if (user.lastName?.toLowerCase() === 'hartwig' || user.firstName?.toLowerCase() === 'chuck') return 'Founding Member';
+    const slug = `${user.firstName || ''}-${user.lastName || ''}`.toLowerCase().replace(/\s+/g, '-');
+    return mockProfileSections[slug] ? 'Gold Member' : undefined;
+  })();
+
   return (
     <nav className="navbar">
       <div className="navbar__container">
@@ -294,6 +305,9 @@ export const Navbar: React.FC = () => {
         </div>
 
         <div className="navbar__right">
+          <button className="navbar__search-btn" onClick={() => navigate('/network')} title="Search" aria-label="Search">
+            <IconSearch size={17} />
+          </button>
           {!user || user.id === 'guest' ? (
             <div className="navbar__auth">
               <button className="navbar__auth-btn" onClick={() => navigate('/login')}>
@@ -322,11 +336,20 @@ export const Navbar: React.FC = () => {
                   <button className="navbar__menu-item" onClick={handleOpenSettings} role="menuitem">
                     Settings
                   </button>
+                  {memberTier && (
+                    <button className="navbar__menu-item" onClick={handleLogout} role="menuitem">
+                      Sign out
+                    </button>
+                  )}
                 </div>
               )}
               <div className="navbar__profile-info">
                 <span className="navbar__user">{user.firstName} {user.lastName}</span>
-                <button className="navbar__logout" onClick={handleLogout}>Sign out</button>
+                {memberTier ? (
+                  <span className="navbar__user-tier">{memberTier}</span>
+                ) : (
+                  <button className="navbar__logout" onClick={handleLogout}>Sign out</button>
+                )}
               </div>
             </div>
           )}

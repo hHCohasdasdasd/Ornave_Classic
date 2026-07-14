@@ -1228,6 +1228,32 @@ p {
   padding: 0;
 }
 
+.navbar__user-tier {
+  font-size: 11px;
+  color: var(--tech-accent-gold, #c6a15b);
+  font-weight: 600;
+}
+
+.navbar__search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #f6f3ed;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+.navbar__search-btn:hover {
+  background: rgba(246, 243, 237, 0.08);
+}
+
 /* Home Page */
 .home-page {
   min-height: 100vh;
