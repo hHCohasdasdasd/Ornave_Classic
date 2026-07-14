@@ -85,6 +85,13 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
             ) : (type === 'firm' ? <IconBuilding size={44} /> : initials)}
           </div>
         </div>
+        {editorial && verified && (
+          <div className="tech-hero__avatar-badge">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 1.6 12 3l2.5-.3 1 2.3 2.3 1-.3 2.5 1.4 2-1.4 2 .3 2.5-2.3 1-1 2.3L12 17l-2 1.4-2-1.4-2.5.3-1-2.3-2.3-1 .3-2.5L1.1 10l1.4-2-.3-2.5 2.3-1 1-2.3L8 1.6l2 .4Z" />
+            </svg>
+          </div>
+        )}
       </div>
 
       <div className="tech-hero__data">
