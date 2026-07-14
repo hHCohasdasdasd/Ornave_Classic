@@ -223,6 +223,16 @@
   box-sizing: border-box;
 }
 
+/* Hero + tab strip bleed past the wrapper's padding so the banner runs
+   flush to the navbar and to both edges instead of floating in a cream
+   gutter — everything below them keeps the normal page margin. */
+.tech-hero--editorial {
+  margin-left: calc(-1 * clamp(20px, 2.5vw, 56px));
+  margin-right: calc(-1 * clamp(20px, 2.5vw, 56px));
+  margin-top: -40px;
+  border-radius: 0;
+}
+
 /* Dark tab strip attached directly to the bottom of the hero card — reads
    as one continuous dark banner rather than a separate light pill nav. */
 .dossier-tabs {
@@ -231,8 +241,10 @@
   justify-content: space-between;
   gap: 20px;
   background: #14140f;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0;
   padding: 0 28px;
+  margin-left: calc(-1 * clamp(20px, 2.5vw, 56px));
+  margin-right: calc(-1 * clamp(20px, 2.5vw, 56px));
   margin-bottom: 24px;
   overflow-x: auto;
 }
