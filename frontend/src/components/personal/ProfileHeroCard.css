@@ -13,8 +13,8 @@
 
 .tech-hero--editorial {
   margin-bottom: 0;
+  border: none;
   border-radius: 16px 16px 0 0;
-  border-bottom: none;
 }
 
 .tech-hero__banner {
@@ -384,6 +384,70 @@
 .tech-link:hover {
   color: var(--tech-accent-gold);
   border-bottom-color: var(--tech-accent-gold);
+}
+
+/* ── Editorial: one open, borderless hero section — the image runs the
+   full height and everything (name, stats, links) sits on it, instead
+   of the photo handing off to a separate white content block. ── */
+.tech-hero--editorial .tech-hero__banner {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+.tech-hero--editorial .tech-hero__banner-overlay {
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(12, 12, 10, 0.05) 0%, rgba(12, 12, 10, 0.4) 45%, rgba(12, 12, 10, 0.94) 100%);
+}
+
+.tech-hero--editorial .tech-hero__content-wrapper {
+  position: relative;
+  z-index: 5;
+  margin-top: 0;
+  padding-top: 230px;
+}
+
+.tech-hero--editorial .tech-hero__extra {
+  position: relative;
+  z-index: 5;
+}
+
+.tech-hero--editorial .tech-hero__name,
+.tech-hero--editorial .tech-hero__accent {
+  color: #f6f3ed;
+}
+
+.tech-hero--editorial .tech-hero__company {
+  color: rgba(246, 243, 237, 0.78);
+}
+
+.tech-hero--editorial .tech-hero__member-since {
+  color: rgba(246, 243, 237, 0.6);
+}
+
+.tech-hero--editorial .tech-hero__stats-row {
+  border-top-color: rgba(246, 243, 237, 0.22);
+}
+
+.tech-hero--editorial .tech-hero__stat {
+  border-right-color: rgba(246, 243, 237, 0.22);
+}
+
+.tech-hero--editorial .tech-hero__stat-value {
+  color: #f6f3ed;
+}
+
+.tech-hero--editorial .tech-hero__stat-label {
+  color: rgba(246, 243, 237, 0.6);
+}
+
+.tech-hero--editorial .tech-link,
+.tech-hero--editorial .tech-link--static {
+  color: rgba(246, 243, 237, 0.68);
+}
+
+.tech-hero--editorial .tech-link:hover {
+  color: var(--tech-accent-gold);
 }
 
 @media (max-width: 768px) {
