@@ -820,6 +820,34 @@ p {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+}
+
+.navbar__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.navbar__chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: rgba(246, 243, 237, 0.55);
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 2px;
+}
+
+.navbar__chevron:hover {
+  color: rgba(246, 243, 237, 0.9);
 }
 
 .navbar__avatar::before {

@@ -260,13 +260,13 @@ export const ProfilePage: React.FC = () => {
       } else {
         setFirstName(profileData.firstName || '');
         setLastName(profileData.lastName || '');
-        setPhone(profileData.userProfile?.phone || '');
-        setHeadline(profileData.userProfile?.headline || '');
-        setLocation(profileData.userProfile?.location || '');
-        setWebsite(profileData.userProfile?.website || '');
-        setBio(profileData.userProfile?.bio || '');
-        setAvatarUrl(profileData.userProfile?.avatarUrl || '');
-        setBannerUrl(profileData.userProfile?.bannerUrl || '');
+        setPhone(profileData.profile?.phone || '');
+        setHeadline(profileData.profile?.headline || '');
+        setLocation(profileData.profile?.location || profileData.profile?.address || '');
+        setWebsite(profileData.profile?.website || '');
+        setBio(profileData.profile?.bio || '');
+        setAvatarUrl(profileData.profile?.avatarUrl || '');
+        setBannerUrl(profileData.profile?.bannerUrl || '');
       }
 
       const storedUser = TokenStorage.getUser();

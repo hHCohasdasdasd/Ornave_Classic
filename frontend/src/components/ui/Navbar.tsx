@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { networkService } from '@/services/networkService';
 import { apiClient } from '@/services/api';
 import {
-  IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel, IconMoon, IconSun,
+  IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel,
   IconBuilding, IconBriefcase, IconSearch, IconUsers, IconCard, IconUser, IconChart, IconSpark,
 } from './Icons';
 import { mockProfileSections } from '@/data/mockProfileSections';
@@ -22,6 +22,7 @@ export const Navbar: React.FC = () => {
   const [notificationsCount, setNotificationsCount] = React.useState(0);
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = React.useState(false);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | undefined>(undefined);
   const profileMenuRef = React.useRef<HTMLDivElement>(null);
   const forBusinessMenuRef = React.useRef<HTMLDivElement>(null);
   const notificationsMenuRef = React.useRef<HTMLDivElement>(null);
@@ -30,6 +31,17 @@ export const Navbar: React.FC = () => {
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
     localStorage.setItem('ornave-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
+
+  React.useEffect(() => {
+    if (!user || user.id === 'guest') {
+      setAvatarUrl(undefined);
+      return;
+    }
+    apiClient.getProfile().then((res) => {
+      const url = res?.data?.profile?.avatarUrl;
+      if (url) setAvatarUrl(url);
+    }).catch(() => {});
+  }, [user?.id]);
 
   React.useEffect(() => {
     const loadStats = async () => {
@@ -293,14 +305,6 @@ export const Navbar: React.FC = () => {
               <span className="navbar__icon"><IconLaurel /></span>
               <span className="navbar__icon-label">Ornave Solutions</span>
             </button>
-            <button
-              className="navbar__icon-btn navbar__dark-toggle"
-              onClick={() => setIsDark(d => !d)}
-              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              <span className="navbar__icon">{isDark ? <IconSun /> : <IconMoon />}</span>
-              <span className="navbar__icon-label">{isDark ? 'Light' : 'Dark'}</span>
-            </button>
           </div>
         </div>
 
@@ -325,7 +329,11 @@ export const Navbar: React.FC = () => {
                 aria-haspopup="menu"
                 aria-expanded={isProfileMenuOpen}
               >
-                {user.firstName[0]}{user.lastName[0]}
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="navbar__avatar-img" />
+                ) : (
+                  <>{user.firstName[0]}{user.lastName[0]}</>
+                )}
                 {notificationsCount > 0 && <span className="navbar__avatar-badge"></span>}
               </button>
               {isProfileMenuOpen && (
@@ -335,6 +343,9 @@ export const Navbar: React.FC = () => {
                   </button>
                   <button className="navbar__menu-item" onClick={handleOpenSettings} role="menuitem">
                     Settings
+                  </button>
+                  <button className="navbar__menu-item" onClick={() => setIsDark(d => !d)} role="menuitem">
+                    {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
                   </button>
                   {memberTier && (
                     <button className="navbar__menu-item" onClick={handleLogout} role="menuitem">
@@ -351,6 +362,15 @@ export const Navbar: React.FC = () => {
                   <button className="navbar__logout" onClick={handleLogout}>Sign out</button>
                 )}
               </div>
+              <button
+                className="navbar__chevron"
+                onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+                aria-label="Account menu"
+              >
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <path d="M2.5 4.5 6 8l3.5-3.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             </div>
           )}
         </div>
