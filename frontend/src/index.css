@@ -620,6 +620,20 @@ p {
   border-bottom: 1px solid rgba(198, 161, 91, 0.22);
 }
 
+/* When a page-level sidebar (e.g. the profile rail) already shows the
+   wordmark and sits above this bar at full height, offset the bar's
+   content so it starts after the rail instead of centering under it. */
+.navbar--sidebar-offset .navbar__container {
+  max-width: none;
+  padding-left: 244px;
+}
+
+@media (max-width: 1024px) {
+  .navbar--sidebar-offset .navbar__container {
+    padding-left: 24px;
+  }
+}
+
 .navbar__container {
   max-width: 1400px;
   margin: 0 auto;

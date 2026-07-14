@@ -9,7 +9,15 @@ import {
 } from './Icons';
 import { mockProfileSections } from '@/data/mockProfileSections';
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  /** True when a page-level left nav rail (e.g. the profile sidebar) already
+   * shows the ORNAVE wordmark and reserves its own width — hides the
+   * navbar's own logo and offsets the bar's content so nothing duplicates
+   * or sits underneath the rail. */
+  sidebarOffset?: boolean;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = false }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [isDark, setIsDark] = React.useState(() => {
@@ -184,12 +192,14 @@ export const Navbar: React.FC = () => {
   })();
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${sidebarOffset ? 'navbar--sidebar-offset' : ''}`}>
       <div className="navbar__container">
         <div className="navbar__left">
-          <div className="navbar__logo" onClick={handleNavigateHome}>
-            ORNAVE
-          </div>
+          {!sidebarOffset && (
+            <div className="navbar__logo" onClick={handleNavigateHome}>
+              ORNAVE
+            </div>
+          )}
         </div>
 
         <div className="navbar__center">

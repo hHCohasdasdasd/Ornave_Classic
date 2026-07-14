@@ -839,7 +839,7 @@ export const ProfilePage: React.FC = () => {
   if (isLoading && !isViewingOther) {
     return (
       <div className={`profile-page ${user?.userType !== 'COMPANY_USER' ? 'profile-page--editorial' : ''}`}>
-        <Navbar />
+        <Navbar sidebarOffset={user?.userType !== 'COMPANY_USER'} />
         <div className="profile-page__container">
           <div className="loading-state">Loading profile...</div>
         </div>
@@ -967,7 +967,7 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <>
-      <Navbar />
+      <Navbar sidebarOffset={profileType !== 'firm'} />
       <div className={`profile-page ${profileType !== 'firm' ? 'profile-page--editorial' : ''}`}>
         <div className="profile-page__shell">
           {profileType !== 'firm' && (
