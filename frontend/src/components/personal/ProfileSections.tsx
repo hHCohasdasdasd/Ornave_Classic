@@ -1182,13 +1182,17 @@ export const ProfileRecentPosts: React.FC<{
   authorAvatar?: string;
 }> = ({ posts = [], authorName, authorAvatar }) => {
   const navigate = useNavigate();
-  if (!posts || posts.length === 0) return null;
   return (
     <div className="dossier-card">
       <div className="dossier-card__header-row">
         <h4 className="dossier-card__title">Recent Posts</h4>
         <span className="dossier-card__view-all">View all</span>
       </div>
+      {!posts || posts.length === 0 ? (
+        <div className="dossier-empty-state">
+          <p>No posts yet.</p>
+        </div>
+      ) : (
       <div className="dossier-posts">
         {posts.slice(0, 3).map((p) => (
           <div key={p.id} className="dossier-post" onClick={() => navigate(`/posts/${p.id}`)}>
@@ -1229,6 +1233,7 @@ export const ProfileRecentPosts: React.FC<{
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 };
@@ -1328,7 +1333,6 @@ export const ProfileSkillBars: React.FC<{ skills?: MockSkillType[] }> = ({ skill
 
 export const ProfileTrustedConnections: React.FC<{ connections?: any[] }> = ({ connections = [] }) => {
   const navigate = useNavigate();
-  if (!connections || connections.length === 0) return null;
   const shown = connections.slice(0, 7);
   const overflow = connections.length - shown.length;
   return (
@@ -1337,6 +1341,11 @@ export const ProfileTrustedConnections: React.FC<{ connections?: any[] }> = ({ c
         <h4 className="dossier-card__title">Trusted Connections</h4>
         <span className="dossier-card__view-all">View all</span>
       </div>
+      {!connections || connections.length === 0 ? (
+        <div className="dossier-empty-state">
+          <p>No connections yet.</p>
+        </div>
+      ) : (
       <div className="dossier-trusted__grid">
         {shown.map((c, i) => (
           <div
@@ -1352,6 +1361,7 @@ export const ProfileTrustedConnections: React.FC<{ connections?: any[] }> = ({ c
           <div className="dossier-trusted__avatar dossier-trusted__avatar--overflow">+{overflow}</div>
         )}
       </div>
+      )}
     </div>
   );
 };

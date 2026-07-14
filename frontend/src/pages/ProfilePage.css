@@ -2288,3 +2288,10 @@
   padding: 16px 0;
 }
 
+.dossier-empty-state {
+  font-size: 0.82rem;
+  color: var(--tech-text-dim);
+  text-align: center;
+  padding: 16px 0;
+}
+
