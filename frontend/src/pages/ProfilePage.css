@@ -7,6 +7,159 @@
   position: relative;
 }
 
+/* ── Left navigation rail — profile pages only. A near-black column that
+   sits flush against the viewport edge, independent of the editorial
+   light theme so it stays dark even on the light profile page. ── */
+.profile-page__shell {
+  display: flex;
+  align-items: flex-start;
+}
+
+.profile-left-nav {
+  flex-shrink: 0;
+  width: 220px;
+  min-height: calc(100vh - 65px);
+  position: sticky;
+  top: 65px;
+  background: #0c0c0a;
+  border-right: 1px solid rgba(198, 161, 91, 0.18);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0 20px;
+}
+
+.profile-left-nav__logo {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #c6a15b;
+  padding: 0 24px 22px;
+  border-bottom: 1px solid rgba(198, 161, 91, 0.18);
+  margin-bottom: 12px;
+}
+
+.profile-left-nav__list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.profile-left-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  background: none;
+  border: none;
+  padding: 11px 24px;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: rgba(246, 243, 237, 0.82);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.profile-left-nav__item svg {
+  flex-shrink: 0;
+  color: rgba(198, 161, 91, 0.85);
+}
+
+.profile-left-nav__item:hover {
+  background: rgba(198, 161, 91, 0.08);
+  color: #f6f3ed;
+}
+
+.profile-left-nav__item--inert {
+  cursor: default;
+}
+
+.profile-left-nav__item--inert:hover {
+  background: none;
+  color: rgba(246, 243, 237, 0.82);
+}
+
+.profile-left-nav__member-card {
+  margin: 20px 18px 14px;
+  padding: 18px 14px 22px;
+  border: 1px solid rgba(198, 161, 91, 0.4);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+  position: relative;
+  background: linear-gradient(180deg, rgba(198, 161, 91, 0.06), transparent);
+}
+
+.profile-left-nav__member-eyebrow {
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(198, 161, 91, 0.75);
+}
+
+.profile-left-nav__member-tier {
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #e9d4a3;
+  letter-spacing: 0.03em;
+  margin: 2px 0 10px;
+}
+
+.profile-left-nav__member-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(246, 243, 237, 0.5);
+}
+
+.profile-left-nav__member-number {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  color: #f6f3ed;
+  letter-spacing: 0.06em;
+}
+
+.profile-left-nav__member-badge {
+  position: absolute;
+  bottom: -13px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #0c0c0a;
+  border: 1px solid rgba(198, 161, 91, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c6a15b;
+}
+
+.profile-left-nav__support {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  margin: 14px 24px 0;
+  padding: 0;
+  font-size: 0.78rem;
+  color: rgba(246, 243, 237, 0.55);
+  cursor: pointer;
+}
+
+.profile-left-nav__support:hover {
+  color: rgba(246, 243, 237, 0.85);
+}
+
+@media (max-width: 1024px) {
+  .profile-left-nav {
+    display: none;
+  }
+}
+
 /* ── Editorial variant: a light, magazine-dossier take on the profile page
    — cream page, white cards, dark charcoal text. Scoped entirely to this
    page (individual profiles only) via local custom-property overrides, so
@@ -47,6 +200,8 @@
 
 .profile-page__wrapper {
   width: 100%;
+  flex: 1;
+  min-width: 0;
   margin: 0 auto;
   padding: 40px clamp(20px, 2.5vw, 56px);
   position: relative;

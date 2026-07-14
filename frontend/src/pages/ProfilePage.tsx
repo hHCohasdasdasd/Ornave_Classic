@@ -10,6 +10,7 @@ import { FirmProfileData } from '@/types/firm';
 import { mockProfileSections } from '@/data/mockProfileSections';
 import { IconUsers, IconChart, IconCard } from '@/components/ui/Icons';
 import { ProfileHeroCard } from '@/components/personal/ProfileHeroCard';
+import { ProfileSidebar } from '@/components/personal/ProfileSidebar';
 import {
   ProfileAnalytics,
   ProfileActivity,
@@ -968,7 +969,11 @@ export const ProfilePage: React.FC = () => {
     <>
       <Navbar />
       <div className={`profile-page ${profileType !== 'firm' ? 'profile-page--editorial' : ''}`}>
-        <div className="profile-page__wrapper">
+        <div className="profile-page__shell">
+          {profileType !== 'firm' && (
+            <ProfileSidebar memberNumber={memberNumber} memberTier={effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Gold Member'} />
+          )}
+          <div className="profile-page__wrapper">
           {/* Top Hero Section */}
           <div className="profile-page__hero-section">
             {(user || isViewingOther) && (
@@ -1517,6 +1522,7 @@ export const ProfilePage: React.FC = () => {
                 </div>
               </div>
             </aside>
+          </div>
           </div>
         </div>
       </div>
