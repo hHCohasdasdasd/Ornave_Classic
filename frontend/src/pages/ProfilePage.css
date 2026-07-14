@@ -8,8 +8,10 @@
 }
 
 /* ── Left navigation rail — profile pages only. A near-black column that
-   sits flush against the viewport edge, independent of the editorial
-   light theme so it stays dark even on the light profile page. ── */
+   spans the full viewport height from the very top, sitting behind/beside
+   the top navbar (not below it) so the two read as one connected shape,
+   independent of the editorial light theme so it stays dark even on the
+   light profile page. ── */
 .profile-page__shell {
   display: flex;
   align-items: flex-start;
@@ -18,14 +20,27 @@
 .profile-left-nav {
   flex-shrink: 0;
   width: 220px;
-  min-height: calc(100vh - 65px);
-  position: sticky;
-  top: 65px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 101;
   background: #0c0c0a;
   border-right: 1px solid rgba(198, 161, 91, 0.18);
   display: flex;
   flex-direction: column;
-  padding: 28px 0 20px;
+  padding: 16px 0 20px;
+  overflow-y: auto;
+}
+
+.profile-page__shell > .profile-page__wrapper {
+  margin-left: 220px;
+}
+
+@media (max-width: 1024px) {
+  .profile-page__shell > .profile-page__wrapper {
+    margin-left: 0;
+  }
 }
 
 .profile-left-nav__logo {
