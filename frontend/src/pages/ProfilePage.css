@@ -21,9 +21,9 @@
   --color-card-text: #1c1a17;
   --color-text: #1c1a17;
   --color-muted: #756c5d;
-  --color-primary: #b08a4e;
-  --color-primary-hover: #96742d;
-  --color-secondary: rgba(176, 138, 78, 0.08);
+  --color-primary: #c6a15b;
+  --color-primary-hover: #d8be84;
+  --color-secondary: rgba(198, 161, 91, 0.08);
   --color-secondary-text: #1c1a17;
   --color-border: rgba(28, 24, 18, 0.1);
   --color-border-dark: rgba(28, 24, 18, 0.18);
@@ -31,15 +31,15 @@
 
   --tech-blue: #1c1a17;
   --tech-blue-glow: rgba(28, 24, 18, 0.08);
-  --tech-accent-gold: #b08a4e;
-  --tech-accent-emerald: #b08a4e;
+  --tech-accent-gold: #c6a15b;
+  --tech-accent-emerald: #c6a15b;
   --tech-card-bg: #ffffff;
   --tech-border: rgba(28, 24, 18, 0.1);
   --tech-border-dark: rgba(28, 24, 18, 0.18);
   --tech-border-dim: rgba(28, 24, 18, 0.07);
   --tech-text-main: #1c1a17;
   --tech-text-dim: #756c5d;
-  --tech-accent-bg: rgba(176, 138, 78, 0.1);
+  --tech-accent-bg: rgba(198, 161, 91, 0.1);
   --tech-bg: #f7f5ee;
 
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 10px 28px rgba(28, 24, 18, 0.08);
