@@ -622,10 +622,22 @@ p {
 
 /* When a page-level sidebar (e.g. the profile rail) already shows the
    wordmark and sits above this bar at full height, offset the bar's
-   content so it starts after the rail instead of centering under it. */
+   content so it starts right after the rail instead of centering under
+   the full viewport — the icon group hugs that edge (flex-start) rather
+   than floating in the middle of the remaining space, with the profile
+   cluster pushed to the far right via margin-left: auto. */
 .navbar--sidebar-offset .navbar__container {
   max-width: none;
   padding-left: 244px;
+  justify-content: flex-start;
+}
+
+.navbar--sidebar-offset .navbar__left {
+  display: none;
+}
+
+.navbar--sidebar-offset .navbar__right {
+  margin-left: auto;
 }
 
 @media (max-width: 1024px) {
