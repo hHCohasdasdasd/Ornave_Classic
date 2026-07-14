@@ -623,7 +623,7 @@ p {
 .navbar__container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 12px 24px;
+  padding: 8px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -638,9 +638,9 @@ p {
 
 .navbar__logo {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #f6f3ed;
+  color: #c6a15b;
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -668,7 +668,7 @@ p {
   align-items: center;
   gap: 2px;
   color: #a79e8c;
-  padding: 8px 16px;
+  padding: 6px 14px;
   transition: all 0.2s ease;
   position: relative;
 }
@@ -809,13 +809,13 @@ p {
 
 .navbar__avatar {
   border: 1px solid rgba(198, 161, 91, 0.4);
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: var(--tech-blue);
   color: #14140f;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
