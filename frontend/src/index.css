@@ -644,6 +644,7 @@ p {
   max-width: 1400px;
   margin: 0 auto;
   padding: 8px 24px;
+  min-height: 72px;
   display: flex;
   justify-content: space-between;
   align-items: center;
