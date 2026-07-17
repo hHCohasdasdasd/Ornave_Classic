@@ -1157,7 +1157,14 @@ export const ProfilePage: React.FC = () => {
                             </div>
 
                             <div className="dossier-grid__posts">
-                              <ProfileRecentPosts posts={posts} authorName={`${firstName} ${lastName}`.trim()} authorAvatar={avatarUrl} />
+                              <ProfileRecentPosts
+                                posts={posts}
+                                authorId={isViewingOther ? viewedUser?.id : user?.id}
+                                authorFirstName={firstName}
+                                authorLastName={lastName}
+                                authorAvatar={avatarUrl}
+                                authorHeadline={headline}
+                              />
                             </div>
                             <div className="dossier-grid__featured">
                               <ProfileFeaturedAchievement
@@ -1269,7 +1276,16 @@ export const ProfilePage: React.FC = () => {
 
                     {activeTab === 'activity' && (
                       <div className="tab-pane fade-in">
-                        <ProfileActivity posts={posts} isLoading={isLoadingPosts} isViewingOther={isViewingOther} />
+                        <ProfileActivity
+                          posts={posts}
+                          isLoading={isLoadingPosts}
+                          isViewingOther={isViewingOther}
+                          authorId={isViewingOther ? viewedUser?.id : user?.id}
+                          authorFirstName={firstName}
+                          authorLastName={lastName}
+                          authorAvatar={avatarUrl}
+                          authorHeadline={headline}
+                        />
                       </div>
                     )}
 

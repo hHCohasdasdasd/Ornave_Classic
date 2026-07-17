@@ -8,6 +8,8 @@ import {
 } from '@/components/ui/Icons';
 import { MockHighlight, MockPortfolioItem, MockSkill as MockSkillType } from '@/data/mockProfileSections';
 import { IconMail, IconPhone, IconVerified } from '@/components/ui/Icons';
+import { FeedItem } from './FeedItem';
+import type { FeedItem as FeedItemData } from '@/types/feed';
 
 interface Experience {
   id: string;
@@ -172,9 +174,41 @@ interface Post {
     likes: number;
     comments: number;
   };
+  mediaUrl?: string;
 }
 
-interface ProfileActivityProps {
+interface PostAuthorProps {
+  authorId?: string;
+  authorFirstName?: string;
+  authorLastName?: string;
+  authorAvatar?: string;
+  authorHeadline?: string;
+}
+
+// Profile pages only store the owner's posts (no per-post author payload,
+// since the author is always whoever's profile this is) — this rebuilds the
+// shape FeedItem expects so the same post card renders identically here and
+// in the main feed.
+function toFeedItemData(post: Post, author: PostAuthorProps): FeedItemData {
+  return {
+    id: post.id,
+    type: 'post',
+    author: {
+      id: author.authorId || post.id,
+      firstName: author.authorFirstName || 'Member',
+      lastName: author.authorLastName || '',
+      profilePicture: author.authorAvatar,
+      headline: author.authorHeadline,
+    },
+    title: post.title,
+    content: post.content,
+    mediaUrl: post.mediaUrl,
+    timestamp: post.timestamp || new Date().toISOString(),
+    reactions: post.reactions,
+  };
+}
+
+interface ProfileActivityProps extends PostAuthorProps {
   posts?: Post[];
   isLoading?: boolean;
   isViewingOther?: boolean;
@@ -209,22 +243,17 @@ export const ProfileFeatured: React.FC<{ posts?: Post[] }> = ({ posts = [] }) =>
   );
 };
 
-export const ProfileActivity: React.FC<ProfileActivityProps> = ({ posts = [], isLoading = false, isViewingOther = false }) => {
+export const ProfileActivity: React.FC<ProfileActivityProps> = ({
+  posts = [],
+  isLoading = false,
+  isViewingOther = false,
+  authorId,
+  authorFirstName,
+  authorLastName,
+  authorAvatar,
+  authorHeadline,
+}) => {
   const navigate = useNavigate();
-  const formatDate = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`;
-    
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays}d ago`;
-    
-    return date.toLocaleDateString();
-  };
-
   const hasContent = posts && posts.length > 0;
 
   return (
@@ -236,7 +265,7 @@ export const ProfileActivity: React.FC<ProfileActivityProps> = ({ posts = [], is
         </div>
         {!isViewingOther && <button className="profile-section__action-btn" onClick={() => navigate('/dashboard')}>Create a post</button>}
       </div>
-      
+
       {isLoading ? (
         <div className="profile-activity">
           <p className="profile-activity__empty">Loading activity...</p>
@@ -244,21 +273,10 @@ export const ProfileActivity: React.FC<ProfileActivityProps> = ({ posts = [], is
       ) : hasContent ? (
         <div className="profile-activity-list">
           {posts?.map(post => (
-            <div key={post.id} className="profile-activity-item">
-              <div className="profile-activity-item__content">
-                {post.title && <h4 className="profile-activity-item__title">{post.title}</h4>}
-                <p className="profile-activity-item__text">{post.content}</p>
-              </div>
-              <div className="profile-activity-item__footer">
-                <span className="profile-activity-item__time">{formatDate(post.timestamp)}</span>
-                {post.reactions && (
-                  <div className="profile-activity-item__reactions">
-                    <span>👍 {post.reactions.likes}</span>
-                    <span>💬 {post.reactions.comments}</span>
-                  </div>
-                )}
-              </div>
-            </div>
+            <FeedItem
+              key={post.id}
+              item={toFeedItemData(post, { authorId, authorFirstName, authorLastName, authorAvatar, authorHeadline })}
+            />
           ))}
         </div>
       ) : (
@@ -1161,27 +1179,14 @@ export const ProfileFeaturedAchievement: React.FC<{
   );
 };
 
-const formatRelativeTime = (timestamp?: string): string => {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) return '';
-  const diffMs = Date.now() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return 'now';
-  if (diffMins < 60) return `${diffMins}m`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 30) return `${diffDays}d`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-export const ProfileRecentPosts: React.FC<{
-  posts?: { id: string; content: string; timestamp?: string; reactions?: { likes: number; comments: number }; mediaUrl?: string }[];
-  authorName?: string;
-  authorAvatar?: string;
-}> = ({ posts = [], authorName, authorAvatar }) => {
-  const navigate = useNavigate();
+export const ProfileRecentPosts: React.FC<PostAuthorProps & { posts?: Post[] }> = ({
+  posts = [],
+  authorId,
+  authorFirstName,
+  authorLastName,
+  authorAvatar,
+  authorHeadline,
+}) => {
   return (
     <div className="dossier-card">
       <div className="dossier-card__header-row">
@@ -1195,42 +1200,10 @@ export const ProfileRecentPosts: React.FC<{
       ) : (
       <div className="dossier-posts">
         {posts.slice(0, 3).map((p) => (
-          <div key={p.id} className="dossier-post" onClick={() => navigate(`/posts/${p.id}`)}>
-            <div className="dossier-post__header">
-              <div className="dossier-post__avatar">
-                {authorAvatar ? <img src={authorAvatar} alt={authorName} /> : (authorName || '?').charAt(0)}
-              </div>
-              <div className="dossier-post__author">
-                <span className="dossier-post__author-name">{authorName || 'Member'}</span>
-                {p.timestamp && <span className="dossier-post__time">{formatRelativeTime(p.timestamp)}</span>}
-              </div>
-              <button
-                className="dossier-post__menu-btn"
-                onClick={(e) => e.stopPropagation()}
-                aria-label="Post options"
-              >
-                ⋯
-              </button>
-            </div>
-            <div className={`dossier-post__body ${p.mediaUrl ? 'dossier-post__body--with-media' : ''}`}>
-              <p className="dossier-post__excerpt">{p.content.length > 140 ? `${p.content.slice(0, 140).trim()}…` : p.content}</p>
-              {p.mediaUrl && (
-                <div className="dossier-post__thumb"><img src={p.mediaUrl} alt="" /></div>
-              )}
-            </div>
-            <div className="dossier-post__meta">
-              <span>♥ {p.reactions?.likes ?? 0}</span>
-              <span>💬 {p.reactions?.comments ?? 0}</span>
-              <span className="dossier-post__share">
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
-                  <circle cx="12.5" cy="3.5" r="1.8"/>
-                  <circle cx="3.5" cy="8" r="1.8"/>
-                  <circle cx="12.5" cy="12.5" r="1.8"/>
-                  <path d="M5.1 7.1 11 4.3M5.1 8.9 11 11.7"/>
-                </svg>
-              </span>
-            </div>
-          </div>
+          <FeedItem
+            key={p.id}
+            item={toFeedItemData(p, { authorId, authorFirstName, authorLastName, authorAvatar, authorHeadline })}
+          />
         ))}
       </div>
       )}
