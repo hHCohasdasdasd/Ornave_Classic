@@ -1143,14 +1143,14 @@ export const ProfilePage: React.FC = () => {
                               />
                             </div>
 
+                            <div className="dossier-grid__posts">
+                              <ProfileRecentPosts posts={posts} authorName={`${firstName} ${lastName}`.trim()} authorAvatar={avatarUrl} />
+                            </div>
                             <div className="dossier-grid__featured">
                               <ProfileFeaturedAchievement
                                 slides={dossierFeaturedSlides}
                                 onView={() => setActiveTab('experience')}
                               />
-                            </div>
-                            <div className="dossier-grid__posts">
-                              <ProfileRecentPosts posts={posts} authorName={`${firstName} ${lastName}`.trim()} authorAvatar={avatarUrl} />
                             </div>
                             <div className="dossier-grid__portfolio">
                               <ProfilePortfolioGallery items={mockData?.portfolio} />

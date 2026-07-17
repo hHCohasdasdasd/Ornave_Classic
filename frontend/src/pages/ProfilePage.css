@@ -1693,12 +1693,12 @@
   grid-column: 4;
 }
 
-.dossier-grid__featured {
+.dossier-grid__posts {
   grid-column: 2 / 4;
   grid-row: 1;
 }
 
-.dossier-grid__posts {
+.dossier-grid__featured {
   grid-column: 2;
   grid-row: 2;
 }
@@ -1727,11 +1727,11 @@
     grid-column: 1;
     grid-row: 1;
   }
-  .dossier-grid__featured {
+  .dossier-grid__posts {
     grid-column: 2;
     grid-row: 1;
   }
-  .dossier-grid__posts {
+  .dossier-grid__featured {
     grid-column: 1;
     grid-row: 2;
   }
