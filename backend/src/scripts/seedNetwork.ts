@@ -280,6 +280,7 @@ const postTemplates = [
       },
       {
         content: `Attending the Global Logistics Summit in Chicago next week. If you're working on supply chain resilience or nearshoring strategies, let's find time to connect.\n\nAlways happy to exchange notes on what's actually working in 2026 vs. what looks good in a deck.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=500&fit=crop',
       },
     ],
   },
@@ -291,6 +292,7 @@ const postTemplates = [
       },
       {
         content: `We just shipped a redesigned dashboard for our robotics monitoring platform and the feedback from operators has been incredible.\n\nMy favorite comment: "It finally looks like something I want to look at."\n\nEnterprise software doesn't have to be ugly. That's a choice, not a constraint.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=800&h=500&fit=crop',
       },
       {
         title: '5 things I learned designing for factory floors',
@@ -306,6 +308,7 @@ const postTemplates = [
       },
       {
         content: `I used to believe the future of manufacturing was fully autonomous. After 15 years on factory floors across 3 continents, I've changed my mind.\n\nThe future is collaborative automation — where humans and machines each do what they're best at. The challenge isn't replacing people. It's redesigning roles.\n\nWe need more process designers, exception managers, and quality arbiters. Fewer button-pushers, more system thinkers.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=800&h=500&fit=crop',
       },
     ],
   },
@@ -314,6 +317,7 @@ const postTemplates = [
     posts: [
       {
         content: `Just back from Valencia where we commissioned our 40th solar installation this year.\n\n Total capacity added: 280 MW\nHouseholds powered: ~190,000\nCO₂ offset (annual): ~120,000 tonnes\n\nNumbers matter. But the real milestone is that solar is now the cheapest form of electricity ever produced in human history. The economics have permanently shifted. 🌍☀️`,
+        mediaUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=500&fit=crop',
       },
       {
         content: `Controversial opinion: ESG reporting, as it's currently done, does more harm than good.\n\nMost companies treat it as a compliance exercise. 80-page reports full of frameworks nobody reads. Zero accountability. Zero feedback loops.\n\nWhat if companies published a single, audited metric: tonnes of CO₂ per million EUR of revenue, year over year. That's it. One number. Make it comparable. Make it consequential.\n\nSimplicity creates accountability.`,
@@ -328,6 +332,7 @@ const postTemplates = [
     posts: [
       {
         content: `We just closed our Series A. 🎉\n\nI've been sitting on this news for two weeks because it still doesn't feel real.\n\n$12M led by Meridian Capital to expand our payment rails across West and East Africa. The problem we're solving: 600 million people on this continent move money through informal channels because the formal ones are too slow, too expensive, or simply unavailable.\n\nWe're changing that. More soon.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=500&fit=crop',
       },
       {
         content: `Something nobody talks about when building in emerging markets: the infrastructure is the feature.\n\nIn markets where internet is spotty and smartphones are shared, the UX playbook from Silicon Valley doesn't apply. We've built our payment flow to work on 2G, with USSD fallback, in 14 languages.\n\nThe constraint IS the innovation.`,
@@ -339,6 +344,7 @@ const postTemplates = [
     posts: [
       {
         content: `New paper dropped from our research team: "Federated Learning for Healthcare Data Without Compromising Patient Privacy."\n\nThe core idea: hospitals can train a shared ML model without ever sharing patient records. Each site trains locally, only model weights are aggregated.\n\nWe tested across 8 hospitals in 4 countries. Accuracy matched centralized training within 2%. GDPR-compliant by design.\n\nOpen access link in comments 👇`,
+        mediaUrl: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=800&h=500&fit=crop',
       },
       {
         content: `Reminder that "AI" in most enterprise software is just:\n- Linear regression with a better UI\n- A large lookup table\n- SQL queries with extra steps\n\nNone of this is bad! It's powerful and practical. But let's call it what it is.\n\nThe gap between "AI-powered" marketing copy and what's actually running in production is enormous. Buyers deserve better transparency.`,
@@ -353,6 +359,7 @@ const postTemplates = [
     posts: [
       {
         content: `Growth channel that nobody talks about enough in B2B SaaS: your existing customers.\n\nWe ran an experiment: instead of increasing our outbound budget, we invested the same amount in a customer success program specifically designed to generate referrals.\n\nResult after 90 days: CAC from referrals = 1/6th of outbound. Close rate = 3x higher. Time to close = 40% shorter.\n\nYour best salespeople are your happiest customers. Are you investing in making them talk?`,
+        mediaUrl: 'https://images.unsplash.com/photo-1494412651409-8963ce7935a7?w=800&h=500&fit=crop',
       },
       {
         content: `Hot take: Most B2B companies don't have a marketing problem. They have a positioning problem.\n\nIf your ICP can't articulate why they chose you over the alternative in one sentence, you haven't done the positioning work yet.\n\n"We're better" is not positioning. "We're the only platform that does X for Y in Z minutes" — that's positioning.`,
@@ -364,6 +371,7 @@ const postTemplates = [
     posts: [
       {
         content: `Filed patent #8 today — a new approach to force-feedback calibration in collaborative robot arms that reduces setup time from 45 minutes to under 4 minutes.\n\nThe breakthrough was surprisingly simple: instead of factory calibration, we let the robot learn its own geometry through a standardized handling sequence on first install.\n\nSometimes the elegant solution hides in the obvious place.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=500&fit=crop',
       },
       {
         content: `Visited a car manufacturing plant in Nagoya last week. They're running 200+ cobots alongside human workers on the same assembly line.\n\nMost striking observation: the workers weren't afraid of the robots. They treated them like tools. Because they were involved in the design process.\n\nTechnology adoption is a social problem, not a technical one.`,
@@ -378,6 +386,7 @@ const postTemplates = [
       },
       {
         content: `We just closed our books on Q2 and our gross margin expanded 400bps YoY — without any price increases.\n\nHow: we systematically identified the 20% of customers that consumed 60% of our support costs. Rebuilt onboarding for that segment specifically. Support tickets dropped 35%.\n\nOperational leverage is built one friction point at a time.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=500&fit=crop',
       },
     ],
   },
@@ -386,6 +395,7 @@ const postTemplates = [
     posts: [
       {
         content: `The Red Sea shipping disruptions are still rippling through global trade — 8 months later.\n\nWhat I'm telling clients: the era of "just-in-time" as a default is over. Strategic inventory buffers are no longer a luxury. They're a competitive differentiator.\n\nThe companies that reacted fastest in late 2024 aren't the ones with the most ships. They're the ones with the best data.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&h=500&fit=crop',
       },
       {
         content: `Trade compliance is the unsexy backbone of global commerce.\n\nI've seen $50M deals stall for 3 months because of a misclassified HS code. I've seen companies fined more than their quarterly profit over documentation gaps.\n\nIf your compliance team reports to legal instead of operations, fix that first.`,
@@ -400,6 +410,7 @@ const postTemplates = [
       },
       {
         content: `Just wrapped a brand sprint with a logistics startup that had the most genuinely interesting product I've seen in years — and the most forgettable brand.\n\nSix weeks later, new positioning, new visual identity, new website. Pipeline doubled in month one after launch.\n\nBrand isn't just aesthetics. It's the shortcut your buyer uses to decide if you're worth their time.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&h=500&fit=crop',
       },
     ],
   },
@@ -408,6 +419,7 @@ const postTemplates = [
     posts: [
       {
         content: `We migrated our entire infrastructure to a multi-region active-active setup last quarter. Zero downtime. Here's what actually made it work:\n\n1. We didn't try to do it all at once\n2. We built the observability first, not last\n3. We practiced the rollback before the rollout\n4. We had one person whose only job was watching dashboards\n\nComplexity is manageable. Surprise is not.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&h=500&fit=crop',
       },
       {
         content: `Reminder: "serverless" doesn't mean no servers. It means somebody else's servers with somebody else's pricing model.\n\nBefore you go all-in on any managed service, model your costs at 10x current volume. I've seen three startups surprise themselves with cloud bills that exceeded revenue.\n\nThe architecture decision is also a financial decision. Treat it that way.`,
@@ -419,6 +431,7 @@ const postTemplates = [
     posts: [
       {
         content: `Digital health in the Gulf is at an inflection point.\n\nWhen I started in this field 7 years ago, telemedicine adoption in Saudi Arabia was under 2%. Post-pandemic: 67%.\n\nBut adoption is the easy part. The hard part is outcomes. We don't just need more apps. We need better incentive structures that reward health, not just healthcare visits.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800&h=500&fit=crop',
       },
       {
         content: `Genuinely excited about what AI-assisted diagnostics can do for physician productivity — not replacement, augmentation.\n\nA radiologist can read ~40 scans per day with high accuracy. AI-assisted radiologists are reviewing 120+ with comparable accuracy.\n\nThat's not a job replacement story. That's a capacity story. In a world with a shortage of 18 million healthcare workers, that matters enormously.`,
@@ -436,6 +449,7 @@ const postTemplates = [
       },
       {
         content: `We just made our 41st investment — a company building ERP software specifically for trade finance intermediaries.\n\nWhy: $9T market. Manual processes everywhere. The incumbent software is 25 years old. The founders have 30 years combined experience in the industry.\n\nPerfect storm. Excited to partner with this team.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&h=500&fit=crop',
       },
     ],
   },
@@ -447,6 +461,7 @@ const postTemplates = [
       },
       {
         content: `Hottest skill in People Ops right now that nobody is talking about: workforce analytics.\n\nNot engagement surveys. Actual behavioral data — when people quit, who leaves first, what signals predict it 6 months before it happens.\n\nThe companies using this data are reducing attrition by 20-30%. The ones ignoring it are still throwing pizza parties and wondering why people leave.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1509391366360-fe5bb65217d0?w=800&h=500&fit=crop',
       },
     ],
   },
@@ -455,6 +470,7 @@ const postTemplates = [
     posts: [
       {
         content: `Threat landscape update: ransomware groups are increasingly targeting supply chain software — not end targets, but the tools those targets use.\n\nIf you're a software vendor with enterprise customers, your security posture IS your customers' security posture. Treat it that way.\n\nThe question isn't "could we be attacked?" It's "would we know within 4 hours if we were?"`,
+        mediaUrl: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&h=500&fit=crop',
       },
       {
         content: `The most common security mistake I see in mid-market companies: treating cybersecurity as an IT problem.\n\nIt's a business risk problem. The CISO should have a direct line to the board. Every new product decision should include a security review. Every vendor contract should include breach notification requirements.\n\nWhen it's just an IT budget line, the first cut always comes from security.`,
@@ -466,6 +482,7 @@ const postTemplates = [
     posts: [
       {
         content: `China cross-border e-commerce update for H1 2026:\n\nVolume is up 34% YoY but margins are compressing — logistics costs, customs complexity, and platform fees are all rising.\n\nThe brands winning are the ones who invested in local partnerships 2-3 years ago. The ones who tried to run it all centrally from Shanghai are struggling.\n\nGo-local is not a strategy. It's table stakes now.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=500&fit=crop',
       },
       {
         content: `What most Western companies get wrong about entering Asian markets:\n\n1. Assuming one "Asia strategy" works across 15 very different markets\n2. Underinvesting in localization (not just language — payments, packaging, customer service)\n3. Applying Western partnership models to relationship-driven cultures\n4. Expecting LinkedIn-style outreach to work where WeChat is the default\n\nThe opportunity is massive. The learning curve is real.`,
@@ -480,6 +497,7 @@ const postTemplates = [
       },
       {
         content: `My team just hit 140% of quota for H1. 🎉\n\nWhat actually drove it:\n\n- We stopped chasing every inbound and got ruthless about ICP\n- We rebuilt our discovery process to focus on business outcomes, not product features\n- We created a "deal review" ritual where we pressure-test every deal over €200K before moving to proposal\n\nThe fundamentals compound. Patience is a sales strategy.`,
+        mediaUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&h=500&fit=crop',
       },
     ],
   },
