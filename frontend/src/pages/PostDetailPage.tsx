@@ -172,10 +172,7 @@ export const PostDetailPage: React.FC = () => {
   };
 
   const handleThemeClick = (theme: string) => {
-    // Navigate back to home with the selected theme
-    // We'll use a state or query param later, for now just home
-    // In a real app we might pass state: { selectedTheme: theme }
-    navigate('/home', { state: { selectedTheme: theme } });
+    navigate(`/themes/${encodeURIComponent(theme)}`);
   };
 
   return (

@@ -45,6 +45,7 @@ import { SalesPage } from '@/pages/SalesPage';
 import { MarketingPage } from '@/pages/MarketingPage';
 import { LearningPage } from '@/pages/LearningPage';
 import { PostDetailPage } from '@/pages/PostDetailPage';
+import { ThemeRoomPage } from '@/pages/ThemeRoomPage';
 import { StoreManagementPage } from '@/pages/StoreManagementPage';
 import { UserStorePage } from '@/pages/UserStorePage';
 import { PurchasedServicesPage } from '@/pages/PurchasedServicesPage';
@@ -68,6 +69,7 @@ function App() {
             />
             <Route path="/home" element={<HomePage />} />
             <Route path="/posts/:postId" element={<PostDetailPage />} />
+            <Route path="/themes/:theme" element={<ThemeRoomPage />} />
 
             {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { User } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
@@ -59,7 +59,6 @@ const carouselSlides: CarouselSlide[] = [
 
 export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { triggerAuthModal } = useAuth();
   
   // State
@@ -87,9 +86,6 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   const [feedMode, setFeedMode] = useState<'forYou' | 'following'>('forYou');
   const [trendingPosts, setTrendingPosts] = useState<FeedItemType[]>([]);
   const [topThemes, setTopThemes] = useState<string[]>([]);
-  const [selectedTheme, setSelectedTheme] = useState<string | null>(
-    (location.state as any)?.selectedTheme || null
-  );
   // Keyboard nav
   const [focusedPostIndex, setFocusedPostIndex] = useState<number>(-1);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -98,10 +94,6 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
 
   // Load initial data
   useEffect(() => {
-    // If we came with a theme, switch to themes tab
-    if (selectedTheme) {
-      setDiscoveryTab('themes');
-    }
     loadFeed();
     loadDiscovery();
     loadNetwork();
@@ -115,12 +107,12 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
 
     window.addEventListener('ornave_state_update', handleStateUpdate);
     return () => window.removeEventListener('ornave_state_update', handleStateUpdate);
-  }, [selectedTheme]);
+  }, []);
 
   const loadFeed = async () => {
     try {
       setIsLoadingFeed(true);
-      const response = await feedService.getFeed(undefined, selectedTheme || undefined);
+      const response = await feedService.getFeed(undefined);
       setFeedItems(response.items);
     } catch (error) {
       console.error('Failed to load feed:', error);
@@ -311,9 +303,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   };
 
   const handleThemeClick = (theme: string) => {
-    setSelectedTheme(prevTheme => prevTheme === theme ? null : theme);
-    // Smooth scroll to feed
-    document.querySelector('.personal-home__center')?.scrollIntoView({ behavior: 'smooth' });
+    navigate(`/themes/${encodeURIComponent(theme)}`);
   };
 
   const discoveryTabCount = discoveryTab === 'people' ? discoveredUsers.length
@@ -472,14 +462,14 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                   ) : (
                     <div className="themes-grid">
                       {(showAllDiscovery ? topThemes : topThemes.slice(0, DISCOVERY_VISIBLE_COUNT)).map((theme, index) => (
-                        <div 
-                          key={index} 
-                          className={`theme-card ${selectedTheme === theme ? 'theme-card--active' : ''}`}
+                        <div
+                          key={index}
+                          className="theme-card"
                           onClick={() => handleThemeClick(theme)}
                         >
                           <div className="theme-card__rank">#{index + 1}</div>
                           <div className="theme-card__name">{theme}</div>
-                          <div className="theme-card__tag">{selectedTheme === theme ? 'Filtered' : 'Trending'}</div>
+                          <div className="theme-card__tag">Enter Room →</div>
                         </div>
                       ))}
                     </div>
@@ -537,18 +527,6 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
           </div>
 
           <Carousel slides={carouselSlides} />
-
-          {selectedTheme && (
-            <div className="feed-filter-indicator">
-              <span>Showing posts for: <strong>{selectedTheme}</strong></span>
-              <button
-                className="feed-filter-indicator__clear"
-                onClick={() => setSelectedTheme(null)}
-              >
-                Clear Filter
-              </button>
-            </div>
-          )}
 
           <div className="personal-home__search" style={{ position: 'relative' }}>
             <span className="personal-home__search-icon"><IconSearch size={15} /></span>
@@ -716,11 +694,8 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
               {topThemes.slice(0, 6).map((theme, i) => (
                 <div
                   key={i}
-                  className={`right-sidebar__topic${selectedTheme === theme ? ' right-sidebar__topic--active' : ''}`}
-                  onClick={() => {
-                    setSelectedTheme(t => t === theme ? null : theme);
-                    document.querySelector('.personal-home__center')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
+                  className="right-sidebar__topic"
+                  onClick={() => handleThemeClick(theme)}
                 >
                   <span className="right-sidebar__topic-rank">#{i + 1}</span>
                   <div>
