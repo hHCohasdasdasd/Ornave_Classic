@@ -61,7 +61,7 @@ const firms = [
     capabilities: ['Solar Panels', 'Energy Storage', 'Grid Integration'],
     about: 'Solaris Energy is powering the transition to a sustainable future with large-scale solar installations across Europe and North Africa.',
     website: 'https://solaris-energy.es',
-    logo: 'https://images.unsplash.com/photo-1509391366360-fe5bb65217d0?w=400&h=400&fit=crop',
+    logo: 'https://images.unsplash.com/photo-1565043666747-69f6646db940?w=400&h=400&fit=crop',
   },
   {
     name: 'DeepCode AI',
@@ -461,7 +461,7 @@ const postTemplates = [
       },
       {
         content: `Hottest skill in People Ops right now that nobody is talking about: workforce analytics.\n\nNot engagement surveys. Actual behavioral data — when people quit, who leaves first, what signals predict it 6 months before it happens.\n\nThe companies using this data are reducing attrition by 20-30%. The ones ignoring it are still throwing pizza parties and wondering why people leave.`,
-        mediaUrl: 'https://images.unsplash.com/photo-1509391366360-fe5bb65217d0?w=800&h=500&fit=crop',
+        mediaUrl: 'https://images.unsplash.com/photo-1565043666747-69f6646db940?w=800&h=500&fit=crop',
       },
     ],
   },

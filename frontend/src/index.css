@@ -105,8 +105,6 @@
   border-color: rgba(246,243,237,0.09);
 }
 [data-theme="dark"] .feed-item:hover { border-color: rgba(198,161,91,0.35); }
-[data-theme="dark"] .feed-item__vote-col { background: #131313; border-right-color: rgba(246,243,237,0.06); }
-[data-theme="dark"] .feed-item__vote-btn { color: #8a8272; }
 [data-theme="dark"] .feed-item__avatar { border-color: rgba(246,243,237,0.1); background: #1c1c1c; }
 [data-theme="dark"] .feed-item__avatar-placeholder { background: #1c1c1c; color: #c6a15b; }
 [data-theme="dark"] .feed-item__title { color: #f6f3ed; }
@@ -115,7 +113,6 @@
 [data-theme="dark"] .feed-item__stats { border-top-color: rgba(246,243,237,0.06); }
 [data-theme="dark"] .feed-item__actions { border-top-color: rgba(246,243,237,0.06); }
 [data-theme="dark"] .feed-item__action-btn:hover { background: rgba(246,243,237,0.06); color: #f6f3ed; }
-[data-theme="dark"] .feed-item__vote-score { color: #f6f3ed; }
 
 [data-theme="dark"] .feed__sort-bar { background: #161616; border-color: rgba(246,243,237,0.08); }
 [data-theme="dark"] .feed__sort-tab:hover { background: rgba(246,243,237,0.06); color: #f6f3ed; }

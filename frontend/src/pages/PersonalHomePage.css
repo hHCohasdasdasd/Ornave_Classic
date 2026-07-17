@@ -536,51 +536,6 @@
   box-shadow: 0 1px 6px rgba(0,0,0,0.4);
 }
 
-/* Reddit vote column — restrained ivory/gold on charcoal */
-.feed-item__vote-col {
-  background: var(--color-bg-alt);
-  min-width: 40px;
-  flex-shrink: 0;
-  padding: 10px 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  border-right: 1px solid var(--color-border);
-}
-
-.feed-item__vote-btn {
-  background: transparent;
-  border: none;
-  font-size: 0.85rem;
-  cursor: pointer;
-  color: var(--color-muted);
-  padding: 3px 6px;
-  border-radius: 2px;
-  line-height: 1;
-  transition: color 0.12s, background 0.12s;
-}
-
-.feed-item__vote-btn:hover { transform: none; background: rgba(246, 243, 237, 0.08); }
-
-.feed-item__vote-btn--up:hover,
-.feed-item__vote-btn--up.active   { color: #8ba378; }
-
-.feed-item__vote-btn--down:hover,
-.feed-item__vote-btn--down.active { color: var(--color-danger); }
-
-.feed-item__vote-score {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--color-text);
-  min-width: 20px;
-  text-align: center;
-  line-height: 1;
-}
-
-.feed-item__vote-score.score--up   { color: #8ba378; }
-.feed-item__vote-score.score--down { color: var(--color-danger); }
-
 /* Main body */
 .feed-item__body {
   flex: 1;
@@ -815,17 +770,7 @@
   overflow: hidden;
 }
 
-.feed--groups .feed-item__vote-col {
-  flex-direction: row;
-  min-width: unset;
-  border-right: none;
-  border-bottom: 1px solid var(--color-border);
-  padding: 6px 12px;
-  justify-content: flex-start;
-  gap: 10px;
-}
-
-.feed--groups .feed-item__media {
+.feed--groups .feed--groups .feed-item__media {
   order: -1;
   margin: 0;
   border-radius: 0;

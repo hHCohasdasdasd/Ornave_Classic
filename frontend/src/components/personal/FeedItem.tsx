@@ -20,8 +20,7 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
   const navigate = useNavigate();
   const { user, triggerAuthModal } = useAuth();
   const [serviceRequested, setServiceRequested] = useState(false);
-  const [voteScore, setVoteScore] = useState(item.reactions?.likes ?? 0);
-  const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
+  const [likeCount, setLikeCount] = useState(item.reactions?.likes ?? 0);
   const [saved, setSaved] = useState(false);
   const [liked, setLiked] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -65,23 +64,10 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
     fn();
   };
 
-  const handleVote = (dir: 'up' | 'down') => {
-    requireAuth('vote', () => {
-      if (userVote === dir) {
-        setVoteScore(v => dir === 'up' ? v - 1 : v + 1);
-        setUserVote(null);
-      } else {
-        const delta = userVote ? 2 : 1;
-        setVoteScore(v => dir === 'up' ? v + delta : v - delta);
-        setUserVote(dir);
-      }
-    });
-  };
-
   const handleLike = () => {
     requireAuth('like this post', () => {
       setLiked(prev => {
-        setVoteScore(v => prev ? v - 1 : v + 1);
+        setLikeCount(v => prev ? v - 1 : v + 1);
         return !prev;
       });
     });
@@ -179,23 +165,6 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
 
   return (
     <div className={`feed-item${focused ? ' feed-item--focused' : ''}`} data-post-id={item.id}>
-      {/* Reddit vote column */}
-      <div className="feed-item__vote-col">
-        <button
-          className={`feed-item__vote-btn feed-item__vote-btn--up${userVote === 'up' ? ' active' : ''}`}
-          onClick={() => handleVote('up')}
-          title="Upvote"
-        >▲</button>
-        <span className={`feed-item__vote-score${userVote === 'up' ? ' score--up' : userVote === 'down' ? ' score--down' : ''}`}>
-          {voteScore >= 1000 ? `${(voteScore / 1000).toFixed(1)}k` : voteScore}
-        </span>
-        <button
-          className={`feed-item__vote-btn feed-item__vote-btn--down${userVote === 'down' ? ' active' : ''}`}
-          onClick={() => handleVote('down')}
-          title="Downvote"
-        >▼</button>
-      </div>
-
       {/* Main body */}
       <div className="feed-item__body">
         {/* Author header */}
@@ -297,7 +266,7 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
         {/* Reaction counts */}
         {item.reactions && (
           <div className="feed-item__stats">
-            <span>{liked ? '❤️' : '🤍'} {voteScore} points</span>
+            <span>{liked ? '❤️' : '🤍'} {likeCount} likes</span>
             <span>💬 {commentCount} comments</span>
           </div>
         )}
@@ -307,7 +276,7 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
           <div className="feed-item__actions">
             <button className={`feed-item__action-btn${liked ? ' feed-item__action-btn--active' : ''}`} onClick={handleLike}>
               <span className="feed-item__action-icon">{liked ? '❤️' : '🤍'}</span>
-              <span>{voteScore} Likes</span>
+              <span>{likeCount} Likes</span>
             </button>
             <button
               className={`feed-item__action-btn${showComments ? ' feed-item__action-btn--active' : ''}`}
