@@ -278,7 +278,7 @@ export const ProfileActivity: React.FC<ProfileActivityProps> = ({ posts = [], is
 // doesn't leak one person's data onto another's. The owner's own profile (no
 // sectionsKey passed) keeps using the original flat key for backward compat
 // with ProfileEditPage.
-function getStoredSections(sectionsKey?: string): Record<string, any> {
+export function getStoredSections(sectionsKey?: string): Record<string, any> {
   const storageKey = sectionsKey ? `ornave_profile_sections_${sectionsKey}` : 'ornave_profile_sections';
   const stored = localStorage.getItem(storageKey);
   if (!stored) return {};

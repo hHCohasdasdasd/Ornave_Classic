@@ -35,6 +35,7 @@ import {
   ProfileSkillBars,
   ProfileTrustedConnections,
   ProfileRecognitions,
+  getStoredSections,
   type DerivedCompany,
   type TimelineEntry,
   type DerivedRecognition,
@@ -862,26 +863,40 @@ export const ProfilePage: React.FC = () => {
   const effectiveMockKey = viewedSlugKey || ownMockKey;
   const mockData = effectiveMockKey ? mockProfileSections[effectiveMockKey] : undefined;
 
-  const earliestMockYear = (() => {
-    if (!mockData) return undefined;
+  // Every profile gets the same editorial Overview layout — for the handful of
+  // demo personas that comes from mockProfileSections, for everyone else it's
+  // built from the same real Experience/Education/Skills/Certifications data
+  // the resume-style sections below already read from localStorage. Portfolio
+  // and recommendations have no real data-entry path yet, so those stay
+  // mock-only and simply render their empty state for real accounts.
+  const realSections = getStoredSections(viewedSlugKey);
+  const sourceExperiences = mockData?.experiences || realSections.experiences || [];
+  const sourceEducations = mockData?.educations || realSections.educations || [];
+  const sourceSkills = mockData?.skills || realSections.skills || [];
+  const sourceCertifications = mockData?.certifications || realSections.certifications || [];
+  const sourcePortfolio = mockData?.portfolio || [];
+  const sourceRecommendations = mockData?.recommendations || [];
+
+  const earliestSourceYear = (() => {
     const years: number[] = [];
-    [...(mockData.experiences || []), ...(mockData.educations || [])].forEach((e: any) => {
+    [...sourceExperiences, ...sourceEducations].forEach((e: any) => {
       if (e.startDate) years.push(parseInt(e.startDate.slice(0, 4), 10));
     });
     return years.length ? Math.min(...years) : undefined;
   })();
 
-  const heroStats = mockData ? [
-    { label: 'Companies Founded', value: new Set((mockData.experiences || []).map((e) => e.company)).size },
-    { label: 'Projects Completed', value: (mockData.portfolio || []).length },
-    { label: 'Years in Business', value: earliestMockYear ? new Date().getFullYear() - earliestMockYear : '—' },
+  const heroStats = [
+    { label: 'Companies Founded', value: new Set(sourceExperiences.map((e: any) => e.company)).size },
+    { label: 'Projects Completed', value: sourcePortfolio.length },
+    { label: 'Years in Business', value: earliestSourceYear ? new Date().getFullYear() - earliestSourceYear : '—' },
     { label: 'Connections', value: connectionCount },
-    { label: 'Recommendations', value: (mockData.recommendations || []).length },
-    { label: 'Verified Achievements', value: (mockData.certifications || []).length },
-  ] : undefined;
+    { label: 'Recommendations', value: sourceRecommendations.length },
+    { label: 'Verified Achievements', value: sourceCertifications.length },
+  ];
 
-  const memberNumber = (effectiveMockKey && mockData)
-    ? String(Math.abs(Array.from(effectiveMockKey).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
+  const memberNumberSourceKey = effectiveMockKey || viewedSlugKey || (isViewingOther ? viewedUser?.id : user?.id);
+  const memberNumber = memberNumberSourceKey
+    ? String(Math.abs(Array.from(memberNumberSourceKey).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
     : undefined;
 
   const defaultEditorialBanner = 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1600&h=500&fit=crop';
@@ -889,10 +904,9 @@ export const ProfilePage: React.FC = () => {
   const yearOf = (d?: string) => (d ? d.slice(0, 4) : '');
 
   const dossierCompanies: DerivedCompany[] = (() => {
-    if (!mockData?.experiences) return [];
     const seen = new Set<string>();
     const result: DerivedCompany[] = [];
-    mockData.experiences.forEach((e) => {
+    sourceExperiences.forEach((e: any) => {
       if (seen.has(e.company)) return;
       seen.add(e.company);
       result.push({
@@ -905,15 +919,14 @@ export const ProfilePage: React.FC = () => {
   })();
 
   const dossierTimeline: TimelineEntry[] = (() => {
-    if (!mockData) return [];
-    const work = (mockData.experiences || []).map((e) => ({
+    const work = sourceExperiences.map((e: any) => ({
       id: e.id,
       period: `${yearOf(e.startDate)} – ${e.current ? 'Present' : yearOf(e.endDate)}`,
       title: e.title,
       org: e.company,
       sortKey: e.startDate || '',
     }));
-    const edu = (mockData.educations || []).map((e) => ({
+    const edu = sourceEducations.map((e: any) => ({
       id: e.id,
       period: `${yearOf(e.startDate)} – ${e.current ? 'Present' : yearOf(e.endDate)}`,
       title: e.degree,
@@ -923,17 +936,17 @@ export const ProfilePage: React.FC = () => {
     return [...work, ...edu].sort((a, b) => (a.sortKey < b.sortKey ? 1 : -1));
   })();
 
-  const dossierExpertise = (mockData?.skills || []).map((s) => s.name);
+  const dossierExpertise = sourceSkills.map((s: any) => s.name);
 
-  const dossierCurrentRole = mockData?.experiences?.find((e) => e.current) || mockData?.experiences?.[0];
+  const dossierCurrentRole = sourceExperiences.find((e: any) => e.current) || sourceExperiences[0];
 
-  const dossierFeaturedSlides = (mockData?.portfolio || []).map((p) => ({
+  const dossierFeaturedSlides = sourcePortfolio.map((p) => ({
     image: p.image,
     title: p.title,
     role: dossierCurrentRole?.title,
   }));
 
-  const dossierRecognitions: DerivedRecognition[] = (mockData?.certifications || []).map((c) => ({
+  const dossierRecognitions: DerivedRecognition[] = sourceCertifications.map((c: any) => ({
     id: c.id,
     label: c.name,
     sublabel: [c.organization, c.issueDate ? yearOf(c.issueDate) : undefined].filter(Boolean).join(' · '),
@@ -996,7 +1009,7 @@ export const ProfilePage: React.FC = () => {
                 editorial={profileType !== 'firm'}
                 verified={!!mockData}
                 stats={heroStats}
-                memberSince={earliestMockYear ? String(earliestMockYear) : undefined}
+                memberSince={earliestSourceYear ? String(earliestSourceYear) : undefined}
                 memberNumber={memberNumber}
                 memberTier={effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Gold Member'}
                 company={dossierCurrentRole?.company}
