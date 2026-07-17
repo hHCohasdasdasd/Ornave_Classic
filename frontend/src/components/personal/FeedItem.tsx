@@ -263,14 +263,6 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
           </div>
         )}
 
-        {/* Reaction counts */}
-        {item.reactions && (
-          <div className="feed-item__stats">
-            <span>{liked ? '❤️' : '🤍'} {likeCount} likes</span>
-            <span>💬 {commentCount} comments</span>
-          </div>
-        )}
-
         {/* Action bar */}
         {item.reactions && (
           <div className="feed-item__actions">

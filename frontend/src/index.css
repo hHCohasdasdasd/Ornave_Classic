@@ -110,7 +110,6 @@
 [data-theme="dark"] .feed-item__title { color: #f6f3ed; }
 [data-theme="dark"] .feed-item__content p { color: #c9c2b2; }
 [data-theme="dark"] .feed-item__author-name { color: #f6f3ed; }
-[data-theme="dark"] .feed-item__stats { border-top-color: rgba(246,243,237,0.06); }
 [data-theme="dark"] .feed-item__actions { border-top-color: rgba(246,243,237,0.06); }
 [data-theme="dark"] .feed-item__action-btn:hover { background: rgba(246,243,237,0.06); color: #f6f3ed; }
 
