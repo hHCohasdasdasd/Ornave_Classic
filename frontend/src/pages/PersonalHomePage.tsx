@@ -24,6 +24,8 @@ interface PersonalHomePageProps {
   user: User | null;
 }
 
+const DISCOVERY_VISIBLE_COUNT = 4;
+
 const carouselSlides: CarouselSlide[] = [
   {
     id: 'slide-1',
@@ -76,6 +78,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   const [isLoadingDiscovery, setIsLoadingDiscovery] = useState(true);
   const [isLoadingNetwork, setIsLoadingNetwork] = useState(true);
   const [discoveryTab, setDiscoveryTab] = useState<'people' | 'firms' | 'trending' | 'themes'>('people');
+  const [showAllDiscovery, setShowAllDiscovery] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
   const [feedViewMode, setFeedViewMode] = useState<'groups' | 'single'>('groups');
@@ -313,6 +316,11 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
     document.querySelector('.personal-home__center')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const discoveryTabCount = discoveryTab === 'people' ? discoveredUsers.length
+    : discoveryTab === 'firms' ? discoveredFirms.length
+    : discoveryTab === 'trending' ? trendingPosts.length
+    : topThemes.length;
+
   return (
     <div className="personal-home">
       <Navbar />
@@ -339,25 +347,25 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
               <div className="discovery-section__tabs">
                 <button
                   className={`discovery-section__tab ${discoveryTab === 'people' ? 'discovery-section__tab--active' : ''}`}
-                  onClick={() => setDiscoveryTab('people')}
+                  onClick={() => { setDiscoveryTab('people'); setShowAllDiscovery(false); }}
                 >
                   People
                 </button>
                 <button
                   className={`discovery-section__tab ${discoveryTab === 'firms' ? 'discovery-section__tab--active' : ''}`}
-                  onClick={() => setDiscoveryTab('firms')}
+                  onClick={() => { setDiscoveryTab('firms'); setShowAllDiscovery(false); }}
                 >
                   Companies
                 </button>
                 <button
                   className={`discovery-section__tab ${discoveryTab === 'trending' ? 'discovery-section__tab--active' : ''}`}
-                  onClick={() => setDiscoveryTab('trending')}
+                  onClick={() => { setDiscoveryTab('trending'); setShowAllDiscovery(false); }}
                 >
                   Trending
                 </button>
                 <button
                   className={`discovery-section__tab ${discoveryTab === 'themes' ? 'discovery-section__tab--active' : ''}`}
-                  onClick={() => setDiscoveryTab('themes')}
+                  onClick={() => { setDiscoveryTab('themes'); setShowAllDiscovery(false); }}
                 >
                   Themes
                 </button>
@@ -387,7 +395,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                   discoveredUsers.length === 0 ? (
                     <div className="discovery-section__empty">No people found</div>
                   ) : (
-                    discoveredUsers.map((user) => (
+                    (showAllDiscovery ? discoveredUsers : discoveredUsers.slice(0, DISCOVERY_VISIBLE_COUNT)).map((user) => (
                       <UserCard
                         key={user.id}
                         user={user}
@@ -401,7 +409,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                       {isSearchingResults ? `No firms matching "${searchQuery}"` : 'No firms found'}
                     </div>
                   ) : (
-                    discoveredFirms.map((firm) => (
+                    (showAllDiscovery ? discoveredFirms : discoveredFirms.slice(0, DISCOVERY_VISIBLE_COUNT)).map((firm) => (
                       <FirmCard
                         key={firm.id || firm.name}
                         firm={firm}
@@ -413,7 +421,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                   trendingPosts.length === 0 ? (
                     <div className="discovery-section__empty">No trending posts yet</div>
                   ) : (
-                    trendingPosts.map((post, index) => (
+                    (showAllDiscovery ? trendingPosts : trendingPosts.slice(0, DISCOVERY_VISIBLE_COUNT)).map((post, index) => (
                       <div 
                         key={post.id} 
                         className="trending-post-card"
@@ -463,7 +471,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                     <div className="discovery-section__empty">No trending themes this week</div>
                   ) : (
                     <div className="themes-grid">
-                      {topThemes.map((theme, index) => (
+                      {(showAllDiscovery ? topThemes : topThemes.slice(0, DISCOVERY_VISIBLE_COUNT)).map((theme, index) => (
                         <div 
                           key={index} 
                           className={`theme-card ${selectedTheme === theme ? 'theme-card--active' : ''}`}
@@ -479,8 +487,17 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                 )}
               </div>
             )}
+
+            {!isLoadingDiscovery && discoveryTabCount > DISCOVERY_VISIBLE_COUNT && (
+              <button
+                className="discovery-section__show-more"
+                onClick={() => setShowAllDiscovery((prev) => !prev)}
+              >
+                {showAllDiscovery ? 'Show Less' : `Show More (${discoveryTabCount - DISCOVERY_VISIBLE_COUNT})`}
+              </button>
+            )}
           </div>
-          
+
           <NetworkSnapshot
             requests={connectionRequests}
             onAccept={handleAcceptConnection}

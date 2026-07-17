@@ -88,6 +88,27 @@
 }
 
 
+.discovery-section__show-more {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid var(--tech-border);
+  color: var(--tech-accent-gold);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.discovery-section__show-more:hover {
+  background: var(--tech-accent-bg);
+  border-color: var(--tech-accent-gold);
+}
+
 .discovery-section__title {
   font-size: 0.9rem;
   color: var(--color-text);
