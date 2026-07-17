@@ -80,7 +80,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   const [showAllDiscovery, setShowAllDiscovery] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
-  const [feedViewMode, setFeedViewMode] = useState<'groups' | 'single'>('groups');
+  const [feedViewMode, setFeedViewMode] = useState<'groups' | 'single'>('single');
   const [feedContentType, setFeedContentType] = useState<'all' | 'friends' | 'firms'>('all');
   const [feedSort, setFeedSort] = useState<'hot' | 'new' | 'top' | 'rising'>('hot');
   const [feedMode, setFeedMode] = useState<'forYou' | 'following'>('forYou');
@@ -591,15 +591,15 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
             {/* View toggle */}
             <div className="feed__view-toggle">
               <button
-                className={`feed__view-btn${feedViewMode === 'groups' ? ' feed__view-btn--active' : ''}`}
-                onClick={() => setFeedViewMode('groups')}
-                title="Grid view"
-              >⊞</button>
-              <button
                 className={`feed__view-btn${feedViewMode === 'single' ? ' feed__view-btn--active' : ''}`}
                 onClick={() => setFeedViewMode('single')}
                 title="List view"
               >☰</button>
+              <button
+                className={`feed__view-btn${feedViewMode === 'groups' ? ' feed__view-btn--active' : ''}`}
+                onClick={() => setFeedViewMode('groups')}
+                title="Grid view"
+              >⊞</button>
             </div>
           </div>
 
