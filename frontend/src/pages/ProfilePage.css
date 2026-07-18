@@ -1715,6 +1715,10 @@
   gap: 20px;
 }
 
+.dossier-grid__bottom-row--single {
+  grid-template-columns: 1fr;
+}
+
 .dossier-grid__services {
   grid-column: 1 / 5;
 }

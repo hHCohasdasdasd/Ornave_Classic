@@ -1089,6 +1089,7 @@ export const ProfilePage: React.FC = () => {
                                 onScheduleMeeting={isViewingOther ? handleMessage : undefined}
                                 onDownloadVCard={!isViewingOther ? handleDownloadVCard : undefined}
                               />
+                              <ProfileTrustedConnections connections={connections.filter(c => c.type === 'user')} />
                             </div>
 
                             <div className="dossier-grid__posts">
@@ -1114,13 +1115,12 @@ export const ProfilePage: React.FC = () => {
                             <div className="dossier-grid__col dossier-grid__col--right">
                               <ProfileTimeline entries={dossierTimeline} />
                               <ProfileCompaniesList companies={dossierCompanies} />
-                            </div>
-
-                            <div className="dossier-grid__bottom-row">
                               <ProfileRecommendations sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
                               <ProfileRecognitions items={dossierRecognitions} />
+                            </div>
+
+                            <div className="dossier-grid__bottom-row dossier-grid__bottom-row--single">
                               <ProfileSkillBars skills={mockData?.skills} />
-                              <ProfileTrustedConnections connections={connections.filter(c => c.type === 'user')} />
                             </div>
 
                             {!isViewingOther && (
