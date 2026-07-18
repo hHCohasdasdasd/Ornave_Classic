@@ -83,16 +83,36 @@ class DiscoveryService {
   }
 
   async discoverFirms(filters?: DiscoveryFilters): Promise<FirmProfile[]> {
-    await new Promise(resolve => setTimeout(resolve, 400));
     const mockFirms = this.generateMockFirms();
-    
+
     // Fetch user-created firms
     const registeredFirms = await firmService.getRegisteredFirms();
-    
+
     // Use a Map to merge mocks and registered firms, prioritizing registered ones
     const firmsMap = new Map<string, any>();
-    
+
     mockFirms.forEach(f => firmsMap.set(f.id, { ...f, isConnected: false }));
+
+    // Real companies published to the global directory (see
+    // /network/directory/search — the actual seeded companies live here).
+    try {
+      const response = await apiClient.get('/network/directory/search', {});
+      const directoryResults = response?.data?.data || response?.data || [];
+      directoryResults.forEach((profile: any) => {
+        firmsMap.set(profile.companyId, {
+          id: profile.companyId,
+          name: profile.company?.name,
+          description: profile.company?.description || profile.about,
+          logo: profile.company?.logo,
+          industry: profile.industry,
+          location: profile.country || 'Global',
+          isConnected: false,
+        });
+      });
+    } catch {
+      // Directory search unavailable — mock/registered firms still show.
+    }
+
     registeredFirms.forEach(reg => {
       firmsMap.set(reg.id || reg.slug, {
         ...reg,
@@ -100,7 +120,7 @@ class DiscoveryService {
         isConnected: false
       });
     });
-    
+
     let firms = Array.from(firmsMap.values());
     
     // Check real follow status from the single source of truth

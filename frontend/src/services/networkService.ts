@@ -4,15 +4,29 @@ import { firmService } from './firmService';
 
 class NetworkService {
   async searchDirectory(filters: any): Promise<any[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Company/firm directory search is not yet backed by a real endpoint.
-    // In a real app, this would be an API call
-    const registeredFirms = await firmService.getRegisteredFirms();
-
     const results: any[] = [];
 
+    // Real companies published to the global directory (see
+    // /network/directory/search — only returns isPublicProfile firms).
+    try {
+      const response = await apiClient.get('/network/directory/search', {
+        params: {
+          industry: filters.industry,
+          country: filters.country,
+          capability: filters.capability,
+          name: filters.name,
+        },
+      });
+      const directoryResults = response?.data?.data || response?.data || [];
+      directoryResults.forEach((profile: any) => results.push({ ...profile, type: 'firm' }));
+    } catch {
+      // Directory search unavailable — fall back to locally-registered firms only.
+    }
+
+    // Firms a user registered from this browser but hasn't been published yet.
+    const registeredFirms = await firmService.getRegisteredFirms();
     registeredFirms.forEach(firm => {
+      if (results.some(r => r.companyId === firm.id)) return;
       results.push({
         companyId: firm.id,
         company: {
