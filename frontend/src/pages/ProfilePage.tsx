@@ -73,7 +73,10 @@ interface Post {
 // `ornave_registered_firms` cache this page otherwise checks. Without this,
 // they'd be misclassified as individual users by the generic keyword guess
 // below and rendered with the wrong profile layout.
-const KNOWN_DEMO_FIRM_SLUGS = new Set(['ecostream-solutions', 'novatech-robotics']);
+const KNOWN_DEMO_FIRM_SLUGS = new Set([
+  'ecostream-solutions', 'novatech-robotics', 'global-logilink', 'azure-health',
+  'solaris-energy', 'deepcode-ai', 'meridian-capital', 'artisan-bloom',
+]);
 
 function isKnownFirmSlug(slug: string): boolean {
   const s = slug.toLowerCase();
@@ -698,7 +701,7 @@ export const ProfilePage: React.FC = () => {
         setFirstName(data.name);
         setLastName('');
         setBio(data.bio || 'No bio available.');
-        const newHeadline = data.firmType === 'SERVICE' ? 'Professional Services' : 'Product & Innovation';
+        const newHeadline = data.tagline || (data.firmType === 'SERVICE' ? 'Professional Services' : 'Product & Innovation');
         setHeadline(newHeadline);
         
         // Update viewedUser with final firm data

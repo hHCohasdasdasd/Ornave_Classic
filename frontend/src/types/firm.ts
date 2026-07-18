@@ -55,6 +55,7 @@ export interface FirmProfileData {
   id: string;
   name: string;
   bio: string;
+  tagline?: string;
   firmType?: 'PRODUCT' | 'SERVICE';
   services: FirmService[];
   team: FirmTeamMember[];

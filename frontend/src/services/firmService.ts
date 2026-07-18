@@ -1,5 +1,6 @@
 import { apiClient } from './api';
 import { FirmProfileData } from '@/types/firm';
+import { mockFirmProfiles } from '@/data/mockFirmProfiles';
 
 const FOLLOWED_FIRMS_KEY = 'ornave_followed_firms';
 const REGISTERED_FIRMS_KEY = 'ornave_registered_firms';
@@ -101,7 +102,12 @@ class FirmService {
       };
     }
 
-    // Fallback to mock data for existing demo firms
+    const mockProfile = mockFirmProfiles[key] || mockFirmProfiles[slugKey];
+    if (mockProfile) {
+      return mockProfile;
+    }
+
+    // Fallback to generic mock data for legacy demo firms
     return {
       id: slug,
       name: slug === 'service-firm' ? 'Service Firm' : 

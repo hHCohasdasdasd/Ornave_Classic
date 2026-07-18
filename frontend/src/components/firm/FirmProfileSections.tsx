@@ -5,6 +5,16 @@ import { storeService, Product } from '@/services/storeService';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
 
+// Team member avatars are either an emoji placeholder ('👤') or a real photo
+// URL — render whichever was given.
+const AvatarContent: React.FC<{ avatar: string; name: string }> = ({ avatar, name }) => (
+  /^https?:\/\//.test(avatar) ? (
+    <img src={avatar} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+  ) : (
+    <>{avatar}</>
+  )
+);
+
 // Firm About Section
 export const FirmAbout: React.FC<{ bio: string }> = ({ bio }) => {
   return (
@@ -287,8 +297,8 @@ export const FirmTeam: React.FC<{ team: FirmTeamMember[] }> = ({ team }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginTop: '12px' }}>
         {team.map((person, index) => (
           <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'rgba(246, 243, 237, 0.02)', borderRadius: '0px', border: '1px solid var(--tech-border)' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '0', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', border: '1px solid var(--tech-blue)', clipPath: 'polygon(15% 0, 100% 0, 100% 85%, 85% 100%, 0 100%, 0 15%)' }}>
-              {person.avatar}
+            <div style={{ width: '40px', height: '40px', borderRadius: '0', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', border: '1px solid var(--tech-blue)', clipPath: 'polygon(15% 0, 100% 0, 100% 85%, 85% 100%, 0 100%, 0 15%)', overflow: 'hidden' }}>
+              <AvatarContent avatar={person.avatar} name={person.name} />
             </div>
             <div>
               <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text)' }}>{person.name}</div>
@@ -511,18 +521,19 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
                 cursor: person.profileSlug ? 'pointer' : 'default'
               }}
             >
-              <div className="bubble-avatar-wrapper" style={{ 
-                width: '32px', 
-                height: '32px', 
-                background: `${color}15`, 
+              <div className="bubble-avatar-wrapper" style={{
+                width: '32px',
+                height: '32px',
+                background: `${color}15`,
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '18px',
-                marginBottom: '6px'
+                marginBottom: '6px',
+                overflow: 'hidden'
               }}>
-                {person.avatar}
+                <AvatarContent avatar={person.avatar} name={person.name} />
               </div>
               <div style={{ 
                 fontSize: '11px', 
