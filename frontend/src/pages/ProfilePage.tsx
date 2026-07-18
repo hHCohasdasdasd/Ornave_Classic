@@ -8,7 +8,7 @@ import { feedService } from '@/services/feedService';
 import { firmService } from '@/services/firmService';
 import { FirmProfileData } from '@/types/firm';
 import { mockProfileSections } from '@/data/mockProfileSections';
-import { IconUsers, IconChart, IconCard } from '@/components/ui/Icons';
+import { IconUsers, IconCard } from '@/components/ui/Icons';
 import { ProfileHeroCard } from '@/components/personal/ProfileHeroCard';
 import { ProfileSidebar } from '@/components/personal/ProfileSidebar';
 import {
@@ -839,8 +839,8 @@ export const ProfilePage: React.FC = () => {
 
   if (isLoading && !isViewingOther) {
     return (
-      <div className={`profile-page ${user?.userType !== 'COMPANY_USER' ? 'profile-page--editorial' : ''}`}>
-        <Navbar sidebarOffset={user?.userType !== 'COMPANY_USER'} />
+      <div className="profile-page profile-page--editorial">
+        <Navbar sidebarOffset />
         <div className="profile-page__container">
           <div className="loading-state">Loading profile...</div>
         </div>
@@ -980,12 +980,10 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <>
-      <Navbar sidebarOffset={profileType !== 'firm'} />
-      <div className={`profile-page ${profileType !== 'firm' ? 'profile-page--editorial' : ''}`}>
+      <Navbar sidebarOffset />
+      <div className="profile-page profile-page--editorial">
         <div className="profile-page__shell">
-          {profileType !== 'firm' && (
-            <ProfileSidebar memberNumber={memberNumber} memberTier={effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Gold Member'} />
-          )}
+          <ProfileSidebar memberNumber={memberNumber} memberTier={effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Gold Member'} />
           <div className="profile-page__wrapper">
           {/* Top Hero Section */}
           <div className="profile-page__hero-section">
@@ -995,7 +993,7 @@ export const ProfilePage: React.FC = () => {
                 connectionCount={connectionCount}
                 headline={headline}
                 avatarUrl={avatarUrl}
-                bannerUrl={bannerUrl || (profileType !== 'firm' ? defaultEditorialBanner : undefined)}
+                bannerUrl={bannerUrl || defaultEditorialBanner}
                 location={location}
                 phone={phone}
                 website={website}
@@ -1006,7 +1004,7 @@ export const ProfilePage: React.FC = () => {
                 githubUrl={isViewingOther ? `https://github.com/${firstName?.toLowerCase() || ''}` : "https://github.com/emmawilliams"}
                 twitterUrl={isViewingOther ? `https://twitter.com/${firstName?.toLowerCase() || ''}` : "https://twitter.com/emma_supplychain"}
                 focusAreas={mockData?.focusAreas}
-                editorial={profileType !== 'firm'}
+                editorial
                 verified={!!mockData}
                 stats={heroStats}
                 memberSince={earliestSourceYear ? String(earliestSourceYear) : undefined}
@@ -1017,128 +1015,50 @@ export const ProfilePage: React.FC = () => {
             )}
           </div>
 
-          {profileType !== 'firm' && (
-            <nav className="dossier-tabs">
-              <div className="dossier-tabs__list">
-                {[
-                  { key: 'overview', label: 'Overview' },
-                  { key: 'experience', label: 'Timeline' },
-                  { key: 'portfolio', label: 'Portfolio' },
-                  { key: 'companies', label: 'Companies' },
-                  { key: 'connections', label: 'Network' },
-                  { key: 'recognitions', label: 'Recognitions' },
-                  { key: 'activity', label: 'Publications' },
-                ].map((t) => (
-                  <button
-                    key={t.key}
-                    className={`dossier-tabs__tab ${activeTab === t.key ? 'active' : ''}`}
-                    onClick={() => setActiveTab(t.key)}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-                {!isViewingOther && (
-                  <button className="dossier-tabs__tab" onClick={() => navigate('/profile/edit')}>
-                    Settings
-                  </button>
-                )}
-              </div>
+          <nav className="dossier-tabs">
+            <div className="dossier-tabs__list">
+              {[
+                { key: 'overview', label: 'Overview' },
+                { key: 'experience', label: 'Timeline' },
+                { key: 'portfolio', label: 'Portfolio' },
+                { key: 'companies', label: 'Companies' },
+                { key: 'connections', label: 'Network' },
+                { key: 'recognitions', label: 'Recognitions' },
+                { key: 'activity', label: 'Publications' },
+                ...(profileType === 'firm' ? [
+                  { key: 'services', label: 'Services' },
+                  { key: 'firm', label: 'Firm Details' },
+                ] : []),
+              ].map((t) => (
+                <button
+                  key={t.key}
+                  className={`dossier-tabs__tab ${activeTab === t.key ? 'active' : ''}`}
+                  onClick={() => setActiveTab(t.key)}
+                >
+                  {t.label}
+                </button>
+              ))}
               {!isViewingOther && (
-                <button className="dossier-tabs__edit-btn" onClick={() => navigate('/profile/edit?tab=info')}>
-                  Edit Profile
+                <button className="dossier-tabs__tab" onClick={() => navigate('/profile/edit')}>
+                  Settings
                 </button>
               )}
-            </nav>
-          )}
+            </div>
+            {!isViewingOther && (
+              <button className="dossier-tabs__edit-btn" onClick={() => navigate('/profile/edit?tab=info')}>
+                Edit Profile
+              </button>
+            )}
+          </nav>
 
           <div className="profile-page__content-grid">
             {/* Left Content Area */}
             <main className="profile-page__main-col">
-              {profileType === 'firm' && (
-              <nav className="profile-nav-tabs">
-                <button
-                  className={`profile-nav-tab ${activeTab === 'overview' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('overview')}
-                >
-                  Overview
-                </button>
-                <button
-                  className={`profile-nav-tab ${activeTab === 'activity' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('activity')}
-                >
-                  Activity
-                </button>
-                <button
-                  className={`profile-nav-tab ${activeTab === 'experience' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('experience')}
-                >
-                  Experience
-                </button>
-                <button
-                  className={`profile-nav-tab ${activeTab === 'skills' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('skills')}
-                >
-                  Skills
-                </button>
-                <button
-                  className={`profile-nav-tab ${activeTab === 'connections' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('connections')}
-                >
-                  Connections
-                </button>
-                {(profileType === 'firm') && (
-                  <button
-                    className={`profile-nav-tab ${activeTab === 'services' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('services')}
-                  >
-                    Services
-                  </button>
-                )}
-                {(profileType === 'firm') && (
-                  <button
-                    className={`profile-nav-tab ${activeTab === 'firm' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('firm')}
-                  >
-                    Firm Details
-                  </button>
-                )}
-              </nav>
-              )}
-
               <div className="profile-tab-content">
                 {(user || isViewingOther) && (
                   <>
                     {activeTab === 'overview' && (
                       <>
-                        {(profileType === 'firm') ? (
-                          <div className="tab-pane bento-grid fade-in">
-                            <div className="bento-item bento-about">
-                              <FirmAbout bio={bio} />
-                            </div>
-                            <div className="bento-item bento-insights">
-                              <FirmInsights insights={firmData?.insights || []} />
-                            </div>
-                            <div className="bento-item bento-stats">
-                              <div className="profile-card stats-summary">
-                                <h4 className="section-title"><span className="profile-section__title-icon"><IconChart size={16} /></span>Performance</h4>
-                                <div className="stats-grid">
-                                  <div className="stat-item">
-                                    <span className="stat-value">{connectionCount}</span>
-                                    <span className="stat-label">Followers</span>
-                                  </div>
-                                  <div className="stat-item">
-                                    <span className="stat-value">{connections.filter(c => c.type === 'user').length}</span>
-                                    <span className="stat-label">Units</span>
-                                  </div>
-                                  <div className="stat-item">
-                                    <span className="stat-value">{posts.length}</span>
-                                    <span className="stat-label">Posts</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
                           <div className="tab-pane fade-in dossier-grid">
                             <div className="dossier-grid__col dossier-grid__col--left">
                               <div className="dossier-card">
@@ -1270,7 +1190,6 @@ export const ProfilePage: React.FC = () => {
                               </div>
                             )}
                           </div>
-                        )}
                       </>
                     )}
 
