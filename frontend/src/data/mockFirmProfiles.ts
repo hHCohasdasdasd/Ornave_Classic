@@ -15,6 +15,45 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
     bio: 'Founded in 2015, EcoStream has been at the forefront of sustainable industrial solutions. We help companies reduce their environmental footprint while optimizing operational efficiency.',
     firmType: 'SERVICE',
     followersCount: 8400,
+    posts: [
+      {
+        id: 'es-post-1',
+        title: 'Closed-loop system live at our largest chemical plant deployment yet',
+        content: 'We just finished commissioning a closed-loop water recycling core at a major chemical plant in Bavaria. Total freshwater intake is down 62% since cutover, ahead of our own projections.\n\nThe redesign touched the entire intake and discharge pipeline — not just a filter swap. Grateful to the on-site team for keeping production running through the transition. 💧',
+        timestamp: '2026-07-15T09:20:00.000Z',
+        reactions: { likes: 74, comments: 12 },
+        mediaUrl: 'https://images.unsplash.com/photo-1494412651409-8963ce7935a7?w=800&h=500&fit=crop',
+      },
+      {
+        id: 'es-post-2',
+        content: 'Proud to share that our Hamburg district recycling network just crossed 2.1 billion liters of water recycled annually — enough to offset the freshwater use of roughly 14,000 households.\n\nMunicipal-scale greywater infrastructure is still an underinvested category. We think that changes fast over the next five years.',
+        timestamp: '2026-07-08T14:05:00.000Z',
+        reactions: { likes: 58, comments: 9 },
+        mediaUrl: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&h=500&fit=crop',
+      },
+      {
+        id: 'es-post-3',
+        title: 'Hot take: most industrial water audits stop one step too early',
+        content: 'Most industrial water audits stop at "here\'s where you\'re losing water." Ours go one step further and model the recycling ROI at 3 different investment tiers before we recommend anything.\n\nThe fix is rarely the flashiest option. It\'s usually the one that pays back in 18 months instead of 5 years.',
+        timestamp: '2026-06-28T11:40:00.000Z',
+        reactions: { likes: 41, comments: 15 },
+      },
+      {
+        id: 'es-post-4',
+        title: 'Now hiring across Munich and Rotterdam',
+        content: 'We\'re growing the field engineering team in both Munich and Rotterdam this quarter. If you\'ve worked on industrial filtration, membrane systems, or greywater infrastructure, we\'d love to talk.\n\nLink to open roles in the Firm Details tab. 🌍',
+        timestamp: '2026-06-18T08:15:00.000Z',
+        reactions: { likes: 36, comments: 4 },
+        mediaUrl: 'https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=800&h=500&fit=crop',
+      },
+      {
+        id: 'es-post-5',
+        title: 'Our 2026 Industrial Water Sustainability Report is out',
+        content: 'Our 2026 Industrial Water Sustainability Report is live. Benchmarks across 40+ European manufacturing sites, regulatory trends, and what "good" looks like for freshwater intake per unit of output.\n\nAvailable now in Resources.',
+        timestamp: '2026-05-19T10:00:00.000Z',
+        reactions: { likes: 29, comments: 3 },
+      },
+    ],
     services: [
       { title: 'Industrial Water Filtration', description: 'Custom-engineered filtration systems built for high-volume manufacturing plants.' },
       { title: 'Water Recycling Programs', description: 'Closed-loop systems that cut freshwater intake by up to 60%.' },
@@ -62,6 +101,22 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
     bio: 'NovaTech Robotics is a leader in precision manufacturing automation. Our robotic arms are used by the world\'s leading automotive and electronics manufacturers.',
     firmType: 'SERVICE',
     followersCount: 14200,
+    posts: [
+      {
+        id: 'nt-post-1',
+        title: 'Next-gen cobot line: 40% faster install, zero recalibration',
+        content: 'Announcing our next-generation collaborative robot line today. The breakthrough: the robot learns its own geometry through a standardized handling sequence on first install, instead of a manual factory calibration pass.\n\nSetup time drops from 45 minutes to under 4. Demo booked out through next month already.',
+        timestamp: '2026-07-12T07:30:00.000Z',
+        reactions: { likes: 96, comments: 21 },
+        mediaUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=500&fit=crop',
+      },
+      {
+        id: 'nt-post-2',
+        content: '200+ cobots now running alongside human workers on a single EV battery assembly line for one of our automotive partners. 3x throughput, zero safety incidents in 18 months.\n\nThe workers weren\'t afraid of the robots. They were involved in the design process from day one.',
+        timestamp: '2026-06-30T13:10:00.000Z',
+        reactions: { likes: 68, comments: 14 },
+      },
+    ],
     services: [
       { title: 'Precision Robotic Arms', description: 'Sub-millimeter accuracy for automotive and electronics assembly lines.' },
       { title: 'Automation Integration', description: 'End-to-end deployment, calibration, and line integration for factory floors.' },
@@ -109,6 +164,22 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
     bio: 'We connect the world through efficient logistics. Our platform provides real-time tracking and optimization for complex global supply chains.',
     firmType: 'SERVICE',
     followersCount: 31000,
+    posts: [
+      {
+        id: 'gl-post-1',
+        title: 'Customs pre-clearance network live across 12 countries',
+        content: 'Our new cross-border e-commerce customs pre-clearance network is fully live across 12 countries. Early numbers: customs delays down 45% for the clients on the network.\n\nThe era of "just-in-time" as a default is over — strategic buffers are a competitive differentiator now, not a luxury.',
+        timestamp: '2026-07-14T10:00:00.000Z',
+        reactions: { likes: 82, comments: 17 },
+        mediaUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=500&fit=crop',
+      },
+      {
+        id: 'gl-post-2',
+        content: 'Cold chain expansion into 6 new Latin American markets is complete. 99.7% on-time delivery for perishable goods in the first full quarter.\n\nTemperature-controlled logistics is unforgiving — there\'s no "close enough" when the cargo is fresh produce.',
+        timestamp: '2026-07-02T09:45:00.000Z',
+        reactions: { likes: 54, comments: 8 },
+      },
+    ],
     services: [
       { title: 'Logistics Optimization', description: 'AI-driven route planning that cuts delivery times by up to 20%.' },
       { title: 'Global Warehousing', description: 'Strategic storage and fulfillment across 50+ countries.' },
@@ -162,6 +233,22 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
     bio: 'Azure Health provides modern software solutions for clinics and hospitals, focusing on patient experience and data security.',
     firmType: 'SERVICE',
     followersCount: 6100,
+    posts: [
+      {
+        id: 'ah-post-1',
+        title: 'Rural telehealth rollout reaches 40 communities in Ontario',
+        content: 'Our rural telehealth rollout has now reached 40 communities across Ontario that previously had no local specialist access. Adoption is the easy part — the hard part is outcomes.\n\nWe\'re measuring follow-up completion rates next, not just first-visit counts.',
+        timestamp: '2026-07-10T12:20:00.000Z',
+        reactions: { likes: 47, comments: 11 },
+        mediaUrl: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800&h=500&fit=crop',
+      },
+      {
+        id: 'ah-post-2',
+        content: 'Wrapped a zero-downtime EHR migration for a 12-clinic network off a 20-year-old records system this week. Every migration plan should assume the old system fails mid-cutover — because eventually, one will.',
+        timestamp: '2026-06-25T08:00:00.000Z',
+        reactions: { likes: 33, comments: 6 },
+      },
+    ],
     services: [
       { title: 'Telemedicine Platform', description: 'HIPAA and PIPEDA-compliant virtual care built for clinics of any size.' },
       { title: 'EHR Integration', description: 'Seamless records interoperability across providers and legacy systems.' },
@@ -209,6 +296,22 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
     bio: 'Solaris Energy is powering the transition to a sustainable future with large-scale solar installations across Europe and North Africa.',
     firmType: 'SERVICE',
     followersCount: 9800,
+    posts: [
+      {
+        id: 'sl-post-1',
+        title: '40th solar installation commissioned this year',
+        content: 'Just commissioned our 40th large-scale solar installation this year — 280 MW added, powering roughly 190,000 households. Solar is now the cheapest form of electricity ever produced in human history. The economics have permanently shifted. ☀️',
+        timestamp: '2026-07-11T15:00:00.000Z',
+        reactions: { likes: 91, comments: 19 },
+        mediaUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&h=500&fit=crop',
+      },
+      {
+        id: 'sl-post-2',
+        content: 'Delivered the region\'s first cross-border renewable power export agreement between Spain and Morocco this week. Grid interconnection is the unglamorous part of the energy transition that determines whether any of the rest of it actually works.',
+        timestamp: '2026-06-29T11:30:00.000Z',
+        reactions: { likes: 45, comments: 7 },
+      },
+    ],
     services: [
       { title: 'Utility-Scale Solar Development', description: 'Site assessment through grid connection for large-scale solar farms.' },
       { title: 'Energy Storage Systems', description: 'Battery integration for reliable 24/7 renewable supply.' },
@@ -253,6 +356,22 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
     bio: 'DeepCode AI uses advanced neural networks to find bugs and security vulnerabilities in code before they reach production.',
     firmType: 'SERVICE',
     followersCount: 5200,
+    posts: [
+      {
+        id: 'dc-post-1',
+        title: 'We closed our Series A 🎉',
+        content: 'We just closed our Series A. 🎉 $40M led by top-tier investors to expand our automated code security platform into Europe.\n\nThe gap between "AI-powered" marketing copy and what\'s actually running in production is enormous. We built the platform to close that gap for real engineering teams.',
+        timestamp: '2026-07-16T09:00:00.000Z',
+        reactions: { likes: 128, comments: 34 },
+        mediaUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&h=500&fit=crop',
+      },
+      {
+        id: 'dc-post-2',
+        content: 'Just wrapped a continuous security scan across a Fortune 100 company\'s entire codebase — 40M+ lines, 1,200+ critical vulnerabilities caught before they ever reached production.\n\nCurrently hiring ML engineers and security researchers. Link in Firm Details.',
+        timestamp: '2026-07-03T14:20:00.000Z',
+        reactions: { likes: 61, comments: 9 },
+      },
+    ],
     services: [
       { title: 'Automated Code Review', description: 'ML-driven bug and vulnerability detection before merge.' },
       { title: 'Security Analysis Platform', description: 'Continuous scanning for supply-chain and dependency vulnerabilities.' },
@@ -300,6 +419,22 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
     bio: 'Meridian Capital partners with ambitious founders building the next generation of enterprise software. We bring capital, networks, and deep operational expertise.',
     firmType: 'SERVICE',
     followersCount: 18700,
+    posts: [
+      {
+        id: 'mc-post-1',
+        title: 'We just made our 41st investment',
+        content: 'We just made our 41st investment — a company building ERP software specifically for trade finance intermediaries. $9T market, still running on manual processes and spreadsheets. The incumbent software is 25 years old.\n\nPerfect storm. Excited to partner with this team.',
+        timestamp: '2026-07-09T10:30:00.000Z',
+        reactions: { likes: 55, comments: 13 },
+        mediaUrl: 'https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?w=800&h=500&fit=crop',
+      },
+      {
+        id: 'mc-post-2',
+        content: 'Closed a new $280M fund targeting B2B software and trade infrastructure companies this quarter. Grateful to our LPs for the continued conviction in this thesis.',
+        timestamp: '2026-06-20T08:45:00.000Z',
+        reactions: { likes: 43, comments: 5 },
+      },
+    ],
     services: [
       { title: 'Growth Equity Investment', description: '$5M–$50M checks for Series B+ B2B software companies.' },
       { title: 'M&A Advisory', description: 'Buy-side and sell-side support for portfolio companies.' },
@@ -344,6 +479,22 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
     bio: 'Connecting local artisans with a global audience, Artisan Bloom celebrates craftsmanship and ethical fashion.',
     firmType: 'SERVICE',
     followersCount: 4300,
+    posts: [
+      {
+        id: 'ab-post-1',
+        title: 'Artisan spotlight: Tuscany Leatherworks',
+        content: 'This month\'s artisan spotlight: a family-run leather workshop in Tuscany we\'ve featured in a dedicated storytelling campaign. 300% sales growth for the maker since launch.\n\nBrand isn\'t just aesthetics — it\'s the shortcut a buyer uses to decide if a small maker is worth their time.',
+        timestamp: '2026-07-13T11:00:00.000Z',
+        reactions: { likes: 62, comments: 10 },
+        mediaUrl: 'https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=800&h=500&fit=crop',
+      },
+      {
+        id: 'ab-post-2',
+        content: 'We finished replacing every shipping material across our catalog with compostable alternatives. 12 tons of plastic waste eliminated in year one. Zero-plastic shipping, permanently, not just for a launch campaign.',
+        timestamp: '2026-06-22T09:15:00.000Z',
+        reactions: { likes: 38, comments: 6 },
+      },
+    ],
     services: [
       { title: 'Curated Marketplace', description: 'Vetted artisans across 20+ countries, ethically sourced goods.' },
       { title: 'Artisan Partnership Program', description: 'Fair-trade sourcing and fulfillment support for independent makers.' },

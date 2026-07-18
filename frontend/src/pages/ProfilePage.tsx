@@ -687,7 +687,7 @@ export const ProfilePage: React.FC = () => {
       localStorage.setItem(`ornave_profile_sections_${key}`, JSON.stringify(mockProfileSections[key]));
     }
 
-    if (profile.id) {
+    if (profile.id && profile.type !== 'firm') {
       loadUserPosts(profile.id);
     }
 
@@ -696,7 +696,19 @@ export const ProfilePage: React.FC = () => {
       firmService.getFirmProfile(firmIdToLoad).then(data => {
         setFirmData(data);
         setConnectionCount(data.followersCount);
-        
+
+        // Firms have no backend "user" to load posts for — use the mock
+        // posts authored for this firm instead (see mockFirmProfiles.ts).
+        setIsLoadingPosts(false);
+        setPosts((data.posts || []).map((p) => ({
+          id: p.id,
+          title: p.title,
+          content: p.content,
+          timestamp: p.timestamp,
+          reactions: p.reactions,
+          mediaUrl: p.mediaUrl,
+        })));
+
         // Sync state variables for hero card
         setFirstName(data.name);
         setLastName('');

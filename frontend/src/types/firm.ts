@@ -51,12 +51,22 @@ export interface FirmSubscription {
   isPopular?: boolean;
 }
 
+export interface FirmPost {
+  id: string;
+  title?: string;
+  content: string;
+  timestamp: string;
+  reactions?: { likes: number; comments: number };
+  mediaUrl?: string;
+}
+
 export interface FirmProfileData {
   id: string;
   name: string;
   bio: string;
   tagline?: string;
   firmType?: 'PRODUCT' | 'SERVICE';
+  posts?: FirmPost[];
   services: FirmService[];
   team: FirmTeamMember[];
   jobs: FirmJob[];
