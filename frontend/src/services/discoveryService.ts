@@ -99,8 +99,9 @@ class DiscoveryService {
       const response = await apiClient.get('/network/directory/search', {});
       const directoryResults = response?.data?.data || response?.data || [];
       directoryResults.forEach((profile: any) => {
-        firmsMap.set(profile.companyId, {
-          id: profile.companyId,
+        const slugOrId = profile.company?.slug || profile.companyId;
+        firmsMap.set(slugOrId, {
+          id: slugOrId,
           name: profile.company?.name,
           description: profile.company?.description || profile.about,
           logo: profile.company?.logo,

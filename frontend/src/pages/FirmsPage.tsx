@@ -64,7 +64,7 @@ export const FirmsPage: React.FC = () => {
       const directoryData = await networkService.searchDirectory({});
       if (directoryData && directoryData.length > 0) {
         setSuggestions(directoryData.map((profile: any) => ({
-          id: profile.companyId,
+          id: profile.company?.slug || profile.companyId,
           name: profile.company.name,
           industry: profile.industry || 'Various',
           description: profile.company.description || profile.about || 'No description available.',
@@ -155,7 +155,7 @@ export const FirmsPage: React.FC = () => {
       
       if (results && results.length > 0) {
         setSearchResults(results.map((profile: any) => ({
-          id: profile.companyId || profile.id,
+          id: profile.company?.slug || profile.companyId || profile.id,
           name: profile.company?.name || profile.name || 'Unknown Firm',
           industry: profile.industry || 'Various',
           description: profile.company?.description || profile.description || 'No description available.',
