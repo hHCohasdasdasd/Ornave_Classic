@@ -932,17 +932,6 @@ export const ProfilePage: React.FC = () => {
       years: 'Trusted Partner',
     }));
 
-  // The Network tab should show who's actually behind the company — its team
-  // — alongside any real connections the firm has made on the platform.
-  const firmTeamAsConnections = (firmData?.team || []).map((member, i) => ({
-    id: member.profileSlug || `${firmData?.id || 'team'}-${member.name.toLowerCase().replace(/\s+/g, '-')}-${i}`,
-    name: member.name,
-    avatarUrl: /^https?:\/\//.test(member.avatar) ? member.avatar : undefined,
-    type: 'user',
-    headline: `${member.role} at ${firmData?.name || ''}`,
-    location: firmData?.locations?.[0]?.city || 'Global',
-  }));
-
   const memberNumberSourceKey = effectiveMockKey || viewedSlugKey || (isViewingOther ? viewedUser?.id : user?.id);
   const memberNumber = memberNumberSourceKey
     ? String(Math.abs(Array.from(memberNumberSourceKey).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
@@ -1287,11 +1276,19 @@ export const ProfilePage: React.FC = () => {
 
                     {activeTab === 'connections' && (
                       <div className="tab-pane fade-in">
-                        <ProfileConnections
-                          connections={profileType === 'firm' ? [...firmTeamAsConnections, ...connections] : connections}
-                          isLoading={isLoadingConnections}
-                          isViewingOther={isViewingOther}
-                        />
+                        {profileType === 'firm' ? (
+                          (firmData?.team && firmData.team.length > 0) ? (
+                            <FirmNetwork team={firmData.team} firmName={firmData.name} />
+                          ) : (
+                            <div className="dossier-empty-state"><p>No team members added yet.</p></div>
+                          )
+                        ) : (
+                          <ProfileConnections
+                            connections={connections}
+                            isLoading={isLoadingConnections}
+                            isViewingOther={isViewingOther}
+                          />
+                        )}
                       </div>
                     )}
 
