@@ -66,6 +66,8 @@ export interface FirmProfileData {
   bio: string;
   tagline?: string;
   firmType?: 'PRODUCT' | 'SERVICE';
+  foundedYear?: number;
+  employeeCount?: string;
   posts?: FirmPost[];
   services: FirmService[];
   team: FirmTeamMember[];

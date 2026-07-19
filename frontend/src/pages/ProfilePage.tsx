@@ -909,6 +909,17 @@ export const ProfilePage: React.FC = () => {
     { label: 'Verified Achievements', value: sourceCertifications.length },
   ];
 
+  // Firms get their own set of stats — team/hiring/output metrics instead of
+  // an individual's career stats, which don't mean anything for a company.
+  const firmHeroStats = firmData ? [
+    { label: 'Founded', value: firmData.foundedYear || '—' },
+    { label: 'Employees', value: firmData.employeeCount || '—' },
+    { label: 'Years in Business', value: firmData.foundedYear ? new Date().getFullYear() - firmData.foundedYear : '—' },
+    { label: 'Followers', value: firmData.followersCount || 0 },
+    { label: 'Case Studies', value: firmData.portfolio?.length || 0 },
+    { label: 'Open Roles', value: firmData.jobs?.length || 0 },
+  ] : undefined;
+
   const memberNumberSourceKey = effectiveMockKey || viewedSlugKey || (isViewingOther ? viewedUser?.id : user?.id);
   const memberNumber = memberNumberSourceKey
     ? String(Math.abs(Array.from(memberNumberSourceKey).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
@@ -1021,7 +1032,7 @@ export const ProfilePage: React.FC = () => {
                 focusAreas={mockData?.focusAreas}
                 editorial
                 verified={!!mockData}
-                stats={heroStats}
+                stats={profileType === 'firm' ? firmHeroStats : heroStats}
                 memberSince={earliestSourceYear ? String(earliestSourceYear) : undefined}
                 memberNumber={memberNumber}
                 memberTier={effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Gold Member'}
