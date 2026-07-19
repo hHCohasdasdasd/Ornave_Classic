@@ -8,6 +8,7 @@ import { feedService } from '@/services/feedService';
 import { firmService } from '@/services/firmService';
 import { FirmProfileData } from '@/types/firm';
 import { mockProfileSections } from '@/data/mockProfileSections';
+import { mockFirmProfiles } from '@/data/mockFirmProfiles';
 import { IconUsers, IconCard } from '@/components/ui/Icons';
 import { ProfileHeroCard } from '@/components/personal/ProfileHeroCard';
 import { ProfileSidebar } from '@/components/personal/ProfileSidebar';
@@ -920,6 +921,17 @@ export const ProfilePage: React.FC = () => {
     { label: 'Open Roles', value: firmData.jobs?.length || 0 },
   ] : undefined;
 
+  // The "Companies" tab means something different for a firm than a person —
+  // not places they've worked, but firms they partner with on the platform.
+  const firmPartnerCompanies: DerivedCompany[] = (firmData?.partnerSlugs || [])
+    .map((slug) => mockFirmProfiles[slug])
+    .filter(Boolean)
+    .map((partner) => ({
+      name: partner.name,
+      role: partner.tagline || 'Trusted Partner',
+      years: 'Trusted Partner',
+    }));
+
   const memberNumberSourceKey = effectiveMockKey || viewedSlugKey || (isViewingOther ? viewedUser?.id : user?.id);
   const memberNumber = memberNumberSourceKey
     ? String(Math.abs(Array.from(memberNumberSourceKey).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
@@ -1236,10 +1248,20 @@ export const ProfilePage: React.FC = () => {
 
                     {activeTab === 'experience' && (
                       <div className="tab-pane fade-in">
-                        <ProfileExperience sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                        <ProfileEducation sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                        <ProfileCertifications sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                        <ProfileLanguages sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                        {profileType === 'firm' ? (
+                          (firmData?.milestones && firmData.milestones.length > 0) ? (
+                            <ProfileTimeline entries={firmData.milestones} title="Company Milestones" />
+                          ) : (
+                            <div className="dossier-empty-state"><p>No milestones added yet.</p></div>
+                          )
+                        ) : (
+                          <>
+                            <ProfileExperience sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                            <ProfileEducation sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                            <ProfileCertifications sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                            <ProfileLanguages sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                          </>
+                        )}
                       </div>
                     )}
 
@@ -1264,29 +1286,59 @@ export const ProfilePage: React.FC = () => {
 
                     {activeTab === 'portfolio' && (
                       <div className="tab-pane fade-in">
-                        <ProfilePortfolioGallery items={mockData?.portfolio} />
+                        {profileType === 'firm' ? (
+                          (firmData?.portfolio && firmData.portfolio.length > 0) ? (
+                            <FirmPortfolio portfolio={firmData.portfolio} />
+                          ) : (
+                            <div className="dossier-empty-state"><p>No case studies added yet.</p></div>
+                          )
+                        ) : (
+                          <ProfilePortfolioGallery items={mockData?.portfolio} />
+                        )}
                       </div>
                     )}
 
                     {activeTab === 'companies' && (
                       <div className="tab-pane fade-in">
-                        <ProfileCompaniesList companies={dossierCompanies} />
+                        {profileType === 'firm' ? (
+                          firmPartnerCompanies.length > 0 ? (
+                            <ProfileCompaniesList companies={firmPartnerCompanies} />
+                          ) : (
+                            <div className="dossier-empty-state"><p>No partner companies added yet.</p></div>
+                          )
+                        ) : (
+                          <ProfileCompaniesList companies={dossierCompanies} />
+                        )}
                       </div>
                     )}
 
                     {activeTab === 'recognitions' && (
                       <div className="tab-pane fade-in">
-                        <ProfileRecognitions items={dossierRecognitions} />
-                        <ProfileAwards sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                        {profileType === 'firm' ? (
+                          <ProfileRecognitions items={firmData?.recognitions || []} />
+                        ) : (
+                          <>
+                            <ProfileRecognitions items={dossierRecognitions} />
+                            <ProfileAwards sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                          </>
+                        )}
                       </div>
                     )}
 
                     {activeTab === 'services' && (
                       <div className="tab-pane fade-in">
-                        <ProfileServices
-                          companyId={isViewingOther ? (viewedUser?.id || '') : (user?.companyId || '')}
-                          isOwner={!isViewingOther}
-                        />
+                        {profileType === 'firm' ? (
+                          (firmData?.services && firmData.services.length > 0) ? (
+                            <FirmServices services={firmData.services} isProminent />
+                          ) : (
+                            <div className="dossier-empty-state"><p>No services added yet.</p></div>
+                          )
+                        ) : (
+                          <ProfileServices
+                            companyId={isViewingOther ? (viewedUser?.id || '') : (user?.companyId || '')}
+                            isOwner={!isViewingOther}
+                          />
+                        )}
                       </div>
                     )}
 

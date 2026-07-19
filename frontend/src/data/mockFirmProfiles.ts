@@ -94,6 +94,17 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
       { id: 'es-1', title: 'Process Engineer', location: 'Munich, Germany', type: 'Full-time' },
       { id: 'es-2', title: 'Field Service Technician', location: 'Rotterdam, Netherlands', type: 'Full-time' },
     ],
+    recognitions: [
+      { id: 'es-r1', label: 'ISO 14001 Certified', sublabel: 'Environmental Management · 2019' },
+      { id: 'es-r2', label: 'Green Business Award', sublabel: 'Bavarian Chamber of Commerce · 2023' },
+    ],
+    milestones: [
+      { id: 'es-m1', period: '2026', title: 'Published 2026 Industrial Water Sustainability Report', org: 'Company Milestone' },
+      { id: 'es-m2', period: '2023', title: 'Hamburg network reaches 2.1B liters recycled annually', org: 'Municipal Infrastructure' },
+      { id: 'es-m3', period: '2018', title: 'Expanded to Rotterdam', org: 'European Distribution Hub' },
+      { id: 'es-m4', period: '2015', title: 'Company founded', org: 'Munich, Germany' },
+    ],
+    partnerSlugs: ['novatech-robotics', 'solaris-energy'],
   },
 
   'novatech-robotics': {
@@ -159,6 +170,17 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
       { id: 'nt-1', title: 'Robotics Engineer', location: 'Nagoya, Japan', type: 'Full-time' },
       { id: 'nt-2', title: 'Field Automation Specialist', location: 'Shenzhen, China', type: 'Full-time' },
     ],
+    recognitions: [
+      { id: 'nt-r1', label: 'ISO 9001 Certified', sublabel: 'Quality Management · 2018' },
+      { id: 'nt-r2', label: 'Manufacturing Innovation Award', sublabel: 'Japan Robotics Association · 2024' },
+    ],
+    milestones: [
+      { id: 'nt-m1', period: '2026', title: 'Launched next-gen cobot line', org: 'Product Launch' },
+      { id: 'nt-m2', period: '2022', title: 'Deployed 200+ cobots on EV battery assembly line', org: 'Automotive Partnership' },
+      { id: 'nt-m3', period: '2015', title: 'Opened Shenzhen manufacturing hub', org: 'Manufacturing Hub' },
+      { id: 'nt-m4', period: '2011', title: 'Company founded', org: 'Nagoya, Japan' },
+    ],
+    partnerSlugs: ['ecostream-solutions', 'global-logilink'],
   },
 
   'global-logilink': {
@@ -230,6 +252,17 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
       { id: 'gl-2', title: 'Supply Chain Coordinator', location: 'Chicago, IL', type: 'Full-time' },
       { id: 'gl-3', title: 'Warehouse Manager', location: 'New Jersey', type: 'Full-time' },
     ],
+    recognitions: [
+      { id: 'gl-r1', label: 'AEO Certified', sublabel: 'EU Customs Authority · 2020' },
+      { id: 'gl-r2', label: 'Supply Chain Excellence Award', sublabel: 'Global Logistics Council · 2025' },
+    ],
+    milestones: [
+      { id: 'gl-m1', period: '2026', title: 'Customs pre-clearance network live across 12 countries', org: 'Network Expansion' },
+      { id: 'gl-m2', period: '2021', title: 'Cold chain expansion into Latin America', org: 'Market Expansion' },
+      { id: 'gl-m3', period: '2014', title: 'Opened Singapore Asia-Pacific hub', org: 'Asia-Pacific Hub' },
+      { id: 'gl-m4', period: '2008', title: 'Company founded', org: 'New York, USA' },
+    ],
+    partnerSlugs: ['novatech-robotics', 'meridian-capital'],
   },
 
   'azure-health': {
@@ -295,6 +328,17 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
       { id: 'ah-1', title: 'Clinical Product Manager', location: 'Toronto, ON', type: 'Full-time' },
       { id: 'ah-2', title: 'Backend Engineer (Healthcare)', location: 'Remote (Canada)', type: 'Full-time' },
     ],
+    recognitions: [
+      { id: 'ah-r1', label: 'HIPAA & PIPEDA Compliant', sublabel: 'Certified 2021' },
+      { id: 'ah-r2', label: 'Digital Health Innovator Award', sublabel: 'Canadian Health Tech Association · 2024' },
+    ],
+    milestones: [
+      { id: 'ah-m1', period: '2026', title: 'Rural telehealth rollout reaches 40 Ontario communities', org: 'Telemedicine' },
+      { id: 'ah-m2', period: '2023', title: 'Zero-downtime EHR migration for 12-clinic network', org: 'Systems Integration' },
+      { id: 'ah-m3', period: '2020', title: 'Opened Vancouver R&D office', org: 'R&D Office' },
+      { id: 'ah-m4', period: '2018', title: 'Company founded', org: 'Toronto, Canada' },
+    ],
+    partnerSlugs: ['deepcode-ai', 'meridian-capital'],
   },
 
   'solaris-energy': {
@@ -357,6 +401,17 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
       { id: 'sl-1', title: 'Site Engineer', location: 'Valencia, Spain', type: 'Full-time' },
       { id: 'sl-2', title: 'Grid Integration Analyst', location: 'Casablanca, Morocco', type: 'Full-time' },
     ],
+    recognitions: [
+      { id: 'sl-r1', label: 'ISO 50001 Certified', sublabel: 'Energy Management · 2019' },
+      { id: 'sl-r2', label: 'Renewable Project of the Year', sublabel: 'European Clean Energy Council · 2025' },
+    ],
+    milestones: [
+      { id: 'sl-m1', period: '2026', title: 'First cross-border renewable export deal (Spain–Morocco)', org: 'Grid Integration' },
+      { id: 'sl-m2', period: '2024', title: 'Opened Casablanca North Africa office', org: 'North Africa Office' },
+      { id: 'sl-m3', period: '2020', title: '40th solar installation commissioned', org: 'Solar Development' },
+      { id: 'sl-m4', period: '2013', title: 'Company founded', org: 'Valencia, Spain' },
+    ],
+    partnerSlugs: ['ecostream-solutions', 'global-logilink'],
   },
 
   'deepcode-ai': {
@@ -422,6 +477,17 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
       { id: 'dc-1', title: 'ML Engineer', location: 'London (Hybrid)', type: 'Full-time' },
       { id: 'dc-2', title: 'Security Researcher', location: 'Remote (EU)', type: 'Full-time' },
     ],
+    recognitions: [
+      { id: 'dc-r1', label: 'SOC 2 Type II Certified', sublabel: '2024' },
+      { id: 'dc-r2', label: 'Best AI Security Startup', sublabel: 'TechCrunch Disrupt · 2026' },
+    ],
+    milestones: [
+      { id: 'dc-m1', period: '2026', title: 'Closed $40M Series B', org: 'Funding Round' },
+      { id: 'dc-m2', period: '2025', title: 'Fortune 100 security rollout — 40M+ lines scanned', org: 'Enterprise Security' },
+      { id: 'dc-m3', period: '2023', title: 'Seed round closed', org: 'Funding Round' },
+      { id: 'dc-m4', period: '2022', title: 'Company founded', org: 'London, UK' },
+    ],
+    partnerSlugs: ['azure-health', 'meridian-capital'],
   },
 
   'meridian-capital': {
@@ -484,6 +550,17 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
       { id: 'mc-1', title: 'Investment Associate', location: 'New York, NY', type: 'Full-time' },
       { id: 'mc-2', title: 'Portfolio Operations Manager', location: 'San Francisco, CA', type: 'Full-time' },
     ],
+    recognitions: [
+      { id: 'mc-r1', label: 'Top 50 B2B VC Firms', sublabel: 'PitchBook · 2025' },
+      { id: 'mc-r2', label: 'ESG Investment Leadership Award', sublabel: '2024' },
+    ],
+    milestones: [
+      { id: 'mc-m1', period: '2026', title: 'Closed $280M fund for B2B software & trade infrastructure', org: 'Fund Milestone' },
+      { id: 'mc-m2', period: '2024', title: '41st portfolio investment — trade finance ERP', org: 'Enterprise Software' },
+      { id: 'mc-m3', period: '2017', title: 'Opened San Francisco office', org: 'West Coast Office' },
+      { id: 'mc-m4', period: '2010', title: 'Company founded', org: 'New York, USA' },
+    ],
+    partnerSlugs: ['deepcode-ai', 'global-logilink'],
   },
 
   'artisan-bloom': {
@@ -546,5 +623,16 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
       { id: 'ab-1', title: 'Artisan Partnerships Manager', location: 'Florence, Italy', type: 'Full-time' },
       { id: 'ab-2', title: 'Supply Chain Coordinator', location: 'Milan, Italy', type: 'Full-time' },
     ],
+    recognitions: [
+      { id: 'ab-r1', label: 'Fair Trade Certified', sublabel: '2022' },
+      { id: 'ab-r2', label: 'Sustainable Retailer of the Year', sublabel: 'Italian Fashion Council · 2025' },
+    ],
+    milestones: [
+      { id: 'ab-m1', period: '2026', title: 'Zero-plastic packaging rollout complete', org: 'Sustainability' },
+      { id: 'ab-m2', period: '2024', title: 'Tuscany Leatherworks spotlight — 300% sales growth for maker', org: 'Artisan Partnership' },
+      { id: 'ab-m3', period: '2022', title: 'Opened Milan design studio', org: 'Design Studio' },
+      { id: 'ab-m4', period: '2021', title: 'Company founded', org: 'Florence, Italy' },
+    ],
+    partnerSlugs: ['ecostream-solutions', 'global-logilink'],
   },
 };

@@ -1256,11 +1256,11 @@ export const ProfileCompaniesList: React.FC<{ companies?: DerivedCompany[] }> = 
 
 export interface TimelineEntry { id: string; period: string; title: string; org: string }
 
-export const ProfileTimeline: React.FC<{ entries?: TimelineEntry[] }> = ({ entries }) => {
+export const ProfileTimeline: React.FC<{ entries?: TimelineEntry[]; title?: string }> = ({ entries, title = 'Experience Timeline' }) => {
   if (!entries || entries.length === 0) return null;
   return (
     <div className="dossier-card">
-      <h4 className="dossier-card__title">Experience Timeline</h4>
+      <h4 className="dossier-card__title">{title}</h4>
       <div className="dossier-timeline">
         {entries.map((e) => (
           <div key={e.id} className="dossier-timeline__item">

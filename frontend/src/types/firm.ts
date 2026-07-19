@@ -60,6 +60,19 @@ export interface FirmPost {
   mediaUrl?: string;
 }
 
+export interface FirmRecognition {
+  id: string;
+  label: string;
+  sublabel?: string;
+}
+
+export interface FirmMilestone {
+  id: string;
+  period: string;
+  title: string;
+  org: string;
+}
+
 export interface FirmProfileData {
   id: string;
   name: string;
@@ -78,4 +91,7 @@ export interface FirmProfileData {
   portfolio?: FirmPortfolioItem[];
   resources?: FirmResource[];
   subscriptions?: FirmSubscription[];
+  recognitions?: FirmRecognition[];
+  milestones?: FirmMilestone[];
+  partnerSlugs?: string[];
 }
