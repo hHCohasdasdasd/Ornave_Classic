@@ -458,35 +458,31 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
           </div>
         </div>
 
-        {/* Connecting Lines (SVG Overlay) */}
-        <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-          <defs>
-            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#c6a15b" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="#e7dfc9" stopOpacity="0.1" />
-            </linearGradient>
-          </defs>
-          {team.map((_, index) => {
-            const angle = (index * (360 / team.length) - 90) * (Math.PI / 180);
-            const radius = 180;
-            const x2 = 50 + (Math.cos(angle) * 35);
-            const y2 = 50 + (Math.sin(angle) * 35);
-            
-            return (
-              <g key={index}>
-                <line 
-                  x1="50%" y1="50%" 
-                  x2={`${x2}%`} 
-                  y2={`${y2}%`}
-                  stroke="url(#lineGradient)" 
-                  strokeWidth="2"
-                  className="network-line"
-                />
-                <circle cx={`${x2}%`} cy={`${y2}%`} r="3" fill="#c6a15b" opacity="0.5" />
-              </g>
-            );
-          })}
-        </svg>
+        {/* Connecting Lines — plain pixel math (not %) so they line up exactly
+           with the bubbles below, which are also positioned in pixels. Mixing
+           the two broke as soon as the container wasn't perfectly square. */}
+        {team.map((_, index) => {
+          const angle = (index * (360 / team.length) - 90) * (Math.PI / 180);
+          const angleDeg = angle * (180 / Math.PI);
+          const radius = 190;
+          return (
+            <div
+              key={index}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                width: `${radius}px`,
+                height: '2px',
+                background: 'linear-gradient(90deg, rgba(198, 161, 91, 0.45), rgba(231, 223, 201, 0.08))',
+                transformOrigin: '0 50%',
+                transform: `rotate(${angleDeg}deg)`,
+                zIndex: 5,
+                pointerEvents: 'none',
+              }}
+            />
+          );
+        })}
 
         {/* Team Bubbles */}
         {team.map((person, index) => {
