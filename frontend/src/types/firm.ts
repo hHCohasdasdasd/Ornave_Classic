@@ -74,11 +74,33 @@ export interface FirmMilestone {
   org: string;
 }
 
+export interface FirmMenuItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: string;
+  category: string;
+  imageUrl?: string;
+}
+
+export interface FirmPropertyListing {
+  id: string;
+  address: string;
+  city: string;
+  price: string;
+  beds: number;
+  baths: number;
+  sqft: number;
+  status: 'For Sale' | 'For Rent' | 'Sold' | 'Pending';
+  imageUrl?: string;
+}
+
 export interface FirmProfileData {
   id: string;
   name: string;
   bio: string;
   tagline?: string;
+  industry?: string;
   firmType?: 'PRODUCT' | 'SERVICE';
   foundedYear?: number;
   employeeCount?: string;
@@ -95,4 +117,6 @@ export interface FirmProfileData {
   recognitions?: FirmRecognition[];
   milestones?: FirmMilestone[];
   partnerSlugs?: string[];
+  menu?: FirmMenuItem[];
+  listings?: FirmPropertyListing[];
 }

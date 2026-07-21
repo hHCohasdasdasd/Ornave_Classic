@@ -1,6 +1,22 @@
 import { apiClient } from './api';
 import { FirmProfileData } from '@/types/firm';
 import { mockFirmProfiles } from '@/data/mockFirmProfiles';
+import { getFirmLayoutTemplate } from '@/utils/businessType';
+
+const DEFAULT_MENU_ITEMS = [
+  { id: 'menu-1', name: 'House Salad', description: 'Seasonal greens, shaved parmesan, citrus vinaigrette.', price: '$12', category: 'Starters' },
+  { id: 'menu-2', name: 'Soup of the Day', description: "Ask your server what's fresh today.", price: '$9', category: 'Starters' },
+  { id: 'menu-3', name: 'Signature Pasta', description: 'Hand-rolled pasta with a slow-simmered sauce.', price: '$24', category: 'Mains' },
+  { id: 'menu-4', name: 'Grilled Catch of the Day', description: 'Market fish, seasonal vegetables, herb butter.', price: '$28', category: 'Mains' },
+  { id: 'menu-5', name: 'Wood-Fired Pizza', description: 'San Marzano tomato, fresh mozzarella, basil.', price: '$18', category: 'Mains' },
+  { id: 'menu-6', name: "Chef's Dessert", description: "Ask your server for tonight's selection.", price: '$10', category: 'Desserts' },
+];
+
+const DEFAULT_LISTINGS = [
+  { id: 'listing-1', address: '124 Maple Street', city: 'Springfield', price: '$425,000', beds: 3, baths: 2, sqft: 1650, status: 'For Sale' as const },
+  { id: 'listing-2', address: '87 Riverside Ave, Unit 4B', city: 'Springfield', price: '$2,400/mo', beds: 2, baths: 1, sqft: 950, status: 'For Rent' as const },
+  { id: 'listing-3', address: '19 Oakwood Court', city: 'Springfield', price: '$610,000', beds: 4, baths: 3, sqft: 2400, status: 'Pending' as const },
+];
 
 const FOLLOWED_FIRMS_KEY = 'ornave_followed_firms';
 const REGISTERED_FIRMS_KEY = 'ornave_registered_firms';
@@ -79,15 +95,15 @@ class FirmService {
     });
 
     if (registered) {
-      return {
+      const template = getFirmLayoutTemplate(registered.industry);
+      const base: FirmProfileData = {
         id: registered.id,
         name: registered.name,
-        bio: registered.description || 'Leading innovation in our industry with a focus on sustainability and customer excellence.',
+        bio: registered.description || `Leading innovation in ${registered.industry || 'our industry'}.`,
+        industry: registered.industry,
+        tagline: registered.industry,
         firmType: registered.industry === 'Professional Services' ? 'SERVICE' : 'PRODUCT',
-        services: [
-          { title: 'Core Solutions', description: `Standard ${registered.industry} offerings.` },
-          { title: 'Enterprise Support', description: '24/7 priority assistance and integration help.' }
-        ],
+        services: [],
         followersCount: registered.connectionCount || 0,
         team: [
           { name: 'Founding Member', role: 'Executive', avatar: '👤', profileSlug: '#' }
@@ -99,6 +115,38 @@ class FirmService {
           employeeGrowth: '+5%',
           avgTenure: '3.2 years'
         }
+      };
+
+      if (template === 'restaurant') {
+        return {
+          ...base,
+          services: [
+            { title: 'Dine-In', description: 'Reserve a table and enjoy the full menu on-site.' },
+            { title: 'Takeout & Delivery', description: 'Order ahead for pickup or delivery to your door.' },
+            { title: 'Private Events & Catering', description: 'Book the space or have us cater your next event.' },
+          ],
+          menu: DEFAULT_MENU_ITEMS,
+        };
+      }
+
+      if (template === 'real-estate') {
+        return {
+          ...base,
+          services: [
+            { title: 'Buying', description: 'Guided search and negotiation support for homebuyers.' },
+            { title: 'Selling', description: 'Full-service listing, staging, and marketing.' },
+            { title: 'Property Management', description: 'End-to-end management for rental portfolios.' },
+          ],
+          listings: DEFAULT_LISTINGS,
+        };
+      }
+
+      return {
+        ...base,
+        services: [
+          { title: 'Core Solutions', description: `Standard ${registered.industry} offerings.` },
+          { title: 'Enterprise Support', description: '24/7 priority assistance and integration help.' },
+        ],
       };
     }
 

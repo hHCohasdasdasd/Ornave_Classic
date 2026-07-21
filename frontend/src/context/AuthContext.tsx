@@ -69,14 +69,15 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, businessType?: string) => Promise<void>;
   register: (
     email: string,
     password: string,
     firstName: string,
     lastName: string,
     companyName?: string,
-    userType?: 'USER' | 'COMPANY_USER'
+    userType?: 'USER' | 'COMPANY_USER',
+    businessType?: string
   ) => Promise<void>;
   logout: () => void;
   setError: (error: string | null) => void;
@@ -157,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     verifyToken();
   }, [token]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, businessType?: string) => {
     if (AUTH_BYPASS_ENABLED) {
       setDemoLoggedOut(false);
       persistBypassSession();
@@ -187,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           slug: newCompany.slug,
           name: newCompany.name,
           description: newCompany.description || `Welcome to ${newCompany.name}.`,
-          industry: 'Professional Services',
+          industry: businessType || 'Professional Services',
           location: 'Global',
           connectionCount: 0
         });
@@ -212,7 +213,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     firstName: string,
     lastName: string,
     companyName?: string,
-    userType: 'USER' | 'COMPANY_USER' = 'COMPANY_USER'
+    userType: 'USER' | 'COMPANY_USER' = 'COMPANY_USER',
+    businessType?: string
   ) => {
     if (AUTH_BYPASS_ENABLED) {
       setDemoLoggedOut(false);
@@ -230,7 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await apiClient.register(email, password, firstName, lastName, companyName, userType);
       // After registration, auto-login
-      await login(email, password);
+      await login(email, password, businessType);
     } catch (err: any) {
       const errorMessage = err.message || 'Registration failed. Please try again.';
       setError(errorMessage);

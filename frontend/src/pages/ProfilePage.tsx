@@ -52,8 +52,11 @@ import {
   FirmNetwork,
   FirmPortfolio,
   FirmResources,
-  FirmSubscriptions
+  FirmSubscriptions,
+  FirmMenu,
+  FirmListings
 } from '@/components/firm/FirmProfileSections';
+import { getFirmLayoutTemplate } from '@/utils/businessType';
 import { Navbar } from '@/components/ui/Navbar';
 import './ProfilePage.css';
 
@@ -301,7 +304,7 @@ export const ProfilePage: React.FC = () => {
             setFirstName(fData.name);
             setLastName('');
             setBio(fData.bio);
-            setHeadline(fData.firmType === 'SERVICE' ? 'Professional Services' : 'Product & Innovation');
+            setHeadline(fData.tagline || (fData.firmType === 'SERVICE' ? 'Professional Services' : 'Product & Innovation'));
             if (fData.locations && fData.locations.length > 0) {
               setLocation(fData.locations[0].city);
             }
@@ -932,6 +935,11 @@ export const ProfilePage: React.FC = () => {
       years: 'Trusted Partner',
     }));
 
+  // What a firm's profile shows for "Services" depends on the business type
+  // it registered as — a restaurant gets a Menu, a real estate firm gets
+  // Listings, everyone else keeps the standard services/case-studies layout.
+  const firmLayoutTemplate = profileType === 'firm' ? getFirmLayoutTemplate(firmData?.industry) : 'default';
+
   const memberNumberSourceKey = effectiveMockKey || viewedSlugKey || (isViewingOther ? viewedUser?.id : user?.id);
   const memberNumber = memberNumberSourceKey
     ? String(Math.abs(Array.from(memberNumberSourceKey).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
@@ -1184,7 +1192,10 @@ export const ProfilePage: React.FC = () => {
                 { key: 'recognitions', label: 'Recognitions' },
                 { key: 'activity', label: 'Publications' },
                 ...(profileType === 'firm' ? [
-                  { key: 'services', label: 'Services' },
+                  {
+                    key: 'services',
+                    label: firmLayoutTemplate === 'restaurant' ? 'Menu' : firmLayoutTemplate === 'real-estate' ? 'Listings' : 'Services',
+                  },
                   { key: 'firm', label: 'Firm Details' },
                 ] : []),
               ].map((t) => (
@@ -1456,10 +1467,24 @@ export const ProfilePage: React.FC = () => {
                     {activeTab === 'services' && (
                       <div className="tab-pane fade-in">
                         {profileType === 'firm' ? (
-                          (firmData?.services && firmData.services.length > 0) ? (
-                            <FirmServices services={firmData.services} isProminent />
+                          firmLayoutTemplate === 'restaurant' ? (
+                            (firmData?.menu && firmData.menu.length > 0) ? (
+                              <FirmMenu items={firmData.menu} />
+                            ) : (
+                              <div className="dossier-empty-state"><p>No menu items added yet.</p></div>
+                            )
+                          ) : firmLayoutTemplate === 'real-estate' ? (
+                            (firmData?.listings && firmData.listings.length > 0) ? (
+                              <FirmListings listings={firmData.listings} />
+                            ) : (
+                              <div className="dossier-empty-state"><p>No listings added yet.</p></div>
+                            )
                           ) : (
-                            <div className="dossier-empty-state"><p>No services added yet.</p></div>
+                            (firmData?.services && firmData.services.length > 0) ? (
+                              <FirmServices services={firmData.services} isProminent />
+                            ) : (
+                              <div className="dossier-empty-state"><p>No services added yet.</p></div>
+                            )
                           )
                         ) : (
                           <ProfileServices
@@ -1476,15 +1501,17 @@ export const ProfilePage: React.FC = () => {
                         <FirmNetwork team={firmData?.team || []} firmName={firmData?.name || ''} />
                         
                         <div className="bento-grid" style={{ marginTop: '20px' }}>
-                          {firmData?.firmType === 'SERVICE' ? (
-                            <div style={{ gridColumn: 'span 12' }}>
+                          <div style={{ gridColumn: 'span 12' }}>
+                            {firmLayoutTemplate === 'restaurant' ? (
+                              <FirmMenu items={firmData?.menu || []} />
+                            ) : firmLayoutTemplate === 'real-estate' ? (
+                              <FirmListings listings={firmData?.listings || []} />
+                            ) : firmData?.firmType === 'SERVICE' ? (
                               <FirmServices services={firmData?.services || []} isProminent={true} />
-                            </div>
-                          ) : (
-                            <div style={{ gridColumn: 'span 12' }}>
+                            ) : (
                               <FirmStore companyId={firmData?.id || ''} />
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
 
                         {firmData?.insights && <FirmInsights insights={firmData.insights} />}

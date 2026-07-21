@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ValidationUtils, ErrorMessages } from '@/utils/storage';
 import { Button } from '@/components/ui/Button';
+import { BUSINESS_TYPE_OPTIONS } from '@/utils/businessType';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export const RegisterPage: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [businessType, setBusinessType] = useState(BUSINESS_TYPE_OPTIONS[0].value);
   const [accountType, setAccountType] = useState<'USER' | 'COMPANY_USER'>('COMPANY_USER');
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
@@ -57,7 +59,8 @@ export const RegisterPage: React.FC = () => {
     try {
       // Pass companyName to register, which will create the company
       const companyPayload = accountType === 'COMPANY_USER' ? companyName : undefined;
-      await register(email, password, firstName, lastName, companyPayload, accountType);
+      const businessTypePayload = accountType === 'COMPANY_USER' ? businessType : undefined;
+      await register(email, password, firstName, lastName, companyPayload, accountType, businessTypePayload);
       navigate('/home');
     } catch (err) {
       // Error is handled in context
@@ -146,6 +149,26 @@ export const RegisterPage: React.FC = () => {
                 style={{ background: 'var(--color-input-bg)', color: 'white', border: '1px solid var(--tech-border-dim)' }}
               />
               {fieldErrors.companyName && <div style={{ color: 'var(--color-danger)', fontSize: '12px' }}>{fieldErrors.companyName}</div>}
+            </div>
+          )}
+
+          {accountType === 'COMPANY_USER' && (
+            <div className="form-group">
+              <label>Business Type</label>
+              <select
+                className="select"
+                value={businessType}
+                onChange={(e) => setBusinessType(e.target.value)}
+                disabled={isLoading}
+                style={{ background: 'var(--color-input-bg)', color: 'white', border: '1px solid var(--tech-border-dim)' }}
+              >
+                {BUSINESS_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.value}</option>
+                ))}
+              </select>
+              <span className="helper-text" style={{ marginTop: '4px', display: 'block' }}>
+                Your profile layout is tailored to this — e.g. Restaurants get a Menu, Real Estate firms get Listings.
+              </span>
             </div>
           )}
 

@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ValidationUtils, ErrorMessages, TokenStorage } from '@/utils/storage';
 import { Button } from '@/components/ui/Button';
 import { firmService } from '@/services/firmService';
+import { BUSINESS_TYPE_OPTIONS } from '@/utils/businessType';
 
 export const CompanySetupPage: React.FC = () => {
   const { user } = useAuth();
@@ -112,19 +113,20 @@ export const CompanySetupPage: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label>Industry</label>
-            <select 
-              className="input" 
+            <label>Business Type</label>
+            <select
+              className="input"
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
               style={{ background: 'var(--color-input-bg)', color: 'white', border: '1px solid var(--tech-border-dim)' }}
             >
-              <option>Professional Services</option>
-              <option>Technology</option>
-              <option>Logistics</option>
-              <option>Infrastructure</option>
-              <option>Manufacturing</option>
+              {BUSINESS_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.value}</option>
+              ))}
             </select>
+            <span className="helper-text" style={{ marginTop: '4px', display: 'block' }}>
+              Your profile layout is tailored to your business type — e.g. Restaurants get a Menu, Real Estate firms get Listings.
+            </span>
           </div>
 
           <div className="form-group">

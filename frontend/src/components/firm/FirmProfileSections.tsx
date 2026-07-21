@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FirmService, FirmTeamMember, FirmJob, FirmLocation, FirmInsightsData, FirmPortfolioItem, FirmResource, FirmSubscription } from '@/types/firm';
+import { FirmService, FirmTeamMember, FirmJob, FirmLocation, FirmInsightsData, FirmPortfolioItem, FirmResource, FirmSubscription, FirmMenuItem, FirmPropertyListing } from '@/types/firm';
 import { storeService, Product } from '@/services/storeService';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
@@ -965,6 +965,92 @@ export const FirmSubscriptions: React.FC<{ subscriptions: FirmSubscription[] }> 
             }}>
               INITIALIZE_SUBSCRIPTION
             </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+// Firm Menu Section — restaurants/cafes get this instead of Services.
+export const FirmMenu: React.FC<{ items: FirmMenuItem[] }> = ({ items }) => {
+  if (!items || items.length === 0) return null;
+
+  const categories = Array.from(new Set(items.map((item) => item.category)));
+
+  return (
+    <section className="profile-section">
+      <div className="profile-section__header">
+        <h2 className="profile-section__title">Menu</h2>
+      </div>
+      {categories.map((category) => (
+        <div key={category} style={{ marginTop: '24px' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--tech-accent-gold)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px' }}>
+            {category}
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {items.filter((item) => item.category === category).map((item) => (
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', paddingBottom: '14px', borderBottom: '1px solid var(--tech-border-dim)' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, color: 'var(--color-text)', fontSize: '0.95rem' }}>{item.name}</div>
+                  {item.description && (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--tech-text-dim)', marginTop: '2px' }}>{item.description}</div>
+                  )}
+                </div>
+                <div style={{ flexShrink: 0, fontWeight: 700, color: 'var(--color-text)', fontFamily: 'var(--font-display)' }}>{item.price}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+};
+
+// Firm Listings Section — real estate / property firms get this instead of Services.
+export const FirmListings: React.FC<{ listings: FirmPropertyListing[] }> = ({ listings }) => {
+  if (!listings || listings.length === 0) return null;
+
+  const statusColor = (status: FirmPropertyListing['status']) => {
+    if (status === 'For Sale') return '#8ba378';
+    if (status === 'For Rent') return '#c6a15b';
+    if (status === 'Pending') return '#a79e8c';
+    return '#8a7f68';
+  };
+
+  return (
+    <section className="profile-section">
+      <div className="profile-section__header">
+        <h2 className="profile-section__title">Listings</h2>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px', marginTop: '16px' }}>
+        {listings.map((listing) => (
+          <div key={listing.id} style={{ border: '1px solid var(--tech-border)', overflow: 'hidden', background: 'rgba(246, 243, 237, 0.02)' }}>
+            <div style={{ position: 'relative', height: '160px', background: 'var(--color-bg-alt)' }}>
+              {listing.imageUrl ? (
+                <img src={listing.imageUrl} alt={listing.address} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tech-text-dim)', fontSize: '2rem' }}>🏠</div>
+              )}
+              <span style={{
+                position: 'absolute', top: '10px', left: '10px',
+                background: statusColor(listing.status), color: '#14140f',
+                fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase',
+                letterSpacing: '0.04em', padding: '4px 10px', borderRadius: '999px',
+              }}>
+                {listing.status}
+              </span>
+            </div>
+            <div style={{ padding: '16px' }}>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--color-text)', fontFamily: 'var(--font-display)' }}>{listing.price}</div>
+              <div style={{ fontSize: '0.88rem', color: 'var(--color-text)', marginTop: '4px' }}>{listing.address}</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--tech-text-dim)' }}>{listing.city}</div>
+              <div style={{ display: 'flex', gap: '14px', marginTop: '12px', fontSize: '0.78rem', color: 'var(--tech-text-dim)' }}>
+                <span>{listing.beds} bed</span>
+                <span>{listing.baths} bath</span>
+                <span>{listing.sqft.toLocaleString()} sqft</span>
+              </div>
+            </div>
           </div>
         ))}
       </div>
