@@ -16,13 +16,23 @@ const AvatarContent: React.FC<{ avatar: string; name: string }> = ({ avatar, nam
 );
 
 // Firm About Section
-export const FirmAbout: React.FC<{ bio: string }> = ({ bio }) => {
+export const FirmAbout: React.FC<{ bio: string; industry?: string }> = ({ bio, industry }) => {
   return (
     <section className="profile-section">
       <div className="profile-section__header">
         <h2 className="profile-section__title">About</h2>
       </div>
       <div className="profile-section__content">
+        {industry && (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            fontSize: '11px', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase',
+            color: 'var(--tech-accent-gold)', border: '1px solid rgba(198, 161, 91, 0.35)',
+            borderRadius: '999px', padding: '5px 12px', marginBottom: '16px',
+          }}>
+            {industry}
+          </div>
+        )}
         <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--tech-text-dim)' }}>
           {bio || 'No description provided.'}
         </p>

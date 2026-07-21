@@ -1232,6 +1232,9 @@ export const ProfilePage: React.FC = () => {
                             <div className="dossier-grid__col dossier-grid__col--left">
                               <div className="dossier-card">
                                 <h4 className="dossier-card__title">About</h4>
+                                {profileType === 'firm' && (firmData?.industry || firmData?.tagline) && (
+                                  <span className="dossier-card__industry-tag">{firmData.industry || firmData.tagline}</span>
+                                )}
                                 <p className="bio-text">{bio || "No bio available."}</p>
                                 <span className="dossier-card__link" onClick={() => setActiveTab('experience')}>View full profile ›</span>
                               </div>
@@ -1497,7 +1500,7 @@ export const ProfilePage: React.FC = () => {
 
                     {activeTab === 'firm' && (
                       <div className="tab-pane fade-in">
-                        <FirmAbout bio={firmData?.bio || ''} />
+                        <FirmAbout bio={firmData?.bio || ''} industry={firmData?.industry || firmData?.tagline} />
                         <FirmNetwork team={firmData?.team || []} firmName={firmData?.name || ''} />
                         
                         <div className="bento-grid" style={{ marginTop: '20px' }}>
