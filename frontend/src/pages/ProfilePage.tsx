@@ -1053,6 +1053,129 @@ export const ProfilePage: React.FC = () => {
             )}
           </div>
 
+          {/* Primary action row — Follow/Connect, Message, Save, Share (or
+             Edit Profile/Log Out on your own profile) — sits right under the
+             hero so it doesn't require scrolling past every tab to reach. */}
+          {!isViewingOther ? (
+            <div className="profile-card account-card">
+              <div className="profile-card__header">
+                <h3>Account</h3>
+              </div>
+              <div className="account-stats">
+                <div className="account-stat">
+                  <span className="account-stat-label">Connections</span>
+                  <span className="account-stat-value">{connectionCount}</span>
+                </div>
+                <div className="account-stat">
+                  <span className="account-stat-label">Profile Views</span>
+                  <span className="account-stat-value">1,248</span>
+                </div>
+              </div>
+              <div className="account-actions">
+                <button
+                  className="btn-primary"
+                  onClick={() => navigate('/profile/edit')}
+                >
+                  Edit Profile
+                </button>
+                <button className="btn-outline-danger" onClick={handleLogout}>
+                  Log Out
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="profile-card connect-card">
+              <div className="connect-actions">
+                <button
+                  className={isFollowing || isConnected || isPending ? "btn-secondary" : "btn-primary"}
+                  onClick={handleFollow}
+                >
+                  {viewedUser?.type === 'firm'
+                    ? (isFollowing ? 'Following' : '+ Follow')
+                    : (isConnected ? 'Connected' : (isPending ? 'Pending' : '+ Connect'))}
+                </button>
+                <button
+                  className="btn-outline-primary"
+                  onClick={handleMessage}
+                >
+                  Message
+                </button>
+                <button
+                  className={`btn-icon-square ${isSaved ? 'btn-icon-square--active' : ''}`}
+                  onClick={handleToggleSave}
+                  title={isSaved ? 'Remove from saved' : 'Save profile'}
+                >
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.4">
+                    <path d="M4 2.5h8a.5.5 0 0 1 .5.5v10.5l-4.5-3-4.5 3V3a.5.5 0 0 1 .5-.5Z" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button
+                  className="btn-icon-square"
+                  onClick={handleShareProfile}
+                  title="Copy profile link"
+                >
+                  {shareCopied ? (
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <path d="M3 8.5 6.5 12 13 4.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+                      <circle cx="12.5" cy="3.5" r="1.8"/>
+                      <circle cx="3.5" cy="8" r="1.8"/>
+                      <circle cx="12.5" cy="12.5" r="1.8"/>
+                      <path d="M5.1 7.1 11 4.3M5.1 8.9 11 11.7"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              {mutualConnections.length > 0 && (
+                <div className="mutual-connections">
+                  <div className="mutual-connections__avatars">
+                    {mutualConnections.slice(0, 4).map((m, i) => (
+                      <div key={m.id || i} className="mutual-connections__avatar" style={{ zIndex: 4 - i }}>
+                        {m.profilePicture ? (
+                          <img src={m.profilePicture} alt={m.firstName} />
+                        ) : (
+                          `${m.firstName?.[0] || ''}${m.lastName?.[0] || ''}`
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <span className="mutual-connections__label">
+                    {mutualConnections.length} mutual connection{mutualConnections.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+              )}
+              {(viewedUser?.type === 'firm' ? isFollowing : isConnected) && (
+                <button
+                  className={`btn-partner ${partnerStatus === 'PARTNERED' ? 'btn-partner--active' : ''}`}
+                  onClick={handlePartner}
+                  title={
+                    partnerStatus === 'PARTNERED'
+                      ? 'End partnership'
+                      : partnerStatus === 'PENDING_SENT'
+                      ? 'Cancel partnership request'
+                      : partnerStatus === 'PENDING_RECEIVED'
+                      ? 'Respond in your Network'
+                      : 'Propose a deeper, partnered relationship'
+                  }
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 1.3 9.8 5l4.1.6-3 2.9.7 4.1L8 10.7 4.4 12.6l.7-4.1-3-2.9L6.2 5 8 1.3Z"/>
+                  </svg>
+                  {partnerStatus === 'PARTNERED'
+                    ? 'Partnered'
+                    : partnerStatus === 'PENDING_SENT'
+                    ? 'Partnership Requested'
+                    : partnerStatus === 'PENDING_RECEIVED'
+                    ? 'Wants to Partner — Respond'
+                    : 'Propose Partnership'}
+                </button>
+              )}
+            </div>
+          )}
+
           <nav className="dossier-tabs">
             <div className="dossier-tabs__list">
               {[
@@ -1390,127 +1513,6 @@ export const ProfilePage: React.FC = () => {
             {/* Right Sidebar */}
             <aside className="profile-page__sidebar-col">
               <div className="sticky-sidebar">
-                {/* User Info / Actions Card */}
-                {!isViewingOther ? (
-                  <div className="profile-card account-card">
-                    <div className="profile-card__header">
-                      <h3>Account</h3>
-                    </div>
-                    <div className="account-stats">
-                      <div className="account-stat">
-                        <span className="account-stat-label">Connections</span>
-                        <span className="account-stat-value">{connectionCount}</span>
-                      </div>
-                      <div className="account-stat">
-                        <span className="account-stat-label">Profile Views</span>
-                        <span className="account-stat-value">1,248</span>
-                      </div>
-                    </div>
-                    <div className="account-actions">
-                      <button 
-                        className="btn-primary" 
-                        onClick={() => navigate('/profile/edit')}
-                      >
-                        Edit Profile
-                      </button>
-                      <button className="btn-outline-danger" onClick={handleLogout}>
-                        Log Out
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="profile-card connect-card">
-                    <div className="connect-actions">
-                      <button
-                        className={isFollowing || isConnected || isPending ? "btn-secondary" : "btn-primary"}
-                        onClick={handleFollow}
-                      >
-                        {viewedUser?.type === 'firm'
-                          ? (isFollowing ? 'Following' : '+ Follow')
-                          : (isConnected ? 'Connected' : (isPending ? 'Pending' : '+ Connect'))}
-                      </button>
-                      <button
-                        className="btn-outline-primary"
-                        onClick={handleMessage}
-                      >
-                        Message
-                      </button>
-                      <button
-                        className={`btn-icon-square ${isSaved ? 'btn-icon-square--active' : ''}`}
-                        onClick={handleToggleSave}
-                        title={isSaved ? 'Remove from saved' : 'Save profile'}
-                      >
-                        <svg width="15" height="15" viewBox="0 0 16 16" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.4">
-                          <path d="M4 2.5h8a.5.5 0 0 1 .5.5v10.5l-4.5-3-4.5 3V3a.5.5 0 0 1 .5-.5Z" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      <button
-                        className="btn-icon-square"
-                        onClick={handleShareProfile}
-                        title="Copy profile link"
-                      >
-                        {shareCopied ? (
-                          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6">
-                            <path d="M3 8.5 6.5 12 13 4.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        ) : (
-                          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
-                            <circle cx="12.5" cy="3.5" r="1.8"/>
-                            <circle cx="3.5" cy="8" r="1.8"/>
-                            <circle cx="12.5" cy="12.5" r="1.8"/>
-                            <path d="M5.1 7.1 11 4.3M5.1 8.9 11 11.7"/>
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-
-                    {mutualConnections.length > 0 && (
-                      <div className="mutual-connections">
-                        <div className="mutual-connections__avatars">
-                          {mutualConnections.slice(0, 4).map((m, i) => (
-                            <div key={m.id || i} className="mutual-connections__avatar" style={{ zIndex: 4 - i }}>
-                              {m.profilePicture ? (
-                                <img src={m.profilePicture} alt={m.firstName} />
-                              ) : (
-                                `${m.firstName?.[0] || ''}${m.lastName?.[0] || ''}`
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        <span className="mutual-connections__label">
-                          {mutualConnections.length} mutual connection{mutualConnections.length === 1 ? '' : 's'}
-                        </span>
-                      </div>
-                    )}
-                    {(viewedUser?.type === 'firm' ? isFollowing : isConnected) && (
-                      <button
-                        className={`btn-partner ${partnerStatus === 'PARTNERED' ? 'btn-partner--active' : ''}`}
-                        onClick={handlePartner}
-                        title={
-                          partnerStatus === 'PARTNERED'
-                            ? 'End partnership'
-                            : partnerStatus === 'PENDING_SENT'
-                            ? 'Cancel partnership request'
-                            : partnerStatus === 'PENDING_RECEIVED'
-                            ? 'Respond in your Network'
-                            : 'Propose a deeper, partnered relationship'
-                        }
-                      >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                          <path d="M8 1.3 9.8 5l4.1.6-3 2.9.7 4.1L8 10.7 4.4 12.6l.7-4.1-3-2.9L6.2 5 8 1.3Z"/>
-                        </svg>
-                        {partnerStatus === 'PARTNERED'
-                          ? 'Partnered'
-                          : partnerStatus === 'PENDING_SENT'
-                          ? 'Partnership Requested'
-                          : partnerStatus === 'PENDING_RECEIVED'
-                          ? 'Wants to Partner — Respond'
-                          : 'Propose Partnership'}
-                      </button>
-                    )}
-                  </div>
-                )}
-
                 {/* Suggestions Section */}
                 <div className="profile-card suggestions-card">
                   <h4 className="sidebar-title">Suggested for you</h4>
