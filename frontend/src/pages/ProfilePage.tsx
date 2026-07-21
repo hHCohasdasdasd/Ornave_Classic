@@ -1057,10 +1057,7 @@ export const ProfilePage: React.FC = () => {
              Edit Profile/Log Out on your own profile) — sits right under the
              hero so it doesn't require scrolling past every tab to reach. */}
           {!isViewingOther ? (
-            <div className="profile-card account-card">
-              <div className="profile-card__header">
-                <h3>Account</h3>
-              </div>
+            <div className="dossier-actions-bar account-card">
               <div className="account-stats">
                 <div className="account-stat">
                   <span className="account-stat-label">Connections</span>
@@ -1084,7 +1081,7 @@ export const ProfilePage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="profile-card connect-card">
+            <div className="dossier-actions-bar connect-card">
               <div className="connect-actions">
                 <button
                   className={isFollowing || isConnected || isPending ? "btn-secondary" : "btn-primary"}

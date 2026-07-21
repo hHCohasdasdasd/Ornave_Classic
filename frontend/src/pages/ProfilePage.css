@@ -233,6 +233,112 @@
   border-radius: 0;
 }
 
+/* Follow/Message action row — sits between the hero and the tab strip, so
+   it keeps their same full-bleed dark background instead of breaking the
+   banner with a boxy white card. */
+.dossier-actions-bar {
+  background: #14140f;
+  padding: 18px 28px;
+  margin-left: calc(-1 * clamp(20px, 2.5vw, 56px));
+  margin-right: calc(-1 * clamp(20px, 2.5vw, 56px));
+  margin-bottom: 0;
+  border-top: 1px solid rgba(198, 161, 91, 0.15);
+}
+
+.dossier-actions-bar.connect-card {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+}
+
+.dossier-actions-bar .connect-actions {
+  margin: 0;
+}
+
+.dossier-actions-bar .btn-outline-primary {
+  color: rgba(246, 243, 237, 0.85);
+  border-color: rgba(246, 243, 237, 0.3);
+}
+
+.dossier-actions-bar .btn-outline-primary:hover {
+  background: rgba(246, 243, 237, 0.08);
+  color: #f6f3ed;
+  border-color: rgba(246, 243, 237, 0.5);
+}
+
+.dossier-actions-bar .btn-icon-square {
+  border-color: rgba(246, 243, 237, 0.25);
+  color: rgba(246, 243, 237, 0.7);
+}
+
+.dossier-actions-bar .btn-icon-square:hover,
+.dossier-actions-bar .btn-icon-square--active {
+  border-color: var(--tech-accent-gold);
+  color: var(--tech-accent-gold);
+  background: rgba(198, 161, 91, 0.12);
+}
+
+.dossier-actions-bar .mutual-connections {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.dossier-actions-bar .mutual-connections__avatar {
+  border-color: #14140f;
+}
+
+.dossier-actions-bar .mutual-connections__label {
+  color: rgba(246, 243, 237, 0.6);
+}
+
+.dossier-actions-bar.account-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+}
+
+.dossier-actions-bar .account-stats {
+  display: flex;
+  gap: 28px;
+}
+
+.dossier-actions-bar .account-stat {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  padding: 0;
+  border: none;
+  margin: 0;
+}
+
+.dossier-actions-bar .account-stat-label {
+  color: rgba(246, 243, 237, 0.55);
+}
+
+.dossier-actions-bar .account-stat-value {
+  color: #f6f3ed;
+}
+
+.dossier-actions-bar .account-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.dossier-actions-bar .btn-outline-danger {
+  color: rgba(246, 243, 237, 0.7);
+  border-color: rgba(246, 243, 237, 0.25);
+}
+
+.dossier-actions-bar .btn-outline-danger:hover {
+  background: rgba(198, 74, 70, 0.15);
+  color: #e8a8a5;
+  border-color: rgba(198, 74, 70, 0.5);
+}
+
 /* Dark tab strip attached directly to the bottom of the hero card — reads
    as one continuous dark banner rather than a separate light pill nav. */
 .dossier-tabs {
