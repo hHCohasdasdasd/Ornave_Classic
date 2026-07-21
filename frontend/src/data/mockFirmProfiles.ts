@@ -65,6 +65,11 @@ export const mockFirmProfiles: Record<string, FirmProfileData> = {
       { name: 'Lena Fischer', role: 'CEO & Co-Founder', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face' },
       { name: 'Markus Weber', role: 'Chief Engineer', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face' },
       { name: 'Priya Sharma', role: 'Head of Sustainability', avatar: 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=200&h=200&fit=crop&crop=face' },
+      { name: 'Thomas Becker', role: 'VP of Operations', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face' },
+      { name: 'Sofia Klein', role: 'Head of Engineering', avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=200&h=200&fit=crop&crop=face' },
+      { name: 'David Novak', role: 'Regional Manager, Rotterdam', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face' },
+      { name: 'Anna Weiss', role: 'Head of Customer Success', avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=face' },
+      { name: 'Jonas Richter', role: 'Sales Director', avatar: 'https://images.unsplash.com/photo-1463453091185-61582044d556?w=200&h=200&fit=crop&crop=face' },
     ],
     locations: [
       { city: 'Munich', address: 'Industriestrasse 24, 80339', type: 'Headquarters' },
