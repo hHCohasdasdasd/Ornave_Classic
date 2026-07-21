@@ -8,6 +8,7 @@ export interface FirmTeamMember {
   role: string;
   avatar: string;
   profileSlug?: string;
+  directReports?: FirmTeamMember[];
 }
 
 export interface FirmJob {

@@ -411,6 +411,35 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
     return '#a79e8c';
   };
 
+  // First ring: leadership, positioned radially around the hub. Second ring:
+  // each leader's own direct reports, fanned out further along roughly the
+  // same angle from the hub so their team reads as branching off of them,
+  // not off the company.
+  const RADIUS_L1 = 190;
+  const RADIUS_L2 = 100;
+  const SIZE_L2 = 48;
+  const hasAnyReports = team.some((p) => p.directReports && p.directReports.length > 0);
+  const containerHeight = hasAnyReports ? 660 : 500;
+
+  type Placed = { person: FirmTeamMember; x: number; y: number; size: number; color: string; fromX: number; fromY: number };
+  const placed: Placed[] = [];
+
+  team.forEach((person, index) => {
+    const angle = (index * (360 / team.length) - 90) * (Math.PI / 180);
+    const x = Math.cos(angle) * RADIUS_L1;
+    const y = Math.sin(angle) * RADIUS_L1;
+    placed.push({ person, x, y, size: getNodeSize(person.role), color: getRoleColor(person.role), fromX: 0, fromY: 0 });
+
+    const reports = person.directReports || [];
+    reports.forEach((report, rIndex) => {
+      const spread = 55 * (Math.PI / 180); // degrees between siblings, in radians
+      const childAngle = angle + (rIndex - (reports.length - 1) / 2) * spread;
+      const rx = x + Math.cos(childAngle) * RADIUS_L2;
+      const ry = y + Math.sin(childAngle) * RADIUS_L2;
+      placed.push({ person: report, x: rx, y: ry, size: SIZE_L2, color: getRoleColor(report.role), fromX: x, fromY: y });
+    });
+  });
+
   return (
     <section className="profile-section" style={{ overflow: 'visible' }}>
       <div className="profile-section__header">
@@ -420,7 +449,7 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
 
       <div className="firm-network-container enhanced-network" style={{
         position: 'relative',
-        height: '500px',
+        height: `${containerHeight}px`,
         background: 'var(--color-bg)',
         borderRadius: '20px',
         marginTop: '16px',
@@ -430,7 +459,7 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
       }}>
         {/* Background Grid Decoration */}
         <div className="network-grid-overlay"></div>
-        
+
         {/* Ambient Glows */}
         <div className="ambient-glow glow-1"></div>
         <div className="ambient-glow glow-2"></div>
@@ -460,19 +489,22 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
 
         {/* Connecting Lines — plain pixel math (not %) so they line up exactly
            with the bubbles below, which are also positioned in pixels. Mixing
-           the two broke as soon as the container wasn't perfectly square. */}
-        {team.map((_, index) => {
-          const angle = (index * (360 / team.length) - 90) * (Math.PI / 180);
-          const angleDeg = angle * (180 / Math.PI);
-          const radius = 190;
+           the two broke as soon as the container wasn't perfectly square.
+           Each line runs from its node's parent (the hub for leadership,
+           or the leader's own bubble for their direct reports). */}
+        {placed.map((p, index) => {
+          const dx = p.x - p.fromX;
+          const dy = p.y - p.fromY;
+          const length = Math.sqrt(dx * dx + dy * dy);
+          const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
           return (
             <div
               key={index}
               style={{
                 position: 'absolute',
-                left: '50%',
-                top: '50%',
-                width: `${radius}px`,
+                left: `calc(50% + ${p.fromX}px)`,
+                top: `calc(50% + ${p.fromY}px)`,
+                width: `${length}px`,
                 height: '2px',
                 background: 'linear-gradient(90deg, rgba(198, 161, 91, 0.45), rgba(231, 223, 201, 0.08))',
                 transformOrigin: '0 50%',
@@ -485,21 +517,17 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
         })}
 
         {/* Team Bubbles */}
-        {team.map((person, index) => {
-          const angle = (index * (360 / team.length) - 90) * (Math.PI / 180);
-          const radius = 190; 
-          const size = getNodeSize(person.role);
-          const color = getRoleColor(person.role);
-          
+        {placed.map((p, index) => {
+          const { person, x, y, size, color } = p;
           return (
-            <div 
+            <div
               key={index}
               className="network-node person-bubble"
               onClick={() => person.profileSlug && navigate(`/profile?view=${person.profileSlug}`)}
               style={{
                 position: 'absolute',
-                left: `calc(50% + ${Math.cos(angle) * radius}px)`,
-                top: `calc(50% + ${Math.sin(angle) * radius}px)`,
+                left: `calc(50% + ${x}px)`,
+                top: `calc(50% + ${y}px)`,
                 transform: 'translate(-50%, -50%)',
                 width: `${size}px`,
                 height: `${size}px`,
@@ -511,29 +539,29 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
                 justifyContent: 'center',
                 boxShadow: '0 8px 16px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.2)',
                 zIndex: 15,
-                padding: '10px',
+                padding: '8px',
                 border: `1.5px solid rgba(246, 243, 237, 0.12)`,
                 transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                 cursor: person.profileSlug ? 'pointer' : 'default'
               }}
             >
               <div className="bubble-avatar-wrapper" style={{
-                width: '32px',
-                height: '32px',
+                width: '28px',
+                height: '28px',
                 background: `${color}15`,
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '18px',
-                marginBottom: '6px',
+                fontSize: '16px',
+                marginBottom: '5px',
                 overflow: 'hidden'
               }}>
                 <AvatarContent avatar={person.avatar} name={person.name} />
               </div>
-              <div style={{ 
-                fontSize: '11px', 
-                fontWeight: 800, 
+              <div style={{
+                fontSize: '10px',
+                fontWeight: 800,
                 textAlign: 'center',
                 color: 'var(--color-text)',
                 lineHeight: '1.1',
@@ -541,9 +569,9 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
               }}>
                 {person.name.split(' ')[0]}<br/>{person.name.split(' ').slice(1).join(' ')}
               </div>
-              <div style={{ 
-                fontSize: '9px', 
-                color: color, 
+              <div style={{
+                fontSize: '8px',
+                color: color,
                 fontWeight: 700,
                 textAlign: 'center',
                 letterSpacing: '0.02em',
@@ -551,7 +579,7 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
               }}>
                 {person.role}
               </div>
-              
+
               {/* Role-specific decorative dot */}
               <div style={{
                 position: 'absolute',
