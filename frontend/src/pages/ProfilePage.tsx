@@ -79,7 +79,7 @@ interface Post {
 // below and rendered with the wrong profile layout.
 const KNOWN_DEMO_FIRM_SLUGS = new Set([
   'ecostream-solutions', 'novatech-robotics', 'global-logilink', 'azure-health',
-  'solaris-energy', 'deepcode-ai', 'meridian-capital', 'artisan-bloom',
+  'solaris-energy', 'deepcode-ai', 'meridian-capital', 'artisan-bloom', 'ember-and-oak',
 ]);
 
 function isKnownFirmSlug(slug: string): boolean {

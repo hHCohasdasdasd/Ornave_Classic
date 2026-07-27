@@ -96,6 +96,17 @@ const firms = [
     website: 'https://artisanbloom.it',
     logo: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop',
   },
+  {
+    name: 'Ember & Oak',
+    slug: 'ember-and-oak',
+    description: 'Wood-fired American cuisine in the heart of downtown Austin.',
+    industry: 'Restaurant & Food Service',
+    country: 'USA',
+    capabilities: ['Wood-Fired Cooking', 'Craft Cocktails', 'Private Dining'],
+    about: 'Founded in 2018, Ember & Oak brings live-fire cooking to downtown Austin — everything from the ribeye to the mushrooms passes over an open oak fire. We work directly with regional farms and source seasonally, changing the menu with the harvest.',
+    website: 'https://emberandoak.com',
+    logo: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=400&fit=crop',
+  },
 ];
 
 const users = [
