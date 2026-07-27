@@ -16,6 +16,9 @@ import globalRoutes from './routes/globalRoutes';
 import postRoutes from './routes/postRoutes';
 import storeRoutes from './routes/storeRoutes';
 import userRoutes from './routes/userRoutes';
+import groupRoutes from './routes/groupRoutes';
+import publicationRoutes from './routes/publicationRoutes';
+import jobRoutes from './routes/jobRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -108,6 +111,7 @@ const API_BASE = '/api';
 app.use(`${API_BASE}/auth`, authRoutes);
 app.use(`${API_BASE}/companies`, companyRoutes);
 app.use(`${API_BASE}/companies/:companyId/modules`, moduleRoutes);
+app.use(`${API_BASE}/companies/:companyId/jobs`, jobRoutes);
 app.use(`${API_BASE}/companies/:companyId/pages`, pageRoutes);
 app.use(`${API_BASE}/companies`, connectionRoutes);
 app.use(`${API_BASE}/companies`, transactionRoutes);
@@ -117,6 +121,8 @@ app.use(`${API_BASE}/global`, globalRoutes);
 app.use(`${API_BASE}/posts`, postRoutes);
 app.use(`${API_BASE}/store`, storeRoutes);
 app.use(`${API_BASE}/users`, userRoutes);
+app.use(`${API_BASE}/groups`, groupRoutes);
+app.use(`${API_BASE}/publications`, publicationRoutes);
 
 // ============================================
 // 404 HANDLER

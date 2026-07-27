@@ -2,6 +2,14 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+export interface MentionEntry {
+  id: string;
+  type: 'user' | 'company';
+  name: string;
+  avatarUrl?: string;
+  slug?: string;
+}
+
 export interface CreatePostRequest {
   authorId: string;
   title?: string;
@@ -9,7 +17,16 @@ export interface CreatePostRequest {
   mediaUrl?: string;
   type?: string;
   visibility?: 'public' | 'connections' | 'private';
+  groupId?: string;
+  linkedPublicationId?: string;
+  mentions?: MentionEntry[];
 }
+
+const LINKED_PUBLICATION_INCLUDE = {
+  linkedPublication: {
+    include: { author: { include: { profile: true, company: true } } },
+  },
+} as const;
 
 export interface PostResponse {
   id: string;
@@ -32,6 +49,15 @@ export interface PostResponse {
   visibility: string;
   timestamp: string;
   isDeleted: boolean;
+  groupId?: string | null;
+  linkedPublication?: {
+    id: string;
+    title: string;
+    coverImage?: string | null;
+    tags: string[];
+    authorName: string;
+  } | null;
+  mentions: MentionEntry[];
 }
 
 export class PostService {
@@ -71,7 +97,11 @@ export class PostService {
         visibility: request.visibility || 'public',
         reactions: JSON.stringify({ likes: 0, comments: 0 }),
         isDeleted: false,
+        groupId: request.groupId,
+        linkedPublicationId: request.linkedPublicationId,
+        mentions: JSON.stringify(request.mentions || []),
       },
+      include: LINKED_PUBLICATION_INCLUDE,
     });
 
     return this.formatPostResponse(post, user);
@@ -89,6 +119,7 @@ export class PostService {
       orderBy: {
         createdAt: 'desc',
       },
+      include: LINKED_PUBLICATION_INCLUDE,
     });
 
     // Get user info for all posts
@@ -113,6 +144,7 @@ export class PostService {
       offset?: number;
       visibility?: 'public' | 'connections' | 'private';
       theme?: string;
+      groupId?: string | null;
     } = {}
   ): Promise<{ items: PostResponse[]; total: number; hasMore: boolean }> {
     const limit = options.limit || 50;
@@ -122,6 +154,7 @@ export class PostService {
     const where: any = {
       isDeleted: false,
       ...(options.visibility && { visibility: options.visibility }),
+      groupId: options.groupId === undefined ? null : options.groupId,
     };
 
     if (options.theme) {
@@ -144,6 +177,7 @@ export class PostService {
       },
       take: limit,
       skip: offset,
+      include: LINKED_PUBLICATION_INCLUDE,
     });
 
     const total = await prisma.post.count({
@@ -177,6 +211,7 @@ export class PostService {
   static async getPost(postId: string): Promise<PostResponse | null> {
     const post = await prisma.post.findUnique({
       where: { id: postId },
+      include: LINKED_PUBLICATION_INCLUDE,
     });
 
     if (!post || post.isDeleted) {
@@ -235,6 +270,7 @@ export class PostService {
       data: {
         reactions: JSON.stringify(reactions),
       },
+      include: LINKED_PUBLICATION_INCLUDE,
     });
 
     const user = await prisma.user.findUnique({
@@ -370,6 +406,31 @@ export class PostService {
    * Format post response
    */
   private static formatPostResponse(post: any, user: any): PostResponse {
+    let linkedPublication: PostResponse['linkedPublication'] = null;
+    if (post.linkedPublication) {
+      const lp = post.linkedPublication;
+      let tags: string[] = [];
+      try {
+        tags = JSON.parse(lp.tags || '[]');
+      } catch {
+        tags = [];
+      }
+      linkedPublication = {
+        id: lp.id,
+        title: lp.title,
+        coverImage: lp.coverImage,
+        tags,
+        authorName: lp.company?.name || `${lp.author.firstName} ${lp.author.lastName}`.trim(),
+      };
+    }
+
+    let mentions: MentionEntry[] = [];
+    try {
+      mentions = JSON.parse(post.mentions || '[]');
+    } catch {
+      mentions = [];
+    }
+
     return {
       id: post.id,
       authorId: post.authorId,
@@ -388,6 +449,9 @@ export class PostService {
       visibility: post.visibility,
       timestamp: post.createdAt.toISOString(),
       isDeleted: post.isDeleted,
+      groupId: post.groupId,
+      linkedPublication,
+      mentions,
     };
   }
 }

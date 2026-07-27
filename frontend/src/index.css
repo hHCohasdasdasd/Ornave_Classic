@@ -636,6 +636,19 @@ p {
   }
 }
 
+/* App-wide shell: the left nav rail (fixed, see ProfileSidebar.css) sits
+   beside every route's content. The content column just needs to leave
+   room for it — the rail handles its own fixed positioning. */
+.app-shell__content {
+  margin-left: 220px;
+}
+
+@media (max-width: 1024px) {
+  .app-shell__content {
+    margin-left: 0;
+  }
+}
+
 .navbar__container {
   max-width: 1400px;
   margin: 0 auto;

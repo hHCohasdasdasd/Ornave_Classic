@@ -28,6 +28,69 @@ function toUserProfile(user: any) {
 
 export class UserConnectionService {
   /**
+   * Search people by name — used for @-tagging in composers. Results from
+   * the searching user's own network are ranked first and flagged
+   * `isConnection`, and carry enough profile detail (headline/bio/location/
+   * company) for the composer to render a small preview — since two people
+   * can share a name, a name match alone isn't enough to tag the right one.
+   */
+  static async searchUsers(query: string, limit = 8, currentUserId?: string) {
+    if (!query.trim()) return [];
+
+    const users = await prisma.user.findMany({
+      where: {
+        isActive: true,
+        ...(currentUserId ? { id: { not: currentUserId } } : {}),
+        OR: [
+          { firstName: { contains: query } },
+          { lastName: { contains: query } },
+        ],
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        profile: {
+          select: { headline: true, bio: true, avatarUrl: true, address: true },
+        },
+        company: { select: { name: true } },
+      },
+      take: limit * 3, // over-fetch so connection-ranking still leaves `limit` results
+    });
+
+    let connectionIds = new Set<string>();
+    if (currentUserId) {
+      const connections = await prisma.userConnection.findMany({
+        where: {
+          status: 'ACCEPTED',
+          OR: [{ requesterId: currentUserId }, { addresseeId: currentUserId }],
+        },
+        select: { requesterId: true, addresseeId: true },
+      });
+      connectionIds = new Set(
+        connections.map((c) => (c.requesterId === currentUserId ? c.addresseeId : c.requesterId))
+      );
+    }
+
+    const results = users.map((u) => ({
+      id: u.id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      email: u.email,
+      headline: u.profile?.headline || undefined,
+      bio: u.profile?.bio || undefined,
+      location: u.profile?.address || undefined,
+      profilePicture: u.profile?.avatarUrl || undefined,
+      companyName: u.company?.name || undefined,
+      isConnection: connectionIds.has(u.id),
+    }));
+
+    results.sort((a, b) => Number(b.isConnection) - Number(a.isConnection));
+    return results.slice(0, limit);
+  }
+
+  /**
    * Send a connection request from requesterId to addresseeId.
    * If the addressee already sent a pending request to the requester, auto-accept instead
    * (mirrors how LinkedIn-style platforms resolve mutual requests).
@@ -388,39 +451,25 @@ export class UserConnectionService {
     });
   }
 
-  /**
-   * Resolve a "firstname-lastname" profile slug (as used by /profile?view=...)
-   * to a real registered user. Used because most profile links in the app are
-   * built from a name slug rather than a real user id. Returns the fuller
-   * profile fields (bio/location/website) so the frontend can replace its
-   * generic placeholder profile with the person's real data.
-   */
-  static async findByNameSlug(slug: string) {
-    const normalized = slug.toLowerCase().trim();
-    const users = await prisma.user.findMany({
-      where: { isActive: true },
+  private static readonly SLUG_RESOLVE_SELECT = {
+    id: true,
+    firstName: true,
+    lastName: true,
+    email: true,
+    isActive: true,
+    profile: {
       select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        profile: {
-          select: {
-            headline: true,
-            avatarUrl: true,
-            bannerUrl: true,
-            bio: true,
-            address: true,
-            website: true,
-          },
-        },
+        headline: true,
+        avatarUrl: true,
+        bannerUrl: true,
+        bio: true,
+        address: true,
+        website: true,
       },
-    });
-    const match = users.find(
-      (u) => `${u.firstName}-${u.lastName}`.toLowerCase() === normalized
-    );
-    if (!match) return null;
+    },
+  } as const;
 
+  private static formatSlugMatch(match: any) {
     return {
       id: match.id,
       firstName: match.firstName,
@@ -433,6 +482,33 @@ export class UserConnectionService {
       location: match.profile?.address || undefined,
       website: match.profile?.website || undefined,
     };
+  }
+
+  /**
+   * Resolve a profile link's "view" param to a real registered user. Most
+   * profile links in the app are built from a "firstname-lastname" slug
+   * rather than a real user id — but that's ambiguous whenever two people
+   * share a name, so callers that already know the exact user (e.g. a
+   * tagged mention) should pass the real id instead, which is tried first.
+   */
+  static async findByNameSlug(slugOrId: string) {
+    const byId = await prisma.user.findUnique({
+      where: { id: slugOrId },
+      select: this.SLUG_RESOLVE_SELECT,
+    });
+    if (byId && byId.isActive) return this.formatSlugMatch(byId);
+
+    const normalized = slugOrId.toLowerCase().trim();
+    const users = await prisma.user.findMany({
+      where: { isActive: true },
+      select: this.SLUG_RESOLVE_SELECT,
+    });
+    const match = users.find(
+      (u) => `${u.firstName}-${u.lastName}`.toLowerCase() === normalized
+    );
+    if (!match) return null;
+
+    return this.formatSlugMatch(match);
   }
 
   /** Suggest other individual users not already connected/pending with the given user. */

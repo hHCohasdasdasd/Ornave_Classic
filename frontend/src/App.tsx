@@ -1,6 +1,7 @@
 import React, { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ProfileSidebar } from '@/components/personal/ProfileSidebar';
 import { HomePage } from '@/pages/HomePage';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -37,6 +38,7 @@ import { FirmsPage } from '@/pages/FirmsPage';
 import { JobsPage } from '@/pages/JobsPage';
 import { LeadsPage } from '@/pages/LeadsPage';
 import { GroupsPage } from '@/pages/GroupsPage';
+import { GroupDetailPage } from '@/pages/GroupDetailPage';
 import { BillingPage } from '@/pages/BillingPage';
 import { TalentPage } from '@/pages/TalentPage';
 import { TalentInsightsPage } from '@/pages/TalentInsightsPage';
@@ -56,11 +58,55 @@ import './App.css';
 
 const AUTH_BYPASS_ENABLED = false;
 
+// Routes that use their own dedicated ERP/admin layout (with its own
+// sidebar) instead of the personal-network Navbar — the global rail would
+// double up with their existing nav, so it's hidden on these paths.
+const SHELL_EXCLUDED_PREFIXES = [
+  '/login',
+  '/register',
+  '/company-setup',
+  '/dashboard',
+  '/modules',
+  '/pages',
+  '/connections',
+  '/transactions',
+  '/messages',
+  '/company-settings',
+  '/global',
+  '/manage-store',
+  '/firm/clients',
+];
+
+const getMemberNumber = (id?: string | null): string | undefined => {
+  if (!id) return undefined;
+  return String(Math.abs(Array.from(id).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6);
+};
+
+const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  const { user } = useAuth();
+  const showShell = !SHELL_EXCLUDED_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
+
+  if (!showShell) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+      <ProfileSidebar memberNumber={getMemberNumber(user?.id)} />
+      <div className="app-shell__content" style={{ flex: 1, minWidth: 0 }}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 function App() {
   return (
     <ErrorBoundary>
       <Router>
         <AuthProvider>
+          <AppShell>
           <Routes>
             {/* Home Page */}
             <Route 
@@ -110,6 +156,7 @@ function App() {
             {/* For Business Routes */}
             <Route path="/leads" element={<LeadsPage />} />
             <Route path="/groups" element={<GroupsPage />} />
+            <Route path="/groups/:slug" element={<GroupDetailPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/talent" element={<TalentPage />} />
             <Route path="/talent-insights" element={<TalentInsightsPage />} />
@@ -129,6 +176,7 @@ function App() {
             {/* Redirects */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </AppShell>
           <AuthModal />
         </AuthProvider>
       </Router>

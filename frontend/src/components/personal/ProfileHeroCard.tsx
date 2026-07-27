@@ -32,6 +32,8 @@ interface ProfileHeroCardProps {
   memberNumber?: string;
   memberTier?: string;
   company?: string;
+  hasStory?: boolean;
+  onViewStory?: () => void;
 }
 
 export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
@@ -54,6 +56,8 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
   memberNumber,
   memberTier = 'Ornave Member',
   company,
+  hasStory = false,
+  onViewStory,
 }) => {
   const navigate = useNavigate();
   const initials = type === 'firm' ? (user?.firstName?.substring(0, 2) || 'F') : `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`;
@@ -78,20 +82,26 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
       </div>
       <div className="tech-hero__content-wrapper">
         <div className="tech-hero__biometric">
-        <div className={`tech-hero__avatar-frame ${type === 'firm' ? 'tech-hero__avatar-frame--firm' : (isPremium ? 'tech-hero__avatar-frame--premium' : '')}`}>
-          <div className="tech-hero__avatar">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={user?.firstName} className="tech-hero__avatar-img" />
-            ) : (type === 'firm' ? <IconBuilding size={44} /> : initials)}
+        <div className="tech-hero__avatar-anchor">
+          <div
+            className={`tech-hero__avatar-frame ${type === 'firm' ? 'tech-hero__avatar-frame--firm' : (isPremium ? 'tech-hero__avatar-frame--premium' : '')} ${hasStory ? 'tech-hero__avatar-frame--story' : ''}`}
+            onClick={hasStory ? onViewStory : undefined}
+            style={hasStory ? { cursor: 'pointer' } : undefined}
+          >
+            <div className="tech-hero__avatar">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={user?.firstName} className="tech-hero__avatar-img" />
+              ) : (type === 'firm' ? <IconBuilding size={44} /> : initials)}
+            </div>
           </div>
+          {editorial && verified && (
+            <div className="tech-hero__avatar-badge">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 1.6 12 3l2.5-.3 1 2.3 2.3 1-.3 2.5 1.4 2-1.4 2 .3 2.5-2.3 1-1 2.3L12 17l-2 1.4-2-1.4-2.5.3-1-2.3-2.3-1 .3-2.5L1.1 10l1.4-2-.3-2.5 2.3-1 1-2.3L8 1.6l2 .4Z" />
+              </svg>
+            </div>
+          )}
         </div>
-        {editorial && verified && (
-          <div className="tech-hero__avatar-badge">
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10 1.6 12 3l2.5-.3 1 2.3 2.3 1-.3 2.5 1.4 2-1.4 2 .3 2.5-2.3 1-1 2.3L12 17l-2 1.4-2-1.4-2.5.3-1-2.3-2.3-1 .3-2.5L1.1 10l1.4-2-.3-2.5 2.3-1 1-2.3L8 1.6l2 .4Z" />
-            </svg>
-          </div>
-        )}
       </div>
 
       <div className="tech-hero__data">

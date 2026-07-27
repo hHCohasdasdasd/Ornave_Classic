@@ -36,3 +36,7 @@ Thumbs.db
 # Misc
 coverage/
 .cache/
+
+# Local SQLite dev database
+backend/prisma/dev.db
+backend/prisma/dev.db-journal

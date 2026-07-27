@@ -40,6 +40,30 @@ export function authMiddleware(
 }
 
 /**
+ * Optional authentication middleware
+ * Decodes the token and attaches user data when present, but never rejects
+ * the request — for endpoints that are publicly readable but personalize
+ * their response (e.g. "isMember") when the caller happens to be signed in.
+ */
+export function optionalAuthMiddleware(
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction
+): void {
+  try {
+    const token = TokenManager.extractToken(req.headers.authorization);
+    if (token) {
+      const decoded = TokenManager.verifyToken(token);
+      req.user = decoded;
+      req.companyId = decoded.companyId || undefined;
+    }
+  } catch {
+    // Invalid/expired token on an optional-auth route — proceed as a guest.
+  }
+  next();
+}
+
+/**
  * Role-based access control middleware
  * Restricts access based on user role
  */

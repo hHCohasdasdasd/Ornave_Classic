@@ -4,6 +4,7 @@ import {
   IconCompass, IconUsers, IconBuilding, IconLayers, IconArticle, IconCalendar,
   IconBag, IconTrendingUp, IconGroups, IconBookmark, IconVerified, IconHeadset,
 } from '@/components/ui/Icons';
+import './ProfileSidebar.css';
 
 interface ProfileSidebarProps {
   memberNumber?: string;
@@ -28,7 +29,7 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ memberNumber, me
 
   return (
     <aside className="profile-left-nav">
-      <div className="profile-left-nav__logo">ORNAVE</div>
+      <div className="profile-left-nav__logo" onClick={() => navigate('/home')}>ORNAVE</div>
       <nav className="profile-left-nav__list">
         {NAV_ITEMS.map((item) => (
           <button

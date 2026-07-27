@@ -209,6 +209,46 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
           <p>{item.content}</p>
         </div>
 
+        {/* Tagged people / companies */}
+        {item.mentions && item.mentions.length > 0 && (
+          <div className="feed-item__mentions">
+            <span className="feed-item__mentions-label">With</span>
+            {item.mentions.map((m) => (
+              <span
+                key={`${m.type}-${m.id}`}
+                className="feed-item__mention-chip"
+                onClick={(e) => { e.stopPropagation(); navigate(`/profile?view=${m.slug}`); }}
+              >
+                {m.avatarUrl && <img src={m.avatarUrl} alt={m.name} />}
+                {m.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Linked publication — this discussion is commenting on/sharing a publication */}
+        {item.linkedPublication && (
+          <div className="feed-item__linked-pub">
+            {item.linkedPublication.coverImage && (
+              <div className="feed-item__linked-pub-img">
+                <img src={item.linkedPublication.coverImage} alt={item.linkedPublication.title} />
+              </div>
+            )}
+            <div className="feed-item__linked-pub-body">
+              <div className="feed-item__linked-pub-label">📄 Publication</div>
+              <div className="feed-item__linked-pub-title">{item.linkedPublication.title}</div>
+              <div className="feed-item__linked-pub-author">by {item.linkedPublication.authorName}</div>
+              {item.linkedPublication.tags.length > 0 && (
+                <div className="feed-item__linked-pub-tags">
+                  {item.linkedPublication.tags.map((t) => (
+                    <span key={t} className="feed-item__linked-pub-tag">{t}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Service card */}
         {item.metadata?.serviceCard && (
           <div className="feed-item__service-card">

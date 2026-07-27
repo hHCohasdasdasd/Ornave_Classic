@@ -371,6 +371,40 @@
   transform: scale(1.1);
 }
 
+.story-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Already-viewed stories get a muted ring instead of the gold gradient */
+.story-avatar--seen {
+  background:
+    linear-gradient(var(--color-bg), var(--color-bg)) padding-box,
+    linear-gradient(135deg, var(--color-border) 0%, var(--color-border) 100%) border-box;
+}
+
+.story-avatar-wrap {
+  position: relative;
+}
+
+.story-avatar__badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--tech-accent-gold, var(--color-primary));
+  color: #14140f;
+  font-size: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-bg);
+}
+
 /* Your Story — solid brand fill */
 .story-avatar--create {
   background:
@@ -416,11 +450,14 @@
 .feed__mode-tab::after {
   content: '';
   position: absolute;
+  top: auto;
   bottom: -14px;
   left: 0;
   width: 0;
   height: 2px;
   background: var(--color-text);
+  border-radius: 0;
+  transform: none;
   transition: width 0.22s ease;
 }
 
@@ -876,6 +913,115 @@
 .feed-item__service-card-btn--sent {
   background: var(--tech-accent-emerald);
   cursor: default;
+}
+
+/* Tagged people / companies on a post */
+.feed-item__mentions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.feed-item__mentions-label {
+  font-size: 0.76rem;
+  color: var(--color-muted);
+  margin-right: 2px;
+}
+
+.feed-item__mention-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(198, 161, 91, 0.1);
+  color: var(--tech-accent-gold, var(--color-primary));
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 3px 10px 3px 4px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.feed-item__mention-chip:hover {
+  background: var(--tech-accent-gold, var(--color-primary));
+  color: #14140f;
+}
+
+.feed-item__mention-chip img {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Linked publication — a discussion quoting/sharing a Publication */
+.feed-item__linked-pub {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 16px 0;
+  padding: 14px 16px;
+  background: rgba(246, 243, 237, 0.03);
+  border: 1px solid var(--tech-border, var(--color-border));
+  border-radius: 10px;
+  border-left: 3px solid var(--tech-accent-gold, var(--color-primary));
+}
+
+.feed-item__linked-pub-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.feed-item__linked-pub-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feed-item__linked-pub-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.feed-item__linked-pub-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tech-accent-gold, var(--color-primary));
+  margin-bottom: 2px;
+}
+
+.feed-item__linked-pub-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+.feed-item__linked-pub-author {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-bottom: 6px;
+}
+
+.feed-item__linked-pub-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.feed-item__linked-pub-tag {
+  background: rgba(198, 161, 91, 0.12);
+  color: var(--tech-accent-gold, var(--color-primary));
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 
 /* Discovery Cards — compact single-row */

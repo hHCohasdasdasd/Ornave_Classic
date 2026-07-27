@@ -12,10 +12,13 @@ import { Carousel, CarouselSlide } from '@/components/personal/Carousel';
 import { QuickActionsSidebar } from '@/components/personal/QuickActionsSidebar';
 import { NewsCard } from '@/components/personal/NewsCard';
 import { ERPSnapshotCard } from '@/components/personal/ERPSnapshotCard';
+import { StoryViewer } from '@/components/personal/StoryViewer';
+import { mockStories } from '@/data/mockStories';
 import { IconLaurel, IconSearch, IconEdit, IconUsers, IconUser, IconBuilding } from '@/components/ui/Icons';
 import { feedService } from '@/services/feedService';
 import { discoveryService } from '@/services/discoveryService';
 import { networkService } from '@/services/networkService';
+import { groupService, Group } from '@/services/groupService';
 import { FeedItem as FeedItemType, ServiceCard } from '@/types/feed';
 import { UserProfile, FirmProfile, ConnectionRequest } from '@/types/discovery';
 import './PersonalHomePage.css';
@@ -80,12 +83,15 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   const [showAllDiscovery, setShowAllDiscovery] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [storyViewerIndex, setStoryViewerIndex] = useState<number | null>(null);
+  const [seenStoryIds, setSeenStoryIds] = useState<Set<string>>(new Set());
   const [feedViewMode, setFeedViewMode] = useState<'groups' | 'single'>('single');
   const [feedContentType, setFeedContentType] = useState<'all' | 'friends' | 'firms'>('all');
   const [feedSort, setFeedSort] = useState<'hot' | 'new' | 'top' | 'rising'>('hot');
   const [feedMode, setFeedMode] = useState<'forYou' | 'following'>('forYou');
   const [trendingPosts, setTrendingPosts] = useState<FeedItemType[]>([]);
   const [topThemes, setTopThemes] = useState<string[]>([]);
+  const [sectorGroups, setSectorGroups] = useState<Group[]>([]);
   // Keyboard nav
   const [focusedPostIndex, setFocusedPostIndex] = useState<number>(-1);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -160,12 +166,14 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
 
   const loadTrendingAndThemes = async () => {
     try {
-      const [trending, themes] = await Promise.all([
+      const [trending, themes, groups] = await Promise.all([
         feedService.getTrendingPosts(),
         feedService.getTopThemes(),
+        groupService.listGroups(),
       ]);
       setTrendingPosts(trending);
       setTopThemes(themes);
+      setSectorGroups(groups);
     } catch (error) {
       console.error('Failed to load trending posts and themes:', error);
     }
@@ -306,10 +314,14 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
     navigate(`/themes/${encodeURIComponent(theme)}`);
   };
 
+  const handleSectorClick = (slug: string) => {
+    navigate(`/groups/${slug}`);
+  };
+
   const discoveryTabCount = discoveryTab === 'people' ? discoveredUsers.length
     : discoveryTab === 'firms' ? discoveredFirms.length
     : discoveryTab === 'trending' ? trendingPosts.length
-    : topThemes.length;
+    : sectorGroups.length;
 
   return (
     <div className="personal-home">
@@ -357,7 +369,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                   className={`discovery-section__tab ${discoveryTab === 'themes' ? 'discovery-section__tab--active' : ''}`}
                   onClick={() => { setDiscoveryTab('themes'); setShowAllDiscovery(false); }}
                 >
-                  Themes
+                  Publications
                 </button>
               </div>
 
@@ -456,20 +468,22 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                     ))
                   )
                 ) : (
-                  // Themes tab
-                  topThemes.length === 0 ? (
-                    <div className="discovery-section__empty">No trending themes this week</div>
+                  // Publications tab — real, user-creatable sector groups
+                  sectorGroups.length === 0 ? (
+                    <div className="discovery-section__empty">
+                      No sectors yet — <span style={{ color: 'var(--tech-blue)', cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }} onClick={() => navigate('/groups')}>create one</span> to get started.
+                    </div>
                   ) : (
                     <div className="themes-grid">
-                      {(showAllDiscovery ? topThemes : topThemes.slice(0, DISCOVERY_VISIBLE_COUNT)).map((theme, index) => (
+                      {(showAllDiscovery ? sectorGroups : sectorGroups.slice(0, DISCOVERY_VISIBLE_COUNT)).map((group, index) => (
                         <div
-                          key={index}
+                          key={group.id}
                           className="theme-card"
-                          onClick={() => handleThemeClick(theme)}
+                          onClick={() => handleSectorClick(group.slug)}
                         >
                           <div className="theme-card__rank">#{index + 1}</div>
-                          <div className="theme-card__name">{theme}</div>
-                          <div className="theme-card__tag">Enter Room →</div>
+                          <div className="theme-card__name">{group.name}</div>
+                          <div className="theme-card__tag">{group.memberCount} member{group.memberCount === 1 ? '' : 's'} · Enter Sector →</div>
                         </div>
                       ))}
                     </div>
@@ -511,20 +525,37 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
               </div>
               <span>{user ? 'Your Story' : 'Sign In'}</span>
             </div>
-            {/* Network stories from discovered users */}
-            {discoveredUsers.slice(0, 8).map((u) => (
-              <div
-                key={u.id}
-                className="story-item"
-                onClick={() => navigate(`/profile?view=${u.firstName.toLowerCase()}-${u.lastName.toLowerCase()}`)}
-              >
-                <div className="story-avatar">
-                  {u.firstName[0]}{u.lastName[0]}
+            {/* Stories from people and companies in the network */}
+            {mockStories.map((story, index) => {
+              const seen = seenStoryIds.has(story.id);
+              return (
+                <div
+                  key={story.id}
+                  className="story-item"
+                  onClick={() => {
+                    setStoryViewerIndex(index);
+                    setSeenStoryIds((prev) => new Set(prev).add(story.id));
+                  }}
+                >
+                  <div className="story-avatar-wrap">
+                    <div className={`story-avatar${seen ? ' story-avatar--seen' : ''}`}>
+                      <img src={story.avatarUrl} alt={story.name} />
+                    </div>
+                    {story.type === 'company' && <span className="story-avatar__badge">🏢</span>}
+                  </div>
+                  <span>{story.name.split(' ')[0]}</span>
                 </div>
-                <span>{u.firstName}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
+
+          {storyViewerIndex !== null && (
+            <StoryViewer
+              stories={mockStories}
+              startIndex={storyViewerIndex}
+              onClose={() => setStoryViewerIndex(null)}
+            />
+          )}
 
           <Carousel slides={carouselSlides} />
 

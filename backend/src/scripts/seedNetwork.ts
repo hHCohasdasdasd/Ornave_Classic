@@ -109,6 +109,121 @@ const firms = [
   },
 ];
 
+// Products keyed by firm slug — gives each firm's "Request Service" card
+// real, industry-specific offerings instead of the generic consulting
+// fallback the UI shows when a company has none.
+const productsBySlug: Record<string, Array<{ name: string; description: string; price: number; currency?: string; category: string; imageUrl?: string; stock?: number }>> = {
+  'ecostream-solutions': [
+    { name: 'Industrial Filtration System', description: 'Custom-engineered filtration unit sized for high-volume manufacturing plants.', price: 48000, category: 'Equipment', imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=600&h=400&fit=crop' },
+    { name: 'Closed-Loop Water Recycling Retrofit', description: 'End-to-end redesign of intake/discharge pipelines around a closed-loop recycling core.', price: 125000, category: 'Installation', imageUrl: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=600&h=400&fit=crop' },
+    { name: 'Environmental Compliance Audit', description: 'Site audit and regulatory compliance strategy for water-intensive industries.', price: 9500, category: 'Consulting' },
+  ],
+  'novatech-robotics': [
+    { name: 'Precision Robotic Arm — Series 7', description: 'Sub-millimeter accuracy robotic arm for automotive and electronics assembly lines.', price: 62000, category: 'Hardware', imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&h=400&fit=crop' },
+    { name: 'Automation Integration Package', description: 'Full deployment, calibration, and line integration for factory floors.', price: 35000, category: 'Integration' },
+    { name: 'Predictive Maintenance Subscription', description: 'Sensor-driven uptime monitoring across your robotic fleet, billed annually.', price: 8400, currency: 'USD', category: 'Subscription' },
+  ],
+  'global-logilink': [
+    { name: 'Global Freight Forwarding — Standard Lane', description: 'Door-to-door freight across our core ocean and air lanes.', price: 2200, category: 'Shipping' },
+    { name: 'Warehousing & Fulfillment Package', description: 'Strategic storage and pick-pack-ship across 50+ countries.', price: 4800, category: 'Warehousing', imageUrl: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=600&h=400&fit=crop' },
+    { name: 'Real-Time Tracking API License', description: 'End-to-end shipment visibility through a single API, annual license.', price: 12000, category: 'Software' },
+  ],
+  'azure-health': [
+    { name: 'Telemedicine Platform License', description: 'HIPAA/PIPEDA-compliant virtual care platform, per-clinic annual license.', price: 18000, category: 'Software', imageUrl: 'https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=600&h=400&fit=crop' },
+    { name: 'EHR Integration Package', description: 'Seamless records interoperability rollout across providers and legacy systems.', price: 42000, category: 'Integration' },
+    { name: 'Patient Portal Setup', description: 'Self-service scheduling, billing, and secure messaging, configured for your clinic.', price: 9000, category: 'Software' },
+  ],
+  'solaris-energy': [
+    { name: 'Utility-Scale Solar Installation (per MW)', description: 'Site assessment through grid connection for large-scale solar farms.', price: 780000, category: 'Installation', imageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600&h=400&fit=crop' },
+    { name: 'Battery Energy Storage System', description: 'Grid-scale battery integration for reliable 24/7 renewable supply.', price: 210000, category: 'Equipment' },
+    { name: 'Grid Interconnection Consulting', description: 'Regulatory strategy and interconnection support for renewable projects.', price: 22000, category: 'Consulting' },
+  ],
+  'deepcode-ai': [
+    { name: 'Code Security Scan — Enterprise', description: 'Continuous ML-driven vulnerability scanning across your entire codebase, annual.', price: 36000, category: 'Subscription', imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&h=400&fit=crop' },
+    { name: 'On-Prem Enterprise Deployment', description: 'Private cloud / on-prem deployment for regulated industries.', price: 65000, category: 'Deployment' },
+    { name: 'Dependency & Supply-Chain Audit', description: 'One-time deep audit of third-party dependencies and supply-chain risk.', price: 14000, category: 'Consulting' },
+  ],
+  'meridian-capital': [
+    { name: 'Growth Equity Investment (Series B+)', description: '$5M–$50M check size for B2B software companies, terms negotiated per deal.', price: 5000000, category: 'Investment' },
+    { name: 'M&A Advisory Engagement', description: 'Buy-side or sell-side advisory support for a portfolio company transaction.', price: 85000, category: 'Advisory' },
+    { name: 'Operational Support Retainer', description: 'Monthly access to our go-to-market and finance operator network.', price: 6000, category: 'Retainer' },
+  ],
+  'artisan-bloom': [
+    { name: 'Handwoven Leather Tote', description: 'Full-grain leather tote, handcrafted by a partner workshop in Tuscany.', price: 285, category: 'Bags', imageUrl: 'https://images.unsplash.com/photo-1591561954557-26941169b49e?w=600&h=400&fit=crop' },
+    { name: 'Hand-Thrown Ceramic Vase Set', description: 'Set of 3 stoneware vases, glazed and fired by independent ceramicists.', price: 145, category: 'Home', imageUrl: 'https://images.unsplash.com/photo-1578500494198-246f612d3b3d?w=600&h=400&fit=crop' },
+    { name: 'Undyed Wool Throw Blanket', description: 'Hand-loomed wool throw from a family cooperative, naturally undyed.', price: 165, category: 'Home', imageUrl: 'https://images.unsplash.com/photo-1600369672770-985fd30004eb?w=600&h=400&fit=crop' },
+  ],
+  'ember-and-oak': [
+    { name: 'Wood-Fired Ribeye', description: '16oz dry-aged ribeye, charred over oak, bone marrow butter.', price: 52, category: 'Mains', imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600&h=400&fit=crop' },
+    { name: 'Charred Octopus', description: 'Wood-fired octopus, smoked paprika aioli, fingerling potatoes.', price: 18, category: 'Starters', imageUrl: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=600&h=400&fit=crop' },
+    { name: 'Wine Dinner Series — Seat', description: 'Four courses, four wines, one long table. Last Thursday of the month.', price: 145, category: 'Events' },
+  ],
+};
+
+// Open roles keyed by firm slug — gives each firm's new "Jobs" tab real,
+// industry-specific listings instead of showing up empty.
+interface JobSeed {
+  title: string;
+  location?: string;
+  type?: string;
+  description?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  salaryPeriod?: string;
+  benefits?: string[];
+  qualifications?: string[];
+}
+
+const STANDARD_BENEFITS = ['Health, dental & vision insurance', 'Paid time off', '401(k) / retirement matching', 'Remote-friendly hybrid schedule'];
+
+const jobsBySlug: Record<string, JobSeed[]> = {
+  'ecostream-solutions': [
+    { title: 'Water Treatment Process Engineer', location: 'Hamburg, Germany', type: 'Full-time', description: 'Design and optimize closed-loop filtration systems for industrial clients, from feasibility studies through commissioning.', salaryMin: 65000, salaryMax: 85000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ["Bachelor's degree in Chemical, Environmental, or Process Engineering", '3+ years designing industrial water treatment systems', 'Familiarity with EU environmental compliance standards'] },
+    { title: 'Environmental Compliance Analyst', location: 'Hamburg, Germany (Hybrid)', type: 'Full-time', description: 'Track evolving water-discharge regulations across our EU deployments and translate them into engineering requirements.', salaryMin: 52000, salaryMax: 68000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['2+ years in environmental compliance or regulatory affairs', 'Strong written German and English', 'Experience with ISO 14001 a plus'] },
+    { title: 'Field Service Technician', location: 'Remote (EU travel)', type: 'Full-time', description: 'Install and maintain filtration hardware on-site at client plants across Western Europe, roughly 60% travel.', salaryMin: 42000, salaryMax: 54000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['Valid EU driver\'s license and passport for regular travel', 'Mechanical or industrial maintenance background', 'Comfortable working independently on client sites'] },
+  ],
+  'novatech-robotics': [
+    { title: 'Robotics Engineer', location: 'Nagoya, Japan', type: 'Full-time', description: 'Design and build precision cobot arms for automotive assembly lines, working across mechanical, electrical, and controls.', salaryMin: 7200000, salaryMax: 9800000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ["Bachelor's or Master's in Robotics, Mechatronics, or Mechanical Engineering", '3+ years designing robotic manipulators', 'Proficiency with CAD (SolidWorks or similar)'] },
+    { title: 'Firmware Engineer, Motion Control', location: 'Nagoya, Japan (Hybrid)', type: 'Full-time', description: 'Own the real-time control loop firmware for our Series 7 robotic arm, from motor drivers up through the motion planner.', salaryMin: 6800000, salaryMax: 9200000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['Strong C/C++ on embedded real-time systems', 'Experience with motor control (FOC, servo tuning)', 'Familiarity with ROS or similar robotics middleware'] },
+    { title: 'Manufacturing Test Intern', location: 'Nagoya, Japan', type: 'Internship', description: 'Support calibration and QA testing on the production floor alongside our manufacturing engineering team.', salaryMin: 220000, salaryMax: 220000, salaryPeriod: 'month', benefits: ['Mentorship from senior robotics engineers', 'Potential full-time offer at internship end'], qualifications: ['Currently pursuing a degree in engineering or a related field', 'Basic understanding of electronics or mechanical systems', 'Available for a minimum 3-month term'] },
+  ],
+  'global-logilink': [
+    { title: 'Senior Logistics Analyst', location: 'New York, NY (Remote)', type: 'Full-time', description: 'Model and optimize multi-modal shipping lanes for enterprise clients using our real-time tracking platform.', salaryMin: 85000, salaryMax: 110000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['4+ years in logistics or supply chain analytics', 'Advanced Excel/SQL; Python a plus', "Bachelor's degree in Supply Chain, Business, or related field"] },
+    { title: 'Supply Chain Coordinator', location: 'Chicago, IL', type: 'Full-time', description: 'Coordinate day-to-day freight and warehousing operations across our carrier network.', salaryMin: 55000, salaryMax: 70000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['2+ years in freight coordination or logistics operations', 'Comfortable working across multiple carrier systems', 'Strong written and verbal communication'] },
+    { title: 'Warehouse Operations Manager', location: 'Newark, NJ', type: 'Full-time', description: 'Run daily operations for our largest East Coast fulfillment hub, leading a team of 20+ associates.', salaryMin: 68000, salaryMax: 88000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['5+ years warehouse or distribution center management', 'Experience with WMS software', 'Forklift certification preferred'] },
+  ],
+  'azure-health': [
+    { title: 'Full-Stack Engineer, Patient Portal', location: 'Toronto, Canada (Hybrid)', type: 'Full-time', description: 'Build patient-facing scheduling and billing features on our EHR platform using React and Node.', salaryMin: 95000, salaryMax: 125000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['4+ years full-stack web development', 'Experience with React, Node.js, and PostgreSQL', 'Healthcare/HIPAA-adjacent experience a plus'] },
+    { title: 'Clinical Implementation Specialist', location: 'Remote (Canada)', type: 'Full-time', description: 'Onboard new clinics onto our telemedicine and EHR products, training staff and configuring workflows.', salaryMin: 60000, salaryMax: 78000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['Clinical or healthcare IT background', 'Comfortable leading live training sessions', 'Willingness to travel occasionally within Canada'] },
+    { title: 'HIPAA/PIPEDA Compliance Officer', location: 'Toronto, Canada', type: 'Full-time', description: 'Azure Health Systems builds the telemedicine and EHR infrastructure that clinics across Canada and the US rely on to see patients, bill insurers, and keep records straight — which means privacy and security compliance isn\'t a side function here, it\'s core to the product. We\'re looking for a Compliance Officer to own that function end to end, reporting directly to our VP of Engineering and working closely with Legal, Product, and Customer Success.\n\nWhat you\'ll do:\n• Own our HIPAA (US) and PIPEDA (Canada) compliance programs in their entirety, including policy authorship, employee training, and breach-response procedures.\n• Lead our annual third-party security audits and SOC 2 Type II renewal, coordinating with external auditors and internal engineering leads.\n• Review new features pre-launch for privacy impact, working with Product and Engineering to build compliance in from the start rather than bolting it on afterward.\n• Maintain and continuously improve our Business Associate Agreements (BAAs) with clinic customers and vendor Data Processing Agreements (DPAs) with subprocessors.\n• Run tabletop breach-response exercises with the security and support teams at least twice a year.\n• Serve as the primary point of contact for customer security questionnaires and enterprise procurement reviews.\n• Track evolving provincial and state-level health privacy regulation and translate changes into concrete engineering and policy requirements.\n• Partner with our Clinical Implementation team to make sure new clinic onboarding meets data handling and consent requirements from day one.\n\nWhat success looks like in the first 6 months:\nYou\'ll have completed a full audit of our current BAA/DPA coverage across all active clinic customers, closed any gaps you find, and led that year\'s SOC 2 renewal without any major findings. By month six, Product and Engineering will be looping you into feature design earlier because they\'ve seen the value you add, not because a checklist requires it.\n\nWhy this role matters:\nA single mishandled patient record isn\'t just a compliance line item for us — it\'s someone\'s medical history, and a breach could mean real harm to real patients and real damage to the clinics that trust us with their operations. This role exists because we take that seriously, and we\'re giving it real authority and a seat at the table to match.', salaryMin: 88000, salaryMax: 115000, salaryPeriod: 'year', benefits: [...STANDARD_BENEFITS, 'Annual professional certification & conference budget ($3,000 CAD)', 'Fully covered CIPP/CIPM recertification', 'Hybrid schedule (2 days/week in our Toronto office)', 'Parental leave top-up to 100% salary for 17 weeks'], qualifications: ['5+ years in healthcare data privacy, compliance, or information security', 'Deep working knowledge of PIPEDA and HIPAA (HITECH Act familiarity a plus)', 'Experience leading or directly supporting a SOC 2 Type II audit', 'CIPP/C or CIPP/US certification preferred (CIPM a plus)', 'Comfortable reading technical architecture diagrams well enough to spot privacy risk', 'Excellent written communication — you\'ll be drafting policy that both engineers and auditors need to understand', 'Prior experience in a healthtech, fintech, or other regulated SaaS environment strongly preferred'] },
+  ],
+  'solaris-energy': [
+    { title: 'Solar Installation Project Manager', location: 'Madrid, Spain', type: 'Full-time', description: 'Lead utility-scale solar farm builds from permitting through grid connection, managing subcontractors on site.', salaryMin: 48000, salaryMax: 62000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['5+ years managing utility-scale construction projects', 'PMP certification preferred', 'Fluent Spanish and English'] },
+    { title: 'Grid Interconnection Engineer', location: 'Madrid, Spain (Hybrid)', type: 'Full-time', description: 'Manage interconnection studies and utility negotiations for new renewable energy sites across Iberia.', salaryMin: 52000, salaryMax: 70000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ["Bachelor's in Electrical Engineering or related field", '3+ years in grid interconnection or transmission planning', 'Familiarity with Spanish/EU grid codes'] },
+    { title: 'Battery Storage Systems Intern', location: 'Madrid, Spain', type: 'Internship', description: 'Support commissioning of grid-scale battery energy storage systems alongside our engineering team.', salaryMin: 1400, salaryMax: 1400, salaryPeriod: 'month', benefits: ['Mentorship from senior energy engineers', 'Hands-on exposure to live commissioning sites'], qualifications: ['Currently pursuing a degree in Electrical or Energy Engineering', 'Interest in renewable energy and grid storage', 'Available for a minimum 6-month term'] },
+  ],
+  'deepcode-ai': [
+    { title: 'Machine Learning Engineer, Security', location: 'London, UK (Remote)', type: 'Full-time', description: 'Train and ship models that detect vulnerabilities in production codebases, working across the full ML lifecycle.', salaryMin: 75000, salaryMax: 105000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['3+ years in applied ML or NLP', 'Strong Python and PyTorch/TensorFlow experience', 'Interest in software security a plus'] },
+    { title: 'Security Researcher', location: 'London, UK', type: 'Full-time', description: 'Hunt for novel vulnerability classes to feed our detection models, and publish findings to our research blog.', salaryMin: 80000, salaryMax: 115000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['4+ years in application security or vulnerability research', 'Track record of CVE disclosures a plus', 'Comfortable reverse engineering unfamiliar codebases'] },
+    { title: 'Enterprise Solutions Architect', location: 'Remote (EU)', type: 'Full-time', description: 'Own on-prem and private-cloud deployments for regulated enterprise customers, from scoping through go-live.', salaryMin: 90000, salaryMax: 120000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['5+ years in enterprise solutions architecture or DevOps', 'Experience with Kubernetes and private cloud deployments', 'Strong client-facing communication skills'] },
+  ],
+  'meridian-capital': [
+    { title: 'Investment Associate', location: 'New York, NY', type: 'Full-time', description: 'Source and evaluate Series B+ growth equity opportunities in B2B software, and support diligence on live deals.', salaryMin: 110000, salaryMax: 150000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['2-4 years in investment banking, private equity, or venture capital', 'Strong financial modeling skills', "Bachelor's degree in Finance, Economics, or related field"] },
+    { title: 'M&A Advisory Analyst', location: 'New York, NY', type: 'Full-time', description: 'Support buy-side and sell-side transactions for portfolio companies, building models and materials for live deals.', salaryMin: 90000, salaryMax: 120000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['1-3 years in investment banking or transaction advisory', 'Advanced Excel and PowerPoint skills', 'Ability to work under tight deal timelines'] },
+    { title: 'Platform Operations Associate', location: 'Remote (US)', type: 'Full-time', description: 'Run the go-to-market and finance operator network for portfolio founders, connecting them with the right operators.', salaryMin: 75000, salaryMax: 95000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['2+ years in operations, GTM, or portfolio support roles', 'Strong project management and relationship-building skills', 'Comfortable working with early- and growth-stage founders'] },
+  ],
+  'artisan-bloom': [
+    { title: 'Artisan Partnerships Manager', location: 'Florence, Italy', type: 'Full-time', description: 'Build relationships with independent workshops across Italy and expand our maker network into new regions.', salaryMin: 32000, salaryMax: 42000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['3+ years in partnerships, sourcing, or vendor management', 'Fluent Italian and English', 'Genuine interest in artisan craft and sustainable fashion'] },
+    { title: 'E-commerce Marketing Specialist', location: 'Florence, Italy (Hybrid)', type: 'Full-time', description: 'Grow our marketplace storefront through content and paid channels, owning the calendar end to end.', salaryMin: 28000, salaryMax: 38000, salaryPeriod: 'year', benefits: STANDARD_BENEFITS, qualifications: ['2+ years in e-commerce or digital marketing', 'Experience with Meta/Google Ads and email platforms', 'Portfolio of content work a plus'] },
+    { title: 'Quality & Sourcing Coordinator', location: 'Remote (EU)', type: 'Part-time', description: 'Vet new artisan partners for craftsmanship and ethical sourcing standards before they join the marketplace.', salaryMin: 18, salaryMax: 24, salaryPeriod: 'hour', benefits: ['Flexible remote schedule'], qualifications: ['Background in textiles, ceramics, or a related craft field', 'Detail-oriented with strong written communication', 'Available roughly 20 hours per week'] },
+  ],
+  'ember-and-oak': [
+    { title: 'Sous Chef', location: 'Austin, TX', type: 'Full-time', description: 'Run the wood-fire line and help shape our seasonal menu alongside the executive chef.', salaryMin: 55000, salaryMax: 68000, salaryPeriod: 'year', benefits: ['Health insurance', 'Paid time off', 'Staff meals', 'Employee dining discount'], qualifications: ['3+ years as a sous chef or senior line cook', 'Live-fire/wood-fired cooking experience preferred', 'ServSafe certification'] },
+    { title: 'Front of House Manager', location: 'Austin, TX', type: 'Full-time', description: 'Lead the floor team and own the guest experience during service, from reservations through closing.', salaryMin: 52000, salaryMax: 62000, salaryPeriod: 'year', benefits: ['Health insurance', 'Paid time off', 'Staff meals', 'Employee dining discount'], qualifications: ['2+ years restaurant management experience', 'Strong leadership and conflict-resolution skills', 'Flexible evening and weekend availability'] },
+    { title: 'Pastry Cook', location: 'Austin, TX', type: 'Part-time', description: 'Develop and execute our rotating dessert menu, including the Basque cheesecake.', salaryMin: 19, salaryMax: 24, salaryPeriod: 'hour', benefits: ['Staff meals', 'Employee dining discount'], qualifications: ['1+ years pastry or bakery experience', 'Comfortable working early-morning prep shifts', 'Portfolio or trail welcomed'] },
+  ],
+};
+
 const users = [
   {
     email: 'alex.rivera@example.com',
@@ -514,6 +629,77 @@ const postTemplates = [
   },
 ];
 
+// Sector groups — user-creatable communities that both people and firms can
+// join. Discussions are regular posts scoped to the group; publications
+// surface here by tag match (see productBySlug-style seeding below).
+const groupSeeds = [
+  {
+    name: 'Science',
+    description: 'A community for scientists, researchers, and R&D teams to share findings, methodology, and early results.',
+    createdBy: 'priya.nair@example.com',
+    members: ['priya.nair@example.com', 'david.kim@example.com', 'fatima.al-rashid@example.com', 'yuki.tanaka@example.com'],
+    discussions: [
+      { author: 'priya.nair@example.com', content: `Just open-sourced our federated learning benchmark suite — the same one behind the healthcare paper we published last month.\n\nIf you're working on privacy-preserving ML and want a standardized way to compare approaches across hospital-style data splits, it's ready to use. Link in my profile.` },
+      { author: 'fatima.al-rashid@example.com', content: `Question for the group: has anyone here evaluated AI-assisted diagnostics against a genuinely blinded radiologist panel, not just retrospective accuracy on a fixed dataset?\n\nMost papers I'm seeing compare against historical reads, which overstates real-world performance. Curious what rigor looks like elsewhere.` },
+    ],
+    publications: [
+      {
+        author: 'priya.nair@example.com',
+        title: 'Federated Learning for Healthcare Data Without Compromising Patient Privacy',
+        content: `We tested federated learning across 8 hospitals in 4 countries. The core idea: each site trains locally on its own patient data, and only model weights — never raw records — are aggregated centrally.\n\nResults: accuracy matched centralized training within 2%, and the entire pipeline is GDPR-compliant by design since patient data never leaves the originating hospital's infrastructure.\n\nWe're releasing the benchmark suite and a reference implementation. This is early-stage work, but we think the privacy/accuracy tradeoff is now good enough for production pilots, not just research demos.`,
+        coverImage: 'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=900&h=500&fit=crop',
+      },
+    ],
+  },
+  {
+    name: 'Finance',
+    description: 'Executives, investors, and finance leaders discussing capital markets, fundraising, and financial strategy.',
+    createdBy: 'anna.kowalski@example.com',
+    members: ['anna.kowalski@example.com', 'tom.bradley@example.com', 'james.okafor@example.com'],
+    discussions: [
+      { author: 'anna.kowalski@example.com', content: `Unpopular finance opinion: most Series B startups are tracking the wrong North Star metric.\n\nGrowth at all costs made sense in 2021. In this market, the boards I sit on care far more about the path to a 3x LTV:CAC ratio than raw top-line growth. Curious if others are seeing the same shift from their investors.` },
+      { author: 'tom.bradley@example.com', content: `We just closed our 41st investment. Happy to answer questions from founders in this group about what actually gets a deal across the finish line at the partner meeting stage — ask away.` },
+    ],
+    publications: [
+      {
+        author: 'james.okafor@example.com',
+        title: 'Building Payment Rails for Markets Legacy Fintech Ignores',
+        content: `600 million people across West and East Africa move money through informal channels because the formal ones are too slow, too expensive, or simply unavailable. We just closed a $12M Series A to fix that.\n\nThe lesson that surprised us most: in these markets, the infrastructure IS the feature. We built our payment flow to work on 2G with USSD fallback, in 14 languages, because the Silicon Valley UX playbook simply doesn't apply where smartphones are shared and internet is spotty.\n\nIf you're building fintech for emerging markets, the constraint is the innovation — design for the network you actually have, not the one you wish you had.`,
+        coverImage: 'https://images.unsplash.com/photo-1554260570-83f8a5a9d5d5?w=900&h=500&fit=crop',
+      },
+    ],
+  },
+  {
+    name: 'Technology',
+    description: 'Engineers, architects, and technical founders talking about what they\'re actually building.',
+    createdBy: 'yuki.tanaka@example.com',
+    members: ['yuki.tanaka@example.com', 'david.kim@example.com', 'nikolai.petrov@example.com', 'mei.zhang@example.com'],
+    discussions: [
+      { author: 'david.kim@example.com', content: `Migrated our entire infrastructure to a multi-region active-active setup last quarter with zero downtime. Happy to do a deep-dive post on the runbook if there's interest — the short version is we practiced the rollback before we ever practiced the rollout.` },
+      { author: 'nikolai.petrov@example.com', content: `Ransomware groups are increasingly targeting supply chain software vendors, not the end targets directly. If you ship software to enterprise customers, your security posture IS their security posture now. Worth an internal audit if you haven't done one this year.` },
+    ],
+    publications: [
+      {
+        author: 'yuki.tanaka@example.com',
+        title: 'Self-Calibrating Robot Geometry: Cutting Cobot Setup Time by 90%',
+        content: `Filed patent #8 this year for a new approach to force-feedback calibration in collaborative robot arms. The old way: a 45-minute manual factory calibration pass for every new install.\n\nThe breakthrough was simpler than expected — instead of calibrating at the factory, we let the robot learn its own geometry through a standardized handling sequence on first install at the customer site. Setup time drops from 45 minutes to under 4.\n\nSometimes the elegant solution really is hiding in the obvious place: let the machine measure itself instead of measuring it for the machine.`,
+        coverImage: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=900&h=500&fit=crop',
+      },
+    ],
+  },
+  {
+    name: 'Logistics',
+    description: 'Supply chain, freight, and operations professionals comparing notes on what\'s actually working in global trade.',
+    createdBy: 'alex.rivera@example.com',
+    members: ['alex.rivera@example.com', 'omar.hassan@example.com', 'mei.zhang@example.com'],
+    discussions: [
+      { author: 'omar.hassan@example.com', content: `The Red Sea shipping disruptions are still rippling through global trade — 8 months later. The companies that reacted fastest weren't the ones with the most ships, they were the ones with the best data. Strategic inventory buffers are a competitive differentiator now, not a luxury.` },
+      { author: 'alex.rivera@example.com', content: `Just wrapped a 6-month supply chain audit for a Fortune 500 manufacturer. 34% of their delays traced back to 3 supplier bottlenecks they had zero visibility into. The fix wasn't new software — it was weekly supplier scorecards and response SLAs. Delays dropped 40% in month one.` },
+    ],
+    publications: [],
+  },
+];
+
 // ---------------------------------------------------------------------------
 // Seed
 // ---------------------------------------------------------------------------
@@ -577,6 +763,75 @@ async function main() {
     seededFirms[firm.slug] = company;
     console.log(`  ✅ Firm: ${firm.name}`);
   }
+
+  // Seed products so each firm's "Request Service" offerings reflect its
+  // actual industry instead of falling back to generic consulting packages.
+  console.log('\n🛍️  Seeding products...');
+  let productCount = 0;
+  for (const [slug, products] of Object.entries(productsBySlug)) {
+    const company = seededFirms[slug];
+    if (!company) continue;
+
+    for (const product of products) {
+      const existing = await prisma.product.findFirst({
+        where: { companyId: company.id, name: product.name },
+      });
+      if (existing) continue;
+
+      await prisma.product.create({
+        data: {
+          companyId: company.id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          currency: product.currency ?? 'USD',
+          category: product.category,
+          imageUrl: product.imageUrl ?? null,
+          stock: product.stock ?? 25,
+          isActive: true,
+        },
+      });
+      productCount++;
+    }
+  }
+  console.log(`  ✅ Created ${productCount} products`);
+
+  // Seed open job listings so each firm's "Jobs" tab has real, industry-
+  // specific roles instead of showing up empty.
+  console.log('\n💼 Seeding job listings...');
+  let jobCount = 0;
+  for (const [slug, jobs] of Object.entries(jobsBySlug)) {
+    const company = seededFirms[slug];
+    if (!company) continue;
+
+    for (const job of jobs) {
+      const data = {
+        companyId: company.id,
+        title: job.title,
+        location: job.location,
+        type: job.type ?? 'Full-time',
+        description: job.description,
+        salaryMin: job.salaryMin,
+        salaryMax: job.salaryMax,
+        salaryPeriod: job.salaryPeriod ?? 'year',
+        benefits: JSON.stringify(job.benefits ?? []),
+        qualifications: JSON.stringify(job.qualifications ?? []),
+        isActive: true,
+      };
+
+      const existing = await prisma.job.findFirst({
+        where: { companyId: company.id, title: job.title },
+      });
+
+      if (existing) {
+        await prisma.job.update({ where: { id: existing.id }, data });
+      } else {
+        await prisma.job.create({ data });
+        jobCount++;
+      }
+    }
+  }
+  console.log(`  ✅ Created ${jobCount} job listings`);
 
   // Seed individual users + profiles + posts
   const seededUsers: Record<string, any> = {};
@@ -701,8 +956,102 @@ async function main() {
   }
   console.log(`  ✅ Created ${connCount} connections`);
 
+  // Seed sector groups: the group itself, its members, discussion posts
+  // (regular Posts scoped via groupId), and publications (a separate entity
+  // that surfaces here purely by tag match, exactly like the real feature).
+  console.log('\n🗂️  Seeding sector groups...');
+  const slugify = (name: string) => name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const tagify = (name: string) => name.toUpperCase().trim().replace(/[^A-Z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+
+  let groupCount = 0;
+  let groupMemberCount = 0;
+  let discussionCount = 0;
+  let publicationCount = 0;
+
+  for (const groupSeed of groupSeeds) {
+    const creator = seededUsers[groupSeed.createdBy];
+    if (!creator) continue;
+
+    const slug = slugify(groupSeed.name);
+    const tag = tagify(groupSeed.name);
+
+    const group = await prisma.group.upsert({
+      where: { slug },
+      update: { description: groupSeed.description, tag },
+      create: {
+        name: groupSeed.name,
+        slug,
+        tag,
+        description: groupSeed.description,
+        createdById: creator.id,
+      },
+    });
+    groupCount++;
+
+    for (const memberEmail of groupSeed.members) {
+      const member = seededUsers[memberEmail];
+      if (!member) continue;
+      await prisma.groupMember.upsert({
+        where: { groupId_userId: { groupId: group.id, userId: member.id } },
+        update: {},
+        create: {
+          groupId: group.id,
+          userId: member.id,
+          role: memberEmail === groupSeed.createdBy ? 'ADMIN' : 'MEMBER',
+        },
+      });
+      groupMemberCount++;
+    }
+
+    for (const discussion of groupSeed.discussions) {
+      const author = seededUsers[discussion.author];
+      if (!author) continue;
+      const daysAgo = Math.floor(Math.random() * 14);
+      const createdAt = new Date(Date.now() - daysAgo * 86400 * 1000);
+      await prisma.post.create({
+        data: {
+          authorId: author.id,
+          groupId: group.id,
+          content: discussion.content,
+          visibility: 'public',
+          type: 'post',
+          reactions: JSON.stringify({ likes: Math.floor(Math.random() * 30) + 2, comments: 0 }),
+          createdAt,
+          updatedAt: createdAt,
+        },
+      });
+      discussionCount++;
+    }
+
+    for (const publication of groupSeed.publications) {
+      const author = seededUsers[publication.author];
+      if (!author) continue;
+      const existing = await prisma.publication.findFirst({ where: { authorId: author.id, title: publication.title } });
+      if (existing) continue;
+      const daysAgo = Math.floor(Math.random() * 10);
+      const createdAt = new Date(Date.now() - daysAgo * 86400 * 1000);
+      await prisma.publication.create({
+        data: {
+          authorId: author.id,
+          title: publication.title,
+          content: publication.content,
+          coverImage: publication.coverImage,
+          tags: JSON.stringify([tag]),
+          visibility: 'public',
+          reactions: JSON.stringify({ likes: Math.floor(Math.random() * 60) + 10, comments: 0 }),
+          createdAt,
+          updatedAt: createdAt,
+        },
+      });
+      publicationCount++;
+    }
+
+    console.log(`  ✅ Sector: ${groupSeed.name}`);
+  }
+  console.log(`  ✅ Created ${groupCount} sectors | ${groupMemberCount} memberships | ${discussionCount} discussions | ${publicationCount} publications`);
+
   console.log('\n✨ Seeding complete!');
-  console.log(`   ${firms.length} firms | ${users.length} users | ${postCount} posts | ${connCount} connections`);
+  console.log(`   ${firms.length} firms | ${productCount} products | ${users.length} users | ${postCount} posts | ${connCount} connections | ${groupCount} sectors`);
 }
 
 main()

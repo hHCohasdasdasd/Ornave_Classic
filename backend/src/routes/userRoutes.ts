@@ -7,6 +7,21 @@ import { ApiResponseHandler } from '../utils/apiResponse';
 export const userRoutes = Router();
 
 /**
+ * Search people by name — used for @-tagging in composers.
+ * GET /api/users/search?q=
+ */
+userRoutes.get(
+  '/search',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const query = (req.query.q as string) || '';
+    const limit = parseInt(req.query.limit as string) || 8;
+    const results = await UserConnectionService.searchUsers(query, limit, req.user!.userId);
+    return ApiResponseHandler.success(res, results, 'Search results retrieved successfully', 200);
+  })
+);
+
+/**
  * Suggested people to connect with
  * GET /api/users/discover
  */

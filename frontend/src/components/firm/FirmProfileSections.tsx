@@ -71,7 +71,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
               </button>
             )}
           </div>
-          {isProminent && <span className="profile-section__badge" style={{ background: 'var(--tech-blue)', color: '#14140f' }}>MARKETPLACE</span>}
+          {isProminent && <span className="profile-section__badge" style={{ background: 'var(--color-primary)', color: '#14140f' }}>MARKETPLACE</span>}
         </div>
         <div className={isProminent ? "profile-section__grid" : "profile-section__items"} style={isProminent ? {
           display: 'grid',
@@ -113,7 +113,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
                 {isProminent && (
                   <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                     <button style={{
-                      background: 'var(--tech-blue)',
+                      background: 'var(--color-primary)',
                       color: '#14140f',
                       border: 'none',
                       padding: '10px 20px',
@@ -198,7 +198,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
             
             <div style={{ marginBottom: '40px', borderBottom: '1px solid var(--tech-border-dim)', paddingBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                <span style={{ background: 'var(--tech-blue)', color: '#14140f', padding: '4px 12px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', fontFamily: 'JetBrains Mono, monospace' }}>MODULE_CATALOG</span>
+                <span style={{ background: 'var(--color-primary)', color: '#14140f', padding: '4px 12px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', fontFamily: 'JetBrains Mono, monospace' }}>MODULE_CATALOG</span>
               </div>
               <h1 style={{ margin: '0 0 8px 0', color: 'var(--color-text)', fontSize: '2rem', fontWeight: 800, textTransform: 'uppercase' }}>Comprehensive_Services</h1>
               <p style={{ color: 'var(--tech-text-dim)', margin: 0, fontSize: '1rem', fontFamily: 'JetBrains Mono, monospace' }}>SCANNING_CAPABILITIES // UPLINK_READY</p>
@@ -250,7 +250,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
                     <button 
                       style={{ 
                         flex: 1,
-                        background: 'var(--tech-blue)',
+                        background: 'var(--color-primary)',
                         color: '#14140f',
                         border: 'none',
                         padding: '14px 24px', 
@@ -284,7 +284,7 @@ export const FirmServices: React.FC<{ services: FirmService[], isProminent?: boo
             <div style={{ marginTop: '60px', textAlign: 'center', background: 'rgba(231, 223, 201, 0.03)', padding: '40px', border: '1px dashed var(--tech-blue)' }}>
               <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '16px', color: 'var(--color-text)', textTransform: 'uppercase' }}>Ready_to_Initialize_Protocol?</h3>
               <p style={{ color: 'var(--tech-text-dim)', marginBottom: '24px', maxWidth: '600px', margin: '0 auto 24px', fontFamily: 'JetBrains Mono, monospace' }}>Our units are on standby to optimize your operational efficiency.</p>
-              <button style={{ background: 'var(--tech-blue)', color: '#14140f', border: 'none', padding: '16px 40px', fontSize: '1.1rem', fontWeight: 900, cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace' }}>
+              <button style={{ background: 'var(--color-primary)', color: '#14140f', border: 'none', padding: '16px 40px', fontSize: '1.1rem', fontWeight: 900, cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace' }}>
                 REQUEST_UPLINK
               </button>
             </div>
@@ -330,17 +330,17 @@ export const FirmJobs: React.FC<{ jobs: FirmJob[] }> = ({ jobs }) => {
     <section className="profile-section">
       <div className="profile-section__header">
         <h2 className="profile-section__title">Open Opportunities</h2>
-        <button className="profile-section__action-btn" onClick={() => navigate('/jobs')} style={{ background: 'var(--tech-blue)', color: '#14140f', fontWeight: 800 }}>VIEW_ALL_JOBS</button>
+        <button className="profile-section__action-btn" onClick={() => navigate('/jobs')} style={{ background: 'var(--color-primary)', color: '#14140f', fontWeight: 800 }}>VIEW_ALL_JOBS</button>
       </div>
       <div className="profile-section__items">
         {jobs.map((job, index) => (
-          <div key={index} className="profile-section__item" style={{ background: 'rgba(246, 243, 237, 0.02)', border: '1px solid var(--tech-border)', borderRadius: '0', padding: '16px', marginBottom: '12px' }}>
-            <div className="profile-item__icon" style={{ background: 'var(--color-bg)', border: '1px solid var(--tech-blue)', color: 'var(--tech-blue)' }}>💼</div>
-            <div className="profile-item__content">
+          <div key={index} className="profile-section__item" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', background: 'rgba(246, 243, 237, 0.02)', border: '1px solid var(--tech-border)', borderRadius: '0', padding: '16px', marginBottom: '12px' }}>
+            <div className="profile-item__icon" style={{ position: 'static', flexShrink: 0, background: 'var(--color-bg)', border: '1px solid var(--tech-blue)', color: 'var(--tech-blue)' }}>💼</div>
+            <div className="profile-item__content" style={{ flex: '1 1 200px', minWidth: 0 }}>
               <h3 className="profile-item__title" style={{ color: 'var(--color-text)', fontSize: '1rem', textTransform: 'uppercase' }}>{job.title}</h3>
               <p className="profile-item__subtitle" style={{ color: 'var(--tech-text-dim)', fontSize: '0.8rem', fontFamily: 'JetBrains Mono, monospace' }}>{job.location} • {job.type}</p>
             </div>
-            <button className="btn-sm-primary" style={{ marginLeft: 'auto', background: 'transparent', border: '1px solid var(--tech-blue)', color: 'var(--tech-blue)' }}>APPLY_MODULE</button>
+            <button className="btn-sm-primary" style={{ flexShrink: 0, background: 'transparent', border: '1px solid var(--tech-blue)', color: 'var(--tech-blue)' }}>APPLY_MODULE</button>
           </div>
         ))}
       </div>
@@ -359,9 +359,9 @@ export const FirmLocations: React.FC<{ locations: FirmLocation[] }> = ({ locatio
       </div>
       <div className="profile-section__items">
         {locations.map((loc, index) => (
-          <div key={index} className="profile-section__item" style={{ background: 'rgba(246, 243, 237, 0.02)', border: '1px solid var(--tech-border)', borderRadius: '0', padding: '16px', marginBottom: '12px' }}>
-            <div className="profile-item__icon" style={{ background: 'var(--color-bg)', border: '1px solid var(--tech-blue)', color: 'var(--tech-blue)' }}>📍</div>
-            <div className="profile-item__content">
+          <div key={index} className="profile-section__item" style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(246, 243, 237, 0.02)', border: '1px solid var(--tech-border)', borderRadius: '0', padding: '16px', marginBottom: '12px' }}>
+            <div className="profile-item__icon" style={{ position: 'static', flexShrink: 0, background: 'var(--color-bg)', border: '1px solid var(--tech-blue)', color: 'var(--tech-blue)' }}>📍</div>
+            <div className="profile-item__content" style={{ minWidth: 0 }}>
               <h3 className="profile-item__title" style={{ color: 'var(--color-text)', fontSize: '1rem', textTransform: 'uppercase' }}>{loc.city} ({loc.type})</h3>
               <p className="profile-item__description" style={{ color: 'var(--tech-text-dim)', fontSize: '0.85rem' }}>{loc.address}</p>
             </div>
@@ -402,13 +402,15 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
   const navigate = useNavigate();
   if (!team || team.length === 0) return null;
 
-  // Determine node size based on role
+  // Determine node size based on role — sized generously enough that a
+  // two-line name plus a one-line truncated role actually fits inside the
+  // circle instead of spilling out past its edge.
   const getNodeSize = (role: string) => {
     const r = role.toUpperCase();
-    if (r.includes('CEO')) return 90;
-    if (r.includes('CFO') || r.includes('CHRO') || r.includes('CTO') || r.includes('COO')) return 80;
-    if (r.includes('EXECUTIVE') || r.includes('DIRECTOR')) return 75;
-    return 70;
+    if (r.includes('CEO')) return 104;
+    if (r.includes('CFO') || r.includes('CHRO') || r.includes('CTO') || r.includes('COO')) return 94;
+    if (r.includes('EXECUTIVE') || r.includes('DIRECTOR')) return 88;
+    return 82;
   };
 
   // Color mapping for roles
@@ -425,11 +427,11 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
   // each leader's own direct reports, fanned out further along roughly the
   // same angle from the hub so their team reads as branching off of them,
   // not off the company.
-  const RADIUS_L1 = 190;
-  const RADIUS_L2 = 100;
-  const SIZE_L2 = 48;
+  const RADIUS_L1 = 220;
+  const RADIUS_L2 = 130;
+  const SIZE_L2 = 66;
   const hasAnyReports = team.some((p) => p.directReports && p.directReports.length > 0);
-  const containerHeight = hasAnyReports ? 660 : 500;
+  const containerHeight = hasAnyReports ? 700 : 540;
 
   type Placed = { person: FirmTeamMember; x: number; y: number; size: number; color: string; fromX: number; fromY: number };
   const placed: Placed[] = [];
@@ -552,32 +554,39 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
                 padding: '8px',
                 border: `1.5px solid rgba(246, 243, 237, 0.12)`,
                 transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                cursor: person.profileSlug ? 'pointer' : 'default'
+                cursor: person.profileSlug ? 'pointer' : 'default',
+                overflow: 'hidden'
               }}
+              title={`${person.name} — ${person.role}`}
             >
               <div className="bubble-avatar-wrapper" style={{
-                width: '28px',
-                height: '28px',
+                width: size >= 90 ? '32px' : '26px',
+                height: size >= 90 ? '32px' : '26px',
                 background: `${color}15`,
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '16px',
-                marginBottom: '5px',
-                overflow: 'hidden'
+                marginBottom: '4px',
+                overflow: 'hidden',
+                flexShrink: 0
               }}>
                 <AvatarContent avatar={person.avatar} name={person.name} />
               </div>
               <div style={{
-                fontSize: '10px',
+                fontSize: size >= 90 ? '11px' : '10px',
                 fontWeight: 800,
                 textAlign: 'center',
                 color: 'var(--color-text)',
-                lineHeight: '1.1',
-                marginBottom: '2px'
+                lineHeight: '1.15',
+                marginBottom: '2px',
+                maxWidth: '100%',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}>
-                {person.name.split(' ')[0]}<br/>{person.name.split(' ').slice(1).join(' ')}
+                {person.name}
               </div>
               <div style={{
                 fontSize: '8px',
@@ -585,7 +594,11 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
                 fontWeight: 700,
                 textAlign: 'center',
                 letterSpacing: '0.02em',
-                textTransform: 'uppercase'
+                textTransform: 'uppercase',
+                maxWidth: 'calc(100% - 4px)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}>
                 {person.role}
               </div>
@@ -660,7 +673,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
             onClick={() => navigate(`/manage-store`)}
             style={{ 
               display: user?.userType === 'COMPANY_USER' && user?.id === companyId ? 'block' : 'none',
-              background: 'var(--tech-blue)',
+              background: 'var(--color-primary)',
               color: '#14140f',
               fontWeight: 800
             }}
@@ -806,7 +819,7 @@ export const FirmStore: React.FC<{ companyId: string }> = ({ companyId }) => {
                       style={{ 
                         padding: '12px 24px', 
                         fontSize: '13px', 
-                        background: 'var(--tech-blue)', 
+                        background: 'var(--color-primary)', 
                         color: '#14140f', 
                         border: 'none', 
                         fontWeight: 900,
@@ -883,29 +896,28 @@ export const FirmResources: React.FC<{ resources: FirmResource[] }> = ({ resourc
       </div>
       <div className="profile-section__items">
         {resources.map((resource, index) => (
-          <div key={index} className="profile-section__item" style={{ background: 'rgba(246, 243, 237, 0.02)', border: '1px solid var(--tech-border)', padding: '16px', marginBottom: '12px', borderRadius: '0' }}>
-            <div className="profile-item__icon" style={{ fontSize: '24px', background: 'var(--color-bg)', border: '1px solid var(--tech-blue)', width: '50px', height: '50px' }}>
+          <div key={index} className="profile-section__item" style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(246, 243, 237, 0.02)', border: '1px solid var(--tech-border)', padding: '16px', marginBottom: '12px', borderRadius: '0' }}>
+            <div className="profile-item__icon" style={{ position: 'static', flexShrink: 0, fontSize: '24px', background: 'var(--color-bg)', border: '1px solid var(--tech-blue)', width: '50px', height: '50px' }}>
               {getTypeIcon(resource.type)}
             </div>
-            <div className="profile-item__content" style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h3 className="profile-item__title" style={{ color: 'var(--color-text)', fontSize: '1rem', textTransform: 'uppercase' }}>{resource.title}</h3>
-                  <p className="profile-item__description" style={{ color: 'var(--tech-text-dim)', fontSize: '0.85rem' }}>{resource.description}</p>
-                </div>
-                <button style={{ 
-                  background: 'transparent', 
-                  border: '1px solid var(--tech-blue)', 
-                  padding: '8px 16px', 
-                  fontSize: '11px', 
-                  fontWeight: 800, 
-                  color: 'var(--tech-blue)',
-                  cursor: 'pointer',
-                  fontFamily: 'JetBrains Mono, monospace'
-                }}>
-                  DOWNLOAD_FILE ⬇
-                </button>
+            <div className="profile-item__content" style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <div style={{ minWidth: 0 }}>
+                <h3 className="profile-item__title" style={{ color: 'var(--color-text)', fontSize: '1rem', textTransform: 'uppercase' }}>{resource.title}</h3>
+                <p className="profile-item__description" style={{ color: 'var(--tech-text-dim)', fontSize: '0.85rem' }}>{resource.description}</p>
               </div>
+              <button style={{
+                flexShrink: 0,
+                background: 'transparent',
+                border: '1px solid var(--tech-blue)',
+                padding: '8px 16px',
+                fontSize: '11px',
+                fontWeight: 800,
+                color: 'var(--tech-blue)',
+                cursor: 'pointer',
+                fontFamily: 'JetBrains Mono, monospace'
+              }}>
+                DOWNLOAD_FILE ⬇
+              </button>
             </div>
           </div>
         ))}
@@ -937,7 +949,7 @@ export const FirmSubscriptions: React.FC<{ subscriptions: FirmSubscription[] }> 
                 position: 'absolute',
                 top: '-14px',
                 left: '20px',
-                background: 'var(--tech-blue)',
+                background: 'var(--color-primary)',
                 color: '#14140f',
                 padding: '4px 12px',
                 borderRadius: '999px',

@@ -31,6 +31,10 @@ model User {
   profile            UserProfile?
   sentConnections     UserConnection[] @relation("requester")
   receivedConnections UserConnection[] @relation("addressee")
+  createdGroups       Group[]
+  groupMemberships    GroupMember[]
+  publications        Publication[]
+  publicationComments PublicationComment[]
 
   @@index([companyId])
   @@index([email])
@@ -92,6 +96,8 @@ model Company {
   users                 User[]
   userConnections       UserCompanyConnection[]
   userDocuments         UserDocument[]
+  publications          Publication[]
+  jobs                  Job[]
 
   @@index([slug])
   @@index([companyToken])
@@ -321,12 +327,117 @@ model Post {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   title      String?
-  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  groupId    String?
+  linkedPublicationId String?
+  mentions   String   @default("[]")
+  author     User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  group      Group?       @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  linkedPublication Publication? @relation(fields: [linkedPublicationId], references: [id], onDelete: SetNull)
   comments   Comment[]
 
   @@index([authorId])
   @@index([createdAt])
   @@index([visibility])
+  @@index([groupId])
+  @@index([linkedPublicationId])
+}
+
+// A user-created sector/community (e.g. "Science", "Finance") that both
+// individual users and firms can join. Discussions are regular Posts scoped
+// to the group via Post.groupId; Publications surface here separately by
+// matching their own tags against this group's tag, not through a direct
+// relation, so one publication can appear in multiple sector groups at once.
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  tag         String   @unique
+  coverImage  String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  members     GroupMember[]
+  discussions Post[]
+
+  @@index([slug])
+  @@index([tag])
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  role      String   @default("MEMBER")
+  joinedAt  DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+// A longer-form piece a user or firm publishes with sector tags — distinct
+// from a Post (own comments/reactions, not part of the home feed). Shows on
+// the author's profile and in every Group whose tag appears in `tags`.
+model Publication {
+  id         String   @id @default(cuid())
+  authorId   String
+  companyId  String?
+  title      String
+  content    String
+  coverImage String?
+  tags       String   @default("[]")
+  mentions   String   @default("[]")
+  reactions  String   @default("{}")
+  visibility String   @default("public")
+  isDeleted  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  author     User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  company    Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  comments   PublicationComment[]
+  linkedInPosts Post[]
+
+  @@index([authorId])
+  @@index([companyId])
+  @@index([createdAt])
+}
+
+model PublicationComment {
+  id            String      @id @default(cuid())
+  publicationId String
+  authorId      String
+  content       String
+  createdAt     DateTime    @default(now())
+  publication   Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  author        User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([publicationId])
+  @@index([authorId])
+}
+
+model Job {
+  id             String   @id @default(cuid())
+  companyId      String
+  title          String
+  location       String?
+  type           String   @default("Full-time")
+  description    String?
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String   @default("USD")
+  salaryPeriod   String   @default("year")
+  benefits       String? // JSON string array
+  qualifications String? // JSON string array
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
 }
 
 model Comment {

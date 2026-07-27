@@ -64,6 +64,14 @@ class ApiClient {
     return this.client.post(url, data, config);
   }
 
+  async patch(url: string, data?: any, config?: any) {
+    return this.client.patch(url, data, config);
+  }
+
+  async delete(url: string, config?: any) {
+    return this.client.delete(url, config);
+  }
+
   // AUTH ENDPOINTS
   async register(
     email: string,

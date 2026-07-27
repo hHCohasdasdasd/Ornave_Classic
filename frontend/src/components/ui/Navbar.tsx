@@ -10,14 +10,16 @@ import {
 import { mockProfileSections } from '@/data/mockProfileSections';
 
 interface NavbarProps {
-  /** True when a page-level left nav rail (e.g. the profile sidebar) already
-   * shows the ORNAVE wordmark and reserves its own width — hides the
-   * navbar's own logo and offsets the bar's content so nothing duplicates
-   * or sits underneath the rail. */
+  /** True when the global left nav rail (ProfileSidebar, rendered once in
+   * App.tsx) is present alongside this page — hides the navbar's own logo
+   * and offsets the bar's content so nothing duplicates or sits underneath
+   * the rail. Defaults to true since the rail now shows on nearly every
+   * route; pages excluded from the shell (ERP/admin layouts, login) don't
+   * render this Navbar at all, so the default doesn't affect them. */
   sidebarOffset?: boolean;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = false }) => {
+export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [isDark, setIsDark] = React.useState(() => {

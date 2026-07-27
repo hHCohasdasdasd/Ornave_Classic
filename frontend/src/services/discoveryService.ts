@@ -4,71 +4,18 @@ import { firmService } from './firmService';
 import { apiClient } from './api';
 
 class DiscoveryService {
-  private generateMockFirms(): FirmProfile[] {
-    return [
-      {
-        id: 'service-firm',
-        name: 'Service Firm',
-        description: 'Premium business consulting and digital transformation services',
-        industry: 'Professional Services',
-        location: 'Global',
-        connectionCount: 12500,
-        isConnected: false,
-      },
-      {
-        id: 'expert-portfolio',
-        name: 'Expert Portfolio',
-        description: 'Specializing in large-scale infrastructure and digital transformation projects',
-        industry: 'Infrastructure & IT',
-        location: 'London, UK',
-        connectionCount: 8400,
-        isConnected: false,
-      },
-      {
-        id: 'resource-hub',
-        name: 'Knowledge Hub',
-        description: 'The leading authority in industry research and B2B educational resources',
-        industry: 'Research & Education',
-        location: 'Amsterdam, Netherlands',
-        connectionCount: 15600,
-        isConnected: false,
-      },
-      {
-        id: 'subscription-pro',
-        name: 'Subscription model',
-        description: 'Reliable ongoing support and maintenance through our industry-leading SLA packages',
-        industry: 'Maintenance & Support',
-        location: 'Singapore',
-        connectionCount: 4200,
-        isConnected: false,
-      },
-      {
-        id: 'abibas',
-        name: 'Abibas',
-        description: 'Leading sports brand specializing in high-performance footwear and apparel',
-        industry: 'Sporting Goods',
-        location: 'Herzogenaurach, Germany',
-        connectionCount: 1500000,
-        isConnected: false,
-      },
-      {
-        id: 'global-logistics-corp',
-        name: 'Global Logistics Corp',
-        description: 'Leading international logistics and supply chain solutions',
-        industry: 'Logistics',
-        location: 'Singapore',
-        connectionCount: 1250,
-        isConnected: false,
-      },
-    ];
-  }
-
   async discoverUsers(filters?: DiscoveryFilters): Promise<UserProfile[]> {
-    const response = await apiClient.discoverUsers(20);
-    let users: UserProfile[] = (response?.data || []).map((u: any) => ({
-      ...u,
-      isConnected: false,
-    }));
+    let users: UserProfile[] = [];
+    try {
+      const response = await apiClient.discoverUsers(20);
+      users = (response?.data || []).map((u: any) => ({
+        ...u,
+        isConnected: false,
+      }));
+    } catch {
+      // Not logged in / suggestions unavailable — firms should still show.
+      return [];
+    }
 
     if (filters?.search) {
       const search = filters.search.toLowerCase();
@@ -83,15 +30,14 @@ class DiscoveryService {
   }
 
   async discoverFirms(filters?: DiscoveryFilters): Promise<FirmProfile[]> {
-    const mockFirms = this.generateMockFirms();
-
     // Fetch user-created firms
     const registeredFirms = await firmService.getRegisteredFirms();
 
-    // Use a Map to merge mocks and registered firms, prioritizing registered ones
+    // Use a Map to merge sources, prioritizing registered ones. Placeholder
+    // filler firms (e.g. "Service Firm", "Subscription model") were dropped
+    // from this pool — they had almost no real data and diluted the
+    // fully fleshed-out companies below.
     const firmsMap = new Map<string, any>();
-
-    mockFirms.forEach(f => firmsMap.set(f.id, { ...f, isConnected: false }));
 
     // Real companies published to the global directory (see
     // /network/directory/search — the actual seeded companies live here).

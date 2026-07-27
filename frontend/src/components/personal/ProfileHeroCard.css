@@ -183,6 +183,12 @@
 
 .tech-hero__biometric {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tech-hero__avatar-anchor {
   position: relative;
 }
 
@@ -227,6 +233,22 @@
 .tech-hero__avatar-frame--firm {
   border-radius: 24px;
   box-shadow: 0 0 0 1px rgba(198, 161, 91, 0.4), 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+/* Same gold-gradient ring language as the home feed's Stories row, so an
+   avatar with an active story reads as tappable the same way everywhere. */
+.tech-hero__avatar-frame--story {
+  box-shadow:
+    0 0 0 4px var(--tech-card-bg, #14140f),
+    0 0 0 7px transparent,
+    0 12px 28px rgba(0, 0, 0, 0.45);
+  background: linear-gradient(135deg, #c6a15b 0%, #a8794a 35%, #9b4a46 70%, #7a3a37 100%);
+  padding: 3px;
+  transition: transform 0.2s ease;
+}
+
+.tech-hero__avatar-frame--story:hover {
+  transform: scale(1.04);
 }
 
 .tech-hero__avatar {

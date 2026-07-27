@@ -19,19 +19,21 @@ postRoutes.post(
       return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
     }
 
-    const { title, content, mediaUrl, type, visibility } = req.body;
+    const { title, content, mediaUrl, type, visibility, groupId, mentions } = req.body;
 
     if (!content || content.trim().length === 0) {
       return ApiResponseHandler.error(res, 'Content is required', undefined, 400);
     }
 
     const post = await PostService.createPost({
-      authorId: req.user.id,
+      authorId: req.user.userId,
       title,
       content,
       mediaUrl,
       type: type || 'post',
       visibility: visibility || 'public',
+      groupId: groupId || undefined,
+      mentions: Array.isArray(mentions) ? mentions : [],
     });
 
     return ApiResponseHandler.success(res, post, 'Post created successfully', 201);
@@ -154,7 +156,7 @@ postRoutes.delete(
 
     const { postId } = req.params;
 
-    await PostService.deletePost(postId, req.user.id);
+    await PostService.deletePost(postId, req.user.userId);
 
     return ApiResponseHandler.success(res, {}, 'Post deleted successfully', 200);
   })
@@ -223,7 +225,7 @@ postRoutes.post(
     if (!content?.trim()) {
       return ApiResponseHandler.error(res, 'Content is required', undefined, 400);
     }
-    const comment = await CommentService.addComment(postId, req.user.id, content.trim());
+    const comment = await CommentService.addComment(postId, req.user.userId, content.trim());
     return ApiResponseHandler.success(res, comment, 'Comment added successfully', 201);
   })
 );

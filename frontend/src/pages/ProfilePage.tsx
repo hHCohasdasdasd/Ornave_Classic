@@ -8,10 +8,10 @@ import { feedService } from '@/services/feedService';
 import { firmService } from '@/services/firmService';
 import { FirmProfileData } from '@/types/firm';
 import { mockProfileSections } from '@/data/mockProfileSections';
-import { mockFirmProfiles } from '@/data/mockFirmProfiles';
+import { mockStories } from '@/data/mockStories';
 import { IconUsers, IconCard } from '@/components/ui/Icons';
 import { ProfileHeroCard } from '@/components/personal/ProfileHeroCard';
-import { ProfileSidebar } from '@/components/personal/ProfileSidebar';
+import { StoryViewer } from '@/components/personal/StoryViewer';
 import {
   ProfileAnalytics,
   ProfileActivity,
@@ -24,7 +24,6 @@ import {
   ProfileVolunteering,
   ProfileAwards,
   ProfileRecommendations,
-  ProfileConnections,
   ProfileServices,
   ProfileExpertiseList,
   ProfileContactCard,
@@ -57,6 +56,7 @@ import {
   FirmListings
 } from '@/components/firm/FirmProfileSections';
 import { getFirmLayoutTemplate } from '@/utils/businessType';
+import { CompanyJobsTab } from '@/components/firm/CompanyJobsTab';
 import { Navbar } from '@/components/ui/Navbar';
 import './ProfilePage.css';
 
@@ -91,6 +91,7 @@ export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [error, setError] = useState('');
   const [connectionCount, setConnectionCount] = useState(0);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -924,17 +925,6 @@ export const ProfilePage: React.FC = () => {
     { label: 'Open Roles', value: firmData.jobs?.length || 0 },
   ] : undefined;
 
-  // The "Companies" tab means something different for a firm than a person —
-  // not places they've worked, but firms they partner with on the platform.
-  const firmPartnerCompanies: DerivedCompany[] = (firmData?.partnerSlugs || [])
-    .map((slug) => mockFirmProfiles[slug])
-    .filter(Boolean)
-    .map((partner) => ({
-      name: partner.name,
-      role: partner.tagline || 'Trusted Partner',
-      years: 'Trusted Partner',
-    }));
-
   // What a firm's profile shows for "Services" depends on the business type
   // it registered as — a restaurant gets a Menu, a real estate firm gets
   // Listings, everyone else keeps the standard services/case-studies layout.
@@ -944,6 +934,14 @@ export const ProfilePage: React.FC = () => {
   const memberNumber = memberNumberSourceKey
     ? String(Math.abs(Array.from(memberNumberSourceKey).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
     : undefined;
+
+  // Mock Stories are keyed by the same profile slug used everywhere else in
+  // the app — only the handful of seeded people/firms in mockStories.ts have
+  // one, so the ring/button simply don't render for everyone else.
+  const activeStorySlug = isViewingOther
+    ? viewedSlugKey
+    : (profileType === 'firm' ? TokenStorage.getCompany()?.slug : `${firstName}-${lastName}`.toLowerCase());
+  const activeStory = mockStories.find((s) => s.profileSlug === activeStorySlug);
 
   const defaultEditorialBanner = 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1600&h=500&fit=crop';
 
@@ -1026,10 +1024,8 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <>
-      <Navbar sidebarOffset />
+      <Navbar />
       <div className="profile-page profile-page--editorial">
-        <div className="profile-page__shell">
-          <ProfileSidebar memberNumber={memberNumber} memberTier={effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Gold Member'} />
           <div className="profile-page__wrapper">
           {/* Top Hero Section */}
           <div className="profile-page__hero-section">
@@ -1057,9 +1053,19 @@ export const ProfilePage: React.FC = () => {
                 memberNumber={memberNumber}
                 memberTier={effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Gold Member'}
                 company={dossierCurrentRole?.company}
+                hasStory={!!activeStory}
+                onViewStory={() => setShowStoryViewer(true)}
               />
             )}
           </div>
+
+          {activeStory && showStoryViewer && (
+            <StoryViewer
+              stories={[activeStory]}
+              startIndex={0}
+              onClose={() => setShowStoryViewer(false)}
+            />
+          )}
 
           {/* Primary action row — Follow/Connect, Message, Save, Share (or
              Edit Profile/Log Out on your own profile) — sits right under the
@@ -1187,9 +1193,6 @@ export const ProfilePage: React.FC = () => {
                 { key: 'overview', label: 'Overview' },
                 { key: 'experience', label: 'Timeline' },
                 { key: 'portfolio', label: 'Portfolio' },
-                { key: 'companies', label: 'Companies' },
-                { key: 'connections', label: 'Network' },
-                { key: 'recognitions', label: 'Recognitions' },
                 { key: 'activity', label: 'Publications' },
                 ...(profileType === 'firm' ? [
                   {
@@ -1197,6 +1200,7 @@ export const ProfilePage: React.FC = () => {
                     label: firmLayoutTemplate === 'restaurant' ? 'Menu' : firmLayoutTemplate === 'real-estate' ? 'Listings' : 'Services',
                   },
                   { key: 'firm', label: 'Firm Details' },
+                  { key: 'jobs', label: 'Jobs' },
                 ] : []),
               ].map((t) => (
                 <button
@@ -1273,7 +1277,7 @@ export const ProfilePage: React.FC = () => {
                               <ProfileTimeline entries={dossierTimeline} />
                               <ProfileCompaniesList companies={dossierCompanies} />
                               <ProfileRecommendations sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                              <ProfileRecognitions items={dossierRecognitions} />
+                              <ProfileRecognitions items={profileType === 'firm' ? (firmData?.recognitions || []).map((r) => ({ id: r.id, label: r.label, sublabel: r.sublabel || '' })) : dossierRecognitions} />
                             </div>
 
                             <div className="dossier-grid__bottom-row dossier-grid__bottom-row--single">
@@ -1408,24 +1412,6 @@ export const ProfilePage: React.FC = () => {
                       </div>
                     )}
 
-                    {activeTab === 'connections' && (
-                      <div className="tab-pane fade-in">
-                        {profileType === 'firm' ? (
-                          (firmData?.team && firmData.team.length > 0) ? (
-                            <FirmNetwork team={firmData.team} firmName={firmData.name} />
-                          ) : (
-                            <div className="dossier-empty-state"><p>No team members added yet.</p></div>
-                          )
-                        ) : (
-                          <ProfileConnections
-                            connections={connections}
-                            isLoading={isLoadingConnections}
-                            isViewingOther={isViewingOther}
-                          />
-                        )}
-                      </div>
-                    )}
-
                     {activeTab === 'portfolio' && (
                       <div className="tab-pane fade-in">
                         {profileType === 'firm' ? (
@@ -1436,33 +1422,6 @@ export const ProfilePage: React.FC = () => {
                           )
                         ) : (
                           <ProfilePortfolioGallery items={mockData?.portfolio} />
-                        )}
-                      </div>
-                    )}
-
-                    {activeTab === 'companies' && (
-                      <div className="tab-pane fade-in">
-                        {profileType === 'firm' ? (
-                          firmPartnerCompanies.length > 0 ? (
-                            <ProfileCompaniesList companies={firmPartnerCompanies} />
-                          ) : (
-                            <div className="dossier-empty-state"><p>No partner companies added yet.</p></div>
-                          )
-                        ) : (
-                          <ProfileCompaniesList companies={dossierCompanies} />
-                        )}
-                      </div>
-                    )}
-
-                    {activeTab === 'recognitions' && (
-                      <div className="tab-pane fade-in">
-                        {profileType === 'firm' ? (
-                          <ProfileRecognitions items={firmData?.recognitions || []} />
-                        ) : (
-                          <>
-                            <ProfileRecognitions items={dossierRecognitions} />
-                            <ProfileAwards sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                          </>
                         )}
                       </div>
                     )}
@@ -1532,6 +1491,17 @@ export const ProfilePage: React.FC = () => {
                         {firmData?.firmType !== 'SERVICE' && <FirmServices services={firmData?.services || []} />}
                       </div>
                     )}
+
+                    {activeTab === 'jobs' && profileType === 'firm' && (
+                      <div className="tab-pane fade-in">
+                        <CompanyJobsTab
+                          companySlug={activeStorySlug || ''}
+                          companyName={firmData?.name}
+                          companyLogo={avatarUrl}
+                          canManage={!isViewingOther && !!user?.companyId}
+                        />
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -1539,55 +1509,37 @@ export const ProfilePage: React.FC = () => {
 
             {/* Right Sidebar */}
             <aside className="profile-page__sidebar-col">
-              <div className="sticky-sidebar">
-                {/* Suggestions Section */}
-                <div className="profile-card suggestions-card">
-                  <h4 className="sidebar-title">Suggested for you</h4>
-                  <div className="suggestions-list">
-                    {[
-                      { id: 'sarah-wilson', name: 'Sarah Wilson', role: 'CTO at DataFlow', icon: '👤' },
-                      { id: 'james-chen', name: 'James Chen', role: 'Supply Chain Manager', icon: '👤' }
-                    ].map((person, i) => (
-                      <div key={i} className="suggestion-item">
-                        <div 
-                          className="suggestion-avatar"
-                          onClick={() => navigate(`/profile?view=${person.id}`)}
-                        >
-                          {person.icon}
+              {profileType !== 'firm' && (
+                <div className="sticky-sidebar">
+                  {/* Suggestions Section */}
+                  <div className="profile-card suggestions-card">
+                    <h4 className="sidebar-title">Suggested for you</h4>
+                    <div className="suggestions-list">
+                      {[
+                        { id: 'sarah-wilson', name: 'Sarah Wilson', role: 'CTO at DataFlow', icon: '👤' },
+                        { id: 'james-chen', name: 'James Chen', role: 'Supply Chain Manager', icon: '👤' }
+                      ].map((person, i) => (
+                        <div key={i} className="suggestion-item">
+                          <div
+                            className="suggestion-avatar"
+                            onClick={() => navigate(`/profile?view=${person.id}`)}
+                          >
+                            {person.icon}
+                          </div>
+                          <div className="suggestion-info">
+                            <span className="suggestion-name" onClick={() => navigate(`/profile?view=${person.id}`)}>{person.name}</span>
+                            <span className="suggestion-role">{person.role}</span>
+                            <button className="btn-sm-outline">Connect</button>
+                          </div>
                         </div>
-                        <div className="suggestion-info">
-                          <span className="suggestion-name" onClick={() => navigate(`/profile?view=${person.id}`)}>{person.name}</span>
-                          <span className="suggestion-role">{person.role}</span>
-                          <button className="btn-sm-outline">Connect</button>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
-
-                {/* News Section */}
-                <div className="profile-card news-sidebar-card">
-                  <h4 className="sidebar-title">Ornave News</h4>
-                  <div className="news-mini-list">
-                    {[
-                      { title: 'Global trade routes', time: '2h ago' },
-                      { title: 'Future of B2B', time: '5h ago' }
-                    ].map((news, i) => (
-                      <div key={i} className="news-mini-item">
-                        <span className="news-mini-dot">•</span>
-                        <div className="news-mini-content">
-                          <span className="news-mini-title">{news.title}</span>
-                          <span className="news-mini-time">{news.time}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              )}
             </aside>
           </div>
           </div>
-        </div>
       </div>
     </>
   );

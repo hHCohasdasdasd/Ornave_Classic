@@ -78,7 +78,7 @@ storeRoutes.post(
     const { companyId, items } = req.body;
 
     const order = await StoreService.createOrder({
-      userId: req.user.id,
+      userId: req.user.userId,
       companyId,
       items,
     });
@@ -92,7 +92,7 @@ storeRoutes.get(
   '/my-orders',
   authMiddleware,
   asyncHandler(async (req: any, res: Response) => {
-    const orders = await StoreService.getUserOrders(req.user.id);
+    const orders = await StoreService.getUserOrders(req.user.userId);
     return ApiResponseHandler.success(res, orders, 'Orders retrieved successfully');
   })
 );

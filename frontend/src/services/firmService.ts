@@ -52,18 +52,18 @@ class FirmService {
     if (!stored) {
       // Seed initial data
       const initial = [
-        { 
-          id: 'global-logistics-corp', 
-          name: 'Global Logistics Corp', 
-          headline: 'End-to-End Supply Chain Solutions', 
+        {
+          id: 'global-logilink',
+          name: 'Global LogiLink',
+          headline: 'Next-Generation Logistics & Supply Chain',
           location: 'New York, USA',
           type: 'firm'
         },
-        { 
-          id: 'abibas', 
-          name: 'Abibas Official', 
-          headline: 'Global Sports Innovation Leader', 
-          location: 'Herzogenaurach, Germany',
+        {
+          id: 'novatech-robotics',
+          name: 'NovaTech Robotics',
+          headline: 'Precision Manufacturing Automation',
+          location: 'Nagoya, Japan',
           type: 'firm'
         }
       ];
