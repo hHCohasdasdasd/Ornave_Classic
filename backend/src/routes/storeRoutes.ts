@@ -45,8 +45,8 @@ storeRoutes.post(
   '/products',
   authMiddleware,
   asyncHandler(async (req: any, res: Response) => {
-    const { name, description, price, currency, imageUrl, category, stock } = req.body;
-    
+    const { name, description, detailedDescription, price, currency, imageUrl, media, category, stock } = req.body;
+
     if (!req.user.companyId) {
       return ApiResponseHandler.error(res, 'Only company users can create products', undefined, 403);
     }
@@ -55,9 +55,11 @@ storeRoutes.post(
       companyId: req.user.companyId,
       name,
       description,
+      detailedDescription,
       price,
       currency,
       imageUrl,
+      media: Array.isArray(media) ? media : undefined,
       category,
       stock,
     });
@@ -75,12 +77,15 @@ storeRoutes.post(
   '/orders',
   authMiddleware,
   asyncHandler(async (req: any, res: Response) => {
-    const { companyId, items } = req.body;
+    const { companyId, items, billingAddress, deliveryAddress, payment } = req.body;
 
     const order = await StoreService.createOrder({
       userId: req.user.userId,
       companyId,
       items,
+      billingAddress,
+      deliveryAddress,
+      payment,
     });
 
     return ApiResponseHandler.success(res, order, 'Order created successfully', 201);

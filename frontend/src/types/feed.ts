@@ -75,6 +75,7 @@ export interface FeedItem {
   };
   linkedPublication?: LinkedPublication | null;
   mentions?: Mention[];
+  tags?: string[];
 }
 
 export interface FeedResponse {

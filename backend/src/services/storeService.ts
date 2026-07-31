@@ -2,13 +2,20 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+export interface ProductMediaItem {
+  type: 'image' | 'video';
+  url: string;
+}
+
 export interface CreateProductRequest {
   companyId: string;
   name: string;
   description?: string;
+  detailedDescription?: string;
   price: number;
   currency?: string;
   imageUrl?: string;
+  media?: ProductMediaItem[];
   category?: string;
   stock?: number;
 }
@@ -18,13 +25,23 @@ export interface ProductResponse {
   companyId: string;
   name: string;
   description: string | null;
+  detailedDescription: string | null;
   price: number;
   currency: string;
   imageUrl: string | null;
+  media: string;
   category: string | null;
   stock: number;
   isActive: boolean;
   createdAt: Date;
+}
+
+export interface OrderAddress {
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
 }
 
 export interface CreateOrderRequest {
@@ -34,6 +51,9 @@ export interface CreateOrderRequest {
     productId: string;
     quantity: number;
   }[];
+  billingAddress?: OrderAddress;
+  deliveryAddress?: OrderAddress;
+  payment?: { brand?: string; last4?: string };
 }
 
 export class StoreService {
@@ -41,14 +61,20 @@ export class StoreService {
    * Create a new product for a company
    */
   static async createProduct(request: CreateProductRequest): Promise<ProductResponse> {
+    const media = request.media && request.media.length > 0
+      ? request.media
+      : (request.imageUrl ? [{ type: 'image' as const, url: request.imageUrl }] : []);
+
     return await prisma.product.create({
       data: {
         companyId: request.companyId,
         name: request.name,
         description: request.description,
+        detailedDescription: request.detailedDescription,
         price: request.price,
         currency: request.currency || 'USD',
-        imageUrl: request.imageUrl,
+        imageUrl: request.imageUrl || media[0]?.url,
+        media: JSON.stringify(media),
         category: request.category,
         stock: request.stock || 0,
         isActive: true,
@@ -82,6 +108,9 @@ export class StoreService {
         companyId,
         isActive: true,
       },
+      include: {
+        company: true,
+      },
       orderBy: {
         createdAt: 'desc',
       },
@@ -94,6 +123,7 @@ export class StoreService {
   static async getProduct(productId: string): Promise<ProductResponse | null> {
     return await prisma.product.findUnique({
       where: { id: productId },
+      include: { company: true },
     });
   }
 
@@ -101,9 +131,13 @@ export class StoreService {
    * Update a product
    */
   static async updateProduct(productId: string, data: Partial<CreateProductRequest>): Promise<ProductResponse> {
+    const { media, ...rest } = data;
     return await prisma.product.update({
       where: { id: productId },
-      data,
+      data: {
+        ...rest,
+        ...(media ? { media: JSON.stringify(media) } : {}),
+      },
     });
   }
 
@@ -153,6 +187,18 @@ export class StoreService {
           totalAmount,
           currency: products[0]?.currency || 'USD',
           status: 'PENDING',
+          billingAddress: request.billingAddress?.address,
+          billingCity: request.billingAddress?.city,
+          billingState: request.billingAddress?.state,
+          billingPostalCode: request.billingAddress?.postalCode,
+          billingCountry: request.billingAddress?.country,
+          deliveryAddress: request.deliveryAddress?.address,
+          deliveryCity: request.deliveryAddress?.city,
+          deliveryState: request.deliveryAddress?.state,
+          deliveryPostalCode: request.deliveryAddress?.postalCode,
+          deliveryCountry: request.deliveryAddress?.country,
+          paymentBrand: request.payment?.brand,
+          paymentLast4: request.payment?.last4,
           items: {
             create: orderItemsData,
           },

@@ -209,6 +209,21 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
           <p>{item.content}</p>
         </div>
 
+        {/* Topic tags */}
+        {item.tags && item.tags.length > 0 && (
+          <div className="feed-item__tags">
+            {item.tags.map((tag) => (
+              <span
+                key={tag}
+                className="feed-item__tag-chip"
+                onClick={(e) => { e.stopPropagation(); navigate(`/home?tag=${encodeURIComponent(tag)}`); }}
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Tagged people / companies */}
         {item.mentions && item.mentions.length > 0 && (
           <div className="feed-item__mentions">

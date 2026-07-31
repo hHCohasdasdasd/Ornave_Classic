@@ -1,18 +1,47 @@
 import { apiClient } from './api';
 
+export interface ProductMediaItem {
+  type: 'image' | 'video';
+  url: string;
+}
+
 export interface Product {
   id: string;
   companyId: string;
   name: string;
   description: string | null;
+  detailedDescription?: string | null;
   price: number;
   currency: string;
   imageUrl: string | null;
+  media?: string;
   category: string | null;
   stock: number;
   isActive: boolean;
   createdAt: string;
   company?: { name: string; id: string };
+}
+
+/** A product's media as a clean list, falling back to its single legacy
+ * `imageUrl` for older records created before multi-media support. */
+export function getProductMedia(product: Product): ProductMediaItem[] {
+  if (product.media) {
+    try {
+      const parsed = JSON.parse(product.media);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {
+      // fall through to legacy imageUrl
+    }
+  }
+  return product.imageUrl ? [{ type: 'image', url: product.imageUrl }] : [];
+}
+
+export interface OrderAddress {
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
 }
 
 export interface Order {
@@ -25,6 +54,18 @@ export interface Order {
   items: OrderItem[];
   company?: { name: string };
   user?: { firstName: string; lastName: string };
+  billingAddress?: string | null;
+  billingCity?: string | null;
+  billingState?: string | null;
+  billingPostalCode?: string | null;
+  billingCountry?: string | null;
+  deliveryAddress?: string | null;
+  deliveryCity?: string | null;
+  deliveryState?: string | null;
+  deliveryPostalCode?: string | null;
+  deliveryCountry?: string | null;
+  paymentBrand?: string | null;
+  paymentLast4?: string | null;
   createdAt: string;
 }
 
@@ -36,47 +77,7 @@ export interface OrderItem {
   price: number;
 }
 
-const ORDERS_KEY = 'ornave_orders';
-
 class StoreService {
-  private getStoredOrders(): Order[] {
-    const stored = localStorage.getItem(ORDERS_KEY);
-    if (!stored) {
-      // Seed initial data
-      const initial: Order[] = [
-        {
-          id: 'ord-1',
-          userId: 'demo-user',
-          companyId: 'abibas',
-          status: 'COMPLETED',
-          totalAmount: 180,
-          currency: 'USD',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-          company: { name: 'Abibas Official', id: 'abibas' },
-          items: [
-            { id: 'i1', productId: 'p2', product: { name: 'Ultraboost 22', price: 180 } as any, quantity: 1, price: 180 }
-          ]
-        },
-        {
-          id: 'ord-2',
-          userId: 'demo-user',
-          companyId: 'global-logistics-corp',
-          status: 'ACTIVE',
-          totalAmount: 1200,
-          currency: 'USD',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-          company: { name: 'Global Logistics Corp', id: 'global-logistics-corp' },
-          items: [
-            { id: 'i2', productId: 's1', product: { name: 'Enterprise SaaS License', price: 1200 } as any, quantity: 1, price: 1200 }
-          ]
-        }
-      ];
-      localStorage.setItem(ORDERS_KEY, JSON.stringify(initial));
-      return initial;
-    }
-    return JSON.parse(stored);
-  }
-
   async getAllProducts(): Promise<Product[]> {
     try {
       const response = await apiClient.get('/store/products');
@@ -87,12 +88,27 @@ class StoreService {
     }
   }
 
+  async getProduct(productId: string): Promise<Product | null> {
+    try {
+      const response = await apiClient.get(`/store/products/${productId}`);
+      return response.data.data || response.data;
+    } catch {
+      return null;
+    }
+  }
+
   async getUserOrders(): Promise<Order[]> {
-    return this.getStoredOrders();
+    try {
+      const response = await apiClient.get('/store/my-orders');
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+      return [];
+    }
   }
 
   async getFirmStats(firmId: string) {
-    const orders = this.getStoredOrders().filter(o => o.companyId === firmId);
+    const orders = (await this.getUserOrders()).filter(o => o.companyId === firmId);
     return {
       activeServices: orders.filter(o => o.status === 'ACTIVE').length,
       historyCount: orders.length,
@@ -192,13 +208,17 @@ class StoreService {
     }
   }
 
-  async createProduct(data: Partial<Product>): Promise<Product> {
+  async createProduct(data: Partial<Omit<Product, 'media'>> & { media?: ProductMediaItem[] }): Promise<Product> {
     const response = await apiClient.post('/store/products', data);
     return response.data.data || response.data;
   }
 
-  async createOrder(companyId: string, items: { productId: string; quantity: number }[]): Promise<Order> {
-    const response = await apiClient.post('/store/orders', { companyId, items });
+  async createOrder(
+    companyId: string,
+    items: { productId: string; quantity: number }[],
+    extra?: { billingAddress?: OrderAddress; deliveryAddress?: OrderAddress; payment?: { brand?: string; last4?: string } }
+  ): Promise<Order> {
+    const response = await apiClient.post('/store/orders', { companyId, items, ...extra });
     return response.data.data || response.data;
   }
 

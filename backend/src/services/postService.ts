@@ -20,6 +20,7 @@ export interface CreatePostRequest {
   groupId?: string;
   linkedPublicationId?: string;
   mentions?: MentionEntry[];
+  tags?: string[];
 }
 
 const LINKED_PUBLICATION_INCLUDE = {
@@ -58,6 +59,7 @@ export interface PostResponse {
     authorName: string;
   } | null;
   mentions: MentionEntry[];
+  tags: string[];
 }
 
 export class PostService {
@@ -100,6 +102,7 @@ export class PostService {
         groupId: request.groupId,
         linkedPublicationId: request.linkedPublicationId,
         mentions: JSON.stringify(request.mentions || []),
+        tags: JSON.stringify((request.tags || []).map((t) => t.toUpperCase())),
       },
       include: LINKED_PUBLICATION_INCLUDE,
     });
@@ -144,6 +147,7 @@ export class PostService {
       offset?: number;
       visibility?: 'public' | 'connections' | 'private';
       theme?: string;
+      tag?: string;
       groupId?: string | null;
     } = {}
   ): Promise<{ items: PostResponse[]; total: number; hasMore: boolean }> {
@@ -156,6 +160,10 @@ export class PostService {
       ...(options.visibility && { visibility: options.visibility }),
       groupId: options.groupId === undefined ? null : options.groupId,
     };
+
+    if (options.tag) {
+      where.tags = { contains: options.tag.toUpperCase() };
+    }
 
     if (options.theme) {
       const themeConfig = this.BUSINESS_THEMES.find(t => t.theme === options.theme);
@@ -431,6 +439,13 @@ export class PostService {
       mentions = [];
     }
 
+    let tags: string[] = [];
+    try {
+      tags = JSON.parse(post.tags || '[]');
+    } catch {
+      tags = [];
+    }
+
     return {
       id: post.id,
       authorId: post.authorId,
@@ -452,6 +467,7 @@ export class PostService {
       groupId: post.groupId,
       linkedPublication,
       mentions,
+      tags,
     };
   }
 }

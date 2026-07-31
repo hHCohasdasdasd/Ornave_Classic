@@ -1,0 +1,266 @@
+.firm-overview-page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.firm-overview-page__loading {
+  padding: 100px 0;
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.firm-overview-page__container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 48px 100px;
+}
+
+.firm-overview-page__back {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.firm-overview-page__back:hover {
+  color: var(--tech-accent-gold);
+}
+
+.firm-overview-page__header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.firm-overview-page__avatar {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--tech-accent-gold);
+  color: var(--tech-accent-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.firm-overview-page__header-text {
+  flex: 1;
+  min-width: 200px;
+}
+
+.firm-overview-page__name {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--color-text);
+}
+
+.firm-overview-page__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.firm-overview-page__meta span:not(:last-child)::after {
+  content: '·';
+  margin-left: 12px;
+  color: var(--color-border-dark);
+}
+
+.firm-overview-page__header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.firm-overview-page__btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border-dark);
+  color: var(--color-text);
+  border-radius: var(--radius-button);
+  padding: 10px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.firm-overview-page__btn:hover {
+  border-color: var(--tech-accent-gold);
+  color: var(--tech-accent-gold);
+}
+
+.firm-overview-page__btn--primary {
+  background: linear-gradient(135deg, var(--color-primary-hover), var(--color-primary));
+  color: #14140f;
+  border: none;
+  box-shadow: 0 6px 18px rgba(198, 161, 91, 0.35);
+}
+
+.firm-overview-page__btn--primary:hover {
+  color: #14140f;
+  transform: translateY(-1px);
+}
+
+.firm-overview-page__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.firm-overview-page__stat {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.firm-overview-page__stat-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.firm-overview-page__stat-value {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--tech-accent-gold);
+}
+
+.firm-overview-page__section-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 14px;
+  color: var(--color-text);
+}
+
+.firm-overview-page__empty {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 30px;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.firm-overview-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Invoice card (shared visual language with Orders & Invoices) ---------- */
+.invoice-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.invoice-card__summary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: none;
+  border: none;
+  padding: 18px 22px;
+  cursor: pointer;
+  text-align: left;
+  flex-wrap: wrap;
+}
+
+.invoice-card__summary-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.invoice-card__order-id {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--tech-accent-gold);
+}
+
+.invoice-card__date {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.invoice-card__summary-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.invoice-card__status {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(198, 161, 91, 0.15);
+  color: var(--tech-accent-gold);
+}
+
+.invoice-card__status--completed {
+  background: rgba(91, 157, 143, 0.15);
+  color: #5b9d8f;
+}
+
+.invoice-card__status--cancelled {
+  background: rgba(201, 106, 94, 0.15);
+  color: #c96a5e;
+}
+
+.invoice-card__total {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.invoice-card__chevron {
+  color: var(--color-muted);
+  transition: transform 0.2s ease;
+}
+
+.invoice-card__chevron--link {
+  transform: rotate(-90deg);
+}
+
+.invoice-card__summary:hover .invoice-card__chevron--link {
+  color: var(--tech-accent-gold);
+}

@@ -9,7 +9,6 @@ import { firmService } from '@/services/firmService';
 import { FirmProfileData } from '@/types/firm';
 import { mockProfileSections } from '@/data/mockProfileSections';
 import { mockStories } from '@/data/mockStories';
-import { IconUsers, IconCard } from '@/components/ui/Icons';
 import { ProfileHeroCard } from '@/components/personal/ProfileHeroCard';
 import { StoryViewer } from '@/components/personal/StoryViewer';
 import {
@@ -25,9 +24,7 @@ import {
   ProfileAwards,
   ProfileRecommendations,
   ProfileServices,
-  ProfileExpertiseList,
   ProfileContactCard,
-  ProfileFeaturedAchievement,
   ProfileRecentPosts,
   ProfilePortfolioGallery,
   ProfileCompaniesList,
@@ -99,6 +96,7 @@ export const ProfilePage: React.FC = () => {
   const [isViewingOther, setIsViewingOther] = useState(false);
   const [viewedUser, setViewedUser] = useState<any>(null);
   const [viewedSlugKey, setViewedSlugKey] = useState<string | undefined>(undefined);
+  const [viewedMemberNumber, setViewedMemberNumber] = useState<number | undefined>(undefined);
   const [firmData, setFirmData] = useState<FirmProfileData | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -109,6 +107,20 @@ export const ProfilePage: React.FC = () => {
   const [mutualConnections, setMutualConnections] = useState<any[]>([]);
   const [isSaved, setIsSaved] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+
+  // The logged-in user's own purchased Ornave status (Basic/Bronze/Silver/
+  // Gold), set from the Enhance Profile shop — kept in sync live so a
+  // purchase is reflected here without needing a full page reload.
+  const [ownMemberTier, setOwnMemberTier] = useState(() => localStorage.getItem('ornave_member_tier') || 'Basic');
+  const [ownHasVerified, setOwnHasVerified] = useState(() => localStorage.getItem('ornave_verified_addon') === 'true');
+  useEffect(() => {
+    const refresh = () => {
+      setOwnMemberTier(localStorage.getItem('ornave_member_tier') || 'Basic');
+      setOwnHasVerified(localStorage.getItem('ornave_verified_addon') === 'true');
+    };
+    window.addEventListener('ornave_state_update', refresh);
+    return () => window.removeEventListener('ornave_state_update', refresh);
+  }, []);
 
   const [activeTab, setActiveTab] = useState('overview');
   
@@ -122,7 +134,7 @@ export const ProfilePage: React.FC = () => {
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [bannerUrl, setBannerUrl] = useState('');
-  const { user, logout, triggerAuthModal } = useAuth();
+  const { user, triggerAuthModal } = useAuth();
 
   useEffect(() => {
     const viewParam = searchParams.get('view');
@@ -637,6 +649,7 @@ export const ProfilePage: React.FC = () => {
     if (!profile.id) profile.id = key;
 
     setViewedSlugKey(key);
+    setViewedMemberNumber(undefined);
     const savedProfiles = JSON.parse(localStorage.getItem('ornave_saved_profiles') || '[]');
     setIsSaved(savedProfiles.some((s: any) => s.key === key));
     setViewedUser(profile);
@@ -664,6 +677,9 @@ export const ProfilePage: React.FC = () => {
       // their real id and real profile data (headline/bio/location/avatar) so the
       // page shows the actual person instead of a generic placeholder.
       networkService.resolveUserBySlug(key).then((real) => {
+        if (real && typeof real.memberNumber === 'number') {
+          setViewedMemberNumber(real.memberNumber);
+        }
         if (real && real.id && real.id !== profile.id) {
           setViewedUser((prev: any) => (prev ? { ...prev, id: real.id } : prev));
           if (real.headline) setHeadline(real.headline);
@@ -682,6 +698,36 @@ export const ProfilePage: React.FC = () => {
           if (user && user.id !== real.id) {
             networkService.getMutualConnections(real.id).then(setMutualConnections);
           }
+        } else if (!mockProfiles[key]) {
+          // Not a known mock profile and no matching user account either —
+          // this "view" param may actually be a real company id (e.g. a
+          // "Posted by" link from the marketplace). Try resolving it as a
+          // firm before settling for the generic placeholder.
+          firmService.getPublicCompanyProfile(key).then((company) => {
+            if (!company) return;
+            setViewedUser((prev: any) => (prev ? { ...prev, id: company.id, type: 'firm', firstName: company.name, lastName: '' } : prev));
+            setFirstName(company.name);
+            setLastName('');
+            if (company.about || company.description) setBio(company.about || company.description || '');
+            if (company.industry) setHeadline(company.industry);
+            if (company.logo) setAvatarUrl(company.logo);
+            if (company.website) setWebsite(company.website);
+            firmService.isFollowing(company.id).then((val) => setIsFollowing(val));
+            firmService.isPartneredWithFirm(company.id).then((val) => setPartnerStatus(val ? 'PARTNERED' : 'NOT_CONNECTED'));
+            firmService.getFirmProfile(company.id).then((data) => {
+              setFirmData(data);
+              setConnectionCount(data.followersCount);
+              setIsLoadingPosts(false);
+              setPosts((data.posts || []).map((p) => ({
+                id: p.id,
+                title: p.title,
+                content: p.content,
+                timestamp: p.timestamp,
+                reactions: p.reactions,
+                mediaUrl: p.mediaUrl,
+              })));
+            });
+          });
         }
       });
     }
@@ -734,11 +780,6 @@ export const ProfilePage: React.FC = () => {
         });
       });
     }
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
   };
 
   /** Fetch the real connection status for a person and reflect it (connected vs. still pending). */
@@ -892,7 +933,6 @@ export const ProfilePage: React.FC = () => {
   const realSections = getStoredSections(viewedSlugKey);
   const sourceExperiences = mockData?.experiences || realSections.experiences || [];
   const sourceEducations = mockData?.educations || realSections.educations || [];
-  const sourceSkills = mockData?.skills || realSections.skills || [];
   const sourceCertifications = mockData?.certifications || realSections.certifications || [];
   const sourcePortfolio = mockData?.portfolio || [];
   const sourceRecommendations = mockData?.recommendations || [];
@@ -906,7 +946,7 @@ export const ProfilePage: React.FC = () => {
   })();
 
   const heroStats = [
-    { label: 'Companies Founded', value: new Set(sourceExperiences.map((e: any) => e.company)).size },
+    { label: 'Companies Worked At', value: new Set(sourceExperiences.map((e: any) => e.company)).size },
     { label: 'Projects Completed', value: sourcePortfolio.length },
     { label: 'Years in Business', value: earliestSourceYear ? new Date().getFullYear() - earliestSourceYear : '—' },
     { label: 'Connections', value: connectionCount },
@@ -930,10 +970,17 @@ export const ProfilePage: React.FC = () => {
   // Listings, everyone else keeps the standard services/case-studies layout.
   const firmLayoutTemplate = profileType === 'firm' ? getFirmLayoutTemplate(firmData?.industry) : 'default';
 
-  const memberNumberSourceKey = effectiveMockKey || viewedSlugKey || (isViewingOther ? viewedUser?.id : user?.id);
-  const memberNumber = memberNumberSourceKey
-    ? String(Math.abs(Array.from(memberNumberSourceKey).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
-    : undefined;
+  // Own profile and any other real registered account both show their real,
+  // permanent member number (assigned sequentially at signup). Only a purely
+  // mock profile with no matching account falls back to a stable hash.
+  const memberNumberSourceKey = effectiveMockKey || viewedSlugKey || (isViewingOther ? viewedUser?.id : undefined);
+  const memberNumber = !isViewingOther && user?.memberNumber
+    ? String(user.memberNumber)
+    : isViewingOther && viewedMemberNumber
+      ? String(viewedMemberNumber)
+      : memberNumberSourceKey
+        ? String(Math.abs(Array.from(memberNumberSourceKey).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
+        : undefined;
 
   // Mock Stories are keyed by the same profile slug used everywhere else in
   // the app — only the handful of seeded people/firms in mockStories.ts have
@@ -980,15 +1027,7 @@ export const ProfilePage: React.FC = () => {
     return [...work, ...edu].sort((a, b) => (a.sortKey < b.sortKey ? 1 : -1));
   })();
 
-  const dossierExpertise = sourceSkills.map((s: any) => s.name);
-
   const dossierCurrentRole = sourceExperiences.find((e: any) => e.current) || sourceExperiences[0];
-
-  const dossierFeaturedSlides = sourcePortfolio.map((p) => ({
-    image: p.image,
-    title: p.title,
-    role: dossierCurrentRole?.title,
-  }));
 
   const dossierRecognitions: DerivedRecognition[] = sourceCertifications.map((c: any) => ({
     id: c.id,
@@ -1051,7 +1090,7 @@ export const ProfilePage: React.FC = () => {
                 stats={profileType === 'firm' ? firmHeroStats : heroStats}
                 memberSince={earliestSourceYear ? String(earliestSourceYear) : undefined}
                 memberNumber={memberNumber}
-                memberTier={effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Gold Member'}
+                memberTier={isViewingOther ? (effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Gold Member') : `${ownHasVerified ? 'Verified ' : ''}${ownMemberTier === 'Basic' ? 'Basic Member' : ownMemberTier}`}
                 company={dossierCurrentRole?.company}
                 hasStory={!!activeStory}
                 onViewStory={() => setShowStoryViewer(true)}
@@ -1088,9 +1127,6 @@ export const ProfilePage: React.FC = () => {
                   onClick={() => navigate('/profile/edit')}
                 >
                   Edit Profile
-                </button>
-                <button className="btn-outline-danger" onClick={handleLogout}>
-                  Log Out
                 </button>
               </div>
             </div>
@@ -1199,6 +1235,7 @@ export const ProfilePage: React.FC = () => {
                     key: 'services',
                     label: firmLayoutTemplate === 'restaurant' ? 'Menu' : firmLayoutTemplate === 'real-estate' ? 'Listings' : 'Services',
                   },
+                  { key: 'marketplace', label: 'Marketplace' },
                   { key: 'firm', label: 'Firm Details' },
                   { key: 'jobs', label: 'Jobs' },
                 ] : []),
@@ -1211,17 +1248,7 @@ export const ProfilePage: React.FC = () => {
                   {t.label}
                 </button>
               ))}
-              {!isViewingOther && (
-                <button className="dossier-tabs__tab" onClick={() => navigate('/profile/edit')}>
-                  Settings
-                </button>
-              )}
             </div>
-            {!isViewingOther && (
-              <button className="dossier-tabs__edit-btn" onClick={() => navigate('/profile/edit?tab=info')}>
-                Edit Profile
-              </button>
-            )}
           </nav>
 
           <div className="profile-page__content-grid">
@@ -1240,9 +1267,8 @@ export const ProfilePage: React.FC = () => {
                                   <span className="dossier-card__industry-tag">{firmData.industry || firmData.tagline}</span>
                                 )}
                                 <p className="bio-text">{bio || "No bio available."}</p>
-                                <span className="dossier-card__link" onClick={() => setActiveTab('experience')}>View full profile ›</span>
                               </div>
-                              <ProfileExpertiseList items={dossierExpertise} />
+                              <ProfileSkillBars skills={mockData?.skills} />
                               <ProfileContactCard
                                 email={dossierEmail}
                                 website={website}
@@ -1263,108 +1289,11 @@ export const ProfilePage: React.FC = () => {
                                 authorHeadline={headline}
                               />
                             </div>
-                            <div className="dossier-grid__featured">
-                              <ProfileFeaturedAchievement
-                                slides={dossierFeaturedSlides}
-                                onView={() => setActiveTab('experience')}
-                              />
-                            </div>
-                            <div className="dossier-grid__portfolio">
-                              <ProfilePortfolioGallery items={mockData?.portfolio} />
-                            </div>
-
                             <div className="dossier-grid__col dossier-grid__col--right">
                               <ProfileTimeline entries={dossierTimeline} />
                               <ProfileCompaniesList companies={dossierCompanies} />
-                              <ProfileRecommendations sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                              <ProfileRecognitions items={profileType === 'firm' ? (firmData?.recognitions || []).map((r) => ({ id: r.id, label: r.label, sublabel: r.sublabel || '' })) : dossierRecognitions} />
                             </div>
 
-                            <div className="dossier-grid__bottom-row dossier-grid__bottom-row--single">
-                              <ProfileSkillBars skills={mockData?.skills} />
-                            </div>
-
-                            {!isViewingOther && (
-                              <div className="dossier-grid__services profile-card stats-mini" onClick={() => navigate('/purchased-services')} style={{ cursor: 'pointer' }}>
-                                <h4 className="section-title"><span className="profile-section__title-icon"><IconCard size={16} /></span>Connected Services</h4>
-                                <div className="connected-firms-preview" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-                                  {connections.filter(c => c.type === 'firm').slice(0, 4).map(firm => (
-                                    <div
-                                      key={firm.id}
-                                      className="firm-preview-row"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(`/purchased-services/${firm.id}`);
-                                      }}
-                                      style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '15px',
-                                        padding: '12px',
-                                        background: 'rgba(246, 243, 237, 0.03)',
-                                        border: '1px solid var(--tech-border-dim)',
-                                        borderRadius: '12px',
-                                        transition: 'all 0.2s ease'
-                                      }}
-                                    >
-                                      <div style={{
-                                        width: '40px',
-                                        height: '40px',
-                                        borderRadius: '50%',
-                                        background: 'var(--color-bg)',
-                                        border: '1px solid var(--tech-border-dark)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexShrink: 0,
-                                        overflow: 'hidden',
-                                        color: 'var(--tech-accent-gold)',
-                                        fontWeight: 700,
-                                        fontSize: '0.75rem'
-                                      }}>
-                                        {firm.avatarUrl ? (
-                                          <img src={firm.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        ) : (firm.name || '?').slice(0, 2).toUpperCase()}
-                                      </div>
-                                      <div style={{ flexGrow: 1, minWidth: 0 }}>
-                                        <div style={{ color: 'var(--color-text)', fontSize: '0.88rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                          {firm.name}
-                                        </div>
-                                        <div style={{ color: 'var(--tech-text-dim)', fontSize: '0.75rem' }}>
-                                          {firm.headline || 'Connected company'}
-                                        </div>
-                                      </div>
-                                      <div className="tech-tag">Active</div>
-                                    </div>
-                                  ))}
-                                  {connections.filter(c => c.type === 'firm').length === 0 && (
-                                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--tech-text-dim)', fontSize: '0.85rem', border: '1px dashed var(--tech-border-dim)', borderRadius: '12px' }}>
-                                      No connected companies yet.
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="mini-stats-row" style={{ borderTop: '1px solid var(--tech-border-dim)', paddingTop: '15px' }}>
-                                  <div className="mini-stat">
-                                    <span className="mini-stat-val">{connections.filter(c => c.type === 'firm').length}</span>
-                                    <span className="mini-stat-lab">Companies</span>
-                                  </div>
-                                  <div className="mini-stat">
-                                    <span className="mini-stat-val">B2B</span>
-                                    <span className="mini-stat-lab">Relationship Type</span>
-                                  </div>
-                                </div>
-                                <button
-                                  className="profile-section__footer-btn"
-                                  style={{ marginTop: '15px', width: '100%', textAlign: 'left' }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate('/purchased-services');
-                                  }}
-                                >
-                                  Manage Services →
-                                </button>
-                              </div>
-                            )}
                           </div>
                       </>
                     )}
@@ -1423,6 +1352,8 @@ export const ProfilePage: React.FC = () => {
                         ) : (
                           <ProfilePortfolioGallery items={mockData?.portfolio} />
                         )}
+                        <ProfileRecommendations sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                        <ProfileRecognitions items={profileType === 'firm' ? (firmData?.recognitions || []).map((r) => ({ id: r.id, label: r.label, sublabel: r.sublabel || '' })) : dossierRecognitions} />
                       </div>
                     )}
 
@@ -1454,6 +1385,15 @@ export const ProfilePage: React.FC = () => {
                             isOwner={!isViewingOther}
                           />
                         )}
+                      </div>
+                    )}
+
+                    {activeTab === 'marketplace' && (
+                      <div className="tab-pane fade-in">
+                        <ProfileServices
+                          companyId={isViewingOther ? (viewedUser?.id || '') : (user?.companyId || '')}
+                          isOwner={!isViewingOther}
+                        />
                       </div>
                     )}
 
@@ -1507,37 +1447,6 @@ export const ProfilePage: React.FC = () => {
               </div>
             </main>
 
-            {/* Right Sidebar */}
-            <aside className="profile-page__sidebar-col">
-              {profileType !== 'firm' && (
-                <div className="sticky-sidebar">
-                  {/* Suggestions Section */}
-                  <div className="profile-card suggestions-card">
-                    <h4 className="sidebar-title">Suggested for you</h4>
-                    <div className="suggestions-list">
-                      {[
-                        { id: 'sarah-wilson', name: 'Sarah Wilson', role: 'CTO at DataFlow', icon: '👤' },
-                        { id: 'james-chen', name: 'James Chen', role: 'Supply Chain Manager', icon: '👤' }
-                      ].map((person, i) => (
-                        <div key={i} className="suggestion-item">
-                          <div
-                            className="suggestion-avatar"
-                            onClick={() => navigate(`/profile?view=${person.id}`)}
-                          >
-                            {person.icon}
-                          </div>
-                          <div className="suggestion-info">
-                            <span className="suggestion-name" onClick={() => navigate(`/profile?view=${person.id}`)}>{person.name}</span>
-                            <span className="suggestion-role">{person.role}</span>
-                            <button className="btn-sm-outline">Connect</button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </aside>
           </div>
           </div>
       </div>

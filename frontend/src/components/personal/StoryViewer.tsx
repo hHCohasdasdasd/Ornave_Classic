@@ -119,7 +119,7 @@ export const StoryViewer: React.FC<StoryViewerProps> = ({ stories, startIndex, o
 
         <div className="story-viewer__header">
           <div className="story-viewer__header-avatar">
-            <img src={story.avatarUrl} alt={story.name} />
+            {story.avatarUrl ? <img src={story.avatarUrl} alt={story.name} /> : <span>{story.name.charAt(0).toUpperCase()}</span>}
           </div>
           <span
             className="story-viewer__header-name"

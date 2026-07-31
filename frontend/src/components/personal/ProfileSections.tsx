@@ -1344,14 +1344,14 @@ export interface DerivedRecognition { id: string; label: string; sublabel: strin
 export const ProfileRecognitions: React.FC<{ items?: DerivedRecognition[] }> = ({ items }) => {
   if (!items || items.length === 0) {
     return (
-      <div className="dossier-card">
+      <div className="dossier-card dossier-card--recognitions">
         <h4 className="dossier-card__title">Recognitions &amp; Awards</h4>
         <div className="dossier-recognitions__empty">No recognitions added yet.</div>
       </div>
     );
   }
   return (
-    <div className="dossier-card">
+    <div className="dossier-card dossier-card--recognitions">
       <div className="dossier-card__header-row">
         <h4 className="dossier-card__title">Recognitions &amp; Awards</h4>
         <span className="dossier-card__view-all">View all</span>
@@ -1359,7 +1359,7 @@ export const ProfileRecognitions: React.FC<{ items?: DerivedRecognition[] }> = (
       <div className="dossier-recognitions__grid">
         {items.slice(0, 4).map((r) => (
           <div key={r.id} className="dossier-recognitions__item">
-            <IconLaurel size={22} />
+            <IconLaurel size={32} />
             <span className="dossier-recognitions__label">{r.label}</span>
             <span className="dossier-recognitions__sublabel">{r.sublabel}</span>
           </div>

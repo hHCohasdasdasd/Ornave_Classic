@@ -2,12 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { storeService, Product } from '@/services/storeService';
 import { ServiceCard } from '@/types/feed';
+import {
+  IconEdit, IconArticle, IconChart, IconTrophy, IconBag,
+  IconGlobe, IconUsers, IconLock, IconImage, IconHash, IconAt, IconPaperclip, IconSave,
+} from '@/components/ui/Icons';
 import './CreatePostModal.css';
 
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (content: string, mediaUrl?: string, title?: string, serviceCard?: ServiceCard) => void;
+  onSubmit: (content: string, mediaUrl?: string, title?: string, serviceCard?: ServiceCard, tags?: string[]) => void;
   userName: string;
   userAvatar?: string;
 }
@@ -26,10 +30,10 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [content, setContent] = useState('');
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [mediaInput, setMediaInput] = useState('');
+  const [tagInput, setTagInput] = useState('');
   const [contentType, setContentType] = useState<ContentType>('post');
   const [visibility, setVisibility] = useState<PostVisibility>('public');
   const [showVisibilityMenu, setShowVisibilityMenu] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [pollOptions, setPollOptions] = useState(['', '']);
   const [pollDuration, setPollDuration] = useState('1 week');
   const [isBold, setIsBold] = useState(false);
@@ -39,7 +43,10 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [selectedService, setSelectedService] = useState<Product | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const tagInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+
+  const tags = tagInput.split(',').map((t) => t.trim()).filter(Boolean);
 
   const maxChars = 3000;
   const charCount = content.length;
@@ -75,10 +82,10 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
         description: selectedService.description || undefined,
         imageUrl: selectedService.imageUrl || undefined,
       };
-      onSubmit(content || `Check out our service: ${selectedService.name}`, undefined, selectedService.name, serviceCard);
+      onSubmit(content || `Check out our service: ${selectedService.name}`, undefined, selectedService.name, serviceCard, tags);
       resetForm();
     } else if (content.trim() || mediaUrls.length > 0) {
-      onSubmit(content, mediaUrls[0], title);
+      onSubmit(content, mediaUrls[0], title, undefined, tags);
       resetForm();
     }
   };
@@ -88,6 +95,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     setContent('');
     setMediaUrls([]);
     setMediaInput('');
+    setTagInput('');
     setContentType('post');
     setVisibility('public');
     setPollOptions(['', '']);
@@ -131,30 +139,22 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     }
   };
 
-  const insertEmoji = (emoji: string) => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const newContent = content.substring(0, start) + emoji + content.substring(end);
-      setContent(newContent);
-      setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
-        textarea.focus();
-      }, 0);
-    }
-    setShowEmojiPicker(false);
-  };
-
-  const quickEmojis = ['👍', '❤️', '🎉', '💡', '🔥', '✨', '💪', '🚀', '🎯', '⭐', '👏', '💼', '📈', '🌟', '😊'];
-
   const visibilityOptions = [
-    { value: 'public' as PostVisibility, icon: '🌐', label: 'Anyone', description: 'Anyone on or off Ornave' },
-    { value: 'connections' as PostVisibility, icon: '👥', label: 'Connections only', description: 'Only your connections can see' },
-    { value: 'private' as PostVisibility, icon: '🔒', label: 'Only me', description: 'Only visible to you' },
+    { value: 'public' as PostVisibility, icon: IconGlobe, label: 'Anyone', description: 'Anyone on or off Ornave', color: '#5b8fc7' },
+    { value: 'connections' as PostVisibility, icon: IconUsers, label: 'Connections only', description: 'Only your connections can see', color: '#5b9d8f' },
+    { value: 'private' as PostVisibility, icon: IconLock, label: 'Only me', description: 'Only visible to you', color: '#cf7d5c' },
   ];
 
   const currentVisibility = visibilityOptions.find(v => v.value === visibility)!;
+
+  const CONTENT_TYPES: { value: ContentType; label: string; icon: React.FC<{ size?: number; className?: string }>; color: string }[] = [
+    { value: 'post', label: 'Post', icon: IconEdit, color: '#c6a15b' },
+    { value: 'article', label: 'Article', icon: IconArticle, color: '#5b9d8f' },
+    { value: 'poll', label: 'Poll', icon: IconChart, color: '#8b7fd6' },
+    { value: 'celebration', label: 'Celebrate', icon: IconTrophy, color: '#cf7d5c' },
+    { value: 'service', label: 'Service', icon: IconBag, color: '#5b8fc7' },
+  ];
+  const activeType = CONTENT_TYPES.find(t => t.value === contentType)!;
 
   const canSubmit = contentType === 'poll'
     ? pollOptions.filter(o => o.trim()).length >= 2
@@ -164,9 +164,11 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
   return (
     <div className="create-post-modal-overlay" onClick={handleOverlayClick}>
-      <div className="create-post-modal">
+      <div className="create-post-modal" style={{ ['--type-accent' as string]: activeType.color }}>
+        <div className="create-post-modal__accent-bar" />
         <div className="create-post-modal__header">
           <h2>
+            <activeType.icon size={16} className="create-post-modal__header-icon" />
             {contentType === 'post' && 'Create a post'}
             {contentType === 'article' && 'Write an article'}
             {contentType === 'poll' && 'Create a poll'}
@@ -191,11 +193,11 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
             </div>
             <div className="create-post-modal__user-info">
               <span className="create-post-modal__name">{userName}</span>
-              <button 
+              <button
                 className="create-post-modal__visibility-btn"
                 onClick={() => setShowVisibilityMenu(!showVisibilityMenu)}
               >
-                {currentVisibility.icon} {currentVisibility.label} ▾
+                <currentVisibility.icon size={12} /> {currentVisibility.label} ▾
               </button>
             </div>
           </div>
@@ -206,12 +208,13 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 <button
                   key={option.value}
                   className={`visibility-option ${visibility === option.value ? 'active' : ''}`}
+                  style={{ ['--vis-accent' as string]: option.color }}
                   onClick={() => {
                     setVisibility(option.value);
                     setShowVisibilityMenu(false);
                   }}
                 >
-                  <span className="visibility-option__icon">{option.icon}</span>
+                  <span className="visibility-option__icon"><option.icon size={16} /></span>
                   <div className="visibility-option__text">
                     <div className="visibility-option__label">{option.label}</div>
                     <div className="visibility-option__description">{option.description}</div>
@@ -225,38 +228,17 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
         {/* Content Type Tabs */}
         <div className="create-post-modal__tabs">
-          <button
-            className={`tab-btn ${contentType === 'post' ? 'active' : ''}`}
-            onClick={() => setContentType('post')}
-          >
-            📝 Post
-          </button>
-          <button
-            className={`tab-btn ${contentType === 'article' ? 'active' : ''}`}
-            onClick={() => setContentType('article')}
-          >
-            📄 Article
-          </button>
-          <button
-            className={`tab-btn ${contentType === 'poll' ? 'active' : ''}`}
-            onClick={() => setContentType('poll')}
-          >
-            📊 Poll
-          </button>
-          <button
-            className={`tab-btn ${contentType === 'celebration' ? 'active' : ''}`}
-            onClick={() => setContentType('celebration')}
-          >
-            🎉 Celebrate
-          </button>
-          {user?.userType === 'COMPANY_USER' && (
+          {CONTENT_TYPES.filter(t => t.value !== 'service' || user?.userType === 'COMPANY_USER').map((type) => (
             <button
-              className={`tab-btn tab-btn--service ${contentType === 'service' ? 'active' : ''}`}
-              onClick={() => setContentType('service')}
+              key={type.value}
+              className={`tab-btn ${contentType === type.value ? 'active' : ''}`}
+              style={{ ['--tab-accent' as string]: type.color }}
+              onClick={() => setContentType(type.value)}
             >
-              🛍️ Service
+              <type.icon size={14} />
+              {type.label}
             </button>
-          )}
+          ))}
         </div>
 
         {/* Service Picker */}
@@ -340,7 +322,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                   cy="12" 
                   r="10" 
                   fill="none" 
-                  stroke={charPercentage > 90 ? 'var(--color-danger)' : 'var(--tech-blue)'}
+                  stroke={charPercentage > 90 ? 'var(--color-danger)' : activeType.color}
                   strokeWidth="2"
                   strokeDasharray={`${charPercentage * 0.628} 62.8`}
                   transform="rotate(-90 12 12)"
@@ -417,45 +399,23 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
           </div>
         )}
 
-        {/* Emoji Picker */}
-        {showEmojiPicker && (
-          <div className="emoji-picker">
-            <div className="emoji-picker__header">Quick reactions</div>
-            <div className="emoji-picker__grid">
-              {quickEmojis.map((emoji) => (
-                <button
-                  key={emoji}
-                  className="emoji-btn"
-                  onClick={() => insertEmoji(emoji)}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Toolbar */}
         {contentType !== 'service' && (
           <div className="create-post-modal__toolbar">
             <div className="toolbar-left">
               <button
-                className="toolbar-btn"
+                className="toolbar-btn toolbar-btn--image"
                 onClick={() => fileInputRef.current?.click()}
                 title="Add photos"
               >
-                🖼️
+                <IconImage size={16} />
               </button>
-              <button
-                className="toolbar-btn"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                title="Add emoji"
-              >
-                😊
+              <button className="toolbar-btn toolbar-btn--at" title="Mention someone">
+                <IconAt size={16} />
               </button>
-              <button className="toolbar-btn" title="Add hashtag">#</button>
-              <button className="toolbar-btn" title="Mention someone">@</button>
-              <button className="toolbar-btn" title="Add document">📎</button>
+              <button className="toolbar-btn toolbar-btn--clip" title="Add document">
+                <IconPaperclip size={16} />
+              </button>
             </div>
             <input
               ref={fileInputRef}
@@ -465,6 +425,28 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
               style={{ display: 'none' }}
               onChange={(e) => { console.log('Files selected:', e.target.files); }}
             />
+          </div>
+        )}
+
+        {/* Tags */}
+        {contentType !== 'poll' && contentType !== 'service' && (
+          <div className="create-post-modal__tags-section">
+            <IconHash size={14} className="create-post-modal__tags-icon" />
+            <input
+              ref={tagInputRef}
+              type="text"
+              className="tag-input"
+              placeholder="Add tags, comma-separated (e.g. supplychain, fintech)"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+            />
+          </div>
+        )}
+        {tags.length > 0 && (
+          <div className="create-post-modal__tag-preview">
+            {tags.map((t) => (
+              <span key={t} className="create-post-modal__tag-chip">#{t.toUpperCase()}</span>
+            ))}
           </div>
         )}
 
@@ -487,7 +469,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
         {/* Footer */}
         <div className="create-post-modal__footer">
-          <button className="draft-btn">💾 Save draft</button>
+          <button className="draft-btn"><IconSave size={13} /> Save draft</button>
           <button
             className="create-post-modal__submit"
             onClick={handleSubmit}

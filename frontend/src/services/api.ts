@@ -123,6 +123,12 @@ class ApiClient {
     email?: string;
     phone?: string;
     bio?: string;
+    website?: string;
+    streetAddress?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
   }) {
     try {
       const response = await this.client.put<ApiResponse<any>>('/auth/profile', data);

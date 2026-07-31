@@ -63,6 +63,14 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
   const initials = type === 'firm' ? (user?.firstName?.substring(0, 2) || 'F') : `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`;
   const headlineText = headline?.trim() || (type === 'firm' ? 'No description yet' : 'No headline yet');
 
+  const tierLower = (memberTier || '').toLowerCase();
+  const memberCardModifier = tierLower.includes('diamond') ? 'diamond'
+    : tierLower.includes('gold') ? 'gold'
+    : tierLower.includes('silver') ? 'silver'
+    : tierLower.includes('bronze') ? 'bronze'
+    : tierLower.includes('founding') ? 'founding'
+    : 'basic';
+
   return (
     <section className={`tech-hero ${isPremium ? 'tech-hero--premium' : ''} ${editorial ? 'tech-hero--editorial' : ''}`}>
       <div className="tech-hero__banner">
@@ -73,7 +81,7 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
         )}
         <div className="tech-hero__banner-overlay"></div>
         {editorial && memberNumber && (
-          <div className="tech-hero__member-card">
+          <div className={`tech-hero__member-card tech-hero__member-card--${memberCardModifier}`}>
             <span className="tech-hero__member-card-eyebrow">Ornave</span>
             <span className="tech-hero__member-card-tier">{memberTier}</span>
             <span className="tech-hero__member-card-number">Member No.<br />{memberNumber}</span>

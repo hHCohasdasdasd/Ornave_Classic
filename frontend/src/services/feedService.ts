@@ -2,7 +2,7 @@ import { FeedResponse, FeedItem, ServiceCard } from '@/types/feed';
 import { apiClient } from './api';
 
 class FeedService {
-  async getFeed(_cursor?: string, theme?: string): Promise<FeedResponse> {
+  async getFeed(_cursor?: string, theme?: string, tag?: string): Promise<FeedResponse> {
     try {
       const response = await apiClient.get('/posts', {
         params: {
@@ -10,11 +10,12 @@ class FeedService {
           offset: 0,
           visibility: 'public',
           theme,
+          tag,
         },
       });
 
       const data = response.data.data || response.data;
-      
+
       // Convert API response to FeedItem format
       const items: FeedItem[] = (data.items || []).map((post: any) => ({
         id: post.id,
@@ -31,6 +32,7 @@ class FeedService {
         mediaUrl: post.mediaUrl,
         timestamp: post.timestamp || new Date().toISOString(),
         reactions: post.reactions || { likes: 0, comments: 0 },
+        tags: post.tags || [],
       }));
 
       return {
@@ -69,6 +71,7 @@ class FeedService {
         mediaUrl: post.mediaUrl,
         timestamp: post.timestamp || post.createdAt || new Date().toISOString(),
         reactions: post.reactions || { likes: 0, comments: 0 },
+        tags: post.tags || [],
       };
     } catch (error) {
       console.error('Failed to fetch post:', error);
@@ -76,7 +79,7 @@ class FeedService {
     }
   }
 
-  async createPost(content: string, mediaUrl?: string, title?: string, serviceCard?: ServiceCard): Promise<FeedItem> {
+  async createPost(content: string, mediaUrl?: string, title?: string, serviceCard?: ServiceCard, tags?: string[]): Promise<FeedItem> {
     try {
       const response = await apiClient.post('/posts', {
         title,
@@ -84,6 +87,7 @@ class FeedService {
         mediaUrl,
         type: 'post',
         visibility: 'public',
+        tags,
       });
 
       const post = response.data.data || response.data;
@@ -104,6 +108,7 @@ class FeedService {
         timestamp: post.timestamp || new Date().toISOString(),
         reactions: post.reactions || { likes: 0, comments: 0 },
         metadata: serviceCard ? { serviceCard } : undefined,
+        tags: post.tags || [],
       };
     } catch (error) {
       console.error('Failed to create post:', error);
@@ -133,6 +138,7 @@ class FeedService {
         mediaUrl: post.mediaUrl,
         timestamp: post.timestamp || new Date().toISOString(),
         reactions: post.reactions || { likes: 0, comments: 0 },
+        tags: post.tags || [],
       }));
 
       return {
@@ -177,6 +183,7 @@ class FeedService {
         mediaUrl: post.mediaUrl,
         timestamp: post.timestamp || post.createdAt || new Date().toISOString(),
         reactions: post.reactions || { likes: 0, comments: 0 },
+        tags: post.tags || [],
       }));
 
       return items;

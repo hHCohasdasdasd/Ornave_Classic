@@ -2,6 +2,7 @@
 
 export interface UserProfile {
   id: string;
+  memberNumber?: number;
   firstName: string;
   lastName: string;
   email: string;

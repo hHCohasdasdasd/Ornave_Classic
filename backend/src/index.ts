@@ -19,6 +19,8 @@ import userRoutes from './routes/userRoutes';
 import groupRoutes from './routes/groupRoutes';
 import publicationRoutes from './routes/publicationRoutes';
 import jobRoutes from './routes/jobRoutes';
+import eventRoutes from './routes/eventRoutes';
+import billingRoutes from './routes/billingRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -123,6 +125,8 @@ app.use(`${API_BASE}/store`, storeRoutes);
 app.use(`${API_BASE}/users`, userRoutes);
 app.use(`${API_BASE}/groups`, groupRoutes);
 app.use(`${API_BASE}/publications`, publicationRoutes);
+app.use(`${API_BASE}/events`, eventRoutes);
+app.use(`${API_BASE}/billing`, billingRoutes);
 
 // ============================================
 // 404 HANDLER

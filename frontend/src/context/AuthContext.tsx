@@ -148,7 +148,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const verifyToken = async () => {
       if (token && user) {
         try {
-          await apiClient.getProfile();
+          const response = await apiClient.getProfile();
+          const fresh = response?.data;
+          if (fresh) {
+            // Merge in the latest server-side fields (e.g. memberNumber) so a
+            // user object cached from before a field existed self-heals
+            // instead of staying stale until the next manual login.
+            const updatedUser: User = {
+              ...user,
+              id: fresh.id,
+              memberNumber: fresh.memberNumber,
+              email: fresh.email,
+              firstName: fresh.firstName,
+              lastName: fresh.lastName,
+              role: fresh.role,
+              companyId: fresh.companyId,
+              userType: fresh.userType,
+            };
+            setUser(updatedUser);
+            TokenStorage.setUser(updatedUser);
+          }
         } catch (err) {
           // Token is invalid, clear everything
           logout();

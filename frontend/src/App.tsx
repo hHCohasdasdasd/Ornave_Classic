@@ -1,5 +1,7 @@
-import React, { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { CartProvider } from '@/context/CartContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ProfileSidebar } from '@/components/personal/ProfileSidebar';
 import { HomePage } from '@/pages/HomePage';
@@ -20,7 +22,7 @@ import { GlobalDocumentsPage } from '@/pages/GlobalDocumentsPage';
 import { GlobalPaymentsPage } from '@/pages/GlobalPaymentsPage';
 import { GlobalActivityPage } from '@/pages/GlobalActivityPage';
 import { ProfilePage } from '@/pages/ProfilePage';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const ProfilePageWithKey = () => {
   const location = useLocation();
@@ -36,6 +38,7 @@ import { TotalConnectionsPage } from '@/pages/TotalConnectionsPage';
 import { FollowingPage } from '@/pages/FollowingPage';
 import { FirmsPage } from '@/pages/FirmsPage';
 import { JobsPage } from '@/pages/JobsPage';
+import { EventsPage } from '@/pages/EventsPage';
 import { LeadsPage } from '@/pages/LeadsPage';
 import { GroupsPage } from '@/pages/GroupsPage';
 import { GroupDetailPage } from '@/pages/GroupDetailPage';
@@ -50,10 +53,18 @@ import { PostDetailPage } from '@/pages/PostDetailPage';
 import { ThemeRoomPage } from '@/pages/ThemeRoomPage';
 import { StoreManagementPage } from '@/pages/StoreManagementPage';
 import { UserStorePage } from '@/pages/UserStorePage';
+import { CheckoutPage } from '@/pages/CheckoutPage';
 import { PurchasedServicesPage } from '@/pages/PurchasedServicesPage';
 import { FirmServiceOverviewPage } from '@/pages/FirmServiceOverviewPage';
 import { FirmClientManagementPage } from '@/pages/FirmClientManagementPage';
 import { AuthModal } from '@/components/ui/AuthModal';
+import { CreatePostModal } from '@/components/personal/CreatePostModal';
+import { CreatePublicationModal } from '@/components/personal/CreatePublicationModal';
+import { CreateStoryModal } from '@/components/personal/CreateStoryModal';
+import { feedService } from '@/services/feedService';
+import { publicationService } from '@/services/publicationService';
+import { Story } from '@/data/mockStories';
+import { Mention, ServiceCard } from '@/types/feed';
 import './App.css';
 
 const AUTH_BYPASS_ENABLED = false;
@@ -77,15 +88,82 @@ const SHELL_EXCLUDED_PREFIXES = [
   '/firm/clients',
 ];
 
-const getMemberNumber = (id?: string | null): string | undefined => {
-  if (!id) return undefined;
-  return String(Math.abs(Array.from(id).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6);
-};
+
+export const MEMBER_TIER_KEY = 'ornave_member_tier';
+export const VERIFIED_ADDON_KEY = 'ornave_verified_addon';
+export const USER_STORIES_KEY = 'ornave_user_stories';
 
 const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const showShell = !SHELL_EXCLUDED_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
+
+  const [memberTier, setMemberTier] = useState(() => localStorage.getItem(MEMBER_TIER_KEY) || 'Basic');
+  const [verified, setVerified] = useState(() => localStorage.getItem(VERIFIED_ADDON_KEY) === 'true');
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showCreateStory, setShowCreateStory] = useState(false);
+  const [showCreatePublication, setShowCreatePublication] = useState(false);
+
+  useEffect(() => {
+    const refresh = () => {
+      setMemberTier(localStorage.getItem(MEMBER_TIER_KEY) || 'Basic');
+      setVerified(localStorage.getItem(VERIFIED_ADDON_KEY) === 'true');
+    };
+    window.addEventListener('ornave_state_update', refresh);
+    return () => window.removeEventListener('ornave_state_update', refresh);
+  }, []);
+
+  const userName = user ? `${user.firstName} ${user.lastName}` : 'You';
+
+  const handleCreatePost = async (content: string, mediaUrl?: string, title?: string, serviceCard?: ServiceCard, tags?: string[]) => {
+    try {
+      await feedService.createPost(content, mediaUrl, title, serviceCard, tags);
+    } finally {
+      setShowCreatePost(false);
+      window.dispatchEvent(new CustomEvent('ornave_feed_update'));
+      navigate('/home');
+    }
+  };
+
+  const handleCreatePublication = async (params: { title: string; content: string; coverImage?: string; tags: string[]; postAsCompany?: boolean; mentions?: Mention[] }) => {
+    try {
+      await publicationService.createPublication(params);
+    } finally {
+      setShowCreatePublication(false);
+      window.dispatchEvent(new CustomEvent('ornave_feed_update'));
+      navigate('/home');
+    }
+  };
+
+  const handleCreateStory = (params: { type: 'image' | 'video' | 'text'; image?: string; video?: string; heading?: string; text?: string; caption?: string; background?: string }) => {
+    const existing: Story[] = JSON.parse(localStorage.getItem(USER_STORIES_KEY) || '[]');
+    const story: Story = {
+      id: `story-you-${Date.now()}`,
+      type: 'user',
+      name: userName,
+      avatarUrl: '',
+      profileSlug: 'me',
+      slides: [{
+        type: params.type,
+        image: params.image,
+        video: params.video,
+        heading: params.heading,
+        text: params.text,
+        caption: params.caption,
+        background: params.background,
+      }],
+    };
+    try {
+      localStorage.setItem(USER_STORIES_KEY, JSON.stringify([story, ...existing]));
+    } catch {
+      console.error('Story too large to store locally — try a smaller file.');
+      return;
+    }
+    window.dispatchEvent(new CustomEvent('ornave_stories_update'));
+    setShowCreateStory(false);
+    navigate('/home');
+  };
 
   if (!showShell) {
     return <>{children}</>;
@@ -93,10 +171,34 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-      <ProfileSidebar memberNumber={getMemberNumber(user?.id)} />
+      <ProfileSidebar
+        memberNumber={user?.memberNumber ? String(user.memberNumber) : undefined}
+        memberTier={`${verified ? 'Verified ' : ''}${memberTier === 'Basic' ? 'Basic Member' : memberTier}`}
+        verified={verified}
+        onCreatePost={() => setShowCreatePost(true)}
+        onCreateStory={() => setShowCreateStory(true)}
+        onCreatePublication={() => setShowCreatePublication(true)}
+      />
       <div className="app-shell__content" style={{ flex: 1, minWidth: 0 }}>
         {children}
       </div>
+      <CreatePostModal
+        isOpen={showCreatePost}
+        onClose={() => setShowCreatePost(false)}
+        onSubmit={handleCreatePost}
+        userName={userName}
+        userAvatar={undefined}
+      />
+      <CreatePublicationModal
+        isOpen={showCreatePublication}
+        onClose={() => setShowCreatePublication(false)}
+        onSubmit={handleCreatePublication}
+      />
+      <CreateStoryModal
+        isOpen={showCreateStory}
+        onClose={() => setShowCreateStory(false)}
+        onSubmit={handleCreateStory}
+      />
     </div>
   );
 };
@@ -106,6 +208,7 @@ function App() {
     <ErrorBoundary>
       <Router>
         <AuthProvider>
+        <CartProvider>
           <AppShell>
           <Routes>
             {/* Home Page */}
@@ -141,6 +244,7 @@ function App() {
             <Route path="/network/following" element={<FollowingPage />} />
             <Route path="/firms" element={<FirmsPage />} />
             <Route path="/jobs" element={<JobsPage />} />
+            <Route path="/events" element={<EventsPage />} />
             <Route path="/profile/edit" element={<ProfileEditPage />} />
             <Route path="/profile/resources" element={<ProfileResourcesPage />} />
             <Route path="/profile/settings/open-to" element={<OpenToWorkSettingsPage />} />
@@ -169,6 +273,7 @@ function App() {
             <Route path="/manage-store" element={<StoreManagementPage />} />
             <Route path="/store" element={<UserStorePage />} />
             <Route path="/store/:companyId" element={<UserStorePage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/firm/clients" element={<FirmClientManagementPage />} />
             <Route path="/purchased-services" element={<PurchasedServicesPage />} />
             <Route path="/purchased-services/:firmId" element={<FirmServiceOverviewPage />} />
@@ -178,6 +283,7 @@ function App() {
           </Routes>
           </AppShell>
           <AuthModal />
+        </CartProvider>
         </AuthProvider>
       </Router>
     </ErrorBoundary>

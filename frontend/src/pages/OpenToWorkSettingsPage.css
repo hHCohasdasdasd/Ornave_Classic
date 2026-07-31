@@ -1,6 +1,21 @@
 .open-to-work-page {
+  --color-bg: #f7f5ee;
+  --color-bg-alt: #f1eee3;
+  --color-card: #ffffff;
+  --color-text: #1c1a17;
+  --color-muted: #756c5d;
+  --color-primary: #c6a15b;
+  --color-primary-hover: #d8be84;
+  --color-border: rgba(28, 24, 18, 0.1);
+  --color-border-dark: rgba(28, 24, 18, 0.18);
+  --color-input-bg: rgba(28, 24, 18, 0.03);
+  --tech-blue: #1c1a17;
+  --tech-blue-glow: rgba(28, 24, 18, 0.08);
+
   min-height: 100vh;
   background: var(--color-bg);
+  color: var(--color-text);
+  padding-bottom: 80px;
 }
 
 .open-to-work-container {
@@ -30,7 +45,8 @@
 }
 
 .open-to-work-header h1 {
-  font-size: 32px;
+  font-family: var(--font-display);
+  font-size: 2rem;
   font-weight: 700;
   color: var(--color-text);
   margin: 0 0 12px 0;
@@ -48,7 +64,7 @@
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 10px 28px rgba(28, 24, 18, 0.08);
 }
 
 .settings-section {
@@ -64,7 +80,8 @@
 }
 
 .settings-section h2 {
-  font-size: 20px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--color-text);
   margin: 0 0 8px 0;

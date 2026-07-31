@@ -74,6 +74,65 @@
   min-width: 150px;
 }
 
+/* Gold — the default gradient above already reads as gold, kept as-is */
+.tech-hero__member-card--gold {
+  background: linear-gradient(155deg, #e3c98a 0%, #c6a15b 55%, #a3803f 100%);
+}
+
+.tech-hero__member-card--silver {
+  background: linear-gradient(155deg, #eef1f3 0%, #c3ccd3 55%, #9aa5ad 100%);
+}
+
+.tech-hero__member-card--silver .tech-hero__member-card-eyebrow,
+.tech-hero__member-card--silver .tech-hero__member-card-tier,
+.tech-hero__member-card--silver .tech-hero__member-card-number {
+  color: #232a2e;
+}
+
+.tech-hero__member-card--bronze {
+  background: linear-gradient(155deg, #dba26e 0%, #b6743f 55%, #8a5527 100%);
+}
+
+.tech-hero__member-card--basic {
+  background: linear-gradient(155deg, #f7f5ee 0%, #e4e0d3 55%, #cdc7b4 100%);
+}
+
+.tech-hero__member-card--basic .tech-hero__member-card-eyebrow,
+.tech-hero__member-card--basic .tech-hero__member-card-tier,
+.tech-hero__member-card--basic .tech-hero__member-card-number {
+  color: #4a453a;
+}
+
+.tech-hero__member-card--founding {
+  background: linear-gradient(155deg, #d9b88a 0%, #9b6f3f 55%, #5f3f1f 100%);
+}
+
+/* Diamond — gold, with flare: same gold family as the Gold tier, but with
+   an animated shimmer sweep and a soft glow so it visibly outranks it. */
+.tech-hero__member-card--diamond {
+  overflow: hidden;
+  background: linear-gradient(155deg, #f5e2a8 0%, #d9b654 45%, #a3803f 100%);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35), 0 0 22px rgba(230, 195, 110, 0.5);
+}
+
+.tech-hero__member-card--diamond::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(115deg, transparent 0%, rgba(255, 255, 255, 0.8) 50%, transparent 100%);
+  animation: diamondCardShimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes diamondCardShimmer {
+  0% { left: -60%; }
+  55% { left: 130%; }
+  100% { left: 130%; }
+}
+
 .tech-hero__member-card-eyebrow {
   font-family: var(--font-display);
   font-size: 0.72rem;

@@ -78,7 +78,7 @@ export const OpenToWorkSettingsPage: React.FC = () => {
 
   const handleSave = () => {
     console.log('Saving settings:', settings);
-    navigate('/profile');
+    navigate('/profile/edit?tab=enhance');
   };
 
   return (
@@ -87,7 +87,7 @@ export const OpenToWorkSettingsPage: React.FC = () => {
       
       <div className="open-to-work-container">
         <div className="open-to-work-header">
-          <button className="back-btn" onClick={() => navigate('/profile')}>
+          <button className="back-btn" onClick={() => navigate('/profile/edit?tab=enhance')}>
             ← Back to Profile
           </button>
           <h1>Availability Settings</h1>
@@ -216,7 +216,7 @@ export const OpenToWorkSettingsPage: React.FC = () => {
 
           {/* Actions */}
           <div className="settings-actions">
-            <button className="btn-secondary" onClick={() => navigate('/profile')}>
+            <button className="btn-secondary" onClick={() => navigate('/profile/edit?tab=enhance')}>
               Cancel
             </button>
             <button className="btn-primary" onClick={handleSave}>

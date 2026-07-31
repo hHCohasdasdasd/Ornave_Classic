@@ -60,6 +60,19 @@ publicationRoutes.get(
 );
 
 /**
+ * Get the most-used tags across recent public publications
+ * GET /api/publications/tags/trending
+ */
+publicationRoutes.get(
+  '/tags/trending',
+  asyncHandler(async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 8;
+    const tags = await PublicationService.getTrendingTags(limit);
+    return ApiResponseHandler.success(res, tags, 'Trending tags retrieved successfully', 200);
+  })
+);
+
+/**
  * Get a single publication
  * GET /api/publications/:id
  */

@@ -19,7 +19,7 @@ postRoutes.post(
       return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
     }
 
-    const { title, content, mediaUrl, type, visibility, groupId, mentions } = req.body;
+    const { title, content, mediaUrl, type, visibility, groupId, mentions, tags } = req.body;
 
     if (!content || content.trim().length === 0) {
       return ApiResponseHandler.error(res, 'Content is required', undefined, 400);
@@ -34,6 +34,7 @@ postRoutes.post(
       visibility: visibility || 'public',
       groupId: groupId || undefined,
       mentions: Array.isArray(mentions) ? mentions : [],
+      tags: Array.isArray(tags) ? tags : [],
     });
 
     return ApiResponseHandler.success(res, post, 'Post created successfully', 201);
@@ -51,12 +52,14 @@ postRoutes.get(
     const offset = parseInt(req.query.offset as string) || 0;
     const visibility = (req.query.visibility as any) || 'public';
     const theme = req.query.theme as string;
+    const tag = req.query.tag as string;
 
     const result = await PostService.getFeed({
       limit,
       offset,
       visibility,
       theme,
+      tag,
     });
 
     return ApiResponseHandler.success(res, result, 'Feed retrieved successfully', 200);

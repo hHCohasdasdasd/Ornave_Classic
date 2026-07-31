@@ -453,6 +453,7 @@ export class UserConnectionService {
 
   private static readonly SLUG_RESOLVE_SELECT = {
     id: true,
+    memberNumber: true,
     firstName: true,
     lastName: true,
     email: true,
@@ -472,6 +473,7 @@ export class UserConnectionService {
   private static formatSlugMatch(match: any) {
     return {
       id: match.id,
+      memberNumber: match.memberNumber,
       firstName: match.firstName,
       lastName: match.lastName,
       email: match.email,

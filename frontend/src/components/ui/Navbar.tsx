@@ -6,6 +6,7 @@ import { apiClient } from '@/services/api';
 import {
   IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel,
   IconBuilding, IconBriefcase, IconSearch, IconUsers, IconCard, IconUser, IconChart, IconSpark,
+  IconLogout, IconBag,
 } from './Icons';
 import { mockProfileSections } from '@/data/mockProfileSections';
 
@@ -22,10 +23,6 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [isDark, setIsDark] = React.useState(() => {
-    const saved = localStorage.getItem('ornave-theme');
-    return saved === 'dark';
-  });
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
   const [isForBusinessMenuOpen, setIsForBusinessMenuOpen] = React.useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false);
@@ -36,11 +33,6 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
   const profileMenuRef = React.useRef<HTMLDivElement>(null);
   const forBusinessMenuRef = React.useRef<HTMLDivElement>(null);
   const notificationsMenuRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    localStorage.setItem('ornave-theme', isDark ? 'dark' : 'light');
-  }, [isDark]);
 
   React.useEffect(() => {
     if (!user || user.id === 'guest') {
@@ -150,11 +142,6 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
   const handleOpenProfile = () => {
     setIsProfileMenuOpen(false);
     navigate('/profile');
-  };
-
-  const handleOpenSettings = () => {
-    setIsProfileMenuOpen(false);
-    navigate('/settings');
   };
 
   const loadNotifications = async () => {
@@ -348,31 +335,9 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
                 )}
                 {notificationsCount > 0 && <span className="navbar__avatar-badge"></span>}
               </button>
-              {isProfileMenuOpen && (
-                <div className="navbar__menu" role="menu">
-                  <button className="navbar__menu-item" onClick={handleOpenProfile} role="menuitem">
-                    View profile
-                  </button>
-                  <button className="navbar__menu-item" onClick={handleOpenSettings} role="menuitem">
-                    Settings
-                  </button>
-                  <button className="navbar__menu-item" onClick={() => setIsDark(d => !d)} role="menuitem">
-                    {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-                  </button>
-                  {memberTier && (
-                    <button className="navbar__menu-item" onClick={handleLogout} role="menuitem">
-                      Sign out
-                    </button>
-                  )}
-                </div>
-              )}
               <div className="navbar__profile-info">
                 <span className="navbar__user">{user.firstName} {user.lastName}</span>
-                {memberTier ? (
-                  <span className="navbar__user-tier">{memberTier}</span>
-                ) : (
-                  <button className="navbar__logout" onClick={handleLogout}>Sign out</button>
-                )}
+                {memberTier && <span className="navbar__user-tier">{memberTier}</span>}
               </div>
               <button
                 className="navbar__chevron"
@@ -383,6 +348,43 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
                   <path d="M2.5 4.5 6 8l3.5-3.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
+
+              {isProfileMenuOpen && (
+                <div className="navbar__menu" role="menu">
+                  <div className="navbar__menu-header">
+                    <div className="navbar__menu-avatar">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="" />
+                      ) : (
+                        <>{user.firstName[0]}{user.lastName[0]}</>
+                      )}
+                    </div>
+                    <div className="navbar__menu-header-text">
+                      <span className="navbar__menu-name">{user.firstName} {user.lastName}</span>
+                      <span className="navbar__menu-email">{user.email}</span>
+                    </div>
+                  </div>
+
+                  <div className="navbar__menu-divider" />
+
+                  <button className="navbar__menu-item" onClick={handleOpenProfile} role="menuitem">
+                    <IconUser size={15} />
+                    View profile
+                  </button>
+
+                  <button className="navbar__menu-item" onClick={() => { setIsProfileMenuOpen(false); navigate('/purchased-services'); }} role="menuitem">
+                    <IconBag size={15} />
+                    Orders &amp; Invoices
+                  </button>
+
+                  <div className="navbar__menu-divider" />
+
+                  <button className="navbar__menu-item navbar__menu-item--danger" onClick={handleLogout} role="menuitem">
+                    <IconLogout size={15} />
+                    Sign out
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

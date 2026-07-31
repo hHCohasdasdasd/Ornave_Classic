@@ -9,6 +9,7 @@ datasource db {
 
 model User {
   id                 String                  @id @default(cuid())
+  memberNumber       Int                     @unique
   email              String                  @unique
   password           String
   firstName          String
@@ -35,6 +36,11 @@ model User {
   groupMemberships    GroupMember[]
   publications        Publication[]
   publicationComments PublicationComment[]
+  events              Event[]
+  eventRsvps          EventRsvp[]
+  eventSaves          EventSave[]
+  savedCards          SavedCard[]
+  savedAddresses      SavedAddress[]
 
   @@index([companyId])
   @@index([email])
@@ -299,20 +305,25 @@ model Message {
 }
 
 model UserProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  displayName String?
-  phone       String?
-  avatarUrl   String?
-  bannerUrl   String?
-  headline    String?
-  address     String?
-  preferences String   @default("{}")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  bio         String?
-  website     String?
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  displayName   String?
+  phone         String?
+  avatarUrl     String?
+  bannerUrl     String?
+  headline      String?
+  address       String?
+  streetAddress String?
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?
+  preferences   String   @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  bio           String?
+  website       String?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Post {
@@ -330,6 +341,7 @@ model Post {
   groupId    String?
   linkedPublicationId String?
   mentions   String   @default("[]")
+  tags       String   @default("[]")
   author     User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
   group      Group?       @relation(fields: [groupId], references: [id], onDelete: SetNull)
   linkedPublication Publication? @relation(fields: [linkedPublicationId], references: [id], onDelete: SetNull)
@@ -533,9 +545,11 @@ model Product {
   companyId   String
   name        String
   description String?
+  detailedDescription String?
   price       Float
   currency    String      @default("USD")
   imageUrl    String?
+  media       String      @default("[]")
   category    String?
   stock       Int         @default(0)
   isActive    Boolean     @default(true)
@@ -543,23 +557,36 @@ model Product {
   updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
   company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ticketedEvents Event[]
 
   @@index([companyId])
   @@index([category])
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  userId      String
-  companyId   String
-  status      String      @default("PENDING")
-  totalAmount Float
-  currency    String      @default("USD")
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items       OrderItem[]
+  id                    String      @id @default(cuid())
+  userId                String
+  companyId             String
+  status                String      @default("PENDING")
+  totalAmount           Float
+  currency              String      @default("USD")
+  billingAddress        String?
+  billingCity           String?
+  billingState          String?
+  billingPostalCode     String?
+  billingCountry        String?
+  deliveryAddress       String?
+  deliveryCity          String?
+  deliveryState         String?
+  deliveryPostalCode    String?
+  deliveryCountry       String?
+  paymentBrand          String?
+  paymentLast4          String?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  company               Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items                 OrderItem[]
 
   @@index([userId])
   @@index([companyId])
@@ -577,4 +604,96 @@ model OrderItem {
 
   @@index([orderId])
   @@index([productId])
+}
+
+model SavedCard {
+  id             String   @id @default(cuid())
+  userId         String
+  cardholderName String
+  brand          String
+  last4          String
+  expiry         String
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model SavedAddress {
+  id            String   @id @default(cuid())
+  userId        String
+  label         String?
+  fullName      String
+  streetAddress String
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Event {
+  id                  String      @id @default(cuid())
+  authorId            String
+  title               String
+  description         String?
+  detailedDescription String?
+  coverImage          String?
+  media               String      @default("[]")
+  category            String?
+  startAt             DateTime
+  endAt               DateTime?
+  isVirtual           Boolean     @default(false)
+  location            String?
+  mapUrl              String?
+  externalLink        String?
+  price               Float       @default(0)
+  currency            String      @default("USD")
+  capacity             Int?
+  ticketProductId     String?
+  isPromoted          Boolean     @default(false)
+  isActive            Boolean     @default(true)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  author              User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  ticketProduct       Product?    @relation(fields: [ticketProductId], references: [id], onDelete: SetNull)
+  rsvps               EventRsvp[]
+  saves               EventSave[]
+
+  @@index([authorId])
+  @@index([category])
+  @@index([startAt])
+  @@index([isPromoted])
+}
+
+model EventRsvp {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  status    String   @default("GOING")
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+model EventSave {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
 }

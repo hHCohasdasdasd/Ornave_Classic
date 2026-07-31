@@ -41,6 +41,7 @@ export interface AuthResponse {
   token: string;
   user: {
     id: string;
+    memberNumber: number;
     email: string;
     firstName: string;
     lastName: string;
@@ -120,22 +121,32 @@ export class AuthService {
       role = userCount === 0 ? UserRole.OWNER : UserRole.EMPLOYEE;
     }
 
-    const user = await prisma.user.create({
-      data: {
-        email: data.email,
-        password: hashedPassword,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        companyId: companyId || undefined,
-        role,
-        userType: accountType,
-        profile: accountType === UserType.USER ? {
-          create: {
-            displayName: `${data.firstName} ${data.lastName}`,
-          },
-        } : undefined,
-      },
-      include: { company: true },
+    // Member numbers are permanent and sequential across all accounts,
+    // starting at 1 in the order accounts are created — assigned inside the
+    // same transaction as the insert so two concurrent signups can't land
+    // on the same number.
+    const user = await prisma.$transaction(async (tx) => {
+      const { _max } = await tx.user.aggregate({ _max: { memberNumber: true } });
+      const memberNumber = (_max.memberNumber || 0) + 1;
+
+      return tx.user.create({
+        data: {
+          memberNumber,
+          email: data.email,
+          password: hashedPassword,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          companyId: companyId || undefined,
+          role,
+          userType: accountType,
+          profile: accountType === UserType.USER ? {
+            create: {
+              displayName: `${data.firstName} ${data.lastName}`,
+            },
+          } : undefined,
+        },
+        include: { company: true },
+      });
     });
 
     // Generate token
@@ -151,6 +162,7 @@ export class AuthService {
       token,
       user: {
         id: user.id,
+        memberNumber: user.memberNumber,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -216,6 +228,7 @@ export class AuthService {
       token,
       user: {
         id: user.id,
+        memberNumber: user.memberNumber,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -241,6 +254,7 @@ export class AuthService {
       where: { id: userId },
       select: {
         id: true,
+        memberNumber: true,
         email: true,
         firstName: true,
         lastName: true,
@@ -257,6 +271,11 @@ export class AuthService {
             displayName: true,
             avatarUrl: true,
             address: true,
+            streetAddress: true,
+            city: true,
+            state: true,
+            postalCode: true,
+            country: true,
           },
         },
       },
@@ -324,6 +343,12 @@ export class AuthService {
       email?: string;
       phone?: string;
       bio?: string;
+      website?: string;
+      streetAddress?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+      country?: string;
     }
   ): Promise<any> {
     const user = await prisma.user.findUnique({
@@ -355,19 +380,22 @@ export class AuthService {
       },
     });
 
-    // Update or create user profile if phone or bio provided
-    if (data.phone !== undefined || data.bio !== undefined) {
+    // Update or create user profile if any profile fields were provided
+    const profileFields = {
+      phone: data.phone,
+      bio: data.bio,
+      website: data.website,
+      streetAddress: data.streetAddress,
+      city: data.city,
+      state: data.state,
+      postalCode: data.postalCode,
+      country: data.country,
+    };
+    if (Object.values(profileFields).some((v) => v !== undefined)) {
       await prisma.userProfile.upsert({
         where: { userId },
-        create: {
-          userId,
-          phone: data.phone,
-          bio: data.bio,
-        },
-        update: {
-          phone: data.phone,
-          bio: data.bio,
-        },
+        create: { userId, ...profileFields },
+        update: profileFields,
       });
     }
 
@@ -388,6 +416,13 @@ export class AuthService {
           select: {
             phone: true,
             bio: true,
+            website: true,
+            address: true,
+            streetAddress: true,
+            city: true,
+            state: true,
+            postalCode: true,
+            country: true,
           },
         },
       },

@@ -78,21 +78,63 @@ class FirmService {
     return this.getStoredFollows();
   }
 
+  /** A verified company's public directory listing — works for any real
+   * registered firm, not just ones this browser has personally logged into
+   * or discovered before (unlike the localStorage-cached registry below). */
+  async getPublicCompanyProfile(companyId: string): Promise<{ id: string; name: string; slug: string; description?: string; logo?: string; industry?: string; about?: string; website?: string } | null> {
+    try {
+      const response = await apiClient.get(`/network/directory/companies/${companyId}`);
+      const data = response.data.data || response.data;
+      if (!data?.company) return null;
+      return {
+        id: data.company.id,
+        name: data.company.name,
+        slug: data.company.slug,
+        description: data.company.description,
+        logo: data.company.logo,
+        industry: data.industry,
+        about: data.about,
+        website: data.website,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   async getFirmProfile(slug: string): Promise<FirmProfileData> {
     const registeredFirms = this.getStoredRegisteredFirms();
     const key = decodeURIComponent(slug).toLowerCase().trim();
     const slugKey = key.replace(/\s+/g, '-');
 
-    const registered = registeredFirms.find(f => {
+    let registered = registeredFirms.find(f => {
       const fId = (f.id || '').toLowerCase();
       const fSlug = (f.slug || '').toLowerCase();
       const fName = (f.name || '').toLowerCase();
       const fNameSlug = fName.replace(/\s+/g, '-');
 
-      return fId === key || fId === slugKey || 
-             fSlug === key || fSlug === slugKey || 
+      return fId === key || fId === slugKey ||
+             fSlug === key || fSlug === slugKey ||
              fName === key || fNameSlug === slugKey;
     });
+
+    // Not a firm this browser has seen before (logged into, or browsed via
+    // the directory) — try the public directory API before giving up and
+    // rendering a made-up placeholder.
+    if (!registered && !mockFirmProfiles[key] && !mockFirmProfiles[slugKey]) {
+      const publicProfile = await this.getPublicCompanyProfile(slug);
+      if (publicProfile) {
+        registered = {
+          id: publicProfile.id,
+          slug: publicProfile.slug,
+          name: publicProfile.name,
+          description: publicProfile.about || publicProfile.description,
+          logo: publicProfile.logo,
+          industry: publicProfile.industry,
+          website: publicProfile.website,
+          connectionCount: 0,
+        };
+      }
+    }
 
     if (registered) {
       const template = getFirmLayoutTemplate(registered.industry);

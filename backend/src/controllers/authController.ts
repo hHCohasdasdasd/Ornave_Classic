@@ -39,6 +39,12 @@ const UpdateProfileSchema = z.object({
   email: z.string().email('Invalid email format').optional(),
   phone: z.string().optional(),
   bio: z.string().optional(),
+  website: z.string().optional(),
+  streetAddress: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
 });
 
 export class AuthController {

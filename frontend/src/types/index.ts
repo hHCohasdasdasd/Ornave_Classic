@@ -3,6 +3,7 @@ export type UserType = 'USER' | 'COMPANY_USER';
 
 export interface User {
   id: string;
+  memberNumber?: number;
   email: string;
   firstName: string;
   lastName: string;

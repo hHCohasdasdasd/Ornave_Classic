@@ -1,31 +1,47 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  IconCompass, IconUsers, IconBuilding, IconLayers, IconArticle, IconCalendar,
-  IconBag, IconTrendingUp, IconGroups, IconBookmark, IconVerified, IconHeadset,
+  IconCompass, IconLayers, IconArticle, IconCalendar,
+  IconBag, IconGroups, IconBookmark, IconHeadset,
+  IconEdit, IconSpark,
 } from '@/components/ui/Icons';
 import './ProfileSidebar.css';
 
 interface ProfileSidebarProps {
   memberNumber?: string;
   memberTier?: string;
+  verified?: boolean;
+  onCreatePost?: () => void;
+  onCreateStory?: () => void;
+  onCreatePublication?: () => void;
 }
 
-const NAV_ITEMS: { label: string; icon: React.FC<{ size?: number }>; route?: string }[] = [
+const NAV_ITEMS: { label: string; icon: React.FC<{ size?: number }>; route?: string; action?: keyof ProfileSidebarProps }[] = [
+  { label: 'Create Post', icon: IconEdit, action: 'onCreatePost' },
+  { label: 'Create Story', icon: IconSpark, action: 'onCreateStory' },
+  { label: 'Create Publication', icon: IconArticle, action: 'onCreatePublication' },
   { label: 'Discover', icon: IconCompass, route: '/network' },
-  { label: 'People', icon: IconUsers, route: '/network' },
-  { label: 'Companies', icon: IconBuilding, route: '/firms' },
   { label: 'Projects', icon: IconLayers },
-  { label: 'Articles', icon: IconArticle },
-  { label: 'Events', icon: IconCalendar },
+  { label: 'Events', icon: IconCalendar, route: '/events' },
   { label: 'Marketplace', icon: IconBag, route: '/store' },
-  { label: 'Investments', icon: IconTrendingUp },
   { label: 'Groups', icon: IconGroups, route: '/groups' },
   { label: 'Saved', icon: IconBookmark },
 ];
 
-export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ memberNumber, memberTier = 'Gold Member' }) => {
+export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
+  memberNumber, memberTier = 'Basic', verified = false,
+  onCreatePost, onCreateStory, onCreatePublication,
+}) => {
   const navigate = useNavigate();
+  const actions: Partial<Record<string, () => void>> = { onCreatePost, onCreateStory, onCreatePublication };
+
+  const tierLower = (memberTier || '').toLowerCase();
+  const memberCardModifier = tierLower.includes('diamond') ? 'diamond'
+    : tierLower.includes('gold') ? 'gold'
+    : tierLower.includes('silver') ? 'silver'
+    : tierLower.includes('bronze') ? 'bronze'
+    : tierLower.includes('founding') ? 'founding'
+    : 'basic';
 
   return (
     <aside className="profile-left-nav">
@@ -34,8 +50,11 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ memberNumber, me
         {NAV_ITEMS.map((item) => (
           <button
             key={item.label}
-            className={`profile-left-nav__item ${!item.route ? 'profile-left-nav__item--inert' : ''}`}
-            onClick={() => item.route && navigate(item.route)}
+            className={`profile-left-nav__item ${!item.route && !item.action ? 'profile-left-nav__item--inert' : ''}`}
+            onClick={() => {
+              if (item.action) actions[item.action]?.();
+              else if (item.route) navigate(item.route);
+            }}
           >
             <item.icon size={17} />
             <span>{item.label}</span>
@@ -44,14 +63,10 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ memberNumber, me
       </nav>
 
       {memberNumber && (
-        <div className="profile-left-nav__member-card">
-          <span className="profile-left-nav__member-eyebrow">ORNAVE</span>
+        <div className={`profile-left-nav__member-card profile-left-nav__member-card--${memberCardModifier}`}>
+          <span className="profile-left-nav__member-eyebrow">Ornave</span>
           <span className="profile-left-nav__member-tier">{memberTier}</span>
-          <span className="profile-left-nav__member-label">Member No.</span>
-          <span className="profile-left-nav__member-number">{memberNumber}</span>
-          <div className="profile-left-nav__member-badge">
-            <IconVerified size={14} />
-          </div>
+          <span className="profile-left-nav__member-number">Member No.<br />{memberNumber}</span>
         </div>
       )}
 

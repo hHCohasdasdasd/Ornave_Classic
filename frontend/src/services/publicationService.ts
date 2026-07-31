@@ -48,6 +48,17 @@ class PublicationService {
     }
   }
 
+  async getTrendingTags(limit = 8): Promise<string[]> {
+    try {
+      const response = await apiClient.get('/publications/tags/trending', { params: { limit } });
+      const data = response.data.data || response.data;
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Failed to fetch trending publication tags:', error);
+      return [];
+    }
+  }
+
   async getPublication(id: string): Promise<Publication | null> {
     try {
       const response = await apiClient.get(`/publications/${id}`);

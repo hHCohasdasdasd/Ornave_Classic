@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { User } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { CreatePostModal } from '@/components/personal/CreatePostModal';
+import { CreateStoryModal } from '@/components/personal/CreateStoryModal';
 import { FeedItem } from '@/components/personal/FeedItem';
 import { UserCard } from '@/components/personal/UserCard';
 import { FirmCard } from '@/components/personal/FirmCard';
@@ -13,12 +14,15 @@ import { QuickActionsSidebar } from '@/components/personal/QuickActionsSidebar';
 import { NewsCard } from '@/components/personal/NewsCard';
 import { ERPSnapshotCard } from '@/components/personal/ERPSnapshotCard';
 import { StoryViewer } from '@/components/personal/StoryViewer';
-import { mockStories } from '@/data/mockStories';
+import { mockStories, Story } from '@/data/mockStories';
+
+const USER_STORIES_KEY = 'ornave_user_stories';
 import { IconLaurel, IconSearch, IconEdit, IconUsers, IconUser, IconBuilding } from '@/components/ui/Icons';
 import { feedService } from '@/services/feedService';
 import { discoveryService } from '@/services/discoveryService';
 import { networkService } from '@/services/networkService';
 import { groupService, Group } from '@/services/groupService';
+import { publicationService } from '@/services/publicationService';
 import { FeedItem as FeedItemType, ServiceCard } from '@/types/feed';
 import { UserProfile, FirmProfile, ConnectionRequest } from '@/types/discovery';
 import './PersonalHomePage.css';
@@ -62,6 +66,8 @@ const carouselSlides: CarouselSlide[] = [
 
 export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const activeTag = searchParams.get('tag') || '';
   const { triggerAuthModal } = useAuth();
   
   // State
@@ -83,8 +89,11 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   const [showAllDiscovery, setShowAllDiscovery] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [showCreateStoryModal, setShowCreateStoryModal] = useState(false);
+  const [userStories, setUserStories] = useState<Story[]>(() => JSON.parse(localStorage.getItem(USER_STORIES_KEY) || '[]'));
   const [storyViewerIndex, setStoryViewerIndex] = useState<number | null>(null);
   const [seenStoryIds, setSeenStoryIds] = useState<Set<string>>(new Set());
+  const allStories = [...userStories, ...mockStories];
   const [feedViewMode, setFeedViewMode] = useState<'groups' | 'single'>('single');
   const [feedContentType, setFeedContentType] = useState<'all' | 'friends' | 'firms'>('all');
   const [feedSort, setFeedSort] = useState<'hot' | 'new' | 'top' | 'rising'>('hot');
@@ -98,9 +107,17 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   // Search autocomplete
   const [showAutocomplete, setShowAutocomplete] = useState(false);
 
-  // Load initial data
+  // Reload the feed whenever the ?tag= filter changes (including on mount),
+  // and whenever a post/publication is created elsewhere in the app.
   useEffect(() => {
     loadFeed();
+    const handleFeedUpdate = () => loadFeed();
+    window.addEventListener('ornave_feed_update', handleFeedUpdate);
+    return () => window.removeEventListener('ornave_feed_update', handleFeedUpdate);
+  }, [activeTag]);
+
+  // Load initial data
+  useEffect(() => {
     loadDiscovery();
     loadNetwork();
     loadNetworkStats();
@@ -110,15 +127,22 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
       loadNetworkStats();
       loadDiscovery();
     };
+    const handleStoriesUpdate = () => {
+      setUserStories(JSON.parse(localStorage.getItem(USER_STORIES_KEY) || '[]'));
+    };
 
     window.addEventListener('ornave_state_update', handleStateUpdate);
-    return () => window.removeEventListener('ornave_state_update', handleStateUpdate);
+    window.addEventListener('ornave_stories_update', handleStoriesUpdate);
+    return () => {
+      window.removeEventListener('ornave_state_update', handleStateUpdate);
+      window.removeEventListener('ornave_stories_update', handleStoriesUpdate);
+    };
   }, []);
 
   const loadFeed = async () => {
     try {
       setIsLoadingFeed(true);
-      const response = await feedService.getFeed(undefined);
+      const response = await feedService.getFeed(undefined, undefined, activeTag || undefined);
       setFeedItems(response.items);
     } catch (error) {
       console.error('Failed to load feed:', error);
@@ -168,7 +192,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
     try {
       const [trending, themes, groups] = await Promise.all([
         feedService.getTrendingPosts(),
-        feedService.getTopThemes(),
+        publicationService.getTrendingTags(),
         groupService.listGroups(),
       ]);
       setTrendingPosts(trending);
@@ -232,6 +256,13 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
     if (!searchQuery.trim()) {
       setIsSearchingResults(false);
       loadDiscovery();
+      return;
+    }
+
+    if (searchQuery.trim().startsWith('#')) {
+      navigate(`/home?tag=${encodeURIComponent(searchQuery.trim().slice(1))}`);
+      setSearchQuery('');
+      setShowAutocomplete(false);
       return;
     }
 
@@ -300,9 +331,9 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
     return () => window.removeEventListener('keydown', onKey);
   }, [feedItems.length]);
 
-  const handleCreatePost = async (content: string, mediaUrl?: string, title?: string, serviceCard?: ServiceCard) => {
+  const handleCreatePost = async (content: string, mediaUrl?: string, title?: string, serviceCard?: ServiceCard, tags?: string[]) => {
     try {
-      const newPost = await feedService.createPost(content, mediaUrl, title, serviceCard);
+      const newPost = await feedService.createPost(content, mediaUrl, title, serviceCard, tags);
       setFeedItems(prev => [newPost, ...prev]);
       setShowCreatePostModal(false);
     } catch (error) {
@@ -311,7 +342,8 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   };
 
   const handleThemeClick = (theme: string) => {
-    navigate(`/themes/${encodeURIComponent(theme)}`);
+    setDiscoveryTab('themes');
+    setShowAllDiscovery(false);
   };
 
   const handleSectorClick = (slug: string) => {
@@ -388,11 +420,6 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
               <div className="discovery-section__empty">Loading...</div>
             ) : (
               <div className="discovery-section__list">
-                {isSearchingResults && (
-                  <div style={{ padding: '10px 15px', borderBottom: '1px solid var(--tech-border)', background: 'var(--tech-blue-glow)', fontSize: '0.7rem', color: 'var(--tech-blue)', fontWeight: 800 }}>
-                    SEARCH_QUERY_ACTIVE: {searchQuery.toUpperCase()}
-                  </div>
-                )}
                 {discoveryTab === 'people' ? (
                   discoveredUsers.length === 0 ? (
                     <div className="discovery-section__empty">No people found</div>
@@ -518,7 +545,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
             {/* Your story bubble */}
             <div
               className="story-item story-item--create"
-              onClick={() => user ? setShowCreatePostModal(true) : triggerAuthModal('Sign in to create a post.')}
+              onClick={() => user ? setShowCreateStoryModal(true) : triggerAuthModal('Sign in to create a story.')}
             >
               <div className="story-avatar story-avatar--create">
                 {user ? `${user.firstName[0]}${user.lastName[0]}` : '+'}
@@ -526,7 +553,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
               <span>{user ? 'Your Story' : 'Sign In'}</span>
             </div>
             {/* Stories from people and companies in the network */}
-            {mockStories.map((story, index) => {
+            {allStories.map((story, index) => {
               const seen = seenStoryIds.has(story.id);
               return (
                 <div
@@ -539,7 +566,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                 >
                   <div className="story-avatar-wrap">
                     <div className={`story-avatar${seen ? ' story-avatar--seen' : ''}`}>
-                      <img src={story.avatarUrl} alt={story.name} />
+                      {story.avatarUrl ? <img src={story.avatarUrl} alt={story.name} /> : <span className="story-avatar__initial">{story.name.charAt(0).toUpperCase()}</span>}
                     </div>
                     {story.type === 'company' && <span className="story-avatar__badge">🏢</span>}
                   </div>
@@ -551,11 +578,36 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
 
           {storyViewerIndex !== null && (
             <StoryViewer
-              stories={mockStories}
+              stories={allStories}
               startIndex={storyViewerIndex}
               onClose={() => setStoryViewerIndex(null)}
             />
           )}
+
+          <CreateStoryModal
+            isOpen={showCreateStoryModal}
+            onClose={() => setShowCreateStoryModal(false)}
+            onSubmit={(params) => {
+              const story: Story = {
+                id: `story-you-${Date.now()}`,
+                type: 'user',
+                name: user ? `${user.firstName} ${user.lastName}` : 'You',
+                avatarUrl: '',
+                profileSlug: 'me',
+                slides: [{ ...params }],
+              };
+              const updated = [story, ...userStories];
+              try {
+                localStorage.setItem(USER_STORIES_KEY, JSON.stringify(updated));
+              } catch {
+                console.error('Story too large to store locally — try a smaller file.');
+                return;
+              }
+              setUserStories(updated);
+              window.dispatchEvent(new CustomEvent('ornave_stories_update'));
+              setShowCreateStoryModal(false);
+            }}
+          />
 
           <Carousel slides={carouselSlides} />
 
@@ -564,7 +616,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
             <input
               className="personal-home__search-input"
               type="text"
-              placeholder="Search people, firms, posts…"
+              placeholder="Search people, firms, posts, or #tag…"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setShowAutocomplete(true); }}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -667,13 +719,20 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
             </div>
           </div>
           
+          {activeTag && (
+            <div className="feed__tag-filter">
+              <span>Posts tagged <strong>#{activeTag}</strong></span>
+              <button onClick={() => navigate('/home')}>✕ Clear</button>
+            </div>
+          )}
+
           {/* Feed */}
           <div className={`feed feed--${feedViewMode}`}>
             {isLoadingFeed ? (
               <div className="feed__loading">Loading your activity feed...</div>
             ) : feedItems.length === 0 ? (
               <div className="feed__empty">
-                <p>No activity yet. Start connecting with people and firms!</p>
+                <p>{activeTag ? `No posts tagged #${activeTag} yet.` : 'No activity yet. Start connecting with people and firms!'}</p>
               </div>
             ) : (
               <div className={`feed__list feed__list--${feedViewMode}`}>
@@ -687,12 +746,6 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
 
         {/* Right sidebar — Twitter-style trending */}
         <aside className="personal-home__right">
-          {/* Search hint */}
-          <div className="right-sidebar__search-hint">
-            <span>⌨️</span>
-            <span>Press <kbd>?</kbd> for keyboard shortcuts</span>
-          </div>
-
           {/* What's Happening — trending posts */}
           <div className="right-sidebar__card">
             <div className="right-sidebar__card-title">What's Happening</div>
@@ -731,7 +784,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                   <span className="right-sidebar__topic-rank">#{i + 1}</span>
                   <div>
                     <div className="right-sidebar__topic-name">{theme}</div>
-                    <div className="right-sidebar__topic-label">Trending in Business</div>
+                    <div className="right-sidebar__topic-label">Trending in Publications</div>
                   </div>
                 </div>
               ))}

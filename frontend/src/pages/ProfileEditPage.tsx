@@ -59,6 +59,81 @@ interface Project {
   current: boolean;
 }
 
+const MODAL_TITLES: Record<string, string> = {
+  experience: 'Add Experience',
+  education: 'Add Education',
+  skills: 'Add Skill',
+  certifications: 'Add Certification',
+  languages: 'Add Language',
+  projects: 'Add Project',
+  featured: 'Featured Section',
+  shop: 'Ornave Status',
+};
+
+const MEMBER_TIER_KEY = 'ornave_member_tier';
+const VERIFIED_ADDON_KEY = 'ornave_verified_addon';
+
+interface StatusTier {
+  id: string;
+  name: string;
+  price: string;
+  tagline: string;
+  perks: string[];
+  icon: string;
+}
+
+const STATUS_TIERS: StatusTier[] = [
+  {
+    id: 'Basic',
+    name: 'Basic',
+    price: 'Free',
+    tagline: 'The essentials, on us',
+    perks: ['Full profile visibility', 'Standard support', 'Standard placement in Discover'],
+    icon: '⚪',
+  },
+  {
+    id: 'Bronze Member',
+    name: 'Bronze Member',
+    price: '$4.99/mo',
+    tagline: 'A little extra shine',
+    perks: ['Bronze member badge everywhere you appear', 'Slightly boosted placement in Discover', 'Basic profile analytics'],
+    icon: '🥉',
+  },
+  {
+    id: 'Silver Member',
+    name: 'Silver Member',
+    price: '$9.99/mo',
+    tagline: 'Stand out in Discover and search',
+    perks: ['Everything in Bronze', 'Silver member badge everywhere you appear', 'Priority placement in Discover', 'Advanced profile analytics'],
+    icon: '🥈',
+  },
+  {
+    id: 'Gold Member',
+    name: 'Gold Member',
+    price: '$19.99/mo',
+    tagline: 'For power networkers and dealmakers',
+    perks: ['Everything in Silver', 'Gold member badge everywhere you appear', 'Top placement in Discover', 'Unlimited saved searches', 'Direct-message any member'],
+    icon: '🥇',
+  },
+  {
+    id: 'Diamond Member',
+    name: 'Diamond Member',
+    price: '$49.99/mo',
+    tagline: 'The absolute top — gold, with flare',
+    perks: ['Everything in Gold', 'Animated shimmering Diamond badge', 'Featured placement across Ornave', 'Dedicated account concierge', 'Exclusive Diamond-only sectors'],
+    icon: '💠',
+  },
+];
+
+const VERIFIED_ADDON: StatusTier = {
+  id: 'Verified',
+  name: 'Verified',
+  price: '$2.99 one-time',
+  tagline: 'A small extra — a verified checkmark next to your name',
+  perks: ['Verified checkmark badge on your name', 'Stacks with any status above'],
+  icon: '✓',
+};
+
 export const ProfileEditPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -70,11 +145,16 @@ export const ProfileEditPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'info' | 'enhance' | 'sections'>('info');
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  // When set, the modal for that same section id is in "edit" mode instead
+  // of "add" mode — the form saves back into this entry instead of
+  // appending a new one.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [currentTier, setCurrentTier] = useState<string>(() => localStorage.getItem(MEMBER_TIER_KEY) || 'Basic');
+  const [hasVerified, setHasVerified] = useState<boolean>(() => localStorage.getItem(VERIFIED_ADDON_KEY) === 'true');
   // Photo states
   const [profilePhoto, setProfilePhoto] = useState<string>('');
   const [backgroundPhoto, setBackgroundPhoto] = useState<string>('');
-  const [customUrl, setCustomUrl] = useState<string>('');
-  
+
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -83,6 +163,11 @@ export const ProfileEditPage: React.FC = () => {
     about: '',
     website: '',
     phone: '',
+    streetAddress: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: '',
   });
 
   // Force Chuck Hartwig data if identified
@@ -254,13 +339,29 @@ export const ProfileEditPage: React.FC = () => {
         setProjects(sectionsData.projects || []);
       }
       
-      // Load photos and custom URL
+      // Load photos
       setProfilePhoto(localStorage.getItem('ornave_profile_photo') || '');
       setBackgroundPhoto(localStorage.getItem('ornave_background_photo') || '');
-      setCustomUrl(localStorage.getItem('ornave_custom_url') || '');
     } catch {
       // ignore malformed storage
     }
+  }, []);
+
+  useEffect(() => {
+    apiClient.getProfile().then((response) => {
+      const profile = response?.data?.profile;
+      if (!profile) return;
+      setFormData((prev) => ({
+        ...prev,
+        streetAddress: profile.streetAddress || prev.streetAddress,
+        city: profile.city || prev.city,
+        state: profile.state || prev.state,
+        postalCode: profile.postalCode || prev.postalCode,
+        country: profile.country || prev.country,
+      }));
+    }).catch(() => {
+      // Not logged in yet or request failed — leave fields blank.
+    });
   }, []);
 
   // Auto-clear messages after 3 seconds
@@ -296,6 +397,12 @@ export const ProfileEditPage: React.FC = () => {
         email: user.email,
         phone: formData.phone,
         bio: formData.about,
+        website: formData.website,
+        streetAddress: formData.streetAddress,
+        city: formData.city,
+        state: formData.state,
+        postalCode: formData.postalCode,
+        country: formData.country,
       });
       localStorage.setItem(
         PROFILE_OVERRIDES_KEY,
@@ -367,11 +474,38 @@ export const ProfileEditPage: React.FC = () => {
     input.click();
   };
 
-  const handleCustomUrlSave = () => {
-    if (customUrl.trim()) {
-      localStorage.setItem('ornave_custom_url', customUrl);
-      setSuccess('Custom URL saved successfully!');
+  // Silver and above include Verified status for free — Basic and Bronze
+  // still need to buy the Verified add-on separately.
+  const AUTO_VERIFIED_TIERS = ['Silver Member', 'Gold Member', 'Diamond Member'];
+
+  const handlePurchaseTier = (tier: StatusTier) => {
+    localStorage.setItem(MEMBER_TIER_KEY, tier.id);
+    setCurrentTier(tier.id);
+
+    let nowVerified = hasVerified;
+    if (AUTO_VERIFIED_TIERS.includes(tier.id) && !hasVerified) {
+      localStorage.setItem(VERIFIED_ADDON_KEY, 'true');
+      setHasVerified(true);
+      nowVerified = true;
     }
+
+    window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'member_tier', tier: tier.id } }));
+    const tierMessage = tier.id === 'Basic' ? "You're now on the Basic tier!" : `You're now a ${tier.name}!`;
+    setSuccess(nowVerified && !hasVerified ? `${tierMessage} You're also now Verified.` : tierMessage);
+    setActiveModal(null);
+  };
+
+  const handlePurchaseVerified = () => {
+    localStorage.setItem(VERIFIED_ADDON_KEY, 'true');
+    setHasVerified(true);
+    window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'verified_addon' } }));
+    setSuccess("You're now Verified!");
+    setActiveModal(null);
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
+    setEditingId(null);
   };
 
   // Experience handlers
@@ -380,8 +514,9 @@ export const ProfileEditPage: React.FC = () => {
       setError('Title and company are required');
       return;
     }
-    const newExperience: Experience = {
-      id: Date.now().toString(),
+    const isEditing = !!editingId;
+    const entry: Experience = {
+      id: editingId || Date.now().toString(),
       title: experienceForm.title!,
       company: experienceForm.company!,
       location: experienceForm.location || '',
@@ -390,12 +525,13 @@ export const ProfileEditPage: React.FC = () => {
       current: experienceForm.current || false,
       description: experienceForm.description || '',
     };
-    const updated = [...experiences, newExperience];
+    const updated = isEditing ? experiences.map(e => e.id === editingId ? entry : e) : [...experiences, entry];
     setExperiences(updated);
     localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), experiences: updated }));
     setExperienceForm({});
+    setEditingId(null);
     setActiveModal(null);
-    setSuccess('Experience added successfully!');
+    setSuccess(isEditing ? 'Experience updated successfully!' : 'Experience added successfully!');
   };
 
   // Education handlers
@@ -404,8 +540,9 @@ export const ProfileEditPage: React.FC = () => {
       setError('School and degree are required');
       return;
     }
-    const newEducation: Education = {
-      id: Date.now().toString(),
+    const isEditing = !!editingId;
+    const entry: Education = {
+      id: editingId || Date.now().toString(),
       school: educationForm.school!,
       degree: educationForm.degree!,
       field: educationForm.field || '',
@@ -414,12 +551,13 @@ export const ProfileEditPage: React.FC = () => {
       current: educationForm.current || false,
       description: educationForm.description || '',
     };
-    const updated = [...educations, newEducation];
+    const updated = isEditing ? educations.map(e => e.id === editingId ? entry : e) : [...educations, entry];
     setEducations(updated);
     localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), educations: updated }));
     setEducationForm({});
+    setEditingId(null);
     setActiveModal(null);
-    setSuccess('Education added successfully!');
+    setSuccess(isEditing ? 'Education updated successfully!' : 'Education added successfully!');
   };
 
   // Skill handlers
@@ -428,17 +566,19 @@ export const ProfileEditPage: React.FC = () => {
       setError('Skill name is required');
       return;
     }
-    const newSkill: Skill = {
-      id: Date.now().toString(),
+    const isEditing = !!editingId;
+    const entry: Skill = {
+      id: editingId || Date.now().toString(),
       name: skillForm.name!,
       level: skillForm.level || 'Intermediate',
     };
-    const updated = [...skills, newSkill];
+    const updated = isEditing ? skills.map(s => s.id === editingId ? entry : s) : [...skills, entry];
     setSkills(updated);
     localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), skills: updated }));
     setSkillForm({});
+    setEditingId(null);
     setActiveModal(null);
-    setSuccess('Skill added successfully!');
+    setSuccess(isEditing ? 'Skill updated successfully!' : 'Skill added successfully!');
   };
 
   // Certification handlers
@@ -447,20 +587,22 @@ export const ProfileEditPage: React.FC = () => {
       setError('Certification name and organization are required');
       return;
     }
-    const newCertification: Certification = {
-      id: Date.now().toString(),
+    const isEditing = !!editingId;
+    const entry: Certification = {
+      id: editingId || Date.now().toString(),
       name: certificationForm.name!,
       organization: certificationForm.organization!,
       issueDate: certificationForm.issueDate || '',
       credentialId: certificationForm.credentialId || '',
       credentialUrl: certificationForm.credentialUrl || '',
     };
-    const updated = [...certifications, newCertification];
+    const updated = isEditing ? certifications.map(c => c.id === editingId ? entry : c) : [...certifications, entry];
     setCertifications(updated);
     localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), certifications: updated }));
     setCertificationForm({});
+    setEditingId(null);
     setActiveModal(null);
-    setSuccess('Certification added successfully!');
+    setSuccess(isEditing ? 'Certification updated successfully!' : 'Certification added successfully!');
   };
 
   // Language handlers
@@ -469,17 +611,19 @@ export const ProfileEditPage: React.FC = () => {
       setError('Language name is required');
       return;
     }
-    const newLanguage: Language = {
-      id: Date.now().toString(),
+    const isEditing = !!editingId;
+    const entry: Language = {
+      id: editingId || Date.now().toString(),
       name: languageForm.name!,
       proficiency: languageForm.proficiency || 'Professional Working',
     };
-    const updated = [...languages, newLanguage];
+    const updated = isEditing ? languages.map(l => l.id === editingId ? entry : l) : [...languages, entry];
     setLanguages(updated);
     localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), languages: updated }));
     setLanguageForm({});
+    setEditingId(null);
     setActiveModal(null);
-    setSuccess('Language added successfully!');
+    setSuccess(isEditing ? 'Language updated successfully!' : 'Language added successfully!');
   };
 
   // Project handlers
@@ -488,8 +632,9 @@ export const ProfileEditPage: React.FC = () => {
       setError('Project name is required');
       return;
     }
-    const newProject: Project = {
-      id: Date.now().toString(),
+    const isEditing = !!editingId;
+    const entry: Project = {
+      id: editingId || Date.now().toString(),
       name: projectForm.name!,
       description: projectForm.description || '',
       url: projectForm.url || '',
@@ -497,12 +642,13 @@ export const ProfileEditPage: React.FC = () => {
       endDate: projectForm.endDate || '',
       current: projectForm.current || false,
     };
-    const updated = [...projects, newProject];
+    const updated = isEditing ? projects.map(p => p.id === editingId ? entry : p) : [...projects, entry];
     setProjects(updated);
     localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), projects: updated }));
     setProjectForm({});
+    setEditingId(null);
     setActiveModal(null);
-    setSuccess('Project added successfully!');
+    setSuccess(isEditing ? 'Project updated successfully!' : 'Project added successfully!');
   };
 
   const sections = [
@@ -514,46 +660,69 @@ export const ProfileEditPage: React.FC = () => {
     { id: 'projects', title: 'Projects', icon: '🚀', description: 'Showcase your projects' },
   ];
 
+  const initials = `${formData.firstName?.[0] || ''}${formData.lastName?.[0] || ''}`.toUpperCase();
+
   return (
     <div className="profile-edit-page">
       <Navbar />
-      
-      <div className="profile-edit-container">
-        <div className="profile-edit-header">
-          <button className="back-btn" onClick={() => navigate('/profile')}>
-            ← Back to Profile
-          </button>
-          <h1>Edit Profile</h1>
-        </div>
 
-        <div className="profile-edit-tabs">
-          <button 
-            className={`profile-edit-tab ${activeTab === 'info' ? 'active' : ''}`}
-            onClick={() => setActiveTab('info')}
-          >
-            Basic Info
-          </button>
-          <button 
-            className={`profile-edit-tab ${activeTab === 'enhance' ? 'active' : ''}`}
-            onClick={() => setActiveTab('enhance')}
-          >
-            Enhance Profile
-          </button>
-          <button 
-            className={`profile-edit-tab ${activeTab === 'sections' ? 'active' : ''}`}
-            onClick={() => setActiveTab('sections')}
-          >
-            Add Sections
-          </button>
-        </div>
+      <div className="profile-edit-shell">
+        <button className="profile-edit-backlink" onClick={() => navigate('/profile')}>
+          ← Back to Profile
+        </button>
 
-        <div className="profile-edit-content">
-          {error && <div className="form-message error">{error}</div>}
-          {success && <div className="form-message success">{success}</div>}
-          {activeTab === 'info' && (
-            <div className="edit-section" style={{ borderLeft: '4px solid var(--tech-blue)', paddingLeft: '30px' }}>
-              <h2 style={{ color: 'var(--tech-blue)' }}>Basic Information</h2>
-              <p className="section-description">Update your primary identity data and contact details</p>
+        <div className="profile-edit-layout">
+          <aside className="profile-edit-preview">
+            <div
+              className="profile-edit-preview__banner"
+              style={backgroundPhoto ? { backgroundImage: `url(${backgroundPhoto})` } : undefined}
+            >
+              <div className="profile-edit-preview__avatar">
+                {profilePhoto ? <img src={profilePhoto} alt="Profile" /> : (initials || '👤')}
+              </div>
+            </div>
+            <div className="profile-edit-preview__body">
+              <h3>{formData.firstName || formData.lastName ? `${formData.firstName} ${formData.lastName}`.trim() : 'Your Name'}</h3>
+              <p className="profile-edit-preview__headline">{formData.headline || 'Add a headline to introduce yourself'}</p>
+              {formData.location && <p className="profile-edit-preview__location">📍 {formData.location}</p>}
+            </div>
+            <div className="profile-edit-preview__note">This is a live preview of how your profile card will appear to others.</div>
+          </aside>
+
+          <div className="profile-edit-main">
+            <div className="profile-edit-header">
+              <h1>Edit Profile</h1>
+              <p>Manage your public identity, media, and professional history.</p>
+            </div>
+
+            <nav className="profile-edit-tabs">
+              <button
+                className={`profile-edit-tab ${activeTab === 'info' ? 'active' : ''}`}
+                onClick={() => setActiveTab('info')}
+              >
+                Basic Info
+              </button>
+              <button
+                className={`profile-edit-tab ${activeTab === 'enhance' ? 'active' : ''}`}
+                onClick={() => setActiveTab('enhance')}
+              >
+                Enhance Profile
+              </button>
+              <button
+                className={`profile-edit-tab ${activeTab === 'sections' ? 'active' : ''}`}
+                onClick={() => setActiveTab('sections')}
+              >
+                Add Sections
+              </button>
+            </nav>
+
+            <div className="profile-edit-content">
+              {error && <div className="form-message error">{error}</div>}
+              {success && <div className="form-message success">{success}</div>}
+              {activeTab === 'info' && (
+                <div className="edit-section">
+                  <h2>Basic Information</h2>
+                  <p className="section-description">Update your primary identity data and contact details</p>
               
               <div className="form-row">
                 <div className="form-group">
@@ -636,343 +805,442 @@ export const ProfileEditPage: React.FC = () => {
                 </div>
               </div>
 
+              <h3 className="form-section-heading">Billing address</h3>
+              <p className="form-section-hint">Used to pre-fill checkout when you buy something on the Marketplace.</p>
+
+              <div className="form-group">
+                <label>Street address</label>
+                <input
+                  type="text"
+                  name="streetAddress"
+                  value={formData.streetAddress}
+                  onChange={handleChange}
+                  placeholder="123 Main St"
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>City</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    placeholder="Chicago"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>State / Region</label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                    placeholder="IL"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Postal code</label>
+                  <input
+                    type="text"
+                    name="postalCode"
+                    value={formData.postalCode}
+                    onChange={handleChange}
+                    placeholder="60601"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Country</label>
+                  <input
+                    type="text"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    placeholder="United States"
+                  />
+                </div>
+              </div>
+
               <div className="form-actions">
                 <button className="btn-secondary" onClick={() => navigate('/profile')} disabled={isSaving}>
-                  DISCARD_CHANGES
+                  Discard Changes
                 </button>
                 <button className="btn-primary" onClick={handleSave} disabled={isSaving}>
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
-            </div>
-          )}
+                </div>
+              )}
 
-          {activeTab === 'enhance' && (
-            <div className="edit-section" style={{ borderLeft: '4px solid var(--tech-accent-gold)', paddingLeft: '30px' }}>
-              <h2 style={{ color: 'var(--tech-accent-gold)' }}>Enhance Profile</h2>
-              <p className="section-description">
+              {activeTab === 'enhance' && (
+                <div className="edit-section">
+                  <h2>Enhance Profile</h2>
+                  <p className="section-description">
                 Optimize your digital presence with high-quality media and custom identifiers
               </p>
 
-              <div className="photo-edit-grid">
-                <div className="photo-card">
-                  <div className="photo-preview-circle">
-                    {profilePhoto ? <img src={profilePhoto} alt="Profile" className="photo-img" /> : '👤'}
-                  </div>
-                  <button className="btn-add" onClick={() => handlePhotoUpload('profile')}>
-                    {profilePhoto ? 'Update Photo' : 'Upload Photo'}
+              <div className="photo-edit-card">
+                <div
+                  className="photo-edit-card__banner"
+                  style={backgroundPhoto ? { backgroundImage: `url(${backgroundPhoto})` } : undefined}
+                >
+                  <button className="photo-edit-card__banner-btn" onClick={() => handlePhotoUpload('background')}>
+                    {backgroundPhoto ? 'Change Banner' : 'Upload Banner'}
                   </button>
                 </div>
-
-                <div className="photo-card">
-                  <div className="photo-preview-banner">
-                    {backgroundPhoto ? <img src={backgroundPhoto} alt="Background" className="photo-img" /> : <div style={{background: 'var(--color-bg)', height: '100%'}}></div>}
+                <div className="photo-edit-card__body">
+                  <div className="photo-edit-card__avatar">
+                    {profilePhoto ? <img src={profilePhoto} alt="Profile" /> : (initials || '👤')}
                   </div>
-                  <button className="btn-add" onClick={() => handlePhotoUpload('background')}>
-                    {backgroundPhoto ? 'Update Banner' : 'Upload Banner'}
-                  </button>
+                  <div className="photo-edit-card__meta">
+                    <button className="btn-add" onClick={() => handlePhotoUpload('profile')}>
+                      {profilePhoto ? 'Update Photo' : 'Upload Photo'}
+                    </button>
+                    <p>Square images work best, at least 400×400px.</p>
+                  </div>
                 </div>
               </div>
 
               <div className="enhancement-cards">
                 <div className="enhancement-card">
-                  <span className="enhancement-icon">🔗</span>
-                  <h3>Custom Profile URL</h3>
-                  {customUrl && <p style={{color: 'var(--tech-blue)', fontSize: '0.7rem'}}>ornave.com/in/{customUrl}</p>}
-                  <button className="btn-outline" onClick={() => setActiveModal('customUrl')}>
-                    CONFIGURE_URL
-                  </button>
-                </div>
-
-                <div className="enhancement-card">
                   <span className="enhancement-icon">🎯</span>
                   <h3>Availability Status</h3>
                   <p>Configure availability preferences</p>
                   <button className="btn-outline" onClick={() => navigate('/profile/settings/open-to')}>
-                    SET_STATUS
+                    Set Status
                   </button>
                 </div>
 
                 <div className="enhancement-card">
-                  <span className="enhancement-icon">📜</span>
-                  <h3>Verification Badge</h3>
-                  <p>Apply for premium identity verification</p>
-                  <button className="btn-outline" onClick={() => setActiveModal('badges')}>
-                    VERIFY_ID
+                  <span className="enhancement-icon">👑</span>
+                  <h3>Ornave Status</h3>
+                  <p>You're currently on the {currentTier}{currentTier === 'Basic' ? ' tier' : ''}{hasVerified ? ' · Verified ✓' : ''}</p>
+                  <button className="btn-outline" onClick={() => setActiveModal('shop')}>
+                    Browse Statuses
                   </button>
                 </div>
               </div>
-            </div>
-          )}
+                </div>
+              )}
 
-          {activeTab === 'sections' && (
-            <div className="edit-section" style={{ borderLeft: '4px solid #8a7f68', paddingLeft: '30px' }}>
-              <h2 style={{ color: '#8a7f68' }}>Profile Sections</h2>
-              <p className="section-description">
-                Populate your professional ledger with structured experience data
-              </p>
+              {activeTab === 'sections' && (
+                <div className="edit-section">
+                  <h2>Profile Sections</h2>
+                  <p className="section-description">
+                    Populate your professional ledger with structured experience data
+                  </p>
 
               <div className="sections-grid">
-                {sections.map(sec => (
-                  <div key={sec.id}>
-                    <div className="section-card">
-                      <div className="section-icon">{sec.icon}</div>
-                      <div className="section-info">
-                        <h3>{sec.title.toUpperCase()}</h3>
-                        <p>{sec.description}</p>
+                {sections.map(sec => {
+                  const entries: { id: string; title: string; subtitle: string; onEdit: () => void; onDelete: () => void }[] =
+                    sec.id === 'experience' ? experiences.map(exp => ({
+                      id: exp.id, title: exp.title, subtitle: exp.company,
+                      onEdit: () => {
+                        setExperienceForm(exp);
+                        setEditingId(exp.id);
+                        setActiveModal('experience');
+                      },
+                      onDelete: () => {
+                        const updated = experiences.filter(e => e.id !== exp.id);
+                        setExperiences(updated);
+                        localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), experiences: updated }));
+                      },
+                    })) :
+                    sec.id === 'education' ? educations.map(edu => ({
+                      id: edu.id, title: edu.school, subtitle: edu.degree,
+                      onEdit: () => {
+                        setEducationForm(edu);
+                        setEditingId(edu.id);
+                        setActiveModal('education');
+                      },
+                      onDelete: () => {
+                        const updated = educations.filter(e => e.id !== edu.id);
+                        setEducations(updated);
+                        localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), educations: updated }));
+                      },
+                    })) :
+                    sec.id === 'skills' ? skills.map(skill => ({
+                      id: skill.id, title: skill.name, subtitle: skill.level,
+                      onEdit: () => {
+                        setSkillForm(skill);
+                        setEditingId(skill.id);
+                        setActiveModal('skills');
+                      },
+                      onDelete: () => {
+                        const updated = skills.filter(s => s.id !== skill.id);
+                        setSkills(updated);
+                        localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), skills: updated }));
+                      },
+                    })) :
+                    sec.id === 'certifications' ? certifications.map(cert => ({
+                      id: cert.id, title: cert.name, subtitle: cert.organization,
+                      onEdit: () => {
+                        setCertificationForm(cert);
+                        setEditingId(cert.id);
+                        setActiveModal('certifications');
+                      },
+                      onDelete: () => {
+                        const updated = certifications.filter(c => c.id !== cert.id);
+                        setCertifications(updated);
+                        localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), certifications: updated }));
+                      },
+                    })) :
+                    sec.id === 'languages' ? languages.map(lang => ({
+                      id: lang.id, title: lang.name, subtitle: lang.proficiency,
+                      onEdit: () => {
+                        setLanguageForm(lang);
+                        setEditingId(lang.id);
+                        setActiveModal('languages');
+                      },
+                      onDelete: () => {
+                        const updated = languages.filter(l => l.id !== lang.id);
+                        setLanguages(updated);
+                        localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), languages: updated }));
+                      },
+                    })) :
+                    projects.map(proj => ({
+                      id: proj.id, title: proj.name, subtitle: `${proj.startDate} – ${proj.current ? 'Present' : proj.endDate}`,
+                      onEdit: () => {
+                        setProjectForm(proj);
+                        setEditingId(proj.id);
+                        setActiveModal('projects');
+                      },
+                      onDelete: () => {
+                        const updated = projects.filter(p => p.id !== proj.id);
+                        setProjects(updated);
+                        localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), projects: updated }));
+                      },
+                    }));
+
+                  return (
+                    <div key={sec.id} className="section-block">
+                      <div className="section-card">
+                        <div className="section-icon">{sec.icon}</div>
+                        <div className="section-info">
+                          <h3>{sec.title}</h3>
+                          <p>{sec.description}</p>
+                        </div>
+                        <button className="btn-add" onClick={() => {
+                          setEditingId(null);
+                          if (sec.id === 'experience') setExperienceForm({});
+                          else if (sec.id === 'education') setEducationForm({});
+                          else if (sec.id === 'skills') setSkillForm({});
+                          else if (sec.id === 'certifications') setCertificationForm({});
+                          else if (sec.id === 'languages') setLanguageForm({});
+                          else setProjectForm({});
+                          setActiveModal(sec.id);
+                        }}>+ Add Entry</button>
                       </div>
-                      <button className="btn-add" onClick={() => setActiveModal(sec.id)}>+ ADD_ENTRY</button>
+
+                      {entries.length > 0 && (
+                        <div className="section-entries">
+                          {entries.map(entry => (
+                            <div key={entry.id} className="section-entry">
+                              <div>
+                                <div className="section-entry__title">{entry.title}</div>
+                                <div className="section-entry__subtitle">{entry.subtitle}</div>
+                              </div>
+                              <div className="section-entry__actions">
+                                <button className="btn-icon-edit" onClick={entry.onEdit}>Edit</button>
+                                <button className="btn-icon-danger" onClick={entry.onDelete}>Remove</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    
-                    {/* Simplified Display of Added Items */}
-                    <div style={{ paddingLeft: '20px', marginTop: '10px' }}>
-                      {sec.id === 'experience' && experiences.map(exp => (
-                        <div key={exp.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid #8ba378' }}>
-                          <div>
-                            <div style={{fontSize: '0.85rem', fontWeight: 800}}>{exp.title}</div>
-                            <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{exp.company}</div>
-                          </div>
-                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
-                            const updated = experiences.filter(e => e.id !== exp.id);
-                            setExperiences(updated);
-                            localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), experiences: updated }));
-                          }}>DELETE</button>
-                        </div>
-                      ))}
-                      {sec.id === 'education' && educations.map(edu => (
-                        <div key={edu.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid var(--tech-accent-gold)' }}>
-                          <div>
-                            <div style={{fontSize: '0.85rem', fontWeight: 800}}>{edu.school}</div>
-                            <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{edu.degree}</div>
-                          </div>
-                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
-                            const updated = educations.filter(e => e.id !== edu.id);
-                            setEducations(updated);
-                            localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), educations: updated }));
-                          }}>DELETE</button>
-                        </div>
-                      ))}
-                      {sec.id === 'skills' && skills.map(skill => (
-                        <div key={skill.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid var(--tech-accent-gold)' }}>
-                          <div>
-                            <div style={{fontSize: '0.85rem', fontWeight: 800}}>{skill.name}</div>
-                            <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{skill.level}</div>
-                          </div>
-                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
-                            const updated = skills.filter(s => s.id !== skill.id);
-                            setSkills(updated);
-                            localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), skills: updated }));
-                          }}>DELETE</button>
-                        </div>
-                      ))}
-                      {sec.id === 'certifications' && certifications.map(cert => (
-                        <div key={cert.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid #8a7f68' }}>
-                          <div>
-                            <div style={{fontSize: '0.85rem', fontWeight: 800}}>{cert.name}</div>
-                            <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{cert.organization}</div>
-                          </div>
-                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
-                            const updated = certifications.filter(c => c.id !== cert.id);
-                            setCertifications(updated);
-                            localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), certifications: updated }));
-                          }}>DELETE</button>
-                        </div>
-                      ))}
-                      {sec.id === 'languages' && languages.map(lang => (
-                        <div key={lang.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid #a79e8c' }}>
-                          <div>
-                            <div style={{fontSize: '0.85rem', fontWeight: 800}}>{lang.name}</div>
-                            <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{lang.proficiency}</div>
-                          </div>
-                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
-                            const updated = languages.filter(l => l.id !== lang.id);
-                            setLanguages(updated);
-                            localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), languages: updated }));
-                          }}>DELETE</button>
-                        </div>
-                      ))}
-                      {sec.id === 'projects' && projects.map(proj => (
-                        <div key={proj.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(246,243,237,0.02)', marginBottom: '5px', borderLeft: '2px solid #8ba378' }}>
-                          <div>
-                            <div style={{fontSize: '0.85rem', fontWeight: 800}}>{proj.name}</div>
-                            <div style={{fontSize: '0.7rem', color: 'var(--tech-text-dim)'}}>{proj.startDate} - {proj.current ? 'Present' : proj.endDate}</div>
-                          </div>
-                          <button style={{background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontWeight: 800}} onClick={() => {
-                            const updated = projects.filter(p => p.id !== proj.id);
-                            setProjects(updated);
-                            localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(PROFILE_SECTIONS_KEY) || '{}'), projects: updated }));
-                          }}>DELETE</button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
       {/* Modals */}
       {activeModal && (
-        <div className="modal-overlay" onClick={() => setActiveModal(null)} style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}>
-          <div className="modal-content tech-modal" onClick={(e) => e.stopPropagation()} style={{
-            background: 'var(--color-bg)',
-            border: '1px solid var(--color-border)',
-            boxShadow: '0 0 50px rgba(0,0,0,0.6), inset 0 0 20px rgba(231, 223, 201, 0.08)',
-            padding: '40px',
-            maxWidth: '600px',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            {/* Grid Background Effect */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(246, 243, 237, 0.03) 1px, transparent 0)', backgroundSize: '24px 24px', pointerEvents: 'none', zIndex: 0 }}></div>
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className={`modal-content ${activeModal === 'shop' ? 'modal-content--shop' : ''}`} onClick={(e) => e.stopPropagation()}>
+            <h2>{editingId ? (MODAL_TITLES[activeModal]?.replace('Add', 'Edit') || 'Edit Entry') : (MODAL_TITLES[activeModal] || 'Add Entry')}</h2>
 
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <h2 style={{
-                fontFamily: '"JetBrains Mono", monospace',
-                fontSize: '1.5rem',
-                marginBottom: '30px',
-                color: 'var(--color-text)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '15px'
-              }}>
-                <span style={{ color: 'var(--tech-blue)' }}>//</span> ADD_{activeModal.toUpperCase()}
-              </h2>
-              
-              <div className="tech-form" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {activeModal === 'experience' && (
-                  <>
+            <div className="tech-form" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {activeModal === 'experience' && (
+                <>
+                  <div className="form-group">
+                    <label className="modal-field-label">Position / Title</label>
+                    <input type="text" className="tech-input" value={experienceForm.title || ''} onChange={(e) => setExperienceForm({...experienceForm, title: e.target.value})} placeholder="e.g. Systems Architect" />
+                  </div>
+                  <div className="form-group">
+                    <label className="modal-field-label">Company</label>
+                    <input type="text" className="tech-input" value={experienceForm.company || ''} onChange={(e) => setExperienceForm({...experienceForm, company: e.target.value})} placeholder="e.g. Global Tech Corp" />
+                  </div>
+                  <div className="form-row">
                     <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Position / Title</label>
-                      <input type="text" className="tech-input" value={experienceForm.title || ''} onChange={(e) => setExperienceForm({...experienceForm, title: e.target.value})} placeholder="e.g. SYSTEMS_ARCHITECT" />
+                      <label className="modal-field-label">Start Date</label>
+                      <input type="month" className="tech-input" value={experienceForm.startDate || ''} onChange={(e) => setExperienceForm({...experienceForm, startDate: e.target.value})} />
                     </div>
                     <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Organization</label>
-                      <input type="text" className="tech-input" value={experienceForm.company || ''} onChange={(e) => setExperienceForm({...experienceForm, company: e.target.value})} placeholder="e.g. GLOBAL_TECH_CORP" />
+                      <label className="modal-field-label">End Date</label>
+                      <input type="month" className="tech-input" value={experienceForm.endDate || ''} onChange={(e) => setExperienceForm({...experienceForm, endDate: e.target.value})} disabled={experienceForm.current} />
                     </div>
-                    <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                      <div className="form-group">
-                        <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Start Date</label>
-                        <input type="month" className="tech-input" value={experienceForm.startDate || ''} onChange={(e) => setExperienceForm({...experienceForm, startDate: e.target.value})} />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>End Date</label>
-                        <input type="month" className="tech-input" value={experienceForm.endDate || ''} onChange={(e) => setExperienceForm({...experienceForm, endDate: e.target.value})} disabled={experienceForm.current} />
-                      </div>
-                    </div>
-                  </>
-                )}
+                  </div>
+                  <div className="form-group">
+                    <label className="modal-field-label">Description</label>
+                    <textarea className="tech-input" value={experienceForm.description || ''} onChange={(e) => setExperienceForm({...experienceForm, description: e.target.value})} rows={6} placeholder="What did you do in this role? Feel free to write as much as you'd like." />
+                  </div>
+                </>
+              )}
 
-                {activeModal === 'education' && (
-                  <>
-                    <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Institution</label>
-                      <input type="text" className="tech-input" value={educationForm.school || ''} onChange={(e) => setEducationForm({...educationForm, school: e.target.value})} placeholder="e.g. MIT_INSTITUTE" />
-                    </div>
-                    <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Degree / Field</label>
-                      <input type="text" className="tech-input" value={educationForm.degree || ''} onChange={(e) => setEducationForm({...educationForm, degree: e.target.value})} placeholder="e.g. MS_COMPUTER_SCIENCE" />
-                    </div>
-                  </>
-                )}
+              {activeModal === 'education' && (
+                <>
+                  <div className="form-group">
+                    <label className="modal-field-label">Institution</label>
+                    <input type="text" className="tech-input" value={educationForm.school || ''} onChange={(e) => setEducationForm({...educationForm, school: e.target.value})} placeholder="e.g. MIT" />
+                  </div>
+                  <div className="form-group">
+                    <label className="modal-field-label">Degree / Field</label>
+                    <input type="text" className="tech-input" value={educationForm.degree || ''} onChange={(e) => setEducationForm({...educationForm, degree: e.target.value})} placeholder="e.g. MS Computer Science" />
+                  </div>
+                </>
+              )}
 
-                {activeModal === 'skills' && (
-                  <>
-                    <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Skill Identifier</label>
-                      <input type="text" className="tech-input" value={skillForm.name || ''} onChange={(e) => setSkillForm({...skillForm, name: e.target.value})} placeholder="e.g. QUANTUM_COMPUTING" />
-                    </div>
-                    <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Proficiency level</label>
-                      <select className="tech-input" value={skillForm.level || 'Intermediate'} onChange={(e) => setSkillForm({...skillForm, level: e.target.value as any})}>
-                        <option value="Beginner">L1_BEGINNER</option>
-                        <option value="Intermediate">L2_INTERMEDIATE</option>
-                        <option value="Advanced">L3_ADVANCED</option>
-                        <option value="Expert">L4_EXPERT</option>
-                      </select>
-                    </div>
-                  </>
-                )}
+              {activeModal === 'skills' && (
+                <>
+                  <div className="form-group">
+                    <label className="modal-field-label">Skill</label>
+                    <input type="text" className="tech-input" value={skillForm.name || ''} onChange={(e) => setSkillForm({...skillForm, name: e.target.value})} placeholder="e.g. Cloud Architecture" />
+                  </div>
+                  <div className="form-group">
+                    <label className="modal-field-label">Proficiency level</label>
+                    <select className="tech-input" value={skillForm.level || 'Intermediate'} onChange={(e) => setSkillForm({...skillForm, level: e.target.value as any})}>
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                      <option value="Expert">Expert</option>
+                    </select>
+                  </div>
+                </>
+              )}
 
-                {activeModal === 'certifications' && (
-                  <>
-                    <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Certificate name</label>
-                      <input type="text" className="tech-input" value={certificationForm.name || ''} onChange={(e) => setCertificationForm({...certificationForm, name: e.target.value})} placeholder="e.g. AWS_ARCHITECT" />
-                    </div>
-                    <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Authority</label>
-                      <input type="text" className="tech-input" value={certificationForm.organization || ''} onChange={(e) => setCertificationForm({...certificationForm, organization: e.target.value})} placeholder="e.g. AMAZON_WEB_SERVICES" />
-                    </div>
-                  </>
-                )}
+              {activeModal === 'certifications' && (
+                <>
+                  <div className="form-group">
+                    <label className="modal-field-label">Certificate name</label>
+                    <input type="text" className="tech-input" value={certificationForm.name || ''} onChange={(e) => setCertificationForm({...certificationForm, name: e.target.value})} placeholder="e.g. AWS Solutions Architect" />
+                  </div>
+                  <div className="form-group">
+                    <label className="modal-field-label">Issuing organization</label>
+                    <input type="text" className="tech-input" value={certificationForm.organization || ''} onChange={(e) => setCertificationForm({...certificationForm, organization: e.target.value})} placeholder="e.g. Amazon Web Services" />
+                  </div>
+                </>
+              )}
 
-                {activeModal === 'languages' && (
-                  <>
-                    <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Language</label>
-                      <input type="text" className="tech-input" value={languageForm.name || ''} onChange={(e) => setLanguageForm({...languageForm, name: e.target.value})} placeholder="e.g. ENGLISH" />
-                    </div>
-                    <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Mastery level</label>
-                      <select className="tech-input" value={languageForm.proficiency || 'Professional Working'} onChange={(e) => setLanguageForm({...languageForm, proficiency: e.target.value as any})}>
-                        <option value="Elementary">L1_ELEMENTARY</option>
-                        <option value="Limited Working">L2_LIMITED</option>
-                        <option value="Professional Working">L3_PROFESSIONAL</option>
-                        <option value="Full Professional">L4_FLUENT</option>
-                        <option value="Native">L5_NATIVE</option>
-                      </select>
-                    </div>
-                  </>
-                )}
+              {activeModal === 'languages' && (
+                <>
+                  <div className="form-group">
+                    <label className="modal-field-label">Language</label>
+                    <input type="text" className="tech-input" value={languageForm.name || ''} onChange={(e) => setLanguageForm({...languageForm, name: e.target.value})} placeholder="e.g. English" />
+                  </div>
+                  <div className="form-group">
+                    <label className="modal-field-label">Proficiency</label>
+                    <select className="tech-input" value={languageForm.proficiency || 'Professional Working'} onChange={(e) => setLanguageForm({...languageForm, proficiency: e.target.value as any})}>
+                      <option value="Elementary">Elementary</option>
+                      <option value="Limited Working">Limited Working</option>
+                      <option value="Professional Working">Professional Working</option>
+                      <option value="Full Professional">Full Professional</option>
+                      <option value="Native">Native</option>
+                    </select>
+                  </div>
+                </>
+              )}
 
-                {activeModal === 'projects' && (
-                  <>
-                    <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Project identifier</label>
-                      <input type="text" className="tech-input" value={projectForm.name || ''} onChange={(e) => setProjectForm({...projectForm, name: e.target.value})} placeholder="e.g. PROJECT_NEBULA" />
-                    </div>
-                    <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Description</label>
-                      <textarea className="tech-input" value={projectForm.description || ''} onChange={(e) => setProjectForm({...projectForm, description: e.target.value})} rows={3} placeholder="System architecture summary..." />
-                    </div>
-                  </>
-                )}
+              {activeModal === 'projects' && (
+                <>
+                  <div className="form-group">
+                    <label className="modal-field-label">Project name</label>
+                    <input type="text" className="tech-input" value={projectForm.name || ''} onChange={(e) => setProjectForm({...projectForm, name: e.target.value})} placeholder="e.g. Project Nebula" />
+                  </div>
+                  <div className="form-group">
+                    <label className="modal-field-label">Description</label>
+                    <textarea className="tech-input" value={projectForm.description || ''} onChange={(e) => setProjectForm({...projectForm, description: e.target.value})} rows={3} placeholder="What did you build, and what was the impact?" />
+                  </div>
+                </>
+              )}
 
-                {activeModal === 'customUrl' && (
-                  <>
-                    <div className="form-group">
-                      <label style={{ color: 'var(--tech-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Custom identifier</label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ color: 'var(--tech-text-dim)', fontSize: '0.8rem' }}>ornave.com/in/</span>
-                        <input type="text" className="tech-input" value={customUrl} onChange={(e) => setCustomUrl(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} placeholder="your-name" style={{ flex: 1 }} />
-                      </div>
+              {activeModal === 'featured' && <p style={{ color: 'var(--color-muted)', fontSize: '0.88rem' }}>This feature is coming soon.</p>}
+
+              {activeModal === 'shop' && (
+                <div className="status-shop">
+                  <p className="status-shop__intro">Unlock a new status to stand out across Ornave. Statuses apply instantly and update everywhere your profile appears.</p>
+                  <div className="status-shop__grid">
+                    {STATUS_TIERS.map((tier) => {
+                      const isCurrent = currentTier === tier.id;
+                      return (
+                        <div key={tier.id} className={`status-tier-card ${tier.id === 'Diamond Member' ? 'status-tier-card--diamond' : ''} ${isCurrent ? 'status-tier-card--current' : ''}`}>
+                          <span className="status-tier-card__icon">{tier.icon}</span>
+                          <h3>{tier.name}</h3>
+                          <p className="status-tier-card__tagline">{tier.tagline}</p>
+                          <div className="status-tier-card__price">{tier.price}</div>
+                          <ul className="status-tier-card__perks">
+                            {tier.perks.map((perk) => <li key={perk}>{perk}</li>)}
+                          </ul>
+                          {isCurrent ? (
+                            <button className="btn-secondary" disabled>Current Status</button>
+                          ) : (
+                            <button className="btn-primary" onClick={() => handlePurchaseTier(tier)}>
+                              {tier.price === 'Free' ? 'Switch to This' : 'Choose This Status'}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="status-shop__addon">
+                    <span className="status-tier-card__icon">{VERIFIED_ADDON.icon}</span>
+                    <div className="status-shop__addon-body">
+                      <h3>{VERIFIED_ADDON.name}</h3>
+                      <p className="status-tier-card__tagline">
+                        {AUTO_VERIFIED_TIERS.includes(currentTier)
+                          ? 'Included free with Silver, Gold, and Diamond status'
+                          : VERIFIED_ADDON.tagline}
+                      </p>
                     </div>
-                  </>
-                )}
-
-                {activeModal === 'featured' && <p style={{ color: 'var(--tech-text-dim)', fontSize: '0.9rem' }}>This experimental module is currently under development.</p>}
-                {activeModal === 'badges' && <p style={{ color: 'var(--tech-text-dim)', fontSize: '0.9rem' }}>Complete professional milestones to unlock system authentication badges.</p>}
-
-                <div className="modal-actions" style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
-                  <button className="btn-secondary" style={{ flex: 1, height: '45px', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '0.7rem', fontWeight: 800 }} onClick={() => setActiveModal(null)}>ABORT</button>
-                  <button className="btn-primary" style={{ flex: 2, height: '45px', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '0.7rem', fontWeight: 800 }} onClick={() => {
-                    if (activeModal === 'experience') handleAddExperience();
-                    else if (activeModal === 'education') handleAddEducation();
-                    else if (activeModal === 'skills') handleAddSkill();
-                    else if (activeModal === 'certifications') handleAddCertification();
-                    else if (activeModal === 'languages') handleAddLanguage();
-                    else if (activeModal === 'projects') handleAddProject();
-                    else if (activeModal === 'customUrl') { handleCustomUrlSave(); setActiveModal(null); }
-                    else setActiveModal(null);
-                  }}>Save</button>
+                    <div className="status-shop__addon-price">
+                      {hasVerified ? 'Included' : VERIFIED_ADDON.price}
+                    </div>
+                    {hasVerified ? (
+                      <button className="btn-secondary" disabled>Owned</button>
+                    ) : (
+                      <button className="btn-primary" onClick={handlePurchaseVerified}>Add Verified</button>
+                    )}
+                  </div>
                 </div>
+              )}
+
+              {activeModal !== 'shop' && (
+              <div className="modal-actions">
+                <button className="btn-secondary" onClick={closeModal}>Cancel</button>
+                <button className="btn-primary" onClick={() => {
+                  if (activeModal === 'experience') handleAddExperience();
+                  else if (activeModal === 'education') handleAddEducation();
+                  else if (activeModal === 'skills') handleAddSkill();
+                  else if (activeModal === 'certifications') handleAddCertification();
+                  else if (activeModal === 'languages') handleAddLanguage();
+                  else if (activeModal === 'projects') handleAddProject();
+                  else closeModal();
+                }}>{editingId ? 'Save Changes' : 'Save'}</button>
+              </div>
+              )}
               </div>
             </div>
           </div>
-        </div>
       )}
     </div>
   );

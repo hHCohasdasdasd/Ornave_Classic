@@ -472,6 +472,40 @@
 /* ============================================================
    Sort Bar — Reddit authentic pill style
    ============================================================ */
+.feed__tag-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(139, 127, 214, 0.1);
+  border: 1px solid rgba(139, 127, 214, 0.35);
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin: 14px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.feed__tag-filter strong {
+  color: #8b7fd6;
+}
+
+.feed__tag-filter button {
+  background: transparent;
+  border: 1px solid rgba(139, 127, 214, 0.5);
+  color: #8b7fd6;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feed__tag-filter button:hover {
+  background: #8b7fd6;
+  color: #14140f;
+}
+
 .feed__sort-bar {
   display: flex;
   justify-content: space-between;
@@ -913,6 +947,31 @@
 .feed-item__service-card-btn--sent {
   background: var(--tech-accent-emerald);
   cursor: default;
+}
+
+/* Topic tags on a post */
+.feed-item__tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.feed-item__tag-chip {
+  background: rgba(139, 127, 214, 0.12);
+  color: #8b7fd6;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feed-item__tag-chip:hover {
+  background: #8b7fd6;
+  color: #14140f;
 }
 
 /* Tagged people / companies on a post */

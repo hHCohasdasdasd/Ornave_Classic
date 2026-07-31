@@ -70,6 +70,59 @@ export class PublicationService {
     };
   }
 
+  /**
+   * Ranks tags by the size of the community actually engaging with them —
+   * not just how many publications carry the tag. A tag's score is the sum
+   * of the member count and post count of the sector (Group) sharing that
+   * tag, plus how many publications use it: the more users and posts a
+   * topic has behind it, the higher it ranks.
+   */
+  static async getTrendingTags(limit: number = 8): Promise<string[]> {
+    const publications = await prisma.publication.findMany({
+      where: { isDeleted: false, visibility: 'public' },
+      select: { tags: true },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+
+    const publicationCounts = new Map<string, number>();
+    for (const publication of publications) {
+      let tags: string[] = [];
+      try {
+        tags = JSON.parse(publication.tags || '[]');
+      } catch {
+        tags = [];
+      }
+      for (const tag of tags) {
+        publicationCounts.set(tag, (publicationCounts.get(tag) || 0) + 1);
+      }
+    }
+
+    const groups = await prisma.group.findMany({ select: { id: true, tag: true } });
+
+    const scores = new Map<string, number>();
+    for (const tag of publicationCounts.keys()) scores.set(tag, 0);
+
+    await Promise.all(
+      groups.map(async (group) => {
+        const [memberCount, postCount] = await Promise.all([
+          prisma.groupMember.count({ where: { groupId: group.id } }),
+          prisma.post.count({ where: { groupId: group.id, isDeleted: false } }),
+        ]);
+        scores.set(group.tag, (scores.get(group.tag) || 0) + memberCount + postCount);
+      })
+    );
+
+    for (const [tag, count] of publicationCounts) {
+      scores.set(tag, (scores.get(tag) || 0) + count);
+    }
+
+    return Array.from(scores.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([tag]) => tag);
+  }
+
   static async getPublication(id: string) {
     const publication = await prisma.publication.findUnique({ where: { id } });
     if (!publication || publication.isDeleted) return null;

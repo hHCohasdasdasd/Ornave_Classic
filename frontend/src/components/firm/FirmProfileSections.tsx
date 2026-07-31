@@ -27,7 +27,7 @@ export const FirmAbout: React.FC<{ bio: string; industry?: string }> = ({ bio, i
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: '6px',
             fontSize: '11px', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase',
-            color: 'var(--tech-accent-gold)', border: '1px solid rgba(198, 161, 91, 0.35)',
+            color: 'var(--tech-accent-gold-text)', border: '1px solid rgba(198, 161, 91, 0.35)',
             borderRadius: '999px', padding: '5px 12px', marginBottom: '16px',
           }}>
             {industry}
@@ -414,13 +414,16 @@ export const FirmNetwork: React.FC<{ team: FirmTeamMember[], firmName: string }>
   };
 
   // Color mapping for roles
+  // These render as small text/dot labels directly on a white card (see
+  // below), so each needs to hold ~4.5:1 contrast on its own rather than
+  // relying on a dark backdrop — plain hue swatches fail that badly.
   const getRoleColor = (role: string) => {
     const r = role.toUpperCase();
-    if (r.includes('CEO')) return '#c6a15b';
-    if (r.includes('FINANCE') || r.includes('CFO')) return '#8ba378';
-    if (r.includes('HUMAN') || r.includes('CHRO')) return '#8a7f68';
-    if (r.includes('TECH') || r.includes('CTO')) return '#e7dfc9';
-    return '#a79e8c';
+    if (r.includes('CEO')) return '#7d6329';
+    if (r.includes('FINANCE') || r.includes('CFO')) return '#4f6b3f';
+    if (r.includes('HUMAN') || r.includes('CHRO')) return '#5f5646';
+    if (r.includes('TECH') || r.includes('CTO')) return '#4f5f68';
+    return '#756c5d';
   };
 
   // First ring: leadership, positioned radially around the hub. Second ring:
@@ -1007,7 +1010,7 @@ export const FirmMenu: React.FC<{ items: FirmMenuItem[] }> = ({ items }) => {
       </div>
       {categories.map((category) => (
         <div key={category} style={{ marginTop: '24px' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--tech-accent-gold)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--tech-accent-gold-text)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px' }}>
             {category}
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
