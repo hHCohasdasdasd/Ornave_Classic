@@ -57,6 +57,13 @@ import { CheckoutPage } from '@/pages/CheckoutPage';
 import { PurchasedServicesPage } from '@/pages/PurchasedServicesPage';
 import { FirmServiceOverviewPage } from '@/pages/FirmServiceOverviewPage';
 import { FirmClientManagementPage } from '@/pages/FirmClientManagementPage';
+import { WorkSuiteHomePage } from '@/pages/WorkSuiteHomePage';
+import { WorkSuiteProjectsPage } from '@/pages/WorkSuiteProjectsPage';
+import { WorkSuiteTasksPage } from '@/pages/WorkSuiteTasksPage';
+import { WorkSuiteClientsPage } from '@/pages/WorkSuiteClientsPage';
+import { WorkSuiteInvoicesPage } from '@/pages/WorkSuiteInvoicesPage';
+import { WorkSuiteGoalsPage } from '@/pages/WorkSuiteGoalsPage';
+import { WorkSuiteAchievementsPage } from '@/pages/WorkSuiteAchievementsPage';
 import { AuthModal } from '@/components/ui/AuthModal';
 import { CreatePostModal } from '@/components/personal/CreatePostModal';
 import { CreatePublicationModal } from '@/components/personal/CreatePublicationModal';
@@ -256,6 +263,15 @@ function App() {
             <Route path="/global/documents" element={<GlobalDocumentsPage />} />
             <Route path="/global/payments" element={<GlobalPaymentsPage />} />
             <Route path="/global/activity" element={<GlobalActivityPage />} />
+
+            {/* Work Suite Routes */}
+            <Route path="/work-suite" element={<WorkSuiteHomePage />} />
+            <Route path="/work-suite/projects" element={<WorkSuiteProjectsPage />} />
+            <Route path="/work-suite/tasks" element={<WorkSuiteTasksPage />} />
+            <Route path="/work-suite/clients" element={<WorkSuiteClientsPage />} />
+            <Route path="/work-suite/invoices" element={<WorkSuiteInvoicesPage />} />
+            <Route path="/work-suite/goals" element={<WorkSuiteGoalsPage />} />
+            <Route path="/work-suite/achievements" element={<WorkSuiteAchievementsPage />} />
 
             {/* For Business Routes */}
             <Route path="/leads" element={<LeadsPage />} />

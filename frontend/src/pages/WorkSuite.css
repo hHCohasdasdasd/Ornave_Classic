@@ -1,0 +1,844 @@
+/* Work Suite - shared styles for the hub + Projects/Tasks/Clients/Invoices/
+   Goals/Achievements pages. Reuses the same "editorial" light treatment as
+   ProfilePage (see .profile-page--editorial in ProfilePage.css): cream page,
+   white cards, dark charcoal text, gold as the singular accent — scoped
+   locally via custom-property overrides so every component below that reads
+   var(--tech-*) / var(--color-*) repaints correctly on its own. Only the
+   header banner stays on the permanent dark ground (like ProfilePage's hero
+   and dossier-tabs strip), using hardcoded light colors since the variables
+   below it are now light-mode. */
+.worksuite-page {
+  --color-bg: #f7f5ee;
+  --color-bg-alt: #f1eee3;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-card-text: #1c1a17;
+  --color-text: #1c1a17;
+  --color-muted: #756c5d;
+  --color-primary: #c6a15b;
+  --color-primary-hover: #d8be84;
+  --color-danger: #9b4a46;
+  --color-border: rgba(28, 24, 18, 0.1);
+  --color-border-dark: rgba(28, 24, 18, 0.18);
+  --color-input-bg: rgba(28, 24, 18, 0.03);
+
+  --tech-accent-gold: #c6a15b;
+  --tech-accent-gold-text: #7d6329;
+  --tech-card-bg: #ffffff;
+  --tech-border: rgba(28, 24, 18, 0.1);
+  --tech-border-dim: rgba(28, 24, 18, 0.07);
+  --tech-text-main: #1c1a17;
+  --tech-text-dim: #756c5d;
+  --tech-bg: #f7f5ee;
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 10px 28px rgba(28, 24, 18, 0.08);
+
+  background: var(--tech-bg);
+  min-height: 100vh;
+  color: var(--tech-text-main);
+  padding-bottom: 100px;
+}
+
+.worksuite-page__banner {
+  background: #14140f;
+  padding: 32px 0;
+  border-bottom: 1px solid rgba(198, 161, 91, 0.15);
+}
+
+.worksuite-page__banner-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.worksuite-breadcrumb {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(246, 243, 237, 0.55);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 14px;
+  transition: color 0.2s ease;
+}
+
+.worksuite-breadcrumb:hover {
+  color: var(--tech-accent-gold);
+}
+
+.worksuite-page__eyebrow {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tech-accent-gold);
+  margin: 0 0 6px;
+}
+
+.worksuite-page__title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #f6f3ed;
+  margin: 0 0 8px;
+}
+
+.worksuite-page__subtitle {
+  font-size: 0.88rem;
+  color: rgba(246, 243, 237, 0.65);
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+.worksuite-page__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 32px 20px;
+}
+
+/* Assistant briefing card */
+.worksuite-assistant {
+  background: linear-gradient(160deg, rgba(198, 161, 91, 0.08), rgba(198, 161, 91, 0.02) 60%), var(--tech-card-bg);
+  border: 1px solid rgba(198, 161, 91, 0.3);
+  border-radius: 16px;
+  padding: 26px 28px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 36px;
+}
+
+.worksuite-assistant__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+
+.worksuite-assistant__avatar {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tech-accent-gold);
+  color: #14140f;
+  font-size: 1.15rem;
+  box-shadow: 0 4px 14px rgba(198, 161, 91, 0.4);
+}
+
+.worksuite-assistant__lead {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.worksuite-assistant__insights {
+  margin: 18px 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.worksuite-assistant__insight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.worksuite-assistant__insight-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.worksuite-assistant__insight-message {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.worksuite-assistant__quickadd {
+  display: flex;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(198, 161, 91, 0.2);
+}
+
+.worksuite-assistant__quickadd input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 999px;
+  padding: 11px 20px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--color-text);
+}
+
+.worksuite-assistant__quickadd input:focus {
+  outline: none;
+  border-color: var(--tech-accent-gold);
+  box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.15);
+}
+
+.worksuite-assistant__quickadd input::placeholder {
+  color: var(--tech-text-dim);
+}
+
+.worksuite-assistant__quickadd button {
+  background: var(--tech-accent-gold);
+  color: #14140f;
+  border: 1px solid var(--tech-accent-gold);
+  border-radius: 999px;
+  padding: 0 22px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.worksuite-assistant__quickadd button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.worksuite-assistant__quickadd button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .worksuite-assistant__quickadd { flex-direction: column; }
+}
+
+/* Stat cards */
+.worksuite-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.worksuite-stat-card {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.worksuite-stat-card:hover {
+  border-color: var(--color-border-dark);
+  transform: translateY(-2px);
+}
+
+.worksuite-stat-card__label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tech-text-dim);
+  margin-bottom: 8px;
+}
+
+.worksuite-stat-card__value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--color-text);
+}
+
+/* Module tiles on the hub */
+.worksuite-modules {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  margin-bottom: 44px;
+}
+
+.worksuite-module-tile {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 16px;
+  padding: 26px 24px;
+  cursor: pointer;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+  text-align: left;
+  box-shadow: var(--shadow-card);
+}
+
+.worksuite-module-tile:hover {
+  border-color: var(--color-border-dark);
+  transform: translateY(-2px);
+}
+
+.worksuite-module-tile__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(198, 161, 91, 0.08);
+  border: 1px solid rgba(198, 161, 91, 0.25);
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+}
+
+.worksuite-module-tile__title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 6px;
+}
+
+.worksuite-module-tile__description {
+  font-size: 0.78rem;
+  color: var(--tech-text-dim);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.worksuite-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.worksuite-section-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* Header row with create button */
+.worksuite-page__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.worksuite-create-btn {
+  background: var(--tech-accent-gold);
+  border: 1px solid var(--tech-accent-gold);
+  border-radius: 999px;
+  color: #14140f;
+  padding: 10px 22px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.worksuite-create-btn:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+/* Filter tabs */
+.worksuite-tabs {
+  display: flex;
+  gap: 26px;
+  border-bottom: 1px solid var(--tech-border);
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.worksuite-tab {
+  background: none;
+  border: none;
+  color: var(--tech-text-dim);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 14px 0;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.worksuite-tab:hover {
+  color: var(--color-text);
+}
+
+.worksuite-tab--active {
+  color: var(--tech-accent-gold-text);
+  border-bottom-color: var(--tech-accent-gold);
+}
+
+.worksuite-select {
+  background: var(--color-input-bg);
+  border: 1px solid var(--tech-border-dim);
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.78rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.worksuite-select:focus {
+  outline: none;
+  border-color: var(--tech-accent-gold);
+  box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.15);
+}
+
+/* Card grid (Projects / Clients) */
+.worksuite-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.worksuite-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--tech-text-dim);
+  padding: 60px 0;
+  font-size: 0.9rem;
+  border: 1px dashed var(--color-border-dark);
+  border-radius: 16px;
+}
+
+.worksuite-card {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.worksuite-card:hover {
+  border-color: var(--color-border-dark);
+  transform: translateY(-2px);
+}
+
+/* Progress bar (Goals) */
+.worksuite-progress {
+  margin: 4px 0 16px;
+}
+
+.worksuite-progress__track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(28, 24, 18, 0.08);
+  overflow: hidden;
+}
+
+.worksuite-progress__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--tech-accent-gold);
+  transition: width 0.3s ease;
+}
+
+.worksuite-progress__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--tech-text-dim);
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Achievements timeline */
+.worksuite-achievement {
+  display: flex;
+  gap: 16px;
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.worksuite-achievement:hover {
+  border-color: var(--color-border-dark);
+  transform: translateY(-2px);
+}
+
+.worksuite-achievement__icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(198, 161, 91, 0.08);
+  border: 1px solid rgba(198, 161, 91, 0.25);
+  font-size: 1.1rem;
+}
+
+.worksuite-achievement__main {
+  flex: 1;
+}
+
+.worksuite-achievement__title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 4px;
+}
+
+.worksuite-achievement__meta {
+  font-size: 0.72rem;
+  color: var(--tech-text-dim);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.worksuite-achievement__description {
+  font-size: 0.8rem;
+  color: var(--tech-text-dim);
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+.worksuite-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.worksuite-card__title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.worksuite-card__meta {
+  font-size: 0.72rem;
+  color: var(--tech-text-dim);
+  margin: 2px 0 0;
+}
+
+.worksuite-card__description {
+  font-size: 0.8rem;
+  color: var(--tech-text-dim);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.worksuite-card__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.worksuite-btn {
+  background: transparent;
+  border: 1px solid var(--color-border-dark);
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.worksuite-btn:hover {
+  border-color: var(--tech-accent-gold);
+  color: var(--tech-accent-gold-text);
+  background: rgba(198, 161, 91, 0.08);
+}
+
+.worksuite-btn--danger:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: rgba(155, 74, 70, 0.08);
+}
+
+.worksuite-btn--primary {
+  background: var(--tech-accent-gold);
+  color: #14140f;
+  border-color: var(--tech-accent-gold);
+}
+
+.worksuite-btn--primary:hover {
+  background: var(--color-primary-hover);
+  color: #14140f;
+  border-color: var(--color-primary-hover);
+}
+
+/* Badges */
+.worksuite-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--tech-border-dim);
+  color: var(--tech-text-dim);
+}
+
+.worksuite-badge--active,
+.worksuite-badge--todo { color: var(--tech-text-dim); }
+.worksuite-badge--in_progress { color: var(--tech-accent-gold-text); border-color: rgba(198, 161, 91, 0.4); background: rgba(198, 161, 91, 0.08); }
+.worksuite-badge--done,
+.worksuite-badge--completed,
+.worksuite-badge--paid { color: #3f6f47; border-color: rgba(63, 111, 71, 0.35); background: rgba(63, 111, 71, 0.08); }
+.worksuite-badge--archived,
+.worksuite-badge--draft { opacity: 0.65; }
+.worksuite-badge--overdue,
+.worksuite-badge--high { color: var(--color-danger); border-color: rgba(155, 74, 70, 0.35); background: rgba(155, 74, 70, 0.08); }
+.worksuite-badge--sent { color: var(--tech-accent-gold-text); border-color: rgba(198, 161, 91, 0.4); background: rgba(198, 161, 91, 0.08); }
+.worksuite-badge--medium { color: var(--tech-accent-gold-text); border-color: rgba(198, 161, 91, 0.4); background: rgba(198, 161, 91, 0.08); }
+.worksuite-badge--low { color: var(--tech-text-dim); }
+
+/* Tasks list */
+.worksuite-task-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 16px;
+  padding: 18px 22px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.worksuite-task-row:hover {
+  border-color: var(--color-border-dark);
+  transform: translateY(-2px);
+}
+
+.worksuite-task-row__main {
+  flex: 1;
+  min-width: 200px;
+}
+
+.worksuite-task-row__title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 4px;
+}
+
+.worksuite-task-row__meta {
+  font-size: 0.72rem;
+  color: var(--tech-text-dim);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.worksuite-task-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Table (Invoices) */
+.worksuite-table-wrap {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.worksuite-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.worksuite-table th {
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--tech-text-dim);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--tech-border);
+}
+
+.worksuite-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--tech-border-dim);
+  color: var(--color-text);
+}
+
+.worksuite-table tr:last-child td {
+  border-bottom: none;
+}
+
+.worksuite-table__muted {
+  color: var(--tech-text-dim);
+}
+
+@media (max-width: 640px) {
+  .worksuite-grid { grid-template-columns: 1fr; }
+  .worksuite-modules { grid-template-columns: 1fr; }
+}
+
+/* Modal (create/edit) */
+.worksuite-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 24, 18, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.worksuite-modal {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(28, 24, 18, 0.25);
+  padding: 28px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.worksuite-modal h2 {
+  font-family: var(--font-display);
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.worksuite-modal p.worksuite-modal__hint {
+  margin: 0 0 18px;
+  font-size: 0.8rem;
+  color: var(--tech-text-dim);
+  line-height: 1.5;
+}
+
+.worksuite-modal label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--tech-text-dim);
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+
+.worksuite-modal label:first-of-type {
+  margin-top: 0;
+}
+
+.worksuite-modal input,
+.worksuite-modal textarea,
+.worksuite-modal select {
+  width: 100%;
+  background: var(--color-input-bg);
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.worksuite-modal input:focus,
+.worksuite-modal textarea:focus,
+.worksuite-modal select:focus {
+  outline: none;
+  border-color: var(--tech-accent-gold);
+  box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.15);
+}
+
+.worksuite-modal__error {
+  color: var(--color-danger);
+  font-size: 0.8rem;
+  margin: 14px 0 0;
+}
+
+.worksuite-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.worksuite-modal__cancel {
+  background: transparent;
+  border: 1px solid var(--color-border-dark);
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 9px 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.worksuite-modal__cancel:hover {
+  background: rgba(28, 24, 18, 0.04);
+}
+
+.worksuite-modal__submit {
+  background: var(--tech-accent-gold);
+  color: #14140f;
+  border: 1px solid var(--tech-accent-gold);
+  border-radius: 999px;
+  padding: 9px 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.worksuite-modal__submit:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.worksuite-modal__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

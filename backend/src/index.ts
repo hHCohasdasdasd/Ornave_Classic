@@ -21,6 +21,7 @@ import publicationRoutes from './routes/publicationRoutes';
 import jobRoutes from './routes/jobRoutes';
 import eventRoutes from './routes/eventRoutes';
 import billingRoutes from './routes/billingRoutes';
+import workSuiteRoutes from './routes/workSuiteRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -127,6 +128,7 @@ app.use(`${API_BASE}/groups`, groupRoutes);
 app.use(`${API_BASE}/publications`, publicationRoutes);
 app.use(`${API_BASE}/events`, eventRoutes);
 app.use(`${API_BASE}/billing`, billingRoutes);
+app.use(`${API_BASE}/work-suite`, workSuiteRoutes);
 
 // ============================================
 // 404 HANDLER

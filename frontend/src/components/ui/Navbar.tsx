@@ -6,7 +6,7 @@ import { apiClient } from '@/services/api';
 import {
   IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel,
   IconBuilding, IconBriefcase, IconSearch, IconUsers, IconCard, IconUser, IconChart, IconSpark,
-  IconLogout, IconBag,
+  IconLogout, IconBag, IconLayers, IconCheck, IconHandshake, IconArticle, IconCompass, IconTrophy,
 } from './Icons';
 import { mockProfileSections } from '@/data/mockProfileSections';
 
@@ -82,6 +82,51 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
       window.removeEventListener('ornave_state_update', handleStateUpdate);
     };
   }, [user]);
+
+  const workSuiteApps = [
+    {
+      icon: <IconLayers />,
+      label: 'Work Suite Home',
+      description: 'Your mini-ERP hub — projects, tasks, clients, invoices.',
+      route: '/work-suite',
+    },
+    {
+      icon: <IconLayers />,
+      label: 'Projects',
+      description: 'Track initiatives from kickoff to completion.',
+      route: '/work-suite/projects',
+    },
+    {
+      icon: <IconCheck />,
+      label: 'Tasks',
+      description: 'Everything on your plate, by status and priority.',
+      route: '/work-suite/tasks',
+    },
+    {
+      icon: <IconHandshake />,
+      label: 'Clients',
+      description: 'A lightweight CRM for who you work with.',
+      route: '/work-suite/clients',
+    },
+    {
+      icon: <IconArticle />,
+      label: 'Invoices',
+      description: 'Bill clients and track what is owed.',
+      route: '/work-suite/invoices',
+    },
+    {
+      icon: <IconCompass />,
+      label: 'Goals',
+      description: 'Set a target, track progress, and see it through.',
+      route: '/work-suite/goals',
+    },
+    {
+      icon: <IconTrophy />,
+      label: 'Achievements',
+      description: 'A record of the milestones you\'ve earned.',
+      route: '/work-suite/achievements',
+    },
+  ];
 
   const forBusinessApps = [
     {
@@ -260,31 +305,57 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
                 <span className="navbar__icon-label">Work Suite</span>
               </button>
               {isForBusinessMenuOpen && (
-                <div className={`navbar__dropdown navbar__dropdown--work-suite ${(!user || user.id === 'guest' || user.userType !== 'COMPANY_USER') ? 'navbar__dropdown--restricted' : ''}`} role="menu">
-                  {(!user || user.id === 'guest' || user.userType !== 'COMPANY_USER') && (
+                <div className={`navbar__dropdown navbar__dropdown--work-suite ${(!user || user.id === 'guest') ? 'navbar__dropdown--restricted' : ''}`} role="menu">
+                  {(!user || user.id === 'guest') && (
                     <div className="navbar__dropdown-overlay">
                       <div className="navbar__dropdown-message">
-                        <span>Log in as a firm</span>
+                        <span>Sign in to open Work Suite</span>
                         <button className="navbar__auth-btn navbar__auth-btn--primary" onClick={() => navigate('/login')}>Login</button>
                       </div>
                     </div>
                   )}
                   <div className="navbar__dropdown-content">
                     <div className="navbar__dropdown-section">
-                      <div className="navbar__dropdown-header">Work Suite Apps</div>
+                      <div className="navbar__dropdown-header">Mini ERP</div>
+                      <div className="navbar__forbiz-grid">
+                        {workSuiteApps.map((app) => (
+                          <button
+                            key={app.route}
+                            className="navbar__dropdown-item navbar__dropdown-item--app"
+                            onClick={() => {
+                              if (user && user.id !== 'guest') {
+                                navigate(app.route);
+                                setIsForBusinessMenuOpen(false);
+                              }
+                            }}
+                            role="menuitem"
+                            disabled={!user || user.id === 'guest'}
+                          >
+                            <span className="navbar__forbiz-app-icon">{app.icon}</span>
+                            <span className="navbar__forbiz-app-copy">
+                              <span className="navbar__forbiz-app-title">{app.label}</span>
+                              <span className="navbar__forbiz-app-desc">{app.description}</span>
+                            </span>
+                            <span className="navbar__forbiz-app-arrow" aria-hidden="true">↗</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="navbar__dropdown-section">
+                      <div className="navbar__dropdown-header">Growth &amp; Hiring</div>
                       <div className="navbar__forbiz-grid">
                         {forBusinessApps.map((app) => (
                           <button
                             key={app.route}
                             className="navbar__dropdown-item navbar__dropdown-item--app"
                             onClick={() => {
-                              if (user && user.id !== 'guest' && user.userType === 'COMPANY_USER') {
+                              if (user && user.id !== 'guest') {
                                 navigate(app.route);
                                 setIsForBusinessMenuOpen(false);
                               }
                             }}
                             role="menuitem"
-                            disabled={!user || user.id === 'guest' || user.userType !== 'COMPANY_USER'}
+                            disabled={!user || user.id === 'guest'}
                           >
                             <span className="navbar__forbiz-app-icon">{app.icon}</span>
                             <span className="navbar__forbiz-app-copy">
@@ -300,7 +371,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
                 </div>
               )}
             </div>
-            <button className="navbar__icon-btn navbar__icon-btn--accent" onClick={() => navigate('/dashboard')}>
+            <button className="navbar__icon-btn navbar__icon-btn--accent" onClick={() => navigate('/work-suite')}>
               <span className="navbar__icon"><IconLaurel /></span>
               <span className="navbar__icon-label">Ornave Solutions</span>
             </button>
