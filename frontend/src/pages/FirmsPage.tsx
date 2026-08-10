@@ -55,7 +55,7 @@ export const FirmsPage: React.FC = () => {
   const loadFirmsData = async () => {
     try {
       const followed = await firmService.getFollowedFirms();
-      setCompaniesFollowing(followed.length + 12); // Base + followed
+      setCompaniesFollowing(followed.length);
 
       const partnered = await firmService.getPartneredFirms();
       setCompaniesPartnered(partnered.length);
@@ -73,37 +73,10 @@ export const FirmsPage: React.FC = () => {
           logo: profile.company.logo
         })));
       } else {
-        // Fallback to mock suggestions
-        setSuggestions([
-          {
-            id: 'ecostream-solutions',
-            name: 'EcoStream Solutions',
-            industry: 'Environmental Services',
-            description: 'Sustainable water management and filtration systems for industrial applications.',
-            commonConnections: 45,
-            commonConnectionName: 'Your Network'
-          },
-          {
-            id: 'novatech-robotics',
-            name: 'NovaTech Robotics',
-            industry: 'Manufacturing',
-            description: 'Advanced automation and robotic arms for precision manufacturing.',
-            commonConnections: 12,
-            commonConnectionName: 'Your Network'
-          }
-        ]);
+        setSuggestions([]);
       }
 
-      // Mock follow requests (company invites)
-      setFollowRequests([
-        {
-          id: '1',
-          name: 'Straumann Group',
-          industry: 'Healthcare / Medical Devices',
-          description: 'Leading provider of dental implants and digital solutions',
-          employees: 5000
-        }
-      ]);
+      setFollowRequests([]);
     } catch (err) {
       console.error('Failed to load firms data:', err);
     }
@@ -416,36 +389,9 @@ export const FirmsPage: React.FC = () => {
               </div>
 
               <div className="popular-firms-grid">
-                {/* Mock popular companies */}
-                {[
-                  { name: 'SAP SE', industry: 'Software & Technology', employees: '103K', followers: '245K' },
-                  { name: 'Deutsche Telekom', industry: 'Telecommunications', employees: '245K', followers: '387K' },
-                  { name: 'BMW Group', industry: 'Automotive', employees: '352K', followers: '512K' }
-                ].map((firm, index) => (
-                  <div key={index} className="popular-firm-card">
-                    <div className="popular-firm-card__cover"></div>
-                    <div className="popular-firm-card__content">
-                      <div className="popular-firm-card__avatar">
-                        {getInitials(firm.name)}
-                      </div>
-                      <h3 className="popular-firm-card__name">
-                        {firm.name}
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="#c6a15b">
-                          <path d="M8 1L10 6H15L11 9L12.5 14L8 11L3.5 14L5 9L1 6H6L8 1Z"/>
-                        </svg>
-                      </h3>
-                      <p className="popular-firm-card__industry">{firm.industry}</p>
-                      <p className="popular-firm-card__employees">{firm.employees} employees</p>
-                      <p className="popular-firm-card__followers">{firm.followers} followers</p>
-                      <button className="popular-firm-card__follow">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                          <path d="M14 7H9V2H7V7H2V9H7V14H9V9H14V7Z"/>
-                        </svg>
-                        Follow
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                {suggestions.length === 0 && (
+                  <p className="firms-empty-state">No popular companies to show yet.</p>
+                )}
               </div>
             </section>
           </main>

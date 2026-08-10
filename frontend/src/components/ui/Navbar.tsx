@@ -8,8 +8,6 @@ import {
   IconBuilding, IconBriefcase, IconSearch, IconUsers, IconCard, IconUser, IconChart, IconSpark,
   IconLogout, IconBag, IconLayers, IconCheck, IconHandshake, IconArticle, IconCompass, IconTrophy,
 } from './Icons';
-import { mockProfileSections } from '@/data/mockProfileSections';
-
 interface NavbarProps {
   /** True when the global left nav rail (ProfileSidebar, rendered once in
    * App.tsx) is present alongside this page — hides the navbar's own logo
@@ -18,6 +16,20 @@ interface NavbarProps {
    * route; pages excluded from the shell (ERP/admin layouts, login) don't
    * render this Navbar at all, so the default doesn't affect them. */
   sidebarOffset?: boolean;
+}
+
+function formatNotificationTime(value: string): string {
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return value;
+  const diffMs = Date.now() - date.getTime();
+  const diffMin = Math.round(diffMs / 60000);
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.round(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.round(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return date.toLocaleDateString();
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
@@ -192,8 +204,37 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
   const loadNotifications = async () => {
     try {
       setIsLoadingNotifications(true);
-      const response = await apiClient.getGlobalActivity();
-      setNotifications(response.data || []);
+
+      // Two separate notification sources: company-level "Global Requests"
+      // activity (GlobalRequest model), and personal incoming connection
+      // requests (UserConnection model) — these used to only show the
+      // former, silently dropping "so-and-so wants to connect" entirely.
+      const [activityResponse, connectionRequests] = await Promise.all([
+        apiClient.getGlobalActivity().catch(() => ({ data: [] })),
+        networkService.getConnectionRequests().catch(() => []),
+      ]);
+
+      const activityItems = (activityResponse?.data || []).map((item: any) => ({
+        requestId: item.requestId,
+        title: item.title,
+        description: item.description,
+        lastUpdate: item.lastUpdate,
+        type: 'activity' as const,
+      }));
+
+      const connectionItems = connectionRequests.map((r: any) => ({
+        requestId: `connection-${r.id}`,
+        title: `${r.user?.firstName || 'Someone'} ${r.user?.lastName || ''}`.trim() + ' wants to connect',
+        description: r.user?.headline || 'Sent you a connection request',
+        lastUpdate: r.timestamp,
+        type: 'connection' as const,
+      }));
+
+      const merged = [...connectionItems, ...activityItems].sort(
+        (a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime()
+      );
+
+      setNotifications(merged);
       // Reset count when opening
       setNotificationsCount(0);
     } catch (error) {
@@ -215,15 +256,9 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
     navigate(user && user.id !== 'guest' ? '/home' : '/');
   };
 
-  // Same tier derivation as the profile hero card: only shown once we know
-  // this account has real editorial content behind it (mockProfileSections),
-  // so a fresh/empty account doesn't get a fabricated "Gold Member" badge.
-  const memberTier = (() => {
-    if (!user || user.id === 'guest' || user.userType === 'COMPANY_USER') return undefined;
-    if (user.lastName?.toLowerCase() === 'hartwig' || user.firstName?.toLowerCase() === 'chuck') return 'Founding Member';
-    const slug = `${user.firstName || ''}-${user.lastName || ''}`.toLowerCase().replace(/\s+/g, '-');
-    return mockProfileSections[slug] ? 'Gold Member' : undefined;
-  })();
+  // No real membership-tier data source yet — leave unset so a fresh
+  // account doesn't get a fabricated tier badge.
+  const memberTier: string | undefined = undefined;
 
   return (
     <nav className={`navbar ${sidebarOffset ? 'navbar--sidebar-offset' : ''}`}>
@@ -273,10 +308,19 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
                       <div className="navbar__dropdown-empty">No notifications yet.</div>
                     ) : (
                       notifications.map((item) => (
-                        <div key={item.requestId} className="navbar__notification-item">
+                        <div
+                          key={item.requestId}
+                          className="navbar__notification-item"
+                          role="menuitem"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => {
+                            setIsNotificationsOpen(false);
+                            navigate(item.type === 'connection' ? '/network' : '/global/activity');
+                          }}
+                        >
                           <div className="navbar__notification-title">{item.title}</div>
                           <div className="navbar__notification-desc">{item.description}</div>
-                          <div className="navbar__notification-time">{item.lastUpdate}</div>
+                          <div className="navbar__notification-time">{formatNotificationTime(item.lastUpdate)}</div>
                         </div>
                       ))
                     )}

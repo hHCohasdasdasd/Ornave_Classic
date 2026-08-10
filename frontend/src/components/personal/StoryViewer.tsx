@@ -1,7 +1,27 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Story, StorySlide, StorySlideType } from '@/data/mockStories';
 import './StoryViewer.css';
+
+export type StorySlideType = 'image' | 'video' | 'text';
+
+export interface StorySlide {
+  type?: StorySlideType;
+  image?: string;
+  video?: string;
+  heading?: string;
+  text?: string;
+  caption?: string;
+  background?: string;
+}
+
+export interface Story {
+  id: string;
+  type: 'user' | 'company';
+  name: string;
+  avatarUrl?: string;
+  profileSlug: string;
+  slides: StorySlide[];
+}
 
 interface StoryViewerProps {
   stories: Story[];

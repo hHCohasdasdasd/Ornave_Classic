@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { apiClient } from '@/services/api';
-import { TokenStorage } from '@/utils/storage';
+import { TokenStorage, scopedKey } from '@/utils/storage';
 import { networkService } from '@/services/networkService';
 import { feedService } from '@/services/feedService';
 import { firmService } from '@/services/firmService';
 import { FirmProfileData } from '@/types/firm';
-import { mockProfileSections } from '@/data/mockProfileSections';
-import { mockStories } from '@/data/mockStories';
 import { ProfileHeroCard } from '@/components/personal/ProfileHeroCard';
 import { StoryViewer } from '@/components/personal/StoryViewer';
 import {
@@ -87,6 +85,7 @@ function isKnownFirmSlug(slug: string): boolean {
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user, triggerAuthModal } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [error, setError] = useState('');
@@ -102,6 +101,12 @@ export const ProfilePage: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [partnerStatus, setPartnerStatus] = useState('NOT_CONNECTED');
+  // True once we've confirmed viewedUser.id is a real backend user id rather
+  // than the raw "firstname-lastname" slug the profile page starts out with
+  // (see loadViewedUserProfile / resolveUserBySlug below). Connect/Partner
+  // actions must wait for this, or they silently fail against a fake id.
+  const [isRealUserResolved, setIsRealUserResolved] = useState(false);
+  const [connectActionError, setConnectActionError] = useState<string | null>(null);
   const [connections, setConnections] = useState<any[]>([]);
   const [isLoadingConnections, setIsLoadingConnections] = useState(false);
   const [mutualConnections, setMutualConnections] = useState<any[]>([]);
@@ -111,19 +116,20 @@ export const ProfilePage: React.FC = () => {
   // The logged-in user's own purchased Ornave status (Basic/Bronze/Silver/
   // Gold), set from the Enhance Profile shop — kept in sync live so a
   // purchase is reflected here without needing a full page reload.
-  const [ownMemberTier, setOwnMemberTier] = useState(() => localStorage.getItem('ornave_member_tier') || 'Basic');
-  const [ownHasVerified, setOwnHasVerified] = useState(() => localStorage.getItem('ornave_verified_addon') === 'true');
+  const [ownMemberTier, setOwnMemberTier] = useState(() => localStorage.getItem(scopedKey('ornave_member_tier', user?.id)) || 'Basic');
+  const [ownHasVerified, setOwnHasVerified] = useState(() => localStorage.getItem(scopedKey('ornave_verified_addon', user?.id)) === 'true');
   useEffect(() => {
     const refresh = () => {
-      setOwnMemberTier(localStorage.getItem('ornave_member_tier') || 'Basic');
-      setOwnHasVerified(localStorage.getItem('ornave_verified_addon') === 'true');
+      setOwnMemberTier(localStorage.getItem(scopedKey('ornave_member_tier', user?.id)) || 'Basic');
+      setOwnHasVerified(localStorage.getItem(scopedKey('ornave_verified_addon', user?.id)) === 'true');
     };
+    refresh();
     window.addEventListener('ornave_state_update', refresh);
     return () => window.removeEventListener('ornave_state_update', refresh);
-  }, []);
+  }, [user?.id]);
 
   const [activeTab, setActiveTab] = useState('overview');
-  
+
   // Profile data state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -134,7 +140,6 @@ export const ProfilePage: React.FC = () => {
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [bannerUrl, setBannerUrl] = useState('');
-  const { user, triggerAuthModal } = useAuth();
 
   useEffect(() => {
     const viewParam = searchParams.get('view');
@@ -164,67 +169,8 @@ export const ProfilePage: React.FC = () => {
       loadNetworkStats();
       loadUserPosts();
       loadConnections();
-      
-      // Seed Chuck Hartwig data if current user is Hartwig. Sourced from the
-      // single mockProfileSections['chuck-hartwig'] record (same data every
-      // other profile draws from) plus two fields that only exist here.
-      if (user?.lastName === 'Hartwig') {
-        const mockSections = {
-          ...mockProfileSections['chuck-hartwig'],
-          projects: [
-            {
-              id: 'proj-1',
-              name: 'Nexus Quantum Architecture',
-              description: 'Next-generation supply chain engine utilizing quantum computing principles for route optimization.',
-              url: 'https://nexusflow.sys/quantum',
-              startDate: '2022-01',
-              current: true
-            }
-          ],
-          awards: [
-            {
-              id: 'award-1',
-              title: 'Global CTO of the Year',
-              issuer: 'World Technology Council',
-              issueDate: '2023-11',
-              description: 'Awarded for pioneering contributions to distributed system architectures.'
-            }
-          ]
-        };
-        localStorage.setItem('ornave_profile_sections', JSON.stringify(mockSections));
-
-        // Also seed overrides for bio/headline
-        localStorage.setItem('ornave_profile_overrides', JSON.stringify({
-          headline: 'Chief Technology Officer | Enterprise Architect | AI Innovation Lead',
-          location: 'Berlin, Germany',
-          bio: 'Visionary technology leader with 20+ years of experience in architecting high-scale distributed systems and leading global engineering teams through digital transformation.',
-          website: 'https://hartwig.tech',
-          phone: '+49 (170) 987-6543'
-        }));
-      }
     }
   }, [user, navigate, searchParams]);
-
-  // Force Hartwig data if name matches
-  useEffect(() => {
-    if (firstName?.toLowerCase() === 'chuck' || lastName?.toLowerCase() === 'hartwig') {
-      if (!bio) {
-        setBio('Visionary technology leader with 20+ years of experience in architecting high-scale distributed systems and leading global engineering teams through digital transformation.');
-      }
-      if (!headline) {
-        setHeadline('Chief Technology Officer | Enterprise Architect | AI Innovation Lead');
-      }
-      if (!location) {
-        setLocation('Berlin, Germany');
-      }
-      if (!website) {
-        setWebsite('https://hartwig.tech');
-      }
-      if (!phone) {
-        setPhone('+49 (170) 987-6543');
-      }
-    }
-  }, [firstName, lastName, bio, headline, location, website, phone]);
 
   const loadUserPosts = async (targetUserId?: string) => {
     try {
@@ -256,46 +202,23 @@ export const ProfilePage: React.FC = () => {
       setIsLoading(true);
       const response = await apiClient.getProfile();
       const profileData = response.data;
-      
-      // Seed data for Hartwig if detected
-      if (profileData.lastName?.toLowerCase() === 'hartwig' || profileData.firstName?.toLowerCase() === 'chuck') {
-        const mockOverrides = {
-          headline: 'Chief Technology Officer | Enterprise Architect | AI Innovation Lead',
-          location: 'Berlin, Germany',
-          bio: 'Visionary technology leader with 20+ years of experience in architecting high-scale distributed systems and leading global engineering teams through digital transformation.',
-          website: 'https://hartwig.tech',
-          phone: '+49 (170) 987-6543'
-        };
-        setHeadline(mockOverrides.headline);
-        setLocation(mockOverrides.location);
-        setWebsite(mockOverrides.website);
-        setBio(mockOverrides.bio);
-        setPhone(mockOverrides.phone);
-        localStorage.setItem('ornave_profile_overrides', JSON.stringify(mockOverrides));
-        
-        // Ensure name is correct
-        setFirstName('Chuck');
-        setLastName('Hartwig');
-        setAvatarUrl('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop');
-        setBannerUrl('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop');
-      } else {
-        setFirstName(profileData.firstName || '');
-        setLastName(profileData.lastName || '');
-        setPhone(profileData.profile?.phone || '');
-        setHeadline(profileData.profile?.headline || '');
-        setLocation(profileData.profile?.location || profileData.profile?.address || '');
-        setWebsite(profileData.profile?.website || '');
-        setBio(profileData.profile?.bio || '');
-        setAvatarUrl(profileData.profile?.avatarUrl || '');
-        setBannerUrl(profileData.profile?.bannerUrl || '');
-      }
+
+      setFirstName(profileData.firstName || '');
+      setLastName(profileData.lastName || '');
+      setPhone(profileData.profile?.phone || '');
+      setHeadline(profileData.profile?.headline || '');
+      setLocation(profileData.profile?.location || profileData.profile?.address || '');
+      setWebsite(profileData.profile?.website || '');
+      setBio(profileData.profile?.bio || '');
+      setAvatarUrl(profileData.profile?.avatarUrl || '');
+      setBannerUrl(profileData.profile?.bannerUrl || '');
 
       const storedUser = TokenStorage.getUser();
       if (storedUser?.firstName) setFirstName(storedUser.firstName);
       if (storedUser?.lastName) setLastName(storedUser.lastName);
 
       try {
-        const raw = localStorage.getItem('ornave_profile_overrides');
+        const raw = localStorage.getItem(scopedKey('ornave_profile_overrides', user?.id));
         if (raw) {
           const overrides = JSON.parse(raw);
           if (overrides.headline !== undefined) setHeadline(overrides.headline);
@@ -314,12 +237,14 @@ export const ProfilePage: React.FC = () => {
           try {
             const fData = await firmService.getFirmProfile(companyData.id || companyData.slug);
             setFirmData(fData);
-            setFirstName(fData.name);
-            setLastName('');
-            setBio(fData.bio);
-            setHeadline(fData.tagline || (fData.firmType === 'SERVICE' ? 'Professional Services' : 'Product & Innovation'));
-            if (fData.locations && fData.locations.length > 0) {
-              setLocation(fData.locations[0].city);
+            if (fData) {
+              setFirstName(fData.name);
+              setLastName('');
+              setBio(fData.bio);
+              setHeadline(fData.tagline || (fData.firmType === 'SERVICE' ? 'Professional Services' : 'Product & Innovation'));
+              if (fData.locations && fData.locations.length > 0) {
+                setLocation(fData.locations[0].city);
+              }
             }
           } catch (e) {
             console.error('Failed to load own firm profile', e);
@@ -415,29 +340,7 @@ export const ProfilePage: React.FC = () => {
         })
       ];
       
-      // If we have very few, add some more "demo" data but prioritize real state
-      if (combined.length === 0) {
-        setConnections([
-          { 
-            id: 'omar-elferwany', 
-            name: 'Omar Elferwany', 
-            headline: 'Senior Software Engineer | System Architect', 
-            type: 'user', 
-            location: 'San Francisco, CA',
-            avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop'
-          },
-          { 
-            id: 'global-logistics-corp', 
-            name: 'Global Logistics Corp', 
-            headline: 'End-to-End Supply Chain Solutions', 
-            type: 'firm', 
-            location: 'New York, USA',
-            avatarUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=100&h=100&fit=crop'
-          }
-        ]);
-      } else {
-        setConnections(combined);
-      }
+      setConnections(combined);
     } catch (err) {
       console.error('Failed to load connections:', err);
     } finally {
@@ -450,158 +353,6 @@ export const ProfilePage: React.FC = () => {
     const decodedParam = decodeURIComponent(viewParam);
     const [fname, lname] = decodedParam.split('-').map(name => name.charAt(0).toUpperCase() + name.slice(1));
     
-    const mockProfiles: { [key: string]: any } = {
-      'omar-elferwany': {
-        firstName: 'Omar',
-        lastName: 'Elferwany',
-        headline: 'Senior Software Engineer',
-        location: 'San Francisco, CA',
-        bio: 'Building scalable systems and passionate about open-source software.',
-        website: 'https://omar.dev',
-        phone: '+1 (555) 123-4567',
-        connectionCount: 324,
-      },
-      'chuck-hartwig': {
-        firstName: 'Chuck',
-        lastName: 'Hartwig',
-        headline: 'Chief Technology Officer | Enterprise Architect | AI Innovation Lead',
-        location: 'Berlin, Germany',
-        bio: 'Visionary technology leader with 20+ years of experience in architecting high-scale distributed systems and leading global engineering teams through digital transformation.',
-        website: 'https://hartwig.tech',
-        phone: '+49 (170) 987-6543',
-        connectionCount: 5842,
-        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop',
-        bannerUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop',
-        type: 'user',
-        isPremium: true,
-      },
-      'mohamed-arafa': {
-        firstName: 'Mohamed',
-        lastName: 'Arafa',
-        headline: 'Full Stack Developer',
-        location: 'Cairo, Egypt',
-        bio: 'Web developer with expertise in React and Node.js. Always learning and sharing knowledge.',
-        website: 'https://mohamedara.dev',
-        phone: '+20 (100) 123-4567',
-        connectionCount: 289,
-      },
-      'andrea-garcía-barea': {
-        firstName: 'Andrea',
-        lastName: 'García Barea',
-        headline: 'Product Manager',
-        location: 'Barcelona, Spain',
-        bio: 'Focused on building products that solve real problems. Data-driven and user-centric.',
-        website: 'https://andreagarcia.com',
-        phone: '+34 (600) 123-456',
-        connectionCount: 456,
-        type: 'user',
-      },
-      'global-logistics-corp': {
-        firstName: 'Global',
-        lastName: 'Logistics Corp',
-        headline: 'Leading Global Supply Chain Solutions',
-        location: 'New York, USA',
-        bio: 'Providing end-to-end logistics solutions for businesses worldwide since 1995.',
-        website: 'https://globallogistics.com',
-        phone: '+1 (800) LOG-ISTIC',
-        connectionCount: 52400,
-        type: 'firm',
-      },
-      'emma-williams': {
-        id: 'cmol9m45z00074qmsf3rzwta7',
-        firstName: 'Emma',
-        lastName: 'Williams',
-        headline: 'Senior Supply Chain Director @ Global Logistics | Digital Transformation Expert',
-        location: 'New York, USA',
-        bio: 'Visionary leader in global logistics and supply chain optimization with 15+ years of experience. Focused on digital transformation and sustainable operations.',
-        website: 'https://emmawilliams.io',
-        phone: '+1 (212) 555-0198',
-        connectionCount: 1240,
-        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop',
-        bannerUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1200&auto=format&fit=crop',
-        type: 'user',
-        isPremium: true,
-      },
-      'abibas': {
-        firstName: 'Abibas',
-        lastName: 'Official',
-        headline: 'Everything is possible with three stripes',
-        location: 'Herzogenaurach, Germany',
-        bio: 'Leading sports brand specializing in high-performance footwear and apparel. Since 1949, we have been pushing the boundaries of athletic innovation.',
-        website: 'https://abibas-mock.com',
-        phone: '+49 123 456789',
-        connectionCount: 1500000,
-        type: 'firm',
-      },
-      'bjorn-gulden': {
-        firstName: 'Bjørn',
-        lastName: 'Gulden',
-        headline: 'CEO at Abibas',
-        location: 'Herzogenaurach, Germany',
-        bio: 'Leading the three stripes into a new era of growth and innovation.',
-        connectionCount: 12400,
-        type: 'user'
-      },
-      'harm-ohlmeyer': {
-        firstName: 'Harm',
-        lastName: 'Ohlmeyer',
-        headline: 'CFO at Abibas',
-        location: 'Herzogenaurach, Germany',
-        bio: 'Driving financial excellence and strategic value creation.',
-        connectionCount: 8900,
-        type: 'user'
-      },
-      'michelle-robertson': {
-        firstName: 'Michelle',
-        lastName: 'Robertson',
-        headline: 'CHRO at Abibas',
-        location: 'Herzogenaurach, Germany',
-        bio: 'Focusing on people, culture, and organizational transformation.',
-        connectionCount: 5600,
-        type: 'user'
-      },
-      'service-firm': {
-        firstName: 'Service',
-        lastName: 'Firm',
-        headline: 'Premium Professional Services & Consulting',
-        location: 'Global',
-        bio: 'A premier service-based organization dedicated to providing high-quality professional services and consulting solutions across multiple industries.',
-        website: 'https://servicefirm.com',
-        phone: '+1 (800) SERVICE',
-        connectionCount: 12500,
-        type: 'firm',
-      },
-      'expert-portfolio': {
-        firstName: 'Expert',
-        lastName: 'Portfolio',
-        headline: 'Proven Success in Enterprise Infrastructure',
-        location: 'London, UK',
-        bio: 'Specializing in large-scale infrastructure and digital transformation projects with a proven track record of excellence.',
-        website: 'https://expert-portfolio.com',
-        connectionCount: 8400,
-        type: 'firm',
-      },
-      'resource-hub': {
-        firstName: 'Knowledge',
-        lastName: 'Hub',
-        headline: 'Authoritative B2B Research & Resources',
-        location: 'Amsterdam, Netherlands',
-        bio: 'The leading authority in industry research, technical documentation, and B2B educational resources.',
-        website: 'https://resource-hub.com',
-        connectionCount: 15600,
-        type: 'firm',
-      },
-      'subscription-pro': {
-        firstName: 'Subscription',
-        lastName: 'model',
-        headline: 'Reliable Ongoing Maintenance & Support',
-        location: 'Singapore',
-        bio: 'Reliable ongoing support and maintenance through our industry-leading subscription and SLA packages.',
-        website: 'https://subscription-pro.com',
-        connectionCount: 4200,
-        type: 'firm',
-      }
-    };
     
     const key = decodedParam.toLowerCase().trim();
     const slugKey = key.replace(/\s+/g, '-');
@@ -619,7 +370,7 @@ export const ProfilePage: React.FC = () => {
              fName === key || fNameSlug === slugKey;
     });
 
-    const profile = (mockProfiles[key] ? { ...mockProfiles[key] } : null) || (registeredFirm ? {
+    const profile: any = (registeredFirm ? {
       firstName: registeredFirm.name,
       lastName: '',
       headline: registeredFirm.headline || `${registeredFirm.industry || 'Professional'} Firm`,
@@ -666,9 +417,11 @@ export const ProfilePage: React.FC = () => {
 
     // Check relationship status
     if (profile.type === 'firm') {
+      setIsRealUserResolved(true); // firms don't go through the slug->user resolution below
       firmService.isFollowing(profile.id).then(val => setIsFollowing(val));
       firmService.isPartneredWithFirm(profile.id).then(val => setPartnerStatus(val ? 'PARTNERED' : 'NOT_CONNECTED'));
     } else {
+      setIsRealUserResolved(false);
       applyConnectionStatus(profile.id);
       networkService.getPartnerStatus(profile.id).then(val => setPartnerStatus(val));
 
@@ -698,11 +451,13 @@ export const ProfilePage: React.FC = () => {
           if (user && user.id !== real.id) {
             networkService.getMutualConnections(real.id).then(setMutualConnections);
           }
-        } else if (!mockProfiles[key]) {
-          // Not a known mock profile and no matching user account either —
-          // this "view" param may actually be a real company id (e.g. a
+          setIsRealUserResolved(true);
+        } else {
+          // No matching user account either — this "view" param may
+          // actually be a real company id (e.g. a
           // "Posted by" link from the marketplace). Try resolving it as a
           // firm before settling for the generic placeholder.
+          setIsRealUserResolved(true); // not a real user id — Connect must not be attempted against it
           firmService.getPublicCompanyProfile(key).then((company) => {
             if (!company) return;
             setViewedUser((prev: any) => (prev ? { ...prev, id: company.id, type: 'firm', firstName: company.name, lastName: '' } : prev));
@@ -716,9 +471,9 @@ export const ProfilePage: React.FC = () => {
             firmService.isPartneredWithFirm(company.id).then((val) => setPartnerStatus(val ? 'PARTNERED' : 'NOT_CONNECTED'));
             firmService.getFirmProfile(company.id).then((data) => {
               setFirmData(data);
-              setConnectionCount(data.followersCount);
+              setConnectionCount(data?.followersCount || 0);
               setIsLoadingPosts(false);
-              setPosts((data.posts || []).map((p) => ({
+              setPosts((data?.posts || []).map((p) => ({
                 id: p.id,
                 title: p.title,
                 content: p.content,
@@ -732,12 +487,6 @@ export const ProfilePage: React.FC = () => {
       });
     }
 
-    // Seed this person's resume-style sections (Experience/Education/Skills/...),
-    // namespaced per-slug so browsing multiple profiles doesn't mix people up.
-    if (mockProfileSections[key]) {
-      localStorage.setItem(`ornave_profile_sections_${key}`, JSON.stringify(mockProfileSections[key]));
-    }
-
     if (profile.id && profile.type !== 'firm') {
       loadUserPosts(profile.id);
     }
@@ -746,10 +495,13 @@ export const ProfilePage: React.FC = () => {
       const firmIdToLoad = profile.id || decodedParam;
       firmService.getFirmProfile(firmIdToLoad).then(data => {
         setFirmData(data);
+        if (!data) {
+          setIsLoadingPosts(false);
+          return;
+        }
         setConnectionCount(data.followersCount);
 
-        // Firms have no backend "user" to load posts for — use the mock
-        // posts authored for this firm instead (see mockFirmProfiles.ts).
+        // Firms have no backend "user" to load posts for.
         setIsLoadingPosts(false);
         setPosts((data.posts || []).map((p) => ({
           id: p.id,
@@ -795,34 +547,47 @@ export const ProfilePage: React.FC = () => {
       triggerAuthModal('Please log in to connect or follow.');
       return;
     }
-    
+
     const isFirm = viewedUser?.type === 'firm';
-    if (isFirm) {
-      const success = isFollowing 
-        ? await firmService.unfollowFirm(viewedUser.id)
-        : await firmService.followFirm(viewedUser);
-      
-      if (success) {
-        setIsFollowing(!isFollowing);
-      }
-    } else {
-      // Logic for personal connection
-      if (isConnected) {
-        await networkService.removeConnection(viewedUser.id);
-        setIsConnected(false);
-        setPartnerStatus('NOT_CONNECTED');
-      } else if (isPending) {
-        // Cancel our outgoing request
-        await networkService.removeConnection(viewedUser.id);
-        setIsPending(false);
+    setConnectActionError(null);
+
+    if (!isFirm && !isRealUserResolved) {
+      // Still resolving whether this profile slug belongs to a real account —
+      // connecting now would send a request against a fake placeholder id.
+      setConnectActionError('Still loading this profile — try again in a moment.');
+      return;
+    }
+
+    try {
+      if (isFirm) {
+        const success = isFollowing
+          ? await firmService.unfollowFirm(viewedUser.id)
+          : await firmService.followFirm(viewedUser);
+
+        if (success) {
+          setIsFollowing(!isFollowing);
+        }
       } else {
-        await networkService.addConnection(viewedUser);
-        // The request may auto-accept (if the other side already requested us)
-        // or stay pending — reflect the real status rather than assuming.
-        const status = await networkService.getConnectionStatus(viewedUser.id);
-        setIsConnected(status === 'CONNECTED');
-        setIsPending(status === 'PENDING_SENT');
+        // Logic for personal connection
+        if (isConnected) {
+          await networkService.removeConnection(viewedUser.id);
+          setIsConnected(false);
+          setPartnerStatus('NOT_CONNECTED');
+        } else if (isPending) {
+          // Cancel our outgoing request
+          await networkService.removeConnection(viewedUser.id);
+          setIsPending(false);
+        } else {
+          await networkService.addConnection(viewedUser);
+          // The request may auto-accept (if the other side already requested us)
+          // or stay pending — reflect the real status rather than assuming.
+          const status = await networkService.getConnectionStatus(viewedUser.id);
+          setIsConnected(status === 'CONNECTED');
+          setIsPending(status === 'PENDING_SENT');
+        }
       }
+    } catch (err: any) {
+      setConnectActionError(err?.message || 'Something went wrong — please try again.');
     }
   };
 
@@ -833,24 +598,35 @@ export const ProfilePage: React.FC = () => {
     }
 
     const isFirm = viewedUser?.type === 'firm';
-    if (isFirm) {
-      if (partnerStatus === 'PARTNERED') {
-        await firmService.unpartnerFirm(viewedUser.id);
-        setPartnerStatus('NOT_CONNECTED');
+    setConnectActionError(null);
+
+    if (!isFirm && !isRealUserResolved) {
+      setConnectActionError('Still loading this profile — try again in a moment.');
+      return;
+    }
+
+    try {
+      if (isFirm) {
+        if (partnerStatus === 'PARTNERED') {
+          await firmService.unpartnerFirm(viewedUser.id);
+          setPartnerStatus('NOT_CONNECTED');
+        } else {
+          const success = await firmService.partnerFirm(viewedUser);
+          if (success) setPartnerStatus('PARTNERED');
+        }
       } else {
-        const success = await firmService.partnerFirm(viewedUser);
-        if (success) setPartnerStatus('PARTNERED');
+        if (partnerStatus === 'PARTNERED' || partnerStatus === 'PENDING_SENT') {
+          await networkService.removePartnership(viewedUser.id);
+          setPartnerStatus('NONE');
+        } else if (partnerStatus === 'PENDING_RECEIVED') {
+          navigate('/network');
+        } else {
+          await networkService.requestPartnership(viewedUser.id);
+          setPartnerStatus('PENDING_SENT');
+        }
       }
-    } else {
-      if (partnerStatus === 'PARTNERED' || partnerStatus === 'PENDING_SENT') {
-        await networkService.removePartnership(viewedUser.id);
-        setPartnerStatus('NONE');
-      } else if (partnerStatus === 'PENDING_RECEIVED') {
-        navigate('/network');
-      } else {
-        await networkService.requestPartnership(viewedUser.id);
-        setPartnerStatus('PENDING_SENT');
-      }
+    } catch (err: any) {
+      setConnectActionError(err?.message || 'Something went wrong — please try again.');
     }
   };
 
@@ -913,29 +689,21 @@ export const ProfilePage: React.FC = () => {
     ? viewedUser?.type
     : (user?.userType === 'COMPANY_USER' ? 'firm' : 'user');
 
-  // Which mockProfileSections record (if any) backs this profile's editorial
-  // content (highlights, focus tags, portfolio, derived stats). Distinct from
-  // `viewedSlugKey`/`sectionsKey`, which control which localStorage namespace
-  // the resume-style sections (Experience, Skills, ...) read from — those stay
-  // untouched here to avoid breaking the owner's own edited data.
-  const ownMockKey = (!isViewingOther && (user?.lastName?.toLowerCase() === 'hartwig' || user?.firstName?.toLowerCase() === 'chuck'))
-    ? 'chuck-hartwig'
-    : undefined;
-  const effectiveMockKey = viewedSlugKey || ownMockKey;
-  const mockData = effectiveMockKey ? mockProfileSections[effectiveMockKey] : undefined;
-
-  // Every profile gets the same editorial Overview layout — for the handful of
-  // demo personas that comes from mockProfileSections, for everyone else it's
-  // built from the same real Experience/Education/Skills/Certifications data
-  // the resume-style sections below already read from localStorage. Portfolio
-  // and recommendations have no real data-entry path yet, so those stay
-  // mock-only and simply render their empty state for real accounts.
-  const realSections = getStoredSections(viewedSlugKey);
-  const sourceExperiences = mockData?.experiences || realSections.experiences || [];
-  const sourceEducations = mockData?.educations || realSections.educations || [];
-  const sourceCertifications = mockData?.certifications || realSections.certifications || [];
-  const sourcePortfolio = mockData?.portfolio || [];
-  const sourceRecommendations = mockData?.recommendations || [];
+  // Every profile gets the same editorial Overview layout, built from the
+  // real Experience/Education/Skills/Certifications data the resume-style
+  // sections below already read from localStorage. Portfolio and
+  // recommendations have no real data-entry path yet, so those simply
+  // render their empty state until that exists.
+  // Own profile: scope by user id (matches ProfileEditPage's save key) so
+  // this account's resume sections never bleed in from — or leak into —
+  // another account that has used this same browser.
+  const effectiveSectionsKey = viewedSlugKey || (!isViewingOther ? user?.id : undefined);
+  const realSections = getStoredSections(effectiveSectionsKey);
+  const sourceExperiences = realSections.experiences || [];
+  const sourceEducations = realSections.educations || [];
+  const sourceCertifications = realSections.certifications || [];
+  const sourcePortfolio: any[] = [];
+  const sourceRecommendations: any[] = [];
 
   const earliestSourceYear = (() => {
     const years: number[] = [];
@@ -971,24 +739,25 @@ export const ProfilePage: React.FC = () => {
   const firmLayoutTemplate = profileType === 'firm' ? getFirmLayoutTemplate(firmData?.industry) : 'default';
 
   // Own profile and any other real registered account both show their real,
-  // permanent member number (assigned sequentially at signup). Only a purely
-  // mock profile with no matching account falls back to a stable hash.
-  const memberNumberSourceKey = effectiveMockKey || viewedSlugKey || (isViewingOther ? viewedUser?.id : undefined);
+  // permanent member number (assigned sequentially at signup). Any profile
+  // with no matching account falls back to a stable hash.
+  const memberNumberSourceKey = viewedSlugKey || (isViewingOther ? viewedUser?.id : undefined);
   const memberNumber = !isViewingOther && user?.memberNumber
     ? String(user.memberNumber)
     : isViewingOther && viewedMemberNumber
       ? String(viewedMemberNumber)
       : memberNumberSourceKey
-        ? String(Math.abs(Array.from(memberNumberSourceKey).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
+        ? String(Math.abs(Array.from(String(memberNumberSourceKey)).reduce((h: number, c: string) => (h * 31 + c.charCodeAt(0)) % 1000000, 7)) + 100000).slice(0, 6)
         : undefined;
 
-  // Mock Stories are keyed by the same profile slug used everywhere else in
-  // the app — only the handful of seeded people/firms in mockStories.ts have
-  // one, so the ring/button simply don't render for everyone else.
+  // Resolved slug for the profile currently being shown (own or viewed).
   const activeStorySlug = isViewingOther
     ? viewedSlugKey
     : (profileType === 'firm' ? TokenStorage.getCompany()?.slug : `${firstName}-${lastName}`.toLowerCase());
-  const activeStory = mockStories.find((s) => s.profileSlug === activeStorySlug);
+
+  // No real story data source yet, so the story ring/button simply don't
+  // render for anyone until that exists.
+  const activeStory: import('@/components/personal/StoryViewer').Story | undefined = undefined;
 
   const defaultEditorialBanner = 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1600&h=500&fit=crop';
 
@@ -1082,15 +851,15 @@ export const ProfilePage: React.FC = () => {
                 isViewingOther={isViewingOther}
                 isPremium={isViewingOther ? viewedUser?.isPremium : false}
                 type={profileType}
-                githubUrl={isViewingOther ? `https://github.com/${firstName?.toLowerCase() || ''}` : "https://github.com/emmawilliams"}
-                twitterUrl={isViewingOther ? `https://twitter.com/${firstName?.toLowerCase() || ''}` : "https://twitter.com/emma_supplychain"}
-                focusAreas={mockData?.focusAreas}
+                githubUrl={isViewingOther ? `https://github.com/${firstName?.toLowerCase() || ''}` : undefined}
+                twitterUrl={isViewingOther ? `https://twitter.com/${firstName?.toLowerCase() || ''}` : undefined}
+                focusAreas={undefined}
                 editorial
-                verified={!!mockData}
+                verified={false}
                 stats={profileType === 'firm' ? firmHeroStats : heroStats}
                 memberSince={earliestSourceYear ? String(earliestSourceYear) : undefined}
                 memberNumber={memberNumber}
-                memberTier={isViewingOther ? (effectiveMockKey === 'chuck-hartwig' ? 'Founding Member' : 'Gold Member') : `${ownHasVerified ? 'Verified ' : ''}${ownMemberTier === 'Basic' ? 'Basic Member' : ownMemberTier}`}
+                memberTier={isViewingOther ? undefined : `${ownHasVerified ? 'Verified ' : ''}${ownMemberTier === 'Basic' ? 'Basic Member' : ownMemberTier}`}
                 company={dossierCurrentRole?.company}
                 hasStory={!!activeStory}
                 onViewStory={() => setShowStoryViewer(true)}
@@ -1118,7 +887,8 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 <div className="account-stat">
                   <span className="account-stat-label">Profile Views</span>
-                  <span className="account-stat-value">1,248</span>
+                  {/* No view-tracking backend exists yet — showing 0 rather than a fabricated number. */}
+                  <span className="account-stat-value">0</span>
                 </div>
               </div>
               <div className="account-actions">
@@ -1136,9 +906,12 @@ export const ProfilePage: React.FC = () => {
                 <button
                   className={isFollowing || isConnected || isPending ? "btn-secondary" : "btn-primary"}
                   onClick={handleFollow}
+                  disabled={viewedUser?.type !== 'firm' && !isRealUserResolved}
                 >
                   {viewedUser?.type === 'firm'
                     ? (isFollowing ? 'Following' : '+ Follow')
+                    : !isRealUserResolved
+                    ? 'Loading…'
                     : (isConnected ? 'Connected' : (isPending ? 'Pending' : '+ Connect'))}
                 </button>
                 <button
@@ -1175,6 +948,12 @@ export const ProfilePage: React.FC = () => {
                   )}
                 </button>
               </div>
+
+              {connectActionError && (
+                <div className="connect-action-error" style={{ color: '#c0392b', fontSize: '13px', marginTop: '6px' }}>
+                  {connectActionError}
+                </div>
+              )}
 
               {mutualConnections.length > 0 && (
                 <div className="mutual-connections">
@@ -1268,7 +1047,7 @@ export const ProfilePage: React.FC = () => {
                                 )}
                                 <p className="bio-text">{bio || "No bio available."}</p>
                               </div>
-                              <ProfileSkillBars skills={mockData?.skills} />
+                              <ProfileSkillBars skills={realSections.skills} />
                               <ProfileContactCard
                                 email={dossierEmail}
                                 website={website}
@@ -1323,10 +1102,10 @@ export const ProfilePage: React.FC = () => {
                           )
                         ) : (
                           <>
-                            <ProfileExperience sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                            <ProfileEducation sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                            <ProfileCertifications sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                            <ProfileLanguages sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                            <ProfileExperience sectionsKey={effectiveSectionsKey} isViewingOther={isViewingOther} />
+                            <ProfileEducation sectionsKey={effectiveSectionsKey} isViewingOther={isViewingOther} />
+                            <ProfileCertifications sectionsKey={effectiveSectionsKey} isViewingOther={isViewingOther} />
+                            <ProfileLanguages sectionsKey={effectiveSectionsKey} isViewingOther={isViewingOther} />
                           </>
                         )}
                       </div>
@@ -1334,10 +1113,10 @@ export const ProfilePage: React.FC = () => {
 
                     {activeTab === 'skills' && (
                       <div className="tab-pane fade-in">
-                        <ProfileSkills sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                        <ProfileProjects sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                        <ProfileAwards sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
-                        <ProfileVolunteering sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                        <ProfileSkills sectionsKey={effectiveSectionsKey} isViewingOther={isViewingOther} />
+                        <ProfileProjects sectionsKey={effectiveSectionsKey} isViewingOther={isViewingOther} />
+                        <ProfileAwards sectionsKey={effectiveSectionsKey} isViewingOther={isViewingOther} />
+                        <ProfileVolunteering sectionsKey={effectiveSectionsKey} isViewingOther={isViewingOther} />
                       </div>
                     )}
 
@@ -1350,9 +1129,9 @@ export const ProfilePage: React.FC = () => {
                             <div className="dossier-empty-state"><p>No case studies added yet.</p></div>
                           )
                         ) : (
-                          <ProfilePortfolioGallery items={mockData?.portfolio} />
+                          <ProfilePortfolioGallery items={sourcePortfolio} />
                         )}
-                        <ProfileRecommendations sectionsKey={viewedSlugKey} isViewingOther={isViewingOther} />
+                        <ProfileRecommendations sectionsKey={effectiveSectionsKey} isViewingOther={isViewingOther} />
                         <ProfileRecognitions items={profileType === 'firm' ? (firmData?.recognitions || []).map((r) => ({ id: r.id, label: r.label, sublabel: r.sublabel || '' })) : dossierRecognitions} />
                       </div>
                     )}

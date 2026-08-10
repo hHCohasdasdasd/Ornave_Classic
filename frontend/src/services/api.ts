@@ -6,6 +6,11 @@ import { ApiResponse } from '@/types';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const AUTH_BYPASS_ENABLED = true;
 
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 class ApiClient {
   private client: AxiosInstance;
 
@@ -13,30 +18,34 @@ class ApiClient {
     this.client = axios.create({
       baseURL: API_BASE_URL,
       timeout: 10000,
+      withCredentials: true, // send the httpOnly auth cookie on every request
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    // Request interceptor - add token to headers
+    // Request interceptor — attach the CSRF header (double-submit pattern;
+    // see backend/src/middleware/csrf.ts) whenever we have a session. The
+    // real auth token itself lives only in the httpOnly cookie and is never
+    // touched by frontend JS.
     this.client.interceptors.request.use(
       (config) => {
-        const token = TokenStorage.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        const csrfToken = getCookie('ornave_csrf');
+        if (csrfToken) {
+          config.headers['X-CSRF-Token'] = csrfToken;
         }
         return config;
       },
       (error) => Promise.reject(error)
     );
 
-    // Response interceptor - handle 401 and refresh token
+    // Response interceptor - handle 401
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
         if (error.response?.status === 401) {
           if (!AUTH_BYPASS_ENABLED) {
-            // Token expired - clear storage and redirect to login
+            // Session expired/invalid - clear local state and redirect to login
             TokenStorage.clear();
             window.location.href = '/login';
           }
@@ -66,6 +75,10 @@ class ApiClient {
 
   async patch(url: string, data?: any, config?: any) {
     return this.client.patch(url, data, config);
+  }
+
+  async put(url: string, data?: any, config?: any) {
+    return this.client.put(url, data, config);
   }
 
   async delete(url: string, config?: any) {
@@ -105,6 +118,14 @@ class ApiClient {
       return response.data;
     } catch (error) {
       this.handleError(error);
+    }
+  }
+
+  async logout() {
+    try {
+      await this.client.post('/auth/logout');
+    } catch {
+      // Best-effort — local state gets cleared regardless by the caller.
     }
   }
 

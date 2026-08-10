@@ -66,6 +66,16 @@ class NetworkService {
     return (response?.data || []).map((u: any) => ({ ...u, isConnected: true }));
   }
 
+  /** Real "people you may know" suggestions — other registered users not already connected/pending. */
+  async getSuggestedUsers(limit = 10): Promise<UserProfile[]> {
+    try {
+      const response = await apiClient.discoverUsers(limit);
+      return response?.data || [];
+    } catch {
+      return [];
+    }
+  }
+
   /** Another member's accepted connections — used when viewing their profile, not our own. */
   async getConnectionsOf(userId: string): Promise<UserProfile[]> {
     try {

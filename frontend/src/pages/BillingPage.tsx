@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
+import { companyBillingService } from '@/services/companyBillingService';
 import './BillingPage.css';
 
 interface Invoice {
@@ -13,17 +14,31 @@ interface Invoice {
   status: 'Paid' | 'Pending' | 'Failed';
 }
 
-const mockInvoices: Invoice[] = [
-  { id: 'INV-2026-003', date: 'Mar 1, 2026', description: 'Ornave Business Premium – March 2026', amount: '€89.00', status: 'Paid' },
-  { id: 'INV-2026-002', date: 'Feb 1, 2026', description: 'Ornave Business Premium – February 2026', amount: '€89.00', status: 'Paid' },
-  { id: 'INV-2026-001', date: 'Jan 1, 2026', description: 'Ornave Business Premium – January 2026', amount: '€89.00', status: 'Paid' },
-  { id: 'INV-2025-012', date: 'Dec 1, 2025', description: 'Ornave Business Premium – December 2025', amount: '€89.00', status: 'Paid' },
-];
-
 export const BillingPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'payment'>('overview');
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+
+  const companyId = user?.companyId;
+
+  useEffect(() => {
+    if (!companyId) return;
+    (async () => {
+      try {
+        const data = await companyBillingService.listInvoices(companyId);
+        setInvoices(data.map(inv => ({
+          id: inv.id,
+          date: inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString() : '',
+          description: inv.description,
+          amount: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(inv.amount),
+          status: inv.status,
+        })));
+      } catch (err) {
+        console.error('Failed to load invoices:', err);
+      }
+    })();
+  }, [companyId]);
 
   return (
     <>
@@ -118,7 +133,7 @@ export const BillingPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {mockInvoices.map(inv => (
+                {invoices.map(inv => (
                   <tr key={inv.id}>
                     <td className="billing-table__id">{inv.id}</td>
                     <td>{inv.date}</td>
@@ -136,6 +151,9 @@ export const BillingPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
+            {invoices.length === 0 && (
+              <p className="billing-empty-state">No invoices yet.</p>
+            )}
           </div>
         )}
 

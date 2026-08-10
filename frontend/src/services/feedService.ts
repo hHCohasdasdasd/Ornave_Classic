@@ -189,8 +189,7 @@ class FeedService {
       return items;
     } catch (error) {
       console.error('Failed to fetch trending posts:', error);
-      // Return mock trending posts if API fails
-      return this.getMockTrendingPosts();
+      return [];
     }
   }
 
@@ -207,59 +206,8 @@ class FeedService {
       return Array.isArray(data) ? data : data.themes || [];
     } catch (error) {
       console.error('Failed to fetch top themes:', error);
-      // Return mock themes if API fails
-      return this.getMockTopThemes();
+      return [];
     }
-  }
-
-  private getMockTrendingPosts(): FeedItem[] {
-    return [
-      {
-        id: 'trending-1',
-        type: 'post',
-        author: {
-          id: '1',
-          firstName: 'Sarah',
-          lastName: 'Anderson',
-          headline: 'Supply Chain Manager',
-          profilePicture: '',
-        },
-        content: 'Excited to announce our new partnership with Global Logistics! 🚀 This collaboration will expand our reach to 50+ new markets.',
-        mediaUrl: '',
-        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        reactions: { likes: 342, comments: 45 },
-      },
-      {
-        id: 'trending-2',
-        type: 'post',
-        author: {
-          id: '2',
-          firstName: 'Michael',
-          lastName: 'Chen',
-          headline: 'Operations Director',
-          profilePicture: '',
-        },
-        content: 'Just completed a successful pilot program with our clients. 20% efficiency improvement across all processes. #operationsExcellence',
-        mediaUrl: '',
-        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        reactions: { likes: 289, comments: 38 },
-      },
-      {
-        id: 'trending-3',
-        type: 'post',
-        author: {
-          id: '3',
-          firstName: 'Emma',
-          lastName: 'Williams',
-          headline: 'Business Development Lead',
-          profilePicture: '',
-        },
-        content: 'Thrilled to share our latest market insights report. Key takeaway: B2B networks are the future of business growth.',
-        mediaUrl: '',
-        timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        reactions: { likes: 256, comments: 52 },
-      },
-    ];
   }
 
   async getComments(postId: string): Promise<any[]> {
@@ -276,18 +224,6 @@ class FeedService {
     return response.data.data || response.data;
   }
 
-  private getMockTopThemes(): string[] {
-    return [
-      'Digital Transformation',
-      'Supply Chain Innovation',
-      'Global Partnership',
-      'Operations Excellence',
-      'B2B Growth',
-      'Market Expansion',
-      'Technology Integration',
-      'Business Collaboration',
-    ];
-  }
 }
 
 export const feedService = new FeedService();

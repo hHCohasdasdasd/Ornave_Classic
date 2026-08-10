@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Navbar } from '@/components/ui/Navbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiClient } from '@/services/api';
-import { TokenStorage } from '@/utils/storage';
+import { TokenStorage, scopedKey } from '@/utils/storage';
 import './ProfileEditPage.css';
 
 interface Experience {
@@ -140,8 +140,11 @@ export const ProfileEditPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const section = searchParams.get('section');
   const tab = searchParams.get('tab');
-  const PROFILE_OVERRIDES_KEY = 'ornave_profile_overrides';
-  const PROFILE_SECTIONS_KEY = 'ornave_profile_sections';
+  // Scoped by user id — these are client-side-only fields with no backend
+  // model yet, so without scoping, one account's edits would bleed into any
+  // other account that shares this browser.
+  const PROFILE_OVERRIDES_KEY = scopedKey('ornave_profile_overrides', user?.id);
+  const PROFILE_SECTIONS_KEY = scopedKey('ornave_profile_sections', user?.id);
 
   const [activeTab, setActiveTab] = useState<'info' | 'enhance' | 'sections'>('info');
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -149,8 +152,8 @@ export const ProfileEditPage: React.FC = () => {
   // of "add" mode — the form saves back into this entry instead of
   // appending a new one.
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [currentTier, setCurrentTier] = useState<string>(() => localStorage.getItem(MEMBER_TIER_KEY) || 'Basic');
-  const [hasVerified, setHasVerified] = useState<boolean>(() => localStorage.getItem(VERIFIED_ADDON_KEY) === 'true');
+  const [currentTier, setCurrentTier] = useState<string>(() => localStorage.getItem(scopedKey(MEMBER_TIER_KEY, user?.id)) || 'Basic');
+  const [hasVerified, setHasVerified] = useState<boolean>(() => localStorage.getItem(scopedKey(VERIFIED_ADDON_KEY, user?.id)) === 'true');
   // Photo states
   const [profilePhoto, setProfilePhoto] = useState<string>('');
   const [backgroundPhoto, setBackgroundPhoto] = useState<string>('');
@@ -169,119 +172,6 @@ export const ProfileEditPage: React.FC = () => {
     postalCode: '',
     country: '',
   });
-
-  // Force Chuck Hartwig data if identified
-  useEffect(() => {
-    const isChuck = user?.lastName?.toLowerCase() === 'hartwig' || 
-                   user?.firstName?.toLowerCase() === 'chuck' || 
-                   formData.lastName?.toLowerCase() === 'hartwig';
-
-    if (isChuck) {
-      if (!formData.about) {
-        setFormData(prev => ({
-          ...prev,
-          firstName: 'Chuck',
-          lastName: 'Hartwig',
-          headline: 'Chief Technology Officer | Enterprise Architect | AI Innovation Lead',
-          location: 'Berlin, Germany',
-          about: 'Visionary technology leader with 20+ years of experience in architecting high-scale distributed systems and leading global engineering teams through digital transformation.',
-          website: 'https://hartwig.tech',
-          phone: '+49 (170) 987-6543'
-        }));
-      }
-      if (!profilePhoto) {
-        setProfilePhoto('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop');
-      }
-      if (!backgroundPhoto) {
-        setBackgroundPhoto('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop');
-      }
-
-      // Seed experience if empty
-      const sectionsRaw = localStorage.getItem(PROFILE_SECTIONS_KEY);
-      const sectionsData = sectionsRaw ? JSON.parse(sectionsRaw) : {};
-
-      if (!sectionsData.experiences || sectionsData.experiences.length === 0) {
-        const mockExperiences: Experience[] = [
-          {
-            id: 'exp1',
-            title: 'VP of Engineering',
-            company: 'Tesla',
-            location: 'Berlin, Germany',
-            startDate: '2020-03',
-            endDate: '',
-            current: true,
-            description: 'Leading the Gigafactory Berlin engineering teams in developing next-generation manufacturing automation systems.'
-          },
-          {
-            id: 'exp2',
-            title: 'Senior Director of Cloud Architecture',
-            company: 'Amazon Web Services (AWS)',
-            location: 'Seattle, WA',
-            startDate: '2015-06',
-            endDate: '2020-02',
-            current: false,
-            description: 'Architected core serverless infrastructure components used by millions of developers worldwide.'
-          },
-          {
-            id: 'exp3',
-            title: 'Staff Software Engineer',
-            company: 'Google',
-            location: 'Mountain View, CA',
-            startDate: '2010-01',
-            endDate: '2015-05',
-            current: false,
-            description: 'Core contributor to the Kubernetes project and Google Cloud Platform networking stack.'
-          }
-        ];
-        setExperiences(mockExperiences);
-        sectionsData.experiences = mockExperiences;
-      }
-
-      if (!sectionsData.educations || sectionsData.educations.length === 0) {
-        const mockEducation: Education[] = [
-          {
-            id: 'edu1',
-            school: 'Stanford University',
-            degree: 'Master of Science',
-            field: 'Computer Science (AI Specialization)',
-            startDate: '2008-09',
-            endDate: '2010-06',
-            current: false,
-            description: 'Focused on large-scale machine learning systems.'
-          },
-          {
-            id: 'edu2',
-            school: 'MIT',
-            degree: 'Bachelor of Science',
-            field: 'Electrical Engineering and Computer Science',
-            startDate: '2004-09',
-            endDate: '2008-06',
-            current: false,
-            description: 'Graduated with honors. Lead of the robotics club.'
-          }
-        ];
-        setEducations(mockEducation);
-        sectionsData.educations = mockEducation;
-      }
-
-      if (!sectionsData.skills || sectionsData.skills.length === 0) {
-        const mockSkills: Skill[] = [
-          { id: 's1', name: 'Cloud Architecture', level: 'Expert' },
-          { id: 's2', name: 'Distributed Systems', level: 'Expert' },
-          { id: 's3', name: 'Artificial Intelligence', level: 'Advanced' },
-          { id: 's4', name: 'Rust', level: 'Advanced' },
-          { id: 's5', name: 'Go', level: 'Expert' },
-          { id: 's6', name: 'Kubernetes', level: 'Expert' }
-        ];
-        setSkills(mockSkills);
-        sectionsData.skills = mockSkills;
-      }
-
-      if (Object.keys(sectionsData).length > 0) {
-        localStorage.setItem(PROFILE_SECTIONS_KEY, JSON.stringify(sectionsData));
-      }
-    }
-  }, [user, formData.lastName, formData.firstName]);
 
   // Section data states
   const [experiences, setExperiences] = useState<Experience[]>([]);
@@ -340,8 +230,8 @@ export const ProfileEditPage: React.FC = () => {
       }
       
       // Load photos
-      setProfilePhoto(localStorage.getItem('ornave_profile_photo') || '');
-      setBackgroundPhoto(localStorage.getItem('ornave_background_photo') || '');
+      setProfilePhoto(localStorage.getItem(scopedKey('ornave_profile_photo', user?.id)) || '');
+      setBackgroundPhoto(localStorage.getItem(scopedKey('ornave_background_photo', user?.id)) || '');
     } catch {
       // ignore malformed storage
     }
@@ -461,10 +351,10 @@ export const ProfileEditPage: React.FC = () => {
           const result = reader.result as string;
           if (type === 'profile') {
             setProfilePhoto(result);
-            localStorage.setItem('ornave_profile_photo', result);
+            localStorage.setItem(scopedKey('ornave_profile_photo', user?.id), result);
           } else {
             setBackgroundPhoto(result);
-            localStorage.setItem('ornave_background_photo', result);
+            localStorage.setItem(scopedKey('ornave_background_photo', user?.id), result);
           }
           setSuccess(`${type === 'profile' ? 'Profile' : 'Background'} photo uploaded successfully!`);
         };
@@ -479,12 +369,12 @@ export const ProfileEditPage: React.FC = () => {
   const AUTO_VERIFIED_TIERS = ['Silver Member', 'Gold Member', 'Diamond Member'];
 
   const handlePurchaseTier = (tier: StatusTier) => {
-    localStorage.setItem(MEMBER_TIER_KEY, tier.id);
+    localStorage.setItem(scopedKey(MEMBER_TIER_KEY, user?.id), tier.id);
     setCurrentTier(tier.id);
 
     let nowVerified = hasVerified;
     if (AUTO_VERIFIED_TIERS.includes(tier.id) && !hasVerified) {
-      localStorage.setItem(VERIFIED_ADDON_KEY, 'true');
+      localStorage.setItem(scopedKey(VERIFIED_ADDON_KEY, user?.id), 'true');
       setHasVerified(true);
       nowVerified = true;
     }
@@ -496,7 +386,7 @@ export const ProfileEditPage: React.FC = () => {
   };
 
   const handlePurchaseVerified = () => {
-    localStorage.setItem(VERIFIED_ADDON_KEY, 'true');
+    localStorage.setItem(scopedKey(VERIFIED_ADDON_KEY, user?.id), 'true');
     setHasVerified(true);
     window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'verified_addon' } }));
     setSuccess("You're now Verified!");

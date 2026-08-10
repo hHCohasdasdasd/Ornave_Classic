@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
-import { networkService } from '@/services/networkService';
+import { jobService } from '@/services/jobService';
 import './JobsPage.css';
 
 interface Job {
@@ -43,87 +43,30 @@ export const JobsPage: React.FC = () => {
 
   const loadJobsData = async () => {
     try {
-      // Mock jobs data
-      const mockJobs: Job[] = [
-        {
-          id: '1',
-          title: '(Senior) Expert Procurement (f/m/d)',
-          company: 'Hamburg Commercial Bank',
-          location: 'Hamburg, Hamburg, Germany',
-          jobType: 'Full-time',
-          workType: 'Hybrid',
-          description: 'Willkommen bei der Hamburg Commercial Bank: Clarity is Capital\n\nWir sind die Hamburg Commercial Bank – eine private Geschäftsbank und erstklassiger Finanzierungsdienstleister, mit festem Bezug zum Norden Deutschlands. Finanzthemen sind für uns nicht nur rein geschäftlich, Sie verstehen es als unsere Aufgabe, für unsere Kundinnen Klarheit zu schaffen – finanzielle Klarheit, die Management-Entscheidungen unterstützt. Dies erreichen wir nur durch den Einsatz unserer Mitarbeitenden. Neben höchster Fachkompetenz zeichnen Dynamik und Fortschritt unsere Unternehmenskultur aus.\n\nFür diese konstante Weiterentwicklung fordern wir jeden Tag neu heraus. Wenn Du auf der Suche nach spannenden Karrieremöglichkeiten in einer zukunftsorientierten Bank bist, die Wandel aktiv vorantreibt, dann bist Du uns genau richtig. Wir freuen uns darauf, Dich in unserem Team willkommen zu heißen!',
-          promoted: true,
-          applicants: 5,
-          posted: '1 ago',
-          salary: 'Competitive'
-        },
-        {
-          id: '2',
-          title: 'Steuerfachangestellter (m/w/d) | Buchführung | Hybrid | Dresden',
-          company: 'kalkül Dresden gmbh Steuerberatungsgesellschaft',
-          location: 'Dresden, Saxony, Germany',
-          jobType: 'Full-time',
-          workType: 'Hybrid',
-          description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      const networkJobs = await jobService.listAllActiveJobs();
+      const mapped: Job[] = networkJobs
+        .filter(job => job.isActive)
+        .map(job => ({
+          id: job.id,
+          title: job.title,
+          company: job.company?.name || 'Unknown company',
+          location: job.location || 'Not specified',
+          jobType: (job.type as Job['jobType']) || 'Full-time',
+          workType: 'On-site',
+          description: job.description || '',
           promoted: false,
-          applicants: 12,
-          posted: '3 days ago'
-        },
-        {
-          id: '3',
-          title: 'Rechtsanwaltsgehilfe/r, Steuerfachgehilfe/r, Bürokauffrau/Bürokaufmann (m/w/d) oder Allroundtalent',
-          company: 'RITTER GENT COLLEGEN',
-          location: 'Hannover, Lower Saxony, Germany',
-          jobType: 'Full-time',
-          workType: 'On-site',
-          description: 'Join our dynamic law and tax consulting firm as a legal assistant or office professional.',
-          promoted: true,
-          applicants: 8,
-          posted: '2 days ago'
-        },
-        {
-          id: '4',
-          title: 'Vertriebsmitarbeiter im Export (m/w/d)',
-          company: 'SAB Bröckkes GmbH & Co. KG',
-          location: 'Viersen, North Rhine-Westphalia, Germany',
-          jobType: 'Full-time',
-          workType: 'On-site',
-          description: 'We are looking for sales professionals to join our export team.',
-          promoted: true,
-          applicants: 15,
-          posted: '1 week ago'
-        },
-        {
-          id: '5',
-          title: 'SEA Manager (m/w/d)',
-          company: 'FAIRFAMILY',
-          location: 'Hamburg, Hamburg, Germany',
-          jobType: 'Full-time',
-          workType: 'Hybrid',
-          description: 'Manage search engine advertising campaigns and drive digital growth.',
-          promoted: true,
-          applicants: 6,
-          posted: '3 days ago'
-        },
-        {
-          id: '6',
-          title: 'Mobilfunk Verkäufer / Store Manager (m/w/d)',
-          company: 'Smart Mobile Center',
-          location: 'Augsburg, Bavaria, Germany',
-          jobType: 'Full-time',
-          workType: 'On-site',
-          description: 'Lead our mobile sales store and drive customer satisfaction.',
-          promoted: false,
-          applicants: 20,
-          posted: '5 days ago'
-        }
-      ];
-      
-      setJobs(mockJobs);
-      setSelectedJobId('1');
+          applicants: 0,
+          posted: job.createdAt ? new Date(job.createdAt).toLocaleDateString() : '',
+          salary: job.salaryMin && job.salaryMax
+            ? `${job.salaryCurrency} ${job.salaryMin} - ${job.salaryMax} / ${job.salaryPeriod}`
+            : undefined,
+        }));
+      setJobs(mapped);
+      setSelectedJobId(mapped[0]?.id || '');
     } catch (err) {
       console.error('Failed to load jobs data:', err);
+      setJobs([]);
+      setSelectedJobId('');
     }
   };
 

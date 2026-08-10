@@ -31,7 +31,22 @@ export interface CreateJobInput {
   qualifications?: string[];
 }
 
+export interface JobWithCompany extends Job {
+  company: { id: string; name: string; slug: string; logo?: string };
+}
+
 class JobService {
+  /** Network-wide, unauthenticated feed of every active job across all companies. */
+  async listAllActiveJobs(): Promise<JobWithCompany[]> {
+    try {
+      const response = await apiClient.get('/jobs');
+      return response.data.data || response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch network-wide jobs:', error);
+      return [];
+    }
+  }
+
   async getCompanyIdBySlug(slug: string): Promise<string | null> {
     try {
       const response = await apiClient.get(`/companies/slug/${slug}`);

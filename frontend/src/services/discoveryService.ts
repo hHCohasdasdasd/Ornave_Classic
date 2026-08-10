@@ -57,7 +57,7 @@ class DiscoveryService {
         });
       });
     } catch {
-      // Directory search unavailable — mock/registered firms still show.
+      // Directory search unavailable — registered firms still show.
     }
 
     registeredFirms.forEach(reg => {
@@ -110,7 +110,7 @@ class DiscoveryService {
   async connectWithFirm(firmId: string): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    // Check both mock and registered firms
+    // Check registered/discovered firms
     const firms = await this.discoverFirms();
     const firm = firms.find(f => f.id === firmId);
     

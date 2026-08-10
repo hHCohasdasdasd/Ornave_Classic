@@ -1,17 +1,35 @@
 // Token storage keys
-const TOKEN_KEY = 'ornave_token';
+const AUTHENTICATED_KEY = 'ornave_authenticated';
 const USER_KEY = 'ornave_user';
 const COMPANY_KEY = 'ornave_company';
 
+/**
+ * Namespaces a localStorage key by the current user's id. Several
+ * "own profile" features (resume sections, membership tier — there's no
+ * backend model for these yet) store their client-side-only state under a
+ * flat, un-namespaced key. Without this, that state leaks across accounts
+ * that share a browser: log in as a different user and you'd see the
+ * previous account's data, because nothing ever distinguished whose it was.
+ * Falls back to the bare key only when there's genuinely no logged-in user.
+ */
+export function scopedKey(baseKey: string, userId?: string | null): string {
+  return userId ? `${baseKey}_${userId}` : baseKey;
+}
+
+// The real JWT lives only in an httpOnly cookie now — page JS can't read it,
+// which is the point (an XSS bug can no longer steal a persistent session
+// token out of localStorage). This is just a non-secret "am I logged in"
+// marker so the UI can render its logged-in/out state without waiting on a
+// network round trip; the cookie is what the backend actually trusts.
 export const TokenStorage = {
-  setToken: (token: string) => {
-    localStorage.setItem(TOKEN_KEY, token);
+  setAuthenticated: () => {
+    localStorage.setItem(AUTHENTICATED_KEY, '1');
   },
-  getToken: () => {
-    return localStorage.getItem(TOKEN_KEY);
+  isAuthenticated: () => {
+    return localStorage.getItem(AUTHENTICATED_KEY) === '1';
   },
-  removeToken: () => {
-    localStorage.removeItem(TOKEN_KEY);
+  clearAuthenticated: () => {
+    localStorage.removeItem(AUTHENTICATED_KEY);
   },
 
   setUser: (user: any) => {
@@ -45,7 +63,7 @@ export const TokenStorage = {
   },
 
   clear: () => {
-    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(AUTHENTICATED_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(COMPANY_KEY);
   },

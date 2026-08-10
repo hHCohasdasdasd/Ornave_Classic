@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
+import { learningService, Course as ServiceCourse } from '@/services/learningService';
 import './LearningPage.css';
+import '@/pages/WorkSuite.css';
 
 interface Course {
   id: string;
@@ -18,35 +20,112 @@ interface Course {
   thumbnail: string;
 }
 
-const mockCourses: Course[] = [
-  { id: '1', title: 'B2B Sales Mastery: Enterprise Closing Techniques', instructor: 'Stefan Vogel', category: 'Sales', level: 'Advanced', duration: '4h 20m', rating: 4.8, enrolled: 3420, progress: 65, saved: false, thumbnail: '📈' },
-  { id: '2', title: 'Data-Driven Marketing for B2B Companies', instructor: 'Marie Leclerc', category: 'Marketing', level: 'Intermediate', duration: '3h 10m', rating: 4.6, enrolled: 2180, saved: true, thumbnail: '📢' },
-  { id: '3', title: 'Mastering LinkedIn & Professional Networking', instructor: 'James Fletcher', category: 'Networking', level: 'Beginner', duration: '2h 45m', rating: 4.9, enrolled: 8930, progress: 20, saved: false, thumbnail: '🤝' },
-  { id: '4', title: 'Financial Modeling for Business Leaders', instructor: 'Anna Becker', category: 'Finance', level: 'Intermediate', duration: '5h 00m', rating: 4.7, enrolled: 1520, saved: false, thumbnail: '💰' },
-  { id: '5', title: 'Hiring & Building High-Performance Teams', instructor: 'Priya Nair', category: 'HR & Leadership', level: 'Intermediate', duration: '3h 30m', rating: 4.5, enrolled: 2870, saved: true, thumbnail: '👥' },
-  { id: '6', title: 'AI Tools for Business Productivity', instructor: 'Lucas Andreou', category: 'Technology', level: 'Beginner', duration: '2h 00m', rating: 4.8, enrolled: 6140, saved: false, thumbnail: '🤖' },
-];
-
 const levelColors = {
   'Beginner': 'lvl--beginner',
   'Intermediate': 'lvl--intermediate',
   'Advanced': 'lvl--advanced',
 };
 
+const courseLevels: Course['level'][] = ['Beginner', 'Intermediate', 'Advanced'];
+
+const toLocal = (c: ServiceCourse): Course => ({
+  id: c.id,
+  title: c.title,
+  instructor: c.instructor || '',
+  category: c.category || '',
+  level: c.level,
+  duration: c.duration || '',
+  rating: c.rating,
+  enrolled: c.enrolled,
+  progress: c.progress,
+  saved: c.saved,
+  thumbnail: c.thumbnail || '📚',
+});
+
 export const LearningPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'recommended' | 'my-learning' | 'saved'>('recommended');
   const [keyword, setKeyword] = useState('');
-  const [courses, setCourses] = useState<Course[]>(mockCourses);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [showModal, setShowModal] = useState(false);
+  const [title, setTitle] = useState('');
+  const [instructor, setInstructor] = useState('');
+  const [category, setCategory] = useState('');
+  const [level, setLevel] = useState<Course['level']>('Beginner');
+  const [duration, setDuration] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const companyId = user?.companyId;
+
+  const load = async () => {
+    if (!companyId) return;
+    setIsLoading(true);
+    try {
+      const data = await learningService.listCourses(companyId);
+      setCourses(data.map(toLocal));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (companyId) load();
+    else setIsLoading(false);
+  }, [companyId]);
 
   if (!user) {
     navigate('/login');
     return null;
   }
 
-  const toggleSave = (id: string) => {
+  const toggleSave = async (id: string) => {
+    if (!companyId) return;
+    const current = courses.find(c => c.id === id);
+    if (!current) return;
     setCourses(prev => prev.map(c => c.id === id ? { ...c, saved: !c.saved } : c));
+    try {
+      await learningService.updateCourse(companyId, id, { saved: !current.saved });
+    } finally {
+      await load();
+    }
+  };
+
+  const openCreate = () => {
+    setTitle('');
+    setInstructor('');
+    setCategory('');
+    setLevel('Beginner');
+    setDuration('');
+    setError(null);
+    setShowModal(true);
+  };
+
+  const handleSave = async () => {
+    if (!title.trim() || !companyId) return;
+    setIsSaving(true);
+    setError(null);
+    try {
+      await learningService.createCourse(companyId, {
+        title: title.trim(),
+        instructor: instructor.trim() || undefined,
+        category: category.trim() || undefined,
+        level,
+        duration: duration.trim() || undefined,
+        rating: 0,
+        enrolled: 0,
+        saved: false,
+      });
+      setShowModal(false);
+      await load();
+    } catch {
+      setError('Something went wrong saving that course — try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const filtered = courses.filter(c => {
@@ -76,7 +155,7 @@ export const LearningPage: React.FC = () => {
                 onChange={e => setKeyword(e.target.value)}
               />
             </div>
-            <button className="learn-search__btn">Search</button>
+            <button className="learn-search__btn" onClick={openCreate}>+ Add Course</button>
           </div>
         </div>
       </div>
@@ -126,10 +205,11 @@ export const LearningPage: React.FC = () => {
 
         {/* Course Grid */}
         <div className="learn-grid">
-          {filtered.length === 0 && (
+          {isLoading ? (
+            <div className="worksuite-empty">Loading courses…</div>
+          ) : filtered.length === 0 ? (
             <div className="learn-empty">No courses found.</div>
-          )}
-          {filtered.map(course => (
+          ) : filtered.map(course => (
             <div key={course.id} className="learn-course-card">
               <div className="learn-course-card__thumb">{course.thumbnail}</div>
               <div className="learn-course-card__body">
@@ -166,6 +246,33 @@ export const LearningPage: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {showModal && (
+        <div className="worksuite-modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="worksuite-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Add Course</h2>
+            <label>Title</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Course title" maxLength={160} />
+            <label>Instructor</label>
+            <input value={instructor} onChange={(e) => setInstructor(e.target.value)} placeholder="Optional" maxLength={120} />
+            <label>Category</label>
+            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Optional" maxLength={120} />
+            <label>Level</label>
+            <select value={level} onChange={(e) => setLevel(e.target.value as Course['level'])}>
+              {courseLevels.map(l => <option key={l} value={l}>{l}</option>)}
+            </select>
+            <label>Duration</label>
+            <input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="e.g. 3h 20m" maxLength={40} />
+            {error && <p className="worksuite-modal__error">{error}</p>}
+            <div className="worksuite-modal__actions">
+              <button className="worksuite-modal__cancel" onClick={() => setShowModal(false)}>Cancel</button>
+              <button className="worksuite-modal__submit" onClick={handleSave} disabled={!title.trim() || isSaving}>
+                {isSaving ? 'Saving…' : 'Add Course'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

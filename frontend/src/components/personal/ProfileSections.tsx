@@ -6,7 +6,6 @@ import {
   IconBriefcase, IconGraduationCap, IconTrophy, IconHandshake, IconGlobe,
   IconLink, IconSpark, IconChart, IconUsers, IconLaurel, IconCard, IconBuilding,
 } from '@/components/ui/Icons';
-import { MockHighlight, MockPortfolioItem, MockSkill as MockSkillType } from '@/data/mockProfileSections';
 import { IconMail, IconPhone, IconVerified } from '@/components/ui/Icons';
 import { FeedItem } from './FeedItem';
 import type { FeedItem as FeedItemData } from '@/types/feed';
@@ -92,9 +91,28 @@ interface Recommendation {
   date: string;
 }
 
+export interface ProfileHighlight {
+  value: string;
+  label: string;
+}
+
+export interface ProfilePortfolioItem {
+  id: string;
+  image: string;
+  title: string;
+  location?: string;
+  year?: string;
+}
+
+export interface ProfileSkillEntry {
+  id: string;
+  name: string;
+  level?: string;
+}
+
 // Highlights strip — punchy, scannable facts up top instead of forcing
 // visitors to read the whole page to find out why this person matters.
-export const ProfileHighlights: React.FC<{ highlights?: MockHighlight[] }> = ({ highlights }) => {
+export const ProfileHighlights: React.FC<{ highlights?: ProfileHighlight[] }> = ({ highlights }) => {
   if (!highlights || highlights.length === 0) return null;
 
   return (
@@ -1052,7 +1070,7 @@ export const ProfileServices: React.FC<ProfileServicesProps> = ({ companyId, isO
 // Editorial dossier widgets — the light, magazine-style Overview layout.
 // Presentation-only: they take plain derived data as props rather than a
 // sectionsKey, since the caller (ProfilePage) already has a single resolved
-// mockProfileSections record to draw from.
+// profile sections record to draw from.
 // ══════════════════════════════════════════════════════════════════════════
 
 export const ProfileExpertiseList: React.FC<{ items?: string[] }> = ({ items }) => {
@@ -1211,7 +1229,7 @@ export const ProfileRecentPosts: React.FC<PostAuthorProps & { posts?: Post[] }> 
   );
 };
 
-export const ProfilePortfolioGallery: React.FC<{ items?: MockPortfolioItem[] }> = ({ items }) => {
+export const ProfilePortfolioGallery: React.FC<{ items?: ProfilePortfolioItem[] }> = ({ items }) => {
   if (!items || items.length === 0) return null;
   return (
     <div className="dossier-card">
@@ -1285,7 +1303,7 @@ const skillLevelToPercent = (level?: string) => {
   }
 };
 
-export const ProfileSkillBars: React.FC<{ skills?: MockSkillType[] }> = ({ skills }) => {
+export const ProfileSkillBars: React.FC<{ skills?: ProfileSkillEntry[] }> = ({ skills }) => {
   if (!skills || skills.length === 0) return null;
   return (
     <div className="dossier-card">

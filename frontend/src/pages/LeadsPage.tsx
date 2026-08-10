@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
+import { leadsService } from '@/services/leadsService';
 import './LeadsPage.css';
+import '@/pages/WorkSuite.css';
 
 interface Lead {
   id: string;
@@ -17,15 +19,6 @@ interface Lead {
   saved: boolean;
 }
 
-const mockLeads: Lead[] = [
-  { id: '1', name: 'Sophia Müller', title: 'Head of Procurement', company: 'Siemens AG', location: 'Munich, Germany', industry: 'Engineering', connections: 2, mutualConnections: 'Klaus Fischer', saved: false },
-  { id: '2', name: 'Marco Bianchi', title: 'Director of Partnerships', company: 'UniCredit Group', location: 'Milan, Italy', industry: 'Finance', connections: 4, saved: true },
-  { id: '3', name: 'Aisha Okafor', title: 'VP of Supply Chain', company: 'Shell PLC', location: 'Amsterdam, Netherlands', industry: 'Energy', connections: 1, mutualConnections: 'Elena Torres', saved: false },
-  { id: '4', name: 'David Park', title: 'Chief Revenue Officer', company: 'SAP SE', location: 'Walldorf, Germany', industry: 'Software', connections: 6, saved: false },
-  { id: '5', name: 'Lucie Novák', title: 'Head of Sales EMEA', company: 'Skoda Auto', location: 'Prague, Czech Republic', industry: 'Automotive', connections: 3, saved: true },
-  { id: '6', name: 'Jan van der Berg', title: 'Global Account Manager', company: 'Philips', location: 'Eindhoven, Netherlands', industry: 'Healthcare Tech', connections: 2, saved: false },
-];
-
 export const LeadsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -34,15 +27,94 @@ export const LeadsPage: React.FC = () => {
   const [keyword, setKeyword] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [industryFilter, setIndustryFilter] = useState('');
-  const [leads, setLeads] = useState<Lead[]>(mockLeads);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [showModal, setShowModal] = useState(false);
+  const [name, setName] = useState('');
+  const [title, setTitle] = useState('');
+  const [leadCompany, setLeadCompany] = useState('');
+  const [location, setLocation] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const companyId = user?.companyId;
+
+  const load = async () => {
+    if (!companyId) return;
+    setIsLoading(true);
+    try {
+      const data = await leadsService.listLeads(companyId);
+      setLeads(data.map(l => ({
+        id: l.id,
+        name: l.name,
+        title: l.title || '',
+        company: l.leadCompany || '',
+        location: l.location || '',
+        industry: l.industry || '',
+        connections: l.connections,
+        mutualConnections: l.mutualConnections ? String(l.mutualConnections) : undefined,
+        saved: l.saved,
+      })));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (companyId) load();
+    else setIsLoading(false);
+  }, [companyId]);
 
   if (!user) {
     navigate('/login');
     return null;
   }
 
-  const toggleSave = (id: string) => {
+  const toggleSave = async (id: string) => {
+    if (!companyId) return;
+    const current = leads.find(l => l.id === id);
+    if (!current) return;
     setLeads(prev => prev.map(l => l.id === id ? { ...l, saved: !l.saved } : l));
+    try {
+      await leadsService.updateLead(companyId, id, { saved: !current.saved });
+    } finally {
+      await load();
+    }
+  };
+
+  const openCreate = () => {
+    setName('');
+    setTitle('');
+    setLeadCompany('');
+    setLocation('');
+    setIndustry('');
+    setError(null);
+    setShowModal(true);
+  };
+
+  const handleSave = async () => {
+    if (!name.trim() || !companyId) return;
+    setIsSaving(true);
+    setError(null);
+    try {
+      await leadsService.createLead(companyId, {
+        name: name.trim(),
+        title: title.trim() || undefined,
+        leadCompany: leadCompany.trim() || undefined,
+        location: location.trim() || undefined,
+        industry: industry.trim() || undefined,
+        connections: 0,
+        saved: false,
+      });
+      setShowModal(false);
+      await load();
+    } catch {
+      setError('Something went wrong saving that lead — try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const filtered = leads.filter(l => {
@@ -92,7 +164,7 @@ export const LeadsPage: React.FC = () => {
                 onChange={e => setIndustryFilter(e.target.value)}
               />
             </div>
-            <button className="leads-search__btn">Search</button>
+            <button className="leads-search__btn" onClick={openCreate}>+ Add Lead</button>
           </div>
         </div>
       </div>
@@ -122,18 +194,16 @@ export const LeadsPage: React.FC = () => {
             <span className="leads-stat__value">{leads.filter(l => l.saved).length}</span>
             <span className="leads-stat__label">Saved leads</span>
           </div>
-          <div className="leads-stat">
-            <span className="leads-stat__value">3</span>
-            <span className="leads-stat__label">Contacted this week</span>
-          </div>
         </div>
 
         {/* Lead Cards */}
         <div className="leads-grid">
-          {filtered.length === 0 && (
+          {isLoading ? (
+            <div className="worksuite-empty">Loading leads…</div>
+          ) : filtered.length === 0 ? (
             <div className="leads-empty">No leads match your search criteria.</div>
-          )}
-          {filtered.map(lead => (
+          ) : (
+          filtered.map(lead => (
             <div key={lead.id} className="lead-card">
               <div className="lead-card__avatar">
                 {lead.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -160,10 +230,36 @@ export const LeadsPage: React.FC = () => {
                 <button className="lead-card__connect">Connect</button>
               </div>
             </div>
-          ))}
+          ))
+          )}
         </div>
       </div>
     </div>
+
+      {showModal && (
+        <div className="worksuite-modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="worksuite-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Add Lead</h2>
+            <label>Name</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" maxLength={120} />
+            <label>Title</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Optional" maxLength={120} />
+            <label>Company</label>
+            <input value={leadCompany} onChange={(e) => setLeadCompany(e.target.value)} placeholder="Optional" maxLength={120} />
+            <label>Location</label>
+            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Optional" maxLength={120} />
+            <label>Industry</label>
+            <input value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Optional" maxLength={120} />
+            {error && <p className="worksuite-modal__error">{error}</p>}
+            <div className="worksuite-modal__actions">
+              <button className="worksuite-modal__cancel" onClick={() => setShowModal(false)}>Cancel</button>
+              <button className="worksuite-modal__submit" onClick={handleSave} disabled={!name.trim() || isSaving}>
+                {isSaving ? 'Saving…' : 'Add Lead'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
+import { talentService } from '@/services/talentService';
 import './TalentPage.css';
+import '@/pages/WorkSuite.css';
 
 interface Candidate {
   id: string;
@@ -16,20 +18,13 @@ interface Candidate {
   saved: boolean;
 }
 
-const mockCandidates: Candidate[] = [
-  { id: '1', name: 'Nina Hoffmann', title: 'Senior Software Engineer', location: 'Berlin, Germany', skills: ['TypeScript', 'React', 'Node.js'], experience: '7 years', availability: 'Available', saved: false },
-  { id: '2', name: 'Carlos Rivera', title: 'Product Manager', location: 'Barcelona, Spain', skills: ['Agile', 'Roadmapping', 'Jira'], experience: '5 years', availability: 'Passive', saved: true },
-  { id: '3', name: 'Anya Kowalski', title: 'Data Scientist', location: 'Warsaw, Poland', skills: ['Python', 'Machine Learning', 'SQL'], experience: '4 years', availability: 'Available', saved: false },
-  { id: '4', name: 'Felix Braun', title: 'DevOps Engineer', location: 'Frankfurt, Germany', skills: ['Kubernetes', 'AWS', 'CI/CD'], experience: '6 years', availability: 'Passive', saved: false },
-  { id: '5', name: 'Priya Sharma', title: 'UX Designer', location: 'Amsterdam, Netherlands', skills: ['Figma', 'User Research', 'Prototyping'], experience: '3 years', availability: 'Available', saved: true },
-  { id: '6', name: 'Luc Fontaine', title: 'Financial Analyst', location: 'Paris, France', skills: ['Excel', 'Financial Modeling', 'Power BI'], experience: '5 years', availability: 'Not looking', saved: false },
-];
-
 const availabilityColors: Record<Candidate['availability'], string> = {
   'Available': 'talent-badge--open',
   'Passive': 'talent-badge--passive',
   'Not looking': 'talent-badge--closed',
 };
+
+const availabilityOptions: Candidate['availability'][] = ['Available', 'Passive', 'Not looking'];
 
 export const TalentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -37,11 +32,91 @@ export const TalentPage: React.FC = () => {
   const [keyword, setKeyword] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
 
-  const [candidates, setCandidates] = useState<Candidate[]>(mockCandidates);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'recommended' | 'saved'>('recommended');
 
-  const toggleSave = (id: string) => {
+  const [showModal, setShowModal] = useState(false);
+  const [name, setName] = useState('');
+  const [title, setTitle] = useState('');
+  const [location, setLocation] = useState('');
+  const [skillsInput, setSkillsInput] = useState('');
+  const [experience, setExperience] = useState('');
+  const [availability, setAvailability] = useState<Candidate['availability']>('Available');
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const companyId = user?.companyId;
+
+  const load = async () => {
+    if (!companyId) return;
+    setIsLoading(true);
+    try {
+      const data = await talentService.listCandidates(companyId);
+      setCandidates(data.map(c => ({
+        id: c.id,
+        name: c.name,
+        title: c.title || '',
+        location: c.location || '',
+        skills: c.skills || [],
+        experience: c.experience || '',
+        availability: c.availability,
+        saved: c.saved,
+      })));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (companyId) load();
+    else setIsLoading(false);
+  }, [companyId]);
+
+  const toggleSave = async (id: string) => {
+    if (!companyId) return;
+    const current = candidates.find(c => c.id === id);
+    if (!current) return;
     setCandidates(prev => prev.map(c => c.id === id ? { ...c, saved: !c.saved } : c));
+    try {
+      await talentService.updateCandidate(companyId, id, { saved: !current.saved });
+    } finally {
+      await load();
+    }
+  };
+
+  const openCreate = () => {
+    setName('');
+    setTitle('');
+    setLocation('');
+    setSkillsInput('');
+    setExperience('');
+    setAvailability('Available');
+    setError(null);
+    setShowModal(true);
+  };
+
+  const handleSave = async () => {
+    if (!name.trim() || !companyId) return;
+    setIsSaving(true);
+    setError(null);
+    try {
+      await talentService.createCandidate(companyId, {
+        name: name.trim(),
+        title: title.trim() || undefined,
+        location: location.trim() || undefined,
+        skills: skillsInput.split(',').map(s => s.trim()).filter(Boolean),
+        experience: experience.trim() || undefined,
+        availability,
+        saved: false,
+      });
+      setShowModal(false);
+      await load();
+    } catch {
+      setError('Something went wrong saving that candidate — try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const filtered = candidates.filter(c => {
@@ -81,7 +156,13 @@ export const TalentPage: React.FC = () => {
                 onChange={e => setLocationFilter(e.target.value)}
               />
             </div>
-            <button className="talent-search__btn">Search</button>
+            <button className="talent-search__btn" onClick={() => {
+              if (!user) {
+                triggerAuthModal('Please log in to add candidates.');
+                return;
+              }
+              openCreate();
+            }}>+ Add Candidate</button>
           </div>
         </div>
       </div>
@@ -110,10 +191,11 @@ export const TalentPage: React.FC = () => {
 
         {/* Candidate Grid */}
         <div className="talent-grid">
-          {filtered.length === 0 && (
+          {isLoading ? (
+            <div className="worksuite-empty">Loading candidates…</div>
+          ) : filtered.length === 0 ? (
             <div className="talent-empty">No candidates match your criteria.</div>
-          )}
-          {filtered.map(candidate => (
+          ) : filtered.map(candidate => (
             <div key={candidate.id} className="talent-card">
               <div className="talent-card__top">
                 <div className="talent-card__avatar">
@@ -143,7 +225,7 @@ export const TalentPage: React.FC = () => {
                 >
                   {candidate.saved ? '★ Saved' : '☆ Save'}
                 </button>
-                <button 
+                <button
                   className="talent-card__message"
                   onClick={() => {
                     if (!user) {
@@ -161,6 +243,35 @@ export const TalentPage: React.FC = () => {
         </div>
       </div>
     </div>
+
+      {showModal && (
+        <div className="worksuite-modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="worksuite-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Add Candidate</h2>
+            <label>Name</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" maxLength={120} />
+            <label>Title</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Optional" maxLength={120} />
+            <label>Location</label>
+            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Optional" maxLength={120} />
+            <label>Skills (comma-separated)</label>
+            <input value={skillsInput} onChange={(e) => setSkillsInput(e.target.value)} placeholder="React, TypeScript, Node.js" maxLength={300} />
+            <label>Experience</label>
+            <input value={experience} onChange={(e) => setExperience(e.target.value)} placeholder="e.g. 5 years" maxLength={60} />
+            <label>Availability</label>
+            <select value={availability} onChange={(e) => setAvailability(e.target.value as Candidate['availability'])}>
+              {availabilityOptions.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+            {error && <p className="worksuite-modal__error">{error}</p>}
+            <div className="worksuite-modal__actions">
+              <button className="worksuite-modal__cancel" onClick={() => setShowModal(false)}>Cancel</button>
+              <button className="worksuite-modal__submit" onClick={handleSave} disabled={!name.trim() || isSaving}>
+                {isSaving ? 'Saving…' : 'Add Candidate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -32,6 +32,11 @@ const BYPASS_COMPANY: Company = {
 
 const BYPASS_TOKEN = 'ornave-demo-token';
 
+// The real JWT lives only in an httpOnly cookie the browser manages
+// automatically — this is just a non-secret "is there an active session"
+// marker for local UI state, never the actual token value.
+const SESSION_MARKER = 'authenticated';
+
 const GUEST_USER: User = {
   id: 'guest',
   email: 'guest@ornave.com',
@@ -58,7 +63,7 @@ function setDemoLoggedOut(loggedOut: boolean) {
 }
 
 function persistBypassSession() {
-  TokenStorage.setToken(BYPASS_TOKEN);
+  TokenStorage.setAuthenticated();
   TokenStorage.setUser(BYPASS_USER);
   TokenStorage.setCompany(BYPASS_COMPANY);
 }
@@ -108,7 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (AUTH_BYPASS_ENABLED && isDemoLoggedOut()) {
       return null;
     }
-    return TokenStorage.getToken() || (AUTH_BYPASS_ENABLED ? BYPASS_TOKEN : null);
+    return TokenStorage.isAuthenticated() ? SESSION_MARKER : (AUTH_BYPASS_ENABLED ? BYPASS_TOKEN : null);
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -193,10 +198,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const response = await apiClient.login(email, password);
-      const { token: newToken, user: newUser, company: newCompany } = response.data;
+      // The server also sets an httpOnly session cookie on this response —
+      // that's what actually authenticates future requests. We deliberately
+      // don't persist `response.data.token` (the raw JWT) anywhere on the
+      // client; only a non-secret "logged in" marker plus display data.
+      const { user: newUser, company: newCompany } = response.data;
 
-      // Store in localStorage
-      TokenStorage.setToken(newToken);
+      TokenStorage.setAuthenticated();
       TokenStorage.setUser(newUser);
       TokenStorage.setCompany(newCompany);
 
@@ -214,7 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Update state
-      setToken(newToken);
+      setToken(SESSION_MARKER);
       setUser(newUser);
       setCompany(newCompany);
     } catch (err: any) {
@@ -271,6 +279,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(null);
       return;
     }
+
+    // Best-effort — clears the httpOnly session cookie server-side. Local
+    // state is cleared immediately below regardless of whether this succeeds.
+    apiClient.logout();
 
     TokenStorage.clear();
     setUser(null);

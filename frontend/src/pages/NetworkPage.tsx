@@ -53,6 +53,7 @@ export const NetworkPage: React.FC = () => {
   const [showAllSuggestions, setShowAllSuggestions] = useState(false);
   const [showAllPopular, setShowAllPopular] = useState(false);
   const [filter, setFilter] = useState<'all' | 'location' | 'industry'>('all');
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -86,76 +87,26 @@ export const NetworkPage: React.FC = () => {
 
       const realRequests = await networkService.getConnectionRequests();
 
-      setPendingRequests([
-        ...realRequests.map((r: any) => ({
-          id: r.id,
-          firstName: r.user?.firstName || 'Ornave',
-          lastName: r.user?.lastName || 'Member',
-          headline: r.user?.headline || 'Ornave member',
-          mutualConnections: 0,
-          avatarUrl: r.user?.profilePicture,
-          isReal: true,
-        })),
-        {
-          id: '1',
-          firstName: 'Alex',
-          lastName: 'Rivera',
-          headline: 'Senior Supply Chain Consultant',
-          mutualConnections: 4,
-          avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop'
-        },
-        {
-          id: '2',
-          firstName: 'Sarah',
-          lastName: 'Chen',
-          headline: 'Industrial Designer | Robotics Enthusiast',
-          mutualConnections: 2,
-          avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop'
-        }
-      ]);
+      setPendingRequests(realRequests.map((r: any) => ({
+        id: r.id,
+        firstName: r.user?.firstName || 'Ornave',
+        lastName: r.user?.lastName || 'Member',
+        headline: r.user?.headline || 'Ornave member',
+        mutualConnections: 0,
+        avatarUrl: r.user?.profilePicture,
+        isReal: true,
+      })));
 
-      setSuggestions([
-        {
-          id: '3',
-          firstName: 'Marcus',
-          lastName: 'Thorn',
-          headline: 'Operations Director at NovaTech',
-          mutualConnections: 3,
-          mutualConnectionName: 'Sarah',
-          connected: storedConnections.some(c => c.id === '3'),
-          avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop'
-        },
-        {
-          id: '4',
-          firstName: 'Elena',
-          lastName: 'Rodriguez',
-          headline: 'Sustainability Lead | Environmental Advocate',
-          mutualConnections: 5,
-          mutualConnectionName: 'Alex',
-          connected: storedConnections.some(c => c.id === '4'),
-          avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop'
-        },
-        {
-          id: '5',
-          firstName: 'Julian',
-          lastName: 'Vogt',
-          headline: 'Full Stack Engineer | Open Source Contributor',
-          mutualConnections: 2,
-          mutualConnectionName: 'Michael',
-          connected: storedConnections.some(c => c.id === '5'),
-          avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop'
-        },
-        {
-          id: '6',
-          firstName: 'Sophia',
-          lastName: 'Müller',
-          headline: 'AI Ethics Researcher',
-          mutualConnections: 1,
-          mutualConnectionName: 'Sarah',
-          connected: storedConnections.some(c => c.id === '6'),
-          avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop'
-        }
-      ]);
+      const realSuggestions = await networkService.getSuggestedUsers(10);
+      setSuggestions(realSuggestions.map((s: any) => ({
+        id: s.id,
+        firstName: s.firstName,
+        lastName: s.lastName,
+        headline: s.headline || 'Ornave member',
+        mutualConnections: 0,
+        connected: storedConnections.some((c: any) => c.id === s.id),
+        avatarUrl: s.profilePicture,
+      })));
 
       setPopularProfiles([
         { 
@@ -229,13 +180,20 @@ export const NetworkPage: React.FC = () => {
   };
 
   const handleConnect = async (suggestion: Suggestion) => {
-    await networkService.addConnection({
-      id: suggestion.id,
-      firstName: suggestion.firstName,
-      lastName: suggestion.lastName,
-      headline: suggestion.headline,
-      location: 'Remote'
-    });
+    try {
+      await networkService.addConnection({
+        id: suggestion.id,
+        firstName: suggestion.firstName,
+        lastName: suggestion.lastName,
+        headline: suggestion.headline,
+        location: 'Remote'
+      });
+      setSuggestions(prev => prev.map(s => s.id === suggestion.id ? { ...s, connected: true } : s));
+    } catch (err) {
+      console.error('Failed to send connection request:', err);
+      setConnectError('Could not send that connection request — please try again.');
+      setTimeout(() => setConnectError(null), 4000);
+    }
   };
 
   const handleDismiss = (id: string) => {
@@ -479,7 +437,8 @@ export const NetworkPage: React.FC = () => {
             {activeTab === 'grow' && (
               <section className="network-section">
                 <div className="network-section__header">
-                  <h2>People you may know in Greater Leipzig Area</h2>
+                  <h2>People you may know</h2>
+                  {connectError && <p style={{ color: '#c0392b', fontSize: '13px', margin: '4px 0 0' }}>{connectError}</p>}
                   <button 
                     className="network-section__link"
                     onClick={() => setShowAllSuggestions(!showAllSuggestions)}

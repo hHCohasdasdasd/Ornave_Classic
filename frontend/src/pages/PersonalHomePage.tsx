@@ -13,8 +13,7 @@ import { Carousel, CarouselSlide } from '@/components/personal/Carousel';
 import { QuickActionsSidebar } from '@/components/personal/QuickActionsSidebar';
 import { NewsCard } from '@/components/personal/NewsCard';
 import { ERPSnapshotCard } from '@/components/personal/ERPSnapshotCard';
-import { StoryViewer } from '@/components/personal/StoryViewer';
-import { mockStories, Story } from '@/data/mockStories';
+import { StoryViewer, Story } from '@/components/personal/StoryViewer';
 
 const USER_STORIES_KEY = 'ornave_user_stories';
 import { IconLaurel, IconSearch, IconEdit, IconUsers, IconUser, IconBuilding } from '@/components/ui/Icons';
@@ -73,6 +72,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   // State
   const [feedItems, setFeedItems] = useState<FeedItemType[]>([]);
   const [discoveredUsers, setDiscoveredUsers] = useState<UserProfile[]>([]);
+  const [connectError, setConnectError] = useState<string | null>(null);
   const [discoveredFirms, setDiscoveredFirms] = useState<FirmProfile[]>([]);
   const [isSearchingResults, setIsSearchingResults] = useState(false);
   const [connectionRequests, setConnectionRequests] = useState<ConnectionRequest[]>([]);
@@ -93,7 +93,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
   const [userStories, setUserStories] = useState<Story[]>(() => JSON.parse(localStorage.getItem(USER_STORIES_KEY) || '[]'));
   const [storyViewerIndex, setStoryViewerIndex] = useState<number | null>(null);
   const [seenStoryIds, setSeenStoryIds] = useState<Set<string>>(new Set());
-  const allStories = [...userStories, ...mockStories];
+  const allStories = userStories;
   const [feedViewMode, setFeedViewMode] = useState<'groups' | 'single'>('single');
   const [feedContentType, setFeedContentType] = useState<'all' | 'friends' | 'firms'>('all');
   const [feedSort, setFeedSort] = useState<'hot' | 'new' | 'top' | 'rising'>('hot');
@@ -210,11 +210,13 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
     }
     try {
       await discoveryService.sendConnectionRequest(userId);
-      setDiscoveredUsers(prev => 
+      setDiscoveredUsers(prev =>
         prev.map(u => u.id === userId ? { ...u, isConnected: true } : u)
       );
     } catch (error) {
       console.error('Failed to connect:', error);
+      setConnectError('Could not send that connection request — please try again.');
+      setTimeout(() => setConnectError(null), 4000);
     }
   };
 
@@ -357,6 +359,11 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
 
   return (
     <div className="personal-home">
+      {connectError && (
+        <div style={{ position: 'fixed', bottom: 20, right: 20, background: '#c0392b', color: '#fff', padding: '10px 16px', borderRadius: 8, zIndex: 9999, fontSize: 13 }}>
+          {connectError}
+        </div>
+      )}
       <Navbar />
       <QuickActionsSidebar
         onCreatePost={() => user ? setShowCreatePostModal(true) : triggerAuthModal('Sign in to create a post.')}

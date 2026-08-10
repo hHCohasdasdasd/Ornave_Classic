@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { StorySlideType } from '@/data/mockStories';
+import { StorySlideType } from './StoryViewer';
 import { IconImage } from '@/components/ui/Icons';
 import './CreateStoryModal.css';
 

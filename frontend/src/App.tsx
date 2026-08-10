@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { scopedKey } from '@/utils/storage';
 import { CartProvider } from '@/context/CartContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ProfileSidebar } from '@/components/personal/ProfileSidebar';
 import { HomePage } from '@/pages/HomePage';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { VerifyEmailPage } from '@/pages/VerifyEmailPage';
 import { CompanySetupPage } from '@/pages/CompanySetupPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ModulesPage } from '@/pages/ModulesPage';
@@ -70,7 +72,7 @@ import { CreatePublicationModal } from '@/components/personal/CreatePublicationM
 import { CreateStoryModal } from '@/components/personal/CreateStoryModal';
 import { feedService } from '@/services/feedService';
 import { publicationService } from '@/services/publicationService';
-import { Story } from '@/data/mockStories';
+import { Story } from '@/components/personal/StoryViewer';
 import { Mention, ServiceCard } from '@/types/feed';
 import './App.css';
 
@@ -106,20 +108,21 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const showShell = !SHELL_EXCLUDED_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
 
-  const [memberTier, setMemberTier] = useState(() => localStorage.getItem(MEMBER_TIER_KEY) || 'Basic');
-  const [verified, setVerified] = useState(() => localStorage.getItem(VERIFIED_ADDON_KEY) === 'true');
+  const [memberTier, setMemberTier] = useState(() => localStorage.getItem(scopedKey(MEMBER_TIER_KEY, user?.id)) || 'Basic');
+  const [verified, setVerified] = useState(() => localStorage.getItem(scopedKey(VERIFIED_ADDON_KEY, user?.id)) === 'true');
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showCreateStory, setShowCreateStory] = useState(false);
   const [showCreatePublication, setShowCreatePublication] = useState(false);
 
   useEffect(() => {
     const refresh = () => {
-      setMemberTier(localStorage.getItem(MEMBER_TIER_KEY) || 'Basic');
-      setVerified(localStorage.getItem(VERIFIED_ADDON_KEY) === 'true');
+      setMemberTier(localStorage.getItem(scopedKey(MEMBER_TIER_KEY, user?.id)) || 'Basic');
+      setVerified(localStorage.getItem(scopedKey(VERIFIED_ADDON_KEY, user?.id)) === 'true');
     };
+    refresh(); // also re-sync immediately when the logged-in user changes
     window.addEventListener('ornave_state_update', refresh);
     return () => window.removeEventListener('ornave_state_update', refresh);
-  }, []);
+  }, [user?.id]);
 
   const userName = user ? `${user.firstName} ${user.lastName}` : 'You';
 
@@ -230,6 +233,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
 
             {/* All Other Pages - Now Visible Without Login */}
             <Route path="/company-setup" element={<CompanySetupPage />} />

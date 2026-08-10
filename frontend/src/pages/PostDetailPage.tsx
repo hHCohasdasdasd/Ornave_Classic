@@ -26,6 +26,7 @@ export const PostDetailPage: React.FC = () => {
 
   // Sidebar states (matching PersonalHomePage)
   const [discoveredUsers, setDiscoveredUsers] = useState<UserProfile[]>([]);
+  const [connectError, setConnectError] = useState<string | null>(null);
   const [discoveredFirms, setDiscoveredFirms] = useState<FirmProfile[]>([]);
   const [connectionRequests, setConnectionRequests] = useState<ConnectionRequest[]>([]);
   const [isLoadingDiscovery, setIsLoadingDiscovery] = useState(true);
@@ -109,11 +110,13 @@ export const PostDetailPage: React.FC = () => {
     }
     try {
       await discoveryService.sendConnectionRequest(userId);
-      setDiscoveredUsers(prev => 
+      setDiscoveredUsers(prev =>
         prev.map(u => u.id === userId ? { ...u, isConnected: true } : u)
       );
     } catch (error) {
       console.error('Failed to connect:', error);
+      setConnectError('Could not send that connection request — please try again.');
+      setTimeout(() => setConnectError(null), 4000);
     }
   };
 
@@ -177,6 +180,11 @@ export const PostDetailPage: React.FC = () => {
 
   return (
     <div className="personal-home post-detail-page">
+      {connectError && (
+        <div style={{ position: 'fixed', bottom: 20, right: 20, background: '#c0392b', color: '#fff', padding: '10px 16px', borderRadius: 8, zIndex: 9999, fontSize: 13 }}>
+          {connectError}
+        </div>
+      )}
       <Navbar />
       
       <div className="floating-particle particle-1"></div>
