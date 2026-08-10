@@ -1,36 +1,13 @@
 /* Work Suite - shared styles for the hub + Projects/Tasks/Clients/Invoices/
-   Goals/Achievements pages. Reuses the same "editorial" light treatment as
-   ProfilePage (see .profile-page--editorial in ProfilePage.css): cream page,
-   white cards, dark charcoal text, gold as the singular accent — scoped
-   locally via custom-property overrides so every component below that reads
-   var(--tech-*) / var(--color-*) repaints correctly on its own. Only the
-   header banner stays on the permanent dark ground (like ProfilePage's hero
-   and dossier-tabs strip), using hardcoded light colors since the variables
-   below it are now light-mode. */
+   Goals/Achievements pages. Matches the site's permanent dark identity
+   (deep charcoal, champagne gold, warm ivory — see :root in index.css)
+   instead of defining its own palette, so it reads as part of the same
+   product as every other page rather than a lighter, disconnected corner
+   of it. --tech-accent-gold-text is the one variable with no global
+   equivalent (used for gold-tinted text on a dark ground) — defined here
+   as the same bright gold as the rest of the accent system. */
 .worksuite-page {
-  --color-bg: #f7f5ee;
-  --color-bg-alt: #f1eee3;
-  --color-surface: #ffffff;
-  --color-card: #ffffff;
-  --color-card-text: #1c1a17;
-  --color-text: #1c1a17;
-  --color-muted: #756c5d;
-  --color-primary: #c6a15b;
-  --color-primary-hover: #d8be84;
-  --color-danger: #9b4a46;
-  --color-border: rgba(28, 24, 18, 0.1);
-  --color-border-dark: rgba(28, 24, 18, 0.18);
-  --color-input-bg: rgba(28, 24, 18, 0.03);
-
-  --tech-accent-gold: #c6a15b;
-  --tech-accent-gold-text: #7d6329;
-  --tech-card-bg: #ffffff;
-  --tech-border: rgba(28, 24, 18, 0.1);
-  --tech-border-dim: rgba(28, 24, 18, 0.07);
-  --tech-text-main: #1c1a17;
-  --tech-text-dim: #756c5d;
-  --tech-bg: #f7f5ee;
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 10px 28px rgba(28, 24, 18, 0.08);
+  --tech-accent-gold-text: var(--tech-accent-gold);
 
   background: var(--tech-bg);
   min-height: 100vh;
@@ -445,7 +422,7 @@
   width: 100%;
   height: 8px;
   border-radius: 999px;
-  background: rgba(28, 24, 18, 0.08);
+  background: rgba(246, 243, 237, 0.08);
   overflow: hidden;
 }
 
@@ -969,7 +946,7 @@
 }
 
 .worksuite-modal__cancel:hover {
-  background: rgba(28, 24, 18, 0.04);
+  background: rgba(246, 243, 237, 0.06);
 }
 
 .worksuite-modal__submit {
