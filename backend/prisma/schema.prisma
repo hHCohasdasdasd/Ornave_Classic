@@ -3,50 +3,59 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id                 String                  @id @default(cuid())
-  memberNumber       Int                     @unique
-  email              String                  @unique
-  password           String
-  firstName          String
-  lastName           String
-  role               String                  @default("EMPLOYEE")
-  userType           String                  @default("COMPANY_USER")
-  isActive           Boolean                 @default(true)
-  companyId          String?
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
-  lastLogin          DateTime?
-  payments           GlobalPayment[]
-  globalRequests     GlobalRequest[]
-  orders             Order[]
-  posts              Post[]
-  comments           Comment[]
-  company            Company?                @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyConnections UserCompanyConnection[]
-  documents          UserDocument[]
-  profile            UserProfile?
-  sentConnections     UserConnection[] @relation("requester")
-  receivedConnections UserConnection[] @relation("addressee")
-  createdGroups       Group[]
-  groupMemberships    GroupMember[]
-  publications        Publication[]
-  publicationComments PublicationComment[]
-  events              Event[]
-  eventRsvps          EventRsvp[]
-  eventSaves          EventSave[]
-  savedCards          SavedCard[]
-  savedAddresses      SavedAddress[]
-  projects            Project[]
-  tasks               Task[]
-  clients             Client[]
-  invoices            Invoice[]
-  goals               Goal[]
-  achievements        Achievement[]
+  id                         String                  @id @default(cuid())
+  memberNumber               Int                     @unique
+  email                      String                  @unique
+  password                   String
+  firstName                  String
+  lastName                   String
+  role                       String                  @default("EMPLOYEE")
+  userType                   String                  @default("COMPANY_USER")
+  isActive                   Boolean                 @default(true)
+  companyId                  String?
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+  lastLogin                  DateTime?
+  failedLoginAttempts        Int                     @default(0)
+  lockedUntil                DateTime?
+  lockoutCount               Int                     @default(0)
+  permanentlyLocked          Boolean                 @default(false)
+  isPlatformAdmin            Boolean                 @default(false)
+  emailVerified              Boolean                 @default(false)
+  emailVerificationTokenHash String?                 @unique
+  emailVerificationExpiry    DateTime?
+  payments                   GlobalPayment[]
+  globalRequests             GlobalRequest[]
+  orders                     Order[]
+  posts                      Post[]
+  comments                   Comment[]
+  company                    Company?                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyConnections         UserCompanyConnection[]
+  documents                  UserDocument[]
+  profile                    UserProfile?
+  sentConnections            UserConnection[]        @relation("requester")
+  receivedConnections        UserConnection[]        @relation("addressee")
+  createdGroups              Group[]
+  groupMemberships           GroupMember[]
+  publications               Publication[]
+  publicationComments        PublicationComment[]
+  events                     Event[]
+  eventRsvps                 EventRsvp[]
+  eventSaves                 EventSave[]
+  savedCards                 SavedCard[]
+  savedAddresses             SavedAddress[]
+  projects                   Project[]
+  tasks                      Task[]
+  clients                    Client[]
+  invoices                   Invoice[]
+  goals                      Goal[]
+  achievements               Achievement[]
 
   @@index([companyId])
   @@index([email])
@@ -62,8 +71,8 @@ model UserConnection {
   partneredAt        DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
-  requester    User     @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
-  addressee    User     @relation("addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  requester          User      @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee          User      @relation("addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
 
   @@unique([requesterId, addresseeId])
   @@index([requesterId])
@@ -110,6 +119,12 @@ model Company {
   userDocuments         UserDocument[]
   publications          Publication[]
   jobs                  Job[]
+  deals                 Deal[]
+  leads                 Lead[]
+  campaigns             Campaign[]
+  courses               Course[]
+  candidates            Candidate[]
+  companyInvoices       CompanyInvoice[]
 
   @@index([slug])
   @@index([companyToken])
@@ -333,25 +348,25 @@ model UserProfile {
 }
 
 model Post {
-  id         String   @id @default(cuid())
-  authorId   String
-  content    String
-  mediaUrl   String?
-  type       String   @default("post")
-  reactions  String   @default("{}")
-  visibility String   @default("public")
-  isDeleted  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  title      String?
-  groupId    String?
+  id                  String       @id @default(cuid())
+  authorId            String
+  content             String
+  mediaUrl            String?
+  type                String       @default("post")
+  reactions           String       @default("{}")
+  visibility          String       @default("public")
+  isDeleted           Boolean      @default(false)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  title               String?
+  groupId             String?
   linkedPublicationId String?
-  mentions   String   @default("[]")
-  tags       String   @default("[]")
-  author     User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  group      Group?       @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  linkedPublication Publication? @relation(fields: [linkedPublicationId], references: [id], onDelete: SetNull)
-  comments   Comment[]
+  mentions            String       @default("[]")
+  tags                String       @default("[]")
+  author              User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  group               Group?       @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  linkedPublication   Publication? @relation(fields: [linkedPublicationId], references: [id], onDelete: SetNull)
+  comments            Comment[]
 
   @@index([authorId])
   @@index([createdAt])
@@ -366,15 +381,15 @@ model Post {
 // matching their own tags against this group's tag, not through a direct
 // relation, so one publication can appear in multiple sector groups at once.
 model Group {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String
-  slug        String   @unique
+  slug        String        @unique
   description String?
-  tag         String   @unique
+  tag         String        @unique
   coverImage  String?
   createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   createdBy   User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
   members     GroupMember[]
   discussions Post[]
@@ -384,13 +399,13 @@ model Group {
 }
 
 model GroupMember {
-  id        String   @id @default(cuid())
-  groupId   String
-  userId    String
-  role      String   @default("MEMBER")
-  joinedAt  DateTime @default(now())
-  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       String   @id @default(cuid())
+  groupId  String
+  userId   String
+  role     String   @default("MEMBER")
+  joinedAt DateTime @default(now())
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId])
   @@index([groupId])
@@ -401,22 +416,22 @@ model GroupMember {
 // from a Post (own comments/reactions, not part of the home feed). Shows on
 // the author's profile and in every Group whose tag appears in `tags`.
 model Publication {
-  id         String   @id @default(cuid())
-  authorId   String
-  companyId  String?
-  title      String
-  content    String
-  coverImage String?
-  tags       String   @default("[]")
-  mentions   String   @default("[]")
-  reactions  String   @default("{}")
-  visibility String   @default("public")
-  isDeleted  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  author     User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  company    Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  comments   PublicationComment[]
+  id            String               @id @default(cuid())
+  authorId      String
+  companyId     String?
+  title         String
+  content       String
+  coverImage    String?
+  tags          String               @default("[]")
+  mentions      String               @default("[]")
+  reactions     String               @default("{}")
+  visibility    String               @default("public")
+  isDeleted     Boolean              @default(false)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  author        User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  company       Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  comments      PublicationComment[]
   linkedInPosts Post[]
 
   @@index([authorId])
@@ -547,52 +562,52 @@ model GlobalPayment {
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  companyId   String
-  name        String
-  description String?
+  id                  String      @id @default(cuid())
+  companyId           String
+  name                String
+  description         String?
   detailedDescription String?
-  price       Float
-  currency    String      @default("USD")
-  imageUrl    String?
-  media       String      @default("[]")
-  category    String?
-  stock       Int         @default(0)
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  orderItems  OrderItem[]
-  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  ticketedEvents Event[]
+  price               Float
+  currency            String      @default("USD")
+  imageUrl            String?
+  media               String      @default("[]")
+  category            String?
+  stock               Int         @default(0)
+  isActive            Boolean     @default(true)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  orderItems          OrderItem[]
+  company             Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ticketedEvents      Event[]
 
   @@index([companyId])
   @@index([category])
 }
 
 model Order {
-  id                    String      @id @default(cuid())
-  userId                String
-  companyId             String
-  status                String      @default("PENDING")
-  totalAmount           Float
-  currency              String      @default("USD")
-  billingAddress        String?
-  billingCity           String?
-  billingState          String?
-  billingPostalCode     String?
-  billingCountry        String?
-  deliveryAddress       String?
-  deliveryCity          String?
-  deliveryState         String?
-  deliveryPostalCode    String?
-  deliveryCountry       String?
-  paymentBrand          String?
-  paymentLast4          String?
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
-  company               Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items                 OrderItem[]
+  id                 String      @id @default(cuid())
+  userId             String
+  companyId          String
+  status             String      @default("PENDING")
+  totalAmount        Float
+  currency           String      @default("USD")
+  billingAddress     String?
+  billingCity        String?
+  billingState       String?
+  billingPostalCode  String?
+  billingCountry     String?
+  deliveryAddress    String?
+  deliveryCity       String?
+  deliveryState      String?
+  deliveryPostalCode String?
+  deliveryCountry    String?
+  paymentBrand       String?
+  paymentLast4       String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  company            Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items              OrderItem[]
 
   @@index([userId])
   @@index([companyId])
@@ -681,16 +696,16 @@ model Task {
 }
 
 model Client {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
   name      String
   email     String?
   phone     String?
   company   String?
   notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   invoices  Invoice[]
 
   @@index([userId])
@@ -768,7 +783,7 @@ model Event {
   externalLink        String?
   price               Float       @default(0)
   currency            String      @default("USD")
-  capacity             Int?
+  capacity            Int?
   ticketProductId     String?
   isPromoted          Boolean     @default(false)
   isActive            Boolean     @default(true)
@@ -810,4 +825,133 @@ model EventSave {
   @@unique([eventId, userId])
   @@index([eventId])
   @@index([userId])
+}
+
+// ============================================
+// COMPANY ERP MODULES (Sales / Leads / Marketing / Learning / Talent / Billing)
+// Every model below is strictly scoped to a single companyId. All access to
+// these records must go through routes that verify req.user.companyId
+// matches the :companyId route param (see companyContextMiddleware) — one
+// company must never be able to read or write another company's ERP data.
+// ============================================
+
+model Deal {
+  id            String    @id @default(cuid())
+  companyId     String
+  name          String
+  clientCompany String?
+  value         Float     @default(0)
+  stage         String    @default("Prospect")
+  owner         String?
+  closeDate     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+model Lead {
+  id                String   @id @default(cuid())
+  companyId         String
+  name              String
+  title             String?
+  leadCompany       String?
+  location          String?
+  industry          String?
+  connections       Int      @default(0)
+  mutualConnections String?
+  saved             Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  company           Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  companyId   String
+  name        String
+  type        String   @default("Sponsored Content")
+  status      String   @default("Draft")
+  budget      Float    @default(0)
+  spent       Float    @default(0)
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  conversions Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+model Course {
+  id         String   @id @default(cuid())
+  companyId  String
+  title      String
+  instructor String?
+  category   String?
+  level      String   @default("Beginner")
+  duration   String?
+  rating     Float    @default(0)
+  enrolled   Int      @default(0)
+  progress   Int?
+  saved      Boolean  @default(false)
+  thumbnail  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+model Candidate {
+  id           String   @id @default(cuid())
+  companyId    String
+  name         String
+  title        String?
+  location     String?
+  skills       String   @default("[]")
+  experience   String?
+  availability String   @default("Available")
+  saved        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+model CompanyInvoice {
+  id          String   @id @default(cuid())
+  companyId   String
+  description String
+  amount      Float
+  status      String   @default("Pending")
+  invoiceDate DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+// Append-only security audit trail for authentication events. Deliberately
+// has no FK/cascade relation to User — an audit log should survive account
+// deletion, not disappear with it.
+model AuthAuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String
+  eventType String // 'REGISTER' | 'LOGIN_SUCCESS' | 'LOGIN_FAILED' | 'ACCOUNT_LOCKED' | 'PASSWORD_CHANGED'
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([email])
+  @@index([eventType])
+  @@index([createdAt])
 }

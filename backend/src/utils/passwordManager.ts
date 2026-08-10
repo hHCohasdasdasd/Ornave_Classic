@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
  */
 
 export class PasswordManager {
-  private static readonly SALT_ROUNDS = 10;
+  private static readonly SALT_ROUNDS = 12;
 
   /**
    * Hash password using bcrypt

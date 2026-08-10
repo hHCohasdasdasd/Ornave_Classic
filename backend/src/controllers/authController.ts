@@ -5,7 +5,15 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { PasswordManager } from '../utils/passwordManager';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../constants';
+import { setAuthCookies, clearAuthCookies } from '../utils/authCookies';
 import { z } from 'zod';
+
+function requestMeta(req: Request) {
+  return {
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  };
+}
 
 /**
  * Authentication Controller
@@ -75,7 +83,8 @@ export class AuthController {
         );
       }
 
-      const authResponse = await AuthService.register(validated as any);
+      const authResponse = await AuthService.register(validated as any, requestMeta(req));
+      setAuthCookies(res, authResponse.token);
 
       return ApiResponseHandler.success(
         res,
@@ -94,7 +103,8 @@ export class AuthController {
   static login = asyncHandler(async (req: Request, res: Response) => {
     try {
       const validated = LoginSchema.parse(req.body);
-      const authResponse = await AuthService.login(validated as any);
+      const authResponse = await AuthService.login(validated as any, requestMeta(req));
+      setAuthCookies(res, authResponse.token);
 
       return ApiResponseHandler.success(
         res,
@@ -133,7 +143,7 @@ export class AuthController {
       }
 
       const validated = ChangePasswordSchema.parse(req.body);
-      await AuthService.changePassword(req.user.userId, validated.oldPassword, validated.newPassword);
+      await AuthService.changePassword(req.user.userId, validated.oldPassword, validated.newPassword, requestMeta(req));
 
       return ApiResponseHandler.success(
         res,
@@ -170,6 +180,46 @@ export class AuthController {
   });
 
   /**
+   * Logout — clears the httpOnly session cookie. (Bearer-token clients have
+   * nothing server-side to clear; they just discard the token locally.)
+   */
+  static logout = asyncHandler(async (_req: Request, res: Response) => {
+    clearAuthCookies(res);
+    return ApiResponseHandler.success(res, null, 'Logged out successfully', 200);
+  });
+
+  /**
+   * Verify email address from a link token
+   */
+  static verifyEmail = asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const token = typeof req.query.token === 'string' ? req.query.token : undefined;
+      if (!token) {
+        return ApiResponseHandler.error(res, 'Verification token is required', undefined, 400);
+      }
+      await AuthService.verifyEmail(token);
+      return ApiResponseHandler.success(res, null, 'Email verified successfully', 200);
+    } catch (error: any) {
+      return ApiResponseHandler.error(res, error.message, undefined, 400);
+    }
+  });
+
+  /**
+   * Resend a verification link to the signed-in (but unverified) user
+   */
+  static resendVerification = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user) {
+        return ApiResponseHandler.error(res, ERROR_MESSAGES.UNAUTHORIZED, undefined, 401);
+      }
+      await AuthService.resendVerification(req.user.userId);
+      return ApiResponseHandler.success(res, null, 'Verification email sent', 200);
+    } catch (error: any) {
+      return ApiResponseHandler.error(res, error.message, undefined, 400);
+    }
+  });
+
+  /**
    * Verify token
    */
   static verifyToken = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -186,6 +236,26 @@ export class AuthController {
       );
     } catch (error: any) {
       return ApiResponseHandler.error(res, error.message, undefined, 401);
+    }
+  });
+
+  /**
+   * [Platform admin only] List currently locked accounts
+   */
+  static listLockedAccounts = asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
+    const locked = await AuthService.listLockedAccounts();
+    return ApiResponseHandler.success(res, locked, 'Locked accounts retrieved', 200);
+  });
+
+  /**
+   * [Platform admin only] Unlock a specific account
+   */
+  static adminUnlockAccount = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      await AuthService.adminUnlockAccount(req.params.userId);
+      return ApiResponseHandler.success(res, null, 'Account unlocked successfully', 200);
+    } catch (error: any) {
+      return ApiResponseHandler.error(res, error.message, undefined, 400);
     }
   });
 }

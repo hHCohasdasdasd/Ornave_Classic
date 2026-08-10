@@ -1,7 +1,35 @@
 import { PrismaClient } from '@prisma/client';
+import crypto from 'crypto';
 import { PasswordManager } from '../utils/passwordManager';
 import { TokenManager } from '../utils/tokenManager';
 import { ERROR_MESSAGES } from '../constants';
+
+const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+/**
+ * Issues a fresh email-verification token for a user, stores its hash, and
+ * "delivers" it. No email provider is wired up yet, so delivery is a console
+ * log for now — swap this one function out once one is configured, nothing
+ * else about the flow needs to change.
+ */
+async function issueEmailVerificationToken(userId: string, email: string): Promise<void> {
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      emailVerificationTokenHash: hashToken(rawToken),
+      emailVerificationExpiry: new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MS),
+    },
+  });
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5175';
+  const verificationLink = `${frontendUrl}/verify-email?token=${rawToken}`;
+  console.log(`[EmailVerification] Verification link for ${email}: ${verificationLink}`);
+}
 
 const prisma = new PrismaClient();
 
@@ -23,6 +51,41 @@ export const UserType = {
  * Handles user registration, login, and token management
  * Enforces multi-tenancy through company-based isolation
  */
+
+export interface RequestMeta {
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+async function logAuthEvent(
+  eventType:
+    | 'REGISTER'
+    | 'LOGIN_SUCCESS'
+    | 'LOGIN_FAILED'
+    | 'ACCOUNT_LOCKED'
+    | 'ACCOUNT_PERMANENTLY_LOCKED'
+    | 'ACCOUNT_UNLOCKED'
+    | 'PASSWORD_CHANGED'
+    | 'EMAIL_VERIFIED',
+  email: string,
+  userId?: string | null,
+  meta?: RequestMeta
+) {
+  try {
+    await prisma.authAuditLog.create({
+      data: {
+        eventType,
+        email,
+        userId: userId || undefined,
+        ipAddress: meta?.ipAddress,
+        userAgent: meta?.userAgent,
+      },
+    });
+  } catch (err) {
+    // Audit logging must never break the auth flow itself.
+    console.error('[AuthAuditLog] failed to record event:', err);
+  }
+}
 
 export interface LoginCredentials {
   email: string;
@@ -64,7 +127,7 @@ export class AuthService {
    * If no companyId provided, creates a new company for the user
    * First user in company automatically becomes OWNER
    */
-  static async register(data: RegisterData): Promise<AuthResponse> {
+  static async register(data: RegisterData, meta?: RequestMeta): Promise<AuthResponse> {
     const accountType = data.userType || UserType.COMPANY_USER;
     let companyId = data.companyId;
 
@@ -158,6 +221,9 @@ export class AuthService {
       userType: user.userType,
     });
 
+    await logAuthEvent('REGISTER', user.email, user.id, meta);
+    await issueEmailVerificationToken(user.id, user.email);
+
     return {
       token,
       user: {
@@ -183,7 +249,22 @@ export class AuthService {
   /**
    * Login user with email and password
    */
-  static async login(credentials: LoginCredentials): Promise<AuthResponse> {
+  private static readonly MAX_FAILED_ATTEMPTS = 5;
+
+  // Escalating lockout durations, indexed by (lockoutCount - 1): 1st lockout
+  // is 15 minutes, 2nd is 1 hour, 3rd is 24 hours, 4th is 72 hours. A 5th
+  // lockout goes permanent — the account stays locked until an admin clears
+  // `permanentlyLocked` directly (there's no self-service unlock for that
+  // tier by design). lockoutCount never auto-decays; it's a lifetime count
+  // of how many times this account has tripped the failed-attempt threshold.
+  private static readonly LOCKOUT_TIERS_MS = [
+    15 * 60 * 1000,
+    60 * 60 * 1000,
+    24 * 60 * 60 * 1000,
+    72 * 60 * 60 * 1000,
+  ];
+
+  static async login(credentials: LoginCredentials, meta?: RequestMeta): Promise<AuthResponse> {
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email: credentials.email },
@@ -191,7 +272,26 @@ export class AuthService {
     });
 
     if (!user) {
+      await logAuthEvent('LOGIN_FAILED', credentials.email, null, meta);
       throw new Error(ERROR_MESSAGES.INVALID_CREDENTIALS);
+    }
+
+    if (user.permanentlyLocked) {
+      await logAuthEvent('LOGIN_FAILED', user.email, user.id, meta);
+      throw new Error(
+        'This account has been permanently locked after repeated failed login attempts. Contact support to regain access.'
+      );
+    }
+
+    // Check if the account is currently locked out from too many failed attempts
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
+      const humanTime =
+        minutesLeft >= 60 ? `${Math.ceil(minutesLeft / 60)} hour(s)` : `${minutesLeft} minute(s)`;
+      await logAuthEvent('LOGIN_FAILED', user.email, user.id, meta);
+      throw new Error(
+        `Account temporarily locked due to too many failed login attempts. Try again in ${humanTime}.`
+      );
     }
 
     // Verify password
@@ -201,6 +301,33 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
+      const failedAttempts = user.failedLoginAttempts + 1;
+      const shouldLock = failedAttempts >= this.MAX_FAILED_ATTEMPTS;
+
+      if (shouldLock) {
+        const newLockoutCount = user.lockoutCount + 1;
+        const tierIndex = newLockoutCount - 1;
+        const goesPermanent = tierIndex >= this.LOCKOUT_TIERS_MS.length;
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            failedLoginAttempts: 0,
+            lockoutCount: newLockoutCount,
+            permanentlyLocked: goesPermanent,
+            lockedUntil: goesPermanent ? null : new Date(Date.now() + this.LOCKOUT_TIERS_MS[tierIndex]),
+          },
+        });
+
+        await logAuthEvent(goesPermanent ? 'ACCOUNT_PERMANENTLY_LOCKED' : 'ACCOUNT_LOCKED', user.email, user.id, meta);
+      } else {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { failedLoginAttempts: failedAttempts },
+        });
+        await logAuthEvent('LOGIN_FAILED', user.email, user.id, meta);
+      }
+
       throw new Error(ERROR_MESSAGES.INVALID_CREDENTIALS);
     }
 
@@ -209,11 +336,15 @@ export class AuthService {
       throw new Error('User account is inactive');
     }
 
-    // Update last login
+    // Successful login — reset the failed-attempt/lock state (but not the
+    // lifetime lockoutCount — escalation deliberately remembers) and update
+    // last login.
     await prisma.user.update({
       where: { id: user.id },
-      data: { lastLogin: new Date() },
+      data: { lastLogin: new Date(), failedLoginAttempts: 0, lockedUntil: null },
     });
+
+    await logAuthEvent('LOGIN_SUCCESS', user.email, user.id, meta);
 
     // Generate token
     const token = TokenManager.generateToken({
@@ -306,7 +437,8 @@ export class AuthService {
   static async changePassword(
     userId: string,
     oldPassword: string,
-    newPassword: string
+    newPassword: string,
+    meta?: RequestMeta
   ): Promise<void> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -330,6 +462,8 @@ export class AuthService {
       where: { id: userId },
       data: { password: hashedPassword },
     });
+
+    await logAuthEvent('PASSWORD_CHANGED', user.email, user.id, meta);
   }
 
   /**
@@ -429,5 +563,89 @@ export class AuthService {
     });
 
     return userWithProfile;
+  }
+
+  /**
+   * Confirm a user's email address using the raw token from the link they
+   * clicked. Tokens are single-use (cleared on success) and expire after
+   * EMAIL_VERIFICATION_EXPIRY_MS.
+   */
+  static async verifyEmail(rawToken: string): Promise<void> {
+    const tokenHash = hashToken(rawToken);
+    const user = await prisma.user.findUnique({ where: { emailVerificationTokenHash: tokenHash } });
+
+    if (!user || !user.emailVerificationExpiry || user.emailVerificationExpiry < new Date()) {
+      throw new Error('Verification link is invalid or has expired');
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        emailVerificationTokenHash: null,
+        emailVerificationExpiry: null,
+      },
+    });
+
+    await logAuthEvent('EMAIL_VERIFIED', user.email, user.id);
+  }
+
+  /**
+   * Re-issue a verification link for a signed-in user who hasn't verified yet.
+   */
+  static async resendVerification(userId: string): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+    }
+    if (user.emailVerified) {
+      throw new Error('Email is already verified');
+    }
+    await issueEmailVerificationToken(user.id, user.email);
+  }
+
+  /**
+   * List every account currently locked (temporarily or permanently) — the
+   * working set a platform admin needs to decide who to unlock.
+   */
+  static async listLockedAccounts() {
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [{ permanentlyLocked: true }, { lockedUntil: { gt: new Date() } }],
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        lockoutCount: true,
+        permanentlyLocked: true,
+        lockedUntil: true,
+      },
+      orderBy: { lockoutCount: 'desc' },
+    });
+    return users;
+  }
+
+  /**
+   * Administrative unlock — clears both temporary and permanent lockout
+   * state. There is no self-service path to this; it's a deliberate design
+   * choice for the permanent-lockout tier.
+   */
+  static async adminUnlockAccount(userId: string): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+    }
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        lockoutCount: 0,
+        permanentlyLocked: false,
+      },
+    });
+    await logAuthEvent('ACCOUNT_UNLOCKED', user.email, user.id);
   }
 }

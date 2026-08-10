@@ -2,6 +2,17 @@ import { Request, Response, NextFunction } from 'express';
 import { TokenManager, JwtPayload } from '../utils/tokenManager';
 import { ApiResponseHandler } from '../utils/apiResponse';
 import { ERROR_MESSAGES } from '../constants';
+import { AUTH_COOKIE_NAME } from '../utils/authCookies';
+
+/**
+ * Prefers an explicit `Authorization: Bearer` header (API clients), falling
+ * back to the httpOnly session cookie (browser sessions) when absent.
+ */
+function extractTokenFromRequest(req: Request): string | null {
+  const headerToken = TokenManager.extractToken(req.headers.authorization);
+  if (headerToken) return headerToken;
+  return (req as any).cookies?.[AUTH_COOKIE_NAME] || null;
+}
 
 /**
  * Extended Express Request with authenticated user data
@@ -21,8 +32,7 @@ export function authMiddleware(
   next: NextFunction
 ): void {
   try {
-    const authHeader = req.headers.authorization;
-    const token = TokenManager.extractToken(authHeader);
+    const token = extractTokenFromRequest(req);
 
     if (!token) {
       ApiResponseHandler.error(res, ERROR_MESSAGES.UNAUTHORIZED, undefined, 401);
@@ -51,7 +61,7 @@ export function optionalAuthMiddleware(
   next: NextFunction
 ): void {
   try {
-    const token = TokenManager.extractToken(req.headers.authorization);
+    const token = extractTokenFromRequest(req);
     if (token) {
       const decoded = TokenManager.verifyToken(token);
       req.user = decoded;

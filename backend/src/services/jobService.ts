@@ -53,6 +53,24 @@ export class JobService {
     return true;
   }
 
+  /**
+   * Network-wide public jobs feed — active postings across ALL companies,
+   * for a "browse all jobs" board. Not tenant-scoped by design: job
+   * postings are meant to be publicly visible network-wide.
+   */
+  static async listAllActiveJobs(limit = 50) {
+    const jobs = await prisma.job.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: { company: { select: { id: true, name: true, slug: true, logo: true } } },
+    });
+    return jobs.map((j: any) => ({
+      ...this.formatJob(j),
+      company: j.company,
+    }));
+  }
+
   private static formatJob(job: any) {
     let benefits: string[] = [];
     try {

@@ -1,9 +1,11 @@
+import './loadEnv';
 import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 
 import { errorHandler } from './middleware/errorHandler';
+import { csrfProtection } from './middleware/csrf';
 import authRoutes from './routes/authRoutes';
 import companyRoutes from './routes/companyRoutes';
 import moduleRoutes from './routes/moduleRoutes';
@@ -22,9 +24,14 @@ import jobRoutes from './routes/jobRoutes';
 import eventRoutes from './routes/eventRoutes';
 import billingRoutes from './routes/billingRoutes';
 import workSuiteRoutes from './routes/workSuiteRoutes';
-
-// Load environment variables
-dotenv.config();
+import salesRoutes from './routes/salesRoutes';
+import leadsRoutes from './routes/leadsRoutes';
+import marketingRoutes from './routes/marketingRoutes';
+import learningRoutes from './routes/learningRoutes';
+import talentRoutes from './routes/talentRoutes';
+import companyBillingRoutes from './routes/companyBillingRoutes';
+import jobsFeedRoutes from './routes/jobsFeedRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -70,6 +77,7 @@ app.use(helmet({
 // Body parser middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(cookieParser());
 
 // ============================================
 // LOGGING MIDDLEWARE
@@ -111,6 +119,11 @@ app.get('/health', (_req, res) => {
 
 const API_BASE = '/api';
 
+// CSRF protection for cookie-authenticated mutating requests (see
+// middleware/csrf.ts) — applies across all /api routes, ahead of the
+// individual route mounts below.
+app.use(API_BASE, csrfProtection);
+
 app.use(`${API_BASE}/auth`, authRoutes);
 app.use(`${API_BASE}/companies`, companyRoutes);
 app.use(`${API_BASE}/companies/:companyId/modules`, moduleRoutes);
@@ -129,6 +142,14 @@ app.use(`${API_BASE}/publications`, publicationRoutes);
 app.use(`${API_BASE}/events`, eventRoutes);
 app.use(`${API_BASE}/billing`, billingRoutes);
 app.use(`${API_BASE}/work-suite`, workSuiteRoutes);
+app.use(`${API_BASE}/companies/:companyId/deals`, salesRoutes);
+app.use(`${API_BASE}/companies/:companyId/leads`, leadsRoutes);
+app.use(`${API_BASE}/companies/:companyId/campaigns`, marketingRoutes);
+app.use(`${API_BASE}/companies/:companyId/courses`, learningRoutes);
+app.use(`${API_BASE}/companies/:companyId/candidates`, talentRoutes);
+app.use(`${API_BASE}/companies/:companyId/invoices`, companyBillingRoutes);
+app.use(`${API_BASE}/jobs`, jobsFeedRoutes);
+app.use(`${API_BASE}/admin`, adminRoutes);
 
 // ============================================
 // 404 HANDLER

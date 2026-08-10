@@ -15,8 +15,18 @@ export interface JwtPayload {
   exp?: number;
 }
 
+function requireJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      'JWT_SECRET environment variable must be set to a strong value (32+ characters) — refusing to start with a weak or missing secret.'
+    );
+  }
+  return secret;
+}
+
 export class TokenManager {
-  private static readonly SECRET = process.env.JWT_SECRET || 'your-secret-key';
+  private static readonly SECRET = requireJwtSecret();
   private static readonly EXPIRY = process.env.JWT_EXPIRY || '7d';
 
   /**
