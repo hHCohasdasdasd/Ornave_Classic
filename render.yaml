@@ -4,7 +4,13 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && npm run build
+    # --include=dev: this service sets NODE_ENV=production below, which
+    # makes plain `npm install` silently skip devDependencies (typescript,
+    # @types/node, prisma CLI) — all required to build. `npm ci` installs
+    # the exact versions in package-lock.json rather than re-resolving
+    # against semver ranges, so the build uses the same typescript version
+    # verified working locally instead of whatever is newest at build time.
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /health
     envVars:
