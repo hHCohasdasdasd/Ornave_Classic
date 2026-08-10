@@ -32,6 +32,7 @@ class FeedService {
         mediaUrl: post.mediaUrl,
         timestamp: post.timestamp || new Date().toISOString(),
         reactions: post.reactions || { likes: 0, comments: 0 },
+        likedByMe: !!post.likedByMe,
         tags: post.tags || [],
       }));
 
@@ -71,6 +72,7 @@ class FeedService {
         mediaUrl: post.mediaUrl,
         timestamp: post.timestamp || post.createdAt || new Date().toISOString(),
         reactions: post.reactions || { likes: 0, comments: 0 },
+        likedByMe: !!post.likedByMe,
         tags: post.tags || [],
       };
     } catch (error) {
@@ -107,6 +109,7 @@ class FeedService {
         mediaUrl: post.mediaUrl,
         timestamp: post.timestamp || new Date().toISOString(),
         reactions: post.reactions || { likes: 0, comments: 0 },
+        likedByMe: !!post.likedByMe,
         metadata: serviceCard ? { serviceCard } : undefined,
         tags: post.tags || [],
       };
@@ -143,6 +146,7 @@ class FeedService {
         mediaUrl: post.mediaUrl,
         timestamp: post.timestamp || new Date().toISOString(),
         reactions: post.reactions || { likes: 0, comments: 0 },
+        likedByMe: !!post.likedByMe,
         tags: post.tags || [],
       }));
 
@@ -188,6 +192,7 @@ class FeedService {
         mediaUrl: post.mediaUrl,
         timestamp: post.timestamp || post.createdAt || new Date().toISOString(),
         reactions: post.reactions || { likes: 0, comments: 0 },
+        likedByMe: !!post.likedByMe,
         tags: post.tags || [],
       }));
 
@@ -226,6 +231,12 @@ class FeedService {
 
   async addComment(postId: string, content: string): Promise<any> {
     const response = await apiClient.post(`/posts/${postId}/comments`, { content });
+    return response.data.data || response.data;
+  }
+
+  /** Toggle the current user's like on a post. Persists server-side and is visible to everyone. */
+  async toggleLike(postId: string): Promise<{ liked: boolean; likeCount: number }> {
+    const response = await apiClient.post(`/posts/${postId}/like`, {});
     return response.data.data || response.data;
   }
 

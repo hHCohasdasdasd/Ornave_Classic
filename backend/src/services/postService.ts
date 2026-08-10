@@ -47,6 +47,7 @@ export interface PostResponse {
     likes: number;
     comments: number;
   };
+  likedByMe: boolean;
   visibility: string;
   timestamp: string;
   isDeleted: boolean;
@@ -107,13 +108,26 @@ export class PostService {
       include: LINKED_PUBLICATION_INCLUDE,
     });
 
-    return this.formatPostResponse(post, user);
+    return this.formatPostResponse(post, user, false);
+  }
+
+  /**
+   * Which of the given posts has the viewer already liked? Empty set for a
+   * guest/anonymous viewer.
+   */
+  private static async getLikedPostIds(postIds: string[], viewerId?: string): Promise<Set<string>> {
+    if (!viewerId || postIds.length === 0) return new Set();
+    const likes = await prisma.postLike.findMany({
+      where: { userId: viewerId, postId: { in: postIds } },
+      select: { postId: true },
+    });
+    return new Set(likes.map(l => l.postId));
   }
 
   /**
    * Get posts for a user
    */
-  static async getUserPosts(userId: string): Promise<PostResponse[]> {
+  static async getUserPosts(userId: string, viewerId?: string): Promise<PostResponse[]> {
     const posts = await prisma.post.findMany({
       where: {
         authorId: userId,
@@ -135,7 +149,9 @@ export class PostService {
       return [];
     }
 
-    return posts.map(post => this.formatPostResponse(post, user));
+    const likedPostIds = await this.getLikedPostIds(posts.map(p => p.id), viewerId);
+
+    return posts.map(post => this.formatPostResponse(post, user, likedPostIds.has(post.id)));
   }
 
   /**
@@ -149,6 +165,7 @@ export class PostService {
       theme?: string;
       tag?: string;
       groupId?: string | null;
+      viewerId?: string;
     } = {}
   ): Promise<{ items: PostResponse[]; total: number; hasMore: boolean }> {
     const limit = options.limit || 50;
@@ -200,10 +217,11 @@ export class PostService {
     });
 
     const userMap = new Map(users.map(u => [u.id, u]));
+    const likedPostIds = await this.getLikedPostIds(posts.map(p => p.id), options.viewerId);
 
     const items = posts.map(post => {
       const user = userMap.get(post.authorId);
-      return this.formatPostResponse(post, user!);
+      return this.formatPostResponse(post, user!, likedPostIds.has(post.id));
     });
 
     return {
@@ -216,7 +234,7 @@ export class PostService {
   /**
    * Get a single post
    */
-  static async getPost(postId: string): Promise<PostResponse | null> {
+  static async getPost(postId: string, viewerId?: string): Promise<PostResponse | null> {
     const post = await prisma.post.findUnique({
       where: { id: postId },
       include: LINKED_PUBLICATION_INCLUDE,
@@ -235,7 +253,48 @@ export class PostService {
       return null;
     }
 
-    return this.formatPostResponse(post, user);
+    const likedPostIds = await this.getLikedPostIds([post.id], viewerId);
+
+    return this.formatPostResponse(post, user, likedPostIds.has(post.id));
+  }
+
+  /**
+   * Toggle the current user's like on a post. Returns the new state and the
+   * post's up-to-date like count (also written back into Post.reactions so
+   * anything still reading that JSON blob — e.g. trending's engagement sort —
+   * stays consistent with the real PostLike rows).
+   */
+  static async toggleLike(postId: string, userId: string): Promise<{ liked: boolean; likeCount: number }> {
+    const post = await prisma.post.findUnique({ where: { id: postId } });
+    if (!post || post.isDeleted) {
+      throw new Error('Post not found');
+    }
+
+    const existing = await prisma.postLike.findUnique({
+      where: { postId_userId: { postId, userId } },
+    });
+
+    if (existing) {
+      await prisma.postLike.delete({ where: { id: existing.id } });
+    } else {
+      await prisma.postLike.create({ data: { postId, userId } });
+    }
+
+    const likeCount = await prisma.postLike.count({ where: { postId } });
+
+    let reactions = { likes: 0, comments: 0 };
+    try {
+      reactions = JSON.parse(post.reactions || '{"likes":0,"comments":0}');
+    } catch {
+      reactions = { likes: 0, comments: 0 };
+    }
+    reactions.likes = likeCount;
+    await prisma.post.update({
+      where: { id: postId },
+      data: { reactions: JSON.stringify(reactions) },
+    });
+
+    return { liked: !existing, likeCount };
   }
 
   /**
@@ -259,44 +318,9 @@ export class PostService {
   }
 
   /**
-   * Update reactions on a post
-   */
-  static async updateReactions(
-    postId: string,
-    reactions: { likes: number; comments: number }
-  ): Promise<PostResponse | null> {
-    const post = await prisma.post.findUnique({
-      where: { id: postId },
-    });
-
-    if (!post || post.isDeleted) {
-      return null;
-    }
-
-    const updated = await prisma.post.update({
-      where: { id: postId },
-      data: {
-        reactions: JSON.stringify(reactions),
-      },
-      include: LINKED_PUBLICATION_INCLUDE,
-    });
-
-    const user = await prisma.user.findUnique({
-      where: { id: post.authorId },
-      include: { profile: true },
-    });
-
-    if (!user) {
-      return null;
-    }
-
-    return this.formatPostResponse(updated, user);
-  }
-
-  /**
    * Get trending posts from the past week
    */
-  static async getTrendingPosts(limit: number = 10): Promise<PostResponse[]> {
+  static async getTrendingPosts(limit: number = 10, viewerId?: string): Promise<PostResponse[]> {
     // Calculate date from one week ago
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -325,6 +349,8 @@ export class PostService {
     const userMap = new Map(users.map(u => [u.id, u]));
 
     // Sort by engagement (likes + comments)
+    const likedPostIds = await this.getLikedPostIds(posts.map(p => p.id), viewerId);
+
     const items = posts.map(post => {
       const user = userMap.get(post.authorId);
       let reactions = { likes: 0, comments: 0 };
@@ -333,9 +359,9 @@ export class PostService {
       } catch (e) {
         console.error(`Failed to parse reactions for post ${post.id}:`, e);
       }
-      
+
       return {
-        post: this.formatPostResponse(post, user!),
+        post: this.formatPostResponse(post, user!, likedPostIds.has(post.id)),
         engagement: (reactions.likes || 0) + (reactions.comments || 0),
       };
     });
@@ -413,7 +439,7 @@ export class PostService {
   /**
    * Format post response
    */
-  private static formatPostResponse(post: any, user: any): PostResponse {
+  private static formatPostResponse(post: any, user: any, likedByMe: boolean = false): PostResponse {
     let linkedPublication: PostResponse['linkedPublication'] = null;
     if (post.linkedPublication) {
       const lp = post.linkedPublication;
@@ -461,6 +487,7 @@ export class PostService {
       mediaUrl: post.mediaUrl,
       type: post.type,
       reactions: JSON.parse(post.reactions || '{"likes":0,"comments":0}'),
+      likedByMe,
       visibility: post.visibility,
       timestamp: post.createdAt.toISOString(),
       isDeleted: post.isDeleted,

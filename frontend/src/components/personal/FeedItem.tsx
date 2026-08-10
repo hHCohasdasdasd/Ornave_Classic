@@ -24,7 +24,8 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused, onDeleted }
   const [serviceRequested, setServiceRequested] = useState(false);
   const [likeCount, setLikeCount] = useState(item.reactions?.likes ?? 0);
   const [saved, setSaved] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(!!item.likedByMe);
+  const [likeInFlight, setLikeInFlight] = useState(false);
   const [muted, setMuted] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -84,11 +85,23 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused, onDeleted }
   };
 
   const handleLike = () => {
-    requireAuth('like this post', () => {
-      setLiked(prev => {
-        setLikeCount(v => prev ? v - 1 : v + 1);
-        return !prev;
-      });
+    requireAuth('like this post', async () => {
+      if (likeInFlight) return;
+      const wasLiked = liked;
+      setLiked(!wasLiked);
+      setLikeCount(v => wasLiked ? v - 1 : v + 1);
+      setLikeInFlight(true);
+      try {
+        const result = await feedService.toggleLike(item.id);
+        setLiked(result.liked);
+        setLikeCount(result.likeCount);
+      } catch {
+        // Roll back the optimistic update on failure.
+        setLiked(wasLiked);
+        setLikeCount(v => wasLiked ? v + 1 : v - 1);
+      } finally {
+        setLikeInFlight(false);
+      }
     });
   };
 

@@ -67,6 +67,7 @@ export interface FeedItem {
     likes: number;
     comments: number;
   };
+  likedByMe?: boolean;
   metadata?: {
     connectionName?: string;
     transactionAmount?: number;

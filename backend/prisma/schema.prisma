@@ -35,6 +35,7 @@ model User {
   orders                     Order[]
   posts                      Post[]
   comments                   Comment[]
+  postLikes                  PostLike[]
   company                    Company?                @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyConnections         UserCompanyConnection[]
   documents                  UserDocument[]
@@ -367,6 +368,7 @@ model Post {
   group               Group?       @relation(fields: [groupId], references: [id], onDelete: SetNull)
   linkedPublication   Publication? @relation(fields: [linkedPublicationId], references: [id], onDelete: SetNull)
   comments            Comment[]
+  likes               PostLike[]
 
   @@index([authorId])
   @@index([createdAt])
@@ -484,6 +486,19 @@ model Comment {
 
   @@index([postId])
   @@index([authorId])
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
 }
 
 model UserCompanyConnection {

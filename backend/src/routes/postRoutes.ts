@@ -1,5 +1,5 @@
-import { Router, Request, Response } from 'express';
-import { authMiddleware } from '../middleware/auth';
+import { Router, Response } from 'express';
+import { authMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { PostService } from '../services/postService';
 import { CommentService } from '../services/commentService';
@@ -47,7 +47,8 @@ postRoutes.post(
  */
 postRoutes.get(
   '/',
-  asyncHandler(async (req: Request, res: Response) => {
+  optionalAuthMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
     const visibility = (req.query.visibility as any) || 'public';
@@ -60,6 +61,7 @@ postRoutes.get(
       visibility,
       theme,
       tag,
+      viewerId: req.user?.userId,
     });
 
     return ApiResponseHandler.success(res, result, 'Feed retrieved successfully', 200);
@@ -72,10 +74,11 @@ postRoutes.get(
  */
 postRoutes.get(
   '/trending',
-  asyncHandler(async (req: Request, res: Response) => {
+  optionalAuthMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 10;
 
-    const posts = await PostService.getTrendingPosts(limit);
+    const posts = await PostService.getTrendingPosts(limit, req.user?.userId);
 
     return ApiResponseHandler.success(
       res,
@@ -92,7 +95,7 @@ postRoutes.get(
  */
 postRoutes.get(
   '/themes',
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 8;
 
     const themes = await PostService.getTopThemes(limit);
@@ -112,10 +115,11 @@ postRoutes.get(
  */
 postRoutes.get(
   '/user/:userId',
-  asyncHandler(async (req: Request, res: Response) => {
+  optionalAuthMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { userId } = req.params;
 
-    const posts = await PostService.getUserPosts(userId);
+    const posts = await PostService.getUserPosts(userId, req.user?.userId);
 
     return ApiResponseHandler.success(
       res,
@@ -132,10 +136,11 @@ postRoutes.get(
  */
 postRoutes.get(
   '/:postId',
-  asyncHandler(async (req: Request, res: Response) => {
+  optionalAuthMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { postId } = req.params;
 
-    const post = await PostService.getPost(postId);
+    const post = await PostService.getPost(postId, req.user?.userId);
 
     if (!post) {
       return ApiResponseHandler.error(res, 'Post not found', undefined, 404);
@@ -166,11 +171,11 @@ postRoutes.delete(
 );
 
 /**
- * Update post reactions
- * PATCH /api/posts/:postId/reactions
+ * Toggle the current user's like on a post
+ * POST /api/posts/:postId/like
  */
-postRoutes.patch(
-  '/:postId/reactions',
+postRoutes.post(
+  '/:postId/like',
   authMiddleware,
   asyncHandler(async (req: any, res: Response) => {
     if (!req.user) {
@@ -178,24 +183,18 @@ postRoutes.patch(
     }
 
     const { postId } = req.params;
-    const { reactions } = req.body;
 
-    if (!reactions || typeof reactions.likes !== 'number' || typeof reactions.comments !== 'number') {
-      return ApiResponseHandler.error(
+    try {
+      const result = await PostService.toggleLike(postId, req.user.userId);
+      return ApiResponseHandler.success(
         res,
-        'Invalid reactions format',
-        undefined,
-        400
+        result,
+        result.liked ? 'Post liked' : 'Post unliked',
+        200
       );
-    }
-
-    const post = await PostService.updateReactions(postId, reactions);
-
-    if (!post) {
+    } catch {
       return ApiResponseHandler.error(res, 'Post not found', undefined, 404);
     }
-
-    return ApiResponseHandler.success(res, post, 'Reactions updated successfully', 200);
   })
 );
 
@@ -205,7 +204,7 @@ postRoutes.patch(
  */
 postRoutes.get(
   '/:postId/comments',
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { postId } = req.params;
     const comments = await CommentService.getComments(postId);
     return ApiResponseHandler.success(res, comments, 'Comments retrieved successfully', 200);
