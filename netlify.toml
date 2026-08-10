@@ -1,0 +1,13 @@
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+# This is a client-side-routed React app (React Router). Without this,
+# refreshing or deep-linking to any non-root path (e.g. /profile) 404s,
+# since there's no actual file at that path on Netlify's static host —
+# every path needs to fall back to index.html and let the router take over.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
