@@ -121,6 +121,24 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     setMediaUrls(mediaUrls.filter((_, i) => i !== index));
   };
 
+  // There's no image-hosting backend to upload to, so selected files are
+  // read directly into data URLs and embedded in the post's mediaUrl the
+  // same way profile/banner photos already work elsewhere in the app.
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remainingSlots = 9 - mediaUrls.length;
+    files.slice(0, remainingSlots).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setMediaUrls((prev) => (prev.length < 9 ? [...prev, reader.result as string] : prev));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = ''; // allow re-selecting the same file(s) later
+  };
+
   const handlePollOptionChange = (index: number, value: string) => {
     const newOptions = [...pollOptions];
     newOptions[index] = value;
@@ -423,7 +441,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
               accept="image/*"
               multiple
               style={{ display: 'none' }}
-              onChange={(e) => { console.log('Files selected:', e.target.files); }}
+              onChange={handleFileSelect}
             />
           </div>
         )}
