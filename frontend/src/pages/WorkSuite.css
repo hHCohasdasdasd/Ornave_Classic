@@ -380,6 +380,17 @@
   transition: all 0.2s ease;
 }
 
+/* The <select> box itself picks up the dark theme fine from the rules
+   above, but the dropdown popup list doesn't inherit anything — browsers
+   render <option> with their own default (usually plain white) unless
+   styled explicitly. Covers every dropdown in Work Suite (project filter,
+   priority/project in the task modal, the per-card status move-select)
+   from one place instead of repeating this per select. */
+.worksuite-page select option {
+  background: var(--tech-card-bg);
+  color: var(--color-text);
+}
+
 .worksuite-select:focus {
   outline: none;
   border-color: var(--tech-accent-gold);
@@ -958,6 +969,26 @@
 .worksuite-kanban-card__icon-btn:hover {
   border-color: var(--color-danger);
   color: var(--color-danger);
+}
+
+/* Compact sizing for the ThemedSelect used as each card's status-move
+   control — sits in a flex row next to the edit/delete icon buttons, so it
+   shouldn't stretch to fill the row the way ThemedSelect does by default. */
+.worksuite-kanban-card__move-select-themed {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.worksuite-kanban-card__move-select-themed .themed-select__trigger {
+  font-size: 0.68rem;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.worksuite-kanban-card__move-select-themed .themed-select__menu {
+  min-width: 130px;
+  left: auto;
+  right: 0;
 }
 
 .worksuite-kanban-card__move-select {

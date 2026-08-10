@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
+import { ThemedSelect } from '@/components/ui/ThemedSelect';
 import { workSuiteService, Task, Project } from '@/services/workSuiteService';
 import { scopedKey } from '@/utils/storage';
 import './WorkSuite.css';
@@ -228,16 +229,13 @@ export const WorkSuiteTasksPage: React.FC = () => {
 
       <div className="worksuite-page__container worksuite-page__container--wide">
         <div className="worksuite-page__header-row">
-          <select
-            className="worksuite-select"
-            value={projectIdFilter}
-            onChange={(e) => setSearchParams(e.target.value ? { projectId: e.target.value } : {})}
-          >
-            <option value="">All Projects</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+          <div style={{ maxWidth: '220px' }}>
+            <ThemedSelect
+              value={projectIdFilter}
+              options={[{ value: '', label: 'All Projects' }, ...projects.map((p) => ({ value: p.id, label: p.name }))]}
+              onChange={(v) => setSearchParams(v ? { projectId: v } : {})}
+            />
+          </div>
           <button className="worksuite-create-btn" onClick={() => openCreate()}>+ New Task</button>
         </div>
 
@@ -364,16 +362,13 @@ export const WorkSuiteTasksPage: React.FC = () => {
                               )}
 
                               <div className="worksuite-kanban-card__footer">
-                                <select
-                                  className="worksuite-kanban-card__move-select"
+                                <ThemedSelect
+                                  className="worksuite-kanban-card__move-select-themed"
                                   value={task.status}
-                                  onChange={(e) => moveTask(task, e.target.value as Task['status'])}
+                                  options={COLUMNS.map((s) => ({ value: s, label: STATUS_LABEL[s] }))}
+                                  onChange={(v) => moveTask(task, v as Task['status'])}
                                   title="Move to another column"
-                                >
-                                  {COLUMNS.map((s) => (
-                                    <option key={s} value={s}>{STATUS_LABEL[s]}</option>
-                                  ))}
-                                </select>
+                                />
                                 <div className="worksuite-kanban-card__actions">
                                   <button className="worksuite-kanban-card__icon-btn" onClick={() => openEdit(task)} title="Edit">✎</button>
                                   <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDelete(task)} title="Delete">✕</button>
@@ -460,18 +455,21 @@ export const WorkSuiteTasksPage: React.FC = () => {
             <label>Description</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Optional details" maxLength={500} />
             <label>Project</label>
-            <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-              <option value="">No project</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <ThemedSelect
+              value={projectId}
+              options={[{ value: '', label: 'No project' }, ...projects.map((p) => ({ value: p.id, label: p.name }))]}
+              onChange={setProjectId}
+            />
             <label>Priority</label>
-            <select value={priority} onChange={(e) => setPriority(e.target.value as Task['priority'])}>
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-            </select>
+            <ThemedSelect
+              value={priority}
+              options={[
+                { value: 'LOW', label: 'Low' },
+                { value: 'MEDIUM', label: 'Medium' },
+                { value: 'HIGH', label: 'High' },
+              ]}
+              onChange={(v) => setPriority(v as Task['priority'])}
+            />
             <label>Due Date</label>
             <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             {error && <p className="worksuite-modal__error">{error}</p>}
