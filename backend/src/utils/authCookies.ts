@@ -15,10 +15,23 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 export function setAuthCookies(res: Response, token: string): void {
   const isProd = process.env.NODE_ENV === 'production';
 
+  // In production the frontend (Netlify) and backend (Render) are on
+  // completely different domains, making every API call a cross-site
+  // request. SameSite=Lax cookies are NOT sent on cross-site fetch/XHR
+  // (only on top-level navigation), so the session would silently stop
+  // working the moment login succeeded — browsers vary in how strictly
+  // they enforce this, so it can look like it "works" on one device/browser
+  // and not another. SameSite=None (requires Secure, which we already set
+  // in production) is what's actually needed for a cross-domain session
+  // cookie to be sent on API requests. Locally, frontend and backend are
+  // both on localhost (different ports, same site), where Lax is fine and
+  // None isn't needed.
+  const sameSite = isProd ? 'none' : 'lax';
+
   res.cookie(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
     secure: isProd,
-    sameSite: 'lax',
+    sameSite,
     maxAge: SEVEN_DAYS_MS,
     path: '/',
   });
@@ -27,7 +40,7 @@ export function setAuthCookies(res: Response, token: string): void {
   res.cookie(CSRF_COOKIE_NAME, csrfToken, {
     httpOnly: false,
     secure: isProd,
-    sameSite: 'lax',
+    sameSite,
     maxAge: SEVEN_DAYS_MS,
     path: '/',
   });
