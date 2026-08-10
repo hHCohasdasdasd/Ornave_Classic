@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { workSuiteService, Task, Project } from '@/services/workSuiteService';
+import { scopedKey } from '@/utils/storage';
 import './WorkSuite.css';
 
 const COLUMNS: Task['status'][] = ['TODO', 'IN_PROGRESS', 'DONE'];
@@ -13,6 +14,35 @@ const STATUS_LABEL: Record<Task['status'], string> = {
   IN_PROGRESS: 'In Progress',
   DONE: 'Done',
 };
+
+const DEFAULT_COLUMN_COLORS: Record<Task['status'], string> = {
+  TODO: '#9d9483',
+  IN_PROGRESS: '#c6a15b',
+  DONE: '#3f6f47',
+};
+
+interface TaskBoardPrefs {
+  columnColors: Record<Task['status'], string>;
+  notifyOverdue: boolean;
+  notifyDueSoon: boolean;
+}
+
+const DEFAULT_PREFS: TaskBoardPrefs = {
+  columnColors: DEFAULT_COLUMN_COLORS,
+  notifyOverdue: true,
+  notifyDueSoon: true,
+};
+
+function isOverdue(task: Task): boolean {
+  if (!task.dueDate || task.status === 'DONE') return false;
+  return new Date(task.dueDate).setHours(23, 59, 59, 999) < Date.now();
+}
+
+function isDueSoon(task: Task): boolean {
+  if (!task.dueDate || task.status === 'DONE' || isOverdue(task)) return false;
+  const days = (new Date(task.dueDate).getTime() - Date.now()) / 86400000;
+  return days >= 0 && days <= 3;
+}
 
 export const WorkSuiteTasksPage: React.FC = () => {
   const navigate = useNavigate();
@@ -38,6 +68,26 @@ export const WorkSuiteTasksPage: React.FC = () => {
   // it's currently hovering over (for the drop-target highlight).
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<Task['status'] | null>(null);
+
+  // Board customization — client-side only (no backend model for this),
+  // scoped per user so it doesn't bleed across accounts sharing a browser.
+  const prefsKey = scopedKey('worksuite_task_prefs', user?.id);
+  const [prefs, setPrefs] = useState<TaskBoardPrefs>(() => {
+    try {
+      const raw = localStorage.getItem(prefsKey);
+      return raw ? { ...DEFAULT_PREFS, ...JSON.parse(raw) } : DEFAULT_PREFS;
+    } catch {
+      return DEFAULT_PREFS;
+    }
+  });
+
+  const updatePrefs = (next: Partial<TaskBoardPrefs>) => {
+    setPrefs((prev) => {
+      const merged = { ...prev, ...next };
+      localStorage.setItem(prefsKey, JSON.stringify(merged));
+      return merged;
+    });
+  };
 
   const load = async () => {
     setIsLoading(true);
@@ -151,6 +201,16 @@ export const WorkSuiteTasksPage: React.FC = () => {
     if (task) moveTask(task, status);
   };
 
+  const overdueTasks = tasks.filter(isOverdue);
+  const dueSoonTasks = tasks.filter(isDueSoon);
+  const upcoming = [...tasks]
+    .filter((t) => t.dueDate && t.status !== 'DONE')
+    .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
+    .slice(0, 5);
+
+  const showBanner =
+    (prefs.notifyOverdue && overdueTasks.length > 0) || (prefs.notifyDueSoon && dueSoonTasks.length > 0);
+
   return (
     <div className="worksuite-page">
       <ProtectedPageOverlay isVisible={isGuest} />
@@ -166,7 +226,7 @@ export const WorkSuiteTasksPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="worksuite-page__container">
+      <div className="worksuite-page__container worksuite-page__container--wide">
         <div className="worksuite-page__header-row">
           <select
             className="worksuite-select"
@@ -181,80 +241,212 @@ export const WorkSuiteTasksPage: React.FC = () => {
           <button className="worksuite-create-btn" onClick={() => openCreate()}>+ New Task</button>
         </div>
 
+        {showBanner && (
+          <div className="worksuite-tasks-banner">
+            {prefs.notifyOverdue && overdueTasks.length > 0 && (
+              <span className="worksuite-tasks-banner__item worksuite-tasks-banner__item--overdue">
+                ⚠ {overdueTasks.length} overdue
+              </span>
+            )}
+            {prefs.notifyDueSoon && dueSoonTasks.length > 0 && (
+              <span className="worksuite-tasks-banner__item">
+                ⏳ {dueSoonTasks.length} due within 3 days
+              </span>
+            )}
+          </div>
+        )}
+
         {isLoading ? (
           <div className="worksuite-empty">Loading tasks…</div>
         ) : (
-          <div className="worksuite-kanban">
-            {COLUMNS.map((status) => {
-              const columnTasks = tasks.filter((t) => t.status === status);
-              return (
-                <div
-                  key={status}
-                  className={`worksuite-kanban__column${dragOverColumn === status ? ' worksuite-kanban__column--drag-over' : ''}`}
-                  onDragOver={(e) => { e.preventDefault(); setDragOverColumn(status); }}
-                  onDragLeave={() => setDragOverColumn((prev) => (prev === status ? null : prev))}
-                  onDrop={(e) => handleColumnDrop(e, status)}
-                >
-                  <div className="worksuite-kanban__column-header">
-                    <span>{STATUS_LABEL[status]}</span>
-                    <span className="worksuite-kanban__column-count">{columnTasks.length}</span>
+          <div className="worksuite-tasks-layout">
+            {/* Left: compact overview */}
+            <aside className="worksuite-tasks-sidebar">
+              <div className="worksuite-tasks-sidebar__section">
+                <h4>Overview</h4>
+                <div className="worksuite-tasks-overview__total">{tasks.length}</div>
+                <div className="worksuite-tasks-overview__total-label">Total tasks</div>
+              </div>
+
+              <div className="worksuite-tasks-sidebar__section">
+                {COLUMNS.map((status) => (
+                  <div key={status} className="worksuite-tasks-overview__stat-row">
+                    <span
+                      className="worksuite-tasks-overview__dot"
+                      style={{ background: prefs.columnColors[status] }}
+                    />
+                    <span className="worksuite-tasks-overview__stat-label">{STATUS_LABEL[status]}</span>
+                    <span className="worksuite-tasks-overview__stat-value">
+                      {tasks.filter((t) => t.status === status).length}
+                    </span>
                   </div>
+                ))}
+              </div>
 
-                  <div className="worksuite-kanban__cards">
-                    {columnTasks.length === 0 ? (
-                      <div className="worksuite-kanban__empty">Drop a task here</div>
-                    ) : (
-                      columnTasks.map((task) => (
-                        <div
-                          key={task.id}
-                          className={`worksuite-kanban-card${draggingTaskId === task.id ? ' worksuite-kanban-card--dragging' : ''}`}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, task)}
-                          onDragEnd={handleDragEnd}
-                        >
-                          <div className="worksuite-kanban-card__top">
-                            <h3 className="worksuite-kanban-card__title">{task.title}</h3>
-                            <span className={`worksuite-badge worksuite-badge--${task.priority.toLowerCase()}`}>{task.priority}</span>
-                          </div>
+              <div className="worksuite-tasks-sidebar__section">
+                <div className="worksuite-tasks-overview__stat-row">
+                  <span className="worksuite-tasks-overview__dot" style={{ background: '#a2504b' }} />
+                  <span className="worksuite-tasks-overview__stat-label">Overdue</span>
+                  <span className="worksuite-tasks-overview__stat-value">{overdueTasks.length}</span>
+                </div>
+                <div className="worksuite-tasks-overview__stat-row">
+                  <span className="worksuite-tasks-overview__dot" style={{ background: '#c6a15b' }} />
+                  <span className="worksuite-tasks-overview__stat-label">Due soon</span>
+                  <span className="worksuite-tasks-overview__stat-value">{dueSoonTasks.length}</span>
+                </div>
+              </div>
 
-                          {(task.project || task.dueDate) && (
-                            <div className="worksuite-kanban-card__meta">
-                              {task.project && <span>📁 {task.project.name}</span>}
-                              {task.dueDate && <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>}
-                            </div>
-                          )}
+              {upcoming.length > 0 && (
+                <div className="worksuite-tasks-sidebar__section">
+                  <h4>Upcoming</h4>
+                  {upcoming.map((t) => (
+                    <div key={t.id} className="worksuite-tasks-overview__upcoming-item">
+                      <span>{t.title}</span>
+                      <span className="worksuite-tasks-overview__upcoming-date">
+                        {new Date(t.dueDate!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </aside>
 
-                          <div className="worksuite-kanban-card__footer">
-                            <select
-                              className="worksuite-kanban-card__move-select"
-                              value={task.status}
-                              onChange={(e) => moveTask(task, e.target.value as Task['status'])}
-                              title="Move to another column"
+            {/* Middle: the board itself */}
+            <div className="worksuite-kanban">
+              {COLUMNS.map((status) => {
+                const columnTasks = tasks.filter((t) => t.status === status);
+                const columnColor = prefs.columnColors[status];
+                return (
+                  <div
+                    key={status}
+                    className={`worksuite-kanban__column${dragOverColumn === status ? ' worksuite-kanban__column--drag-over' : ''}`}
+                    style={{ borderTop: `3px solid ${columnColor}` }}
+                    onDragOver={(e) => { e.preventDefault(); setDragOverColumn(status); }}
+                    onDragLeave={() => setDragOverColumn((prev) => (prev === status ? null : prev))}
+                    onDrop={(e) => handleColumnDrop(e, status)}
+                  >
+                    <div className="worksuite-kanban__column-header">
+                      <span>
+                        <span className="worksuite-tasks-overview__dot" style={{ background: columnColor, marginRight: '8px' }} />
+                        {STATUS_LABEL[status]}
+                      </span>
+                      <span className="worksuite-kanban__column-count">{columnTasks.length}</span>
+                    </div>
+
+                    <div className="worksuite-kanban__cards">
+                      {columnTasks.length === 0 ? (
+                        <div className="worksuite-kanban__empty">Drop a task here</div>
+                      ) : (
+                        columnTasks.map((task) => {
+                          const overdue = prefs.notifyOverdue && isOverdue(task);
+                          const dueSoon = prefs.notifyDueSoon && isDueSoon(task);
+                          return (
+                            <div
+                              key={task.id}
+                              className={`worksuite-kanban-card${draggingTaskId === task.id ? ' worksuite-kanban-card--dragging' : ''}`}
+                              style={{ borderLeft: `4px solid ${columnColor}` }}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, task)}
+                              onDragEnd={handleDragEnd}
                             >
-                              {COLUMNS.map((s) => (
-                                <option key={s} value={s}>{STATUS_LABEL[s]}</option>
-                              ))}
-                            </select>
-                            <div className="worksuite-kanban-card__actions">
-                              <button className="worksuite-kanban-card__icon-btn" onClick={() => openEdit(task)} title="Edit">✎</button>
-                              <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDelete(task)} title="Delete">✕</button>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
+                              <div className="worksuite-kanban-card__top">
+                                <h3 className="worksuite-kanban-card__title">{task.title}</h3>
+                                <span className={`worksuite-badge worksuite-badge--${task.priority.toLowerCase()}`}>{task.priority}</span>
+                              </div>
 
+                              {(task.project || task.dueDate || overdue || dueSoon) && (
+                                <div className="worksuite-kanban-card__meta">
+                                  {task.project && <span>📁 {task.project.name}</span>}
+                                  {task.dueDate && <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>}
+                                  {overdue && <span className="worksuite-kanban-card__flag worksuite-kanban-card__flag--overdue">Overdue</span>}
+                                  {!overdue && dueSoon && <span className="worksuite-kanban-card__flag">Due soon</span>}
+                                </div>
+                              )}
+
+                              <div className="worksuite-kanban-card__footer">
+                                <select
+                                  className="worksuite-kanban-card__move-select"
+                                  value={task.status}
+                                  onChange={(e) => moveTask(task, e.target.value as Task['status'])}
+                                  title="Move to another column"
+                                >
+                                  {COLUMNS.map((s) => (
+                                    <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+                                  ))}
+                                </select>
+                                <div className="worksuite-kanban-card__actions">
+                                  <button className="worksuite-kanban-card__icon-btn" onClick={() => openEdit(task)} title="Edit">✎</button>
+                                  <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDelete(task)} title="Delete">✕</button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <button
+                      className="worksuite-kanban-card__move-select"
+                      style={{ width: '100%', marginTop: '10px', padding: '8px', cursor: 'pointer' }}
+                      onClick={() => openCreate(status)}
+                    >
+                      + Add task
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Right: customization settings */}
+            <aside className="worksuite-tasks-sidebar">
+              <div className="worksuite-tasks-sidebar__section">
+                <h4>Card Colors</h4>
+                {COLUMNS.map((status) => (
+                  <div key={status} className="worksuite-tasks-settings__color-row">
+                    <span>{STATUS_LABEL[status]}</span>
+                    <input
+                      type="color"
+                      value={prefs.columnColors[status]}
+                      onChange={(e) =>
+                        updatePrefs({ columnColors: { ...prefs.columnColors, [status]: e.target.value } })
+                      }
+                    />
+                  </div>
+                ))}
+                {JSON.stringify(prefs.columnColors) !== JSON.stringify(DEFAULT_COLUMN_COLORS) && (
                   <button
                     className="worksuite-kanban-card__move-select"
-                    style={{ width: '100%', marginTop: '10px', padding: '8px', cursor: 'pointer' }}
-                    onClick={() => openCreate(status)}
+                    style={{ width: '100%', marginTop: '8px', padding: '6px', cursor: 'pointer' }}
+                    onClick={() => updatePrefs({ columnColors: DEFAULT_COLUMN_COLORS })}
                   >
-                    + Add task
+                    Reset colors
                   </button>
-                </div>
-              );
-            })}
+                )}
+              </div>
+
+              <div className="worksuite-tasks-sidebar__section">
+                <h4>Notifications</h4>
+                <label className="worksuite-tasks-settings__checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={prefs.notifyOverdue}
+                    onChange={(e) => updatePrefs({ notifyOverdue: e.target.checked })}
+                  />
+                  <span>Flag overdue tasks</span>
+                </label>
+                <label className="worksuite-tasks-settings__checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={prefs.notifyDueSoon}
+                    onChange={(e) => updatePrefs({ notifyDueSoon: e.target.checked })}
+                  />
+                  <span>Flag tasks due within 3 days</span>
+                </label>
+                <p className="worksuite-tasks-settings__hint">
+                  These show as banners and badges here on the board — there's no email/push delivery yet.
+                </p>
+              </div>
+            </aside>
           </div>
         )}
       </div>
