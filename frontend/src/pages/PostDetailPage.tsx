@@ -327,7 +327,7 @@ export const PostDetailPage: React.FC = () => {
               <div className="post-detail-page__header">
                 <h1 className="post-detail-page__title">Conversation</h1>
               </div>
-              <FeedItem item={post} />
+              <FeedItem item={post} onDeleted={() => navigate('/home')} />
               
               <div className="post-detail-page__comments-section">
                 <h3>Comments</h3>

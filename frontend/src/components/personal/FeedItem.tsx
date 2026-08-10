@@ -7,6 +7,8 @@ import { feedService } from '@/services/feedService';
 interface FeedItemProps {
   item: FeedItemType;
   focused?: boolean;
+  /** Called after a successful delete so the parent can drop it from its list. */
+  onDeleted?: (postId: string) => void;
 }
 
 interface Comment {
@@ -16,7 +18,7 @@ interface Comment {
   author: { id: string; firstName: string; lastName: string; headline?: string };
 }
 
-const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
+const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused, onDeleted }) => {
   const navigate = useNavigate();
   const { user, triggerAuthModal } = useAuth();
   const [serviceRequested, setServiceRequested] = useState(false);
@@ -24,6 +26,23 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
   const [saved, setSaved] = useState(false);
   const [liked, setLiked] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [showMenu, setShowMenu] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const isOwnPost = !!user && user.id === item.author.id;
+
+  const handleDelete = async () => {
+    if (!isOwnPost || isDeleting) return;
+    if (!window.confirm('Delete this post? This can\'t be undone.')) return;
+    setIsDeleting(true);
+    try {
+      await feedService.deletePost(item.id);
+      onDeleted?.(item.id);
+    } catch {
+      alert('Could not delete that post — please try again.');
+      setIsDeleting(false);
+    }
+  };
 
   // Comments state
   const [showComments, setShowComments] = useState(false);
@@ -198,9 +217,36 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({ item, focused }) => {
               )}
             </div>
           </div>
-          <button className={`feed-item__save-btn${saved ? ' saved' : ''}`} onClick={handleSave} title={saved ? 'Unsave' : 'Save'}>
-            {saved ? '🔖' : '📑'}
-          </button>
+          <div className="feed-item__header-right">
+            <button className={`feed-item__save-btn${saved ? ' saved' : ''}`} onClick={handleSave} title={saved ? 'Unsave' : 'Save'}>
+              {saved ? '🔖' : '📑'}
+            </button>
+            {isOwnPost && (
+              <div className="feed-item__menu">
+                <button
+                  className="feed-item__save-btn"
+                  onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
+                  title="Post options"
+                >
+                  ⋯
+                </button>
+                {showMenu && (
+                  <>
+                    <div className="feed-item__menu-backdrop" onClick={() => setShowMenu(false)} />
+                    <div className="feed-item__menu-dropdown">
+                      <button
+                        className="feed-item__menu-item feed-item__menu-item--danger"
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? 'Deleting…' : '🗑 Delete post'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Content — title is the hero (Reddit style) */}

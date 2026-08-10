@@ -731,6 +731,66 @@
 .feed-item__save-btn:hover { color: var(--tech-blue); transform: none; }
 .feed-item__save-btn.saved  { color: var(--color-primary); }
 
+.feed-item__header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.feed-item__menu {
+  position: relative;
+}
+
+.feed-item__menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.feed-item__menu-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 41;
+  min-width: 160px;
+  background: var(--tech-card-bg, var(--color-card));
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  padding: 4px;
+}
+
+.feed-item__menu-item {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.feed-item__menu-item:hover {
+  background: rgba(198, 161, 91, 0.1);
+}
+
+.feed-item__menu-item--danger {
+  color: var(--color-danger);
+}
+
+.feed-item__menu-item--danger:hover {
+  background: rgba(155, 74, 70, 0.12);
+}
+
+.feed-item__menu-item:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* Post title — big, article-style link title */
 .feed-item__content {
   color: var(--color-text);

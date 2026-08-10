@@ -744,7 +744,12 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
             ) : (
               <div className={`feed__list feed__list--${feedViewMode}`}>
                 {feedItems.map((item, idx) => (
-                  <FeedItem key={item.id} item={item} focused={idx === focusedPostIndex} />
+                  <FeedItem
+                    key={item.id}
+                    item={item}
+                    focused={idx === focusedPostIndex}
+                    onDeleted={(id) => setFeedItems((prev) => prev.filter((i) => i.id !== id))}
+                  />
                 ))}
               </div>
             )}

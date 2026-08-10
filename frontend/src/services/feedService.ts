@@ -116,6 +116,11 @@ class FeedService {
     }
   }
 
+  /** Delete a post. Backend enforces the caller is the post's own author. */
+  async deletePost(postId: string): Promise<void> {
+    await apiClient.delete(`/posts/${postId}`);
+  }
+
   async getUserPosts(userId: string): Promise<FeedResponse> {
     try {
       const response = await apiClient.get(`/posts/user/${userId}`);
