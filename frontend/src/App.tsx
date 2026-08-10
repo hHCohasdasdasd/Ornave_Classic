@@ -129,10 +129,12 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const handleCreatePost = async (content: string, mediaUrl?: string, title?: string, serviceCard?: ServiceCard, tags?: string[]) => {
     try {
       await feedService.createPost(content, mediaUrl, title, serviceCard, tags);
-    } finally {
       setShowCreatePost(false);
       window.dispatchEvent(new CustomEvent('ornave_feed_update'));
       navigate('/home');
+    } catch (error: any) {
+      console.error('Failed to create post:', error);
+      alert(error?.response?.data?.message || 'Could not create that post — please try again.');
     }
   };
 

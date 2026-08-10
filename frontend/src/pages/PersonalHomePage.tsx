@@ -338,8 +338,9 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
       const newPost = await feedService.createPost(content, mediaUrl, title, serviceCard, tags);
       setFeedItems(prev => [newPost, ...prev]);
       setShowCreatePostModal(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create post:', error);
+      alert(error?.response?.data?.message || 'Could not create that post — please try again.');
     }
   };
 

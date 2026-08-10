@@ -123,20 +123,70 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
   // There's no image-hosting backend to upload to, so selected files are
   // read directly into data URLs and embedded in the post's mediaUrl the
-  // same way profile/banner photos already work elsewhere in the app.
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const remainingSlots = 9 - mediaUrls.length;
-    files.slice(0, remainingSlots).forEach((file) => {
+  // same way profile/banner photos already work elsewhere in the app. A raw
+  // phone photo can be several MB, and base64 adds ~33% on top of that —
+  // easily enough to blow past the server's request body limit with the
+  // failure surfacing as "nothing happens" if the caller doesn't check.
+  // Downscaling through a canvas keeps every upload well under that
+  // regardless of the original file size.
+  const MAX_IMAGE_DIMENSION = 1600;
+  const JPEG_QUALITY = 0.82;
+
+  const readAsDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setMediaUrls((prev) => (prev.length < 9 ? [...prev, reader.result as string] : prev));
-        }
-      };
+      reader.onload = () => (typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Read failed')));
+      reader.onerror = () => reject(reader.error || new Error('Read failed'));
       reader.readAsDataURL(file);
     });
+
+  const compressImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      readAsDataUrl(file)
+        .then((rawDataUrl) => {
+          const img = new Image();
+          img.onload = () => {
+            let { width, height } = img;
+            if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+              if (width > height) {
+                height = Math.round((height / width) * MAX_IMAGE_DIMENSION);
+                width = MAX_IMAGE_DIMENSION;
+              } else {
+                width = Math.round((width / height) * MAX_IMAGE_DIMENSION);
+                height = MAX_IMAGE_DIMENSION;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) { resolve(rawDataUrl); return; } // fall back to the uncompressed original
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
+          };
+          img.onerror = () => resolve(rawDataUrl); // fall back rather than block the upload
+          img.src = rawDataUrl;
+        })
+        .catch(reject);
+    });
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
     e.target.value = ''; // allow re-selecting the same file(s) later
+    const remainingSlots = 9 - mediaUrls.length;
+    for (const file of files.slice(0, remainingSlots)) {
+      try {
+        // SVGs are already small/vector and gifs would lose animation if
+        // rasterized through canvas — only compress real photo formats.
+        const dataUrl = file.type === 'image/svg+xml' || file.type === 'image/gif'
+          ? await readAsDataUrl(file)
+          : await compressImage(file);
+        setMediaUrls((prev) => (prev.length < 9 ? [...prev, dataUrl] : prev));
+      } catch (err) {
+        console.error('Failed to process image:', err);
+        alert(`Could not read "${file.name}" — please try a different image.`);
+      }
+    }
   };
 
   const handlePollOptionChange = (index: number, value: string) => {
