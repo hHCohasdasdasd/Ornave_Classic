@@ -17,7 +17,12 @@ class ApiClient {
   constructor() {
     this.client = axios.create({
       baseURL: API_BASE_URL,
-      timeout: 10000,
+      // Render's free tier spins the backend down after ~15 min idle; the
+      // first request after that has to cold-start it, which can take
+      // several seconds on top of normal network latency. 10s was tipping
+      // over into false "Network error" failures on exactly that first
+      // request — not a real connectivity problem.
+      timeout: 30000,
       withCredentials: true, // send the httpOnly auth cookie on every request
       headers: {
         'Content-Type': 'application/json',
