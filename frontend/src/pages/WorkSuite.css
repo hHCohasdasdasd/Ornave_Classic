@@ -670,6 +670,158 @@
   gap: 10px;
 }
 
+/* Tasks kanban board */
+.worksuite-kanban {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .worksuite-kanban {
+    grid-template-columns: 1fr;
+  }
+}
+
+.worksuite-kanban__column {
+  background: var(--color-bg-alt);
+  border: 1px solid var(--tech-border);
+  border-radius: 16px;
+  padding: 14px;
+  min-height: 120px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.worksuite-kanban__column--drag-over {
+  background: rgba(198, 161, 91, 0.1);
+  border-color: rgba(198, 161, 91, 0.4);
+}
+
+.worksuite-kanban__column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 14px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+}
+
+.worksuite-kanban__column-count {
+  font-family: var(--font-body, inherit);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--tech-text-dim);
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+
+.worksuite-kanban__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 40px;
+}
+
+.worksuite-kanban-card {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-card);
+  cursor: grab;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.worksuite-kanban-card:hover {
+  border-color: var(--color-border-dark);
+  transform: translateY(-2px);
+}
+
+.worksuite-kanban-card--dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.worksuite-kanban-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.worksuite-kanban-card__title {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 8px;
+  line-height: 1.35;
+}
+
+.worksuite-kanban-card__meta {
+  font-size: 0.68rem;
+  color: var(--tech-text-dim);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.worksuite-kanban-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.worksuite-kanban-card__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.worksuite-kanban-card__icon-btn {
+  background: none;
+  border: 1px solid var(--tech-border);
+  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: var(--tech-text-dim);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.worksuite-kanban-card__icon-btn:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.worksuite-kanban-card__move-select {
+  font-size: 0.68rem;
+  border-radius: 8px;
+  border: 1px solid var(--tech-border);
+  background: var(--tech-card-bg);
+  color: var(--tech-text-main);
+  padding: 3px 6px;
+}
+
+.worksuite-kanban__empty {
+  font-size: 0.75rem;
+  color: var(--tech-text-dim);
+  text-align: center;
+  padding: 18px 8px;
+  border: 1px dashed var(--tech-border);
+  border-radius: 10px;
+}
+
 /* Table (Invoices) */
 .worksuite-table-wrap {
   background: var(--tech-card-bg);

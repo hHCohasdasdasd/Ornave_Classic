@@ -6,18 +6,12 @@ import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { workSuiteService, Task, Project } from '@/services/workSuiteService';
 import './WorkSuite.css';
 
-type StatusFilter = 'ALL' | 'TODO' | 'IN_PROGRESS' | 'DONE';
+const COLUMNS: Task['status'][] = ['TODO', 'IN_PROGRESS', 'DONE'];
 
 const STATUS_LABEL: Record<Task['status'], string> = {
   TODO: 'To Do',
   IN_PROGRESS: 'In Progress',
   DONE: 'Done',
-};
-
-const NEXT_STATUS: Record<Task['status'], Task['status']> = {
-  TODO: 'IN_PROGRESS',
-  IN_PROGRESS: 'DONE',
-  DONE: 'TODO',
 };
 
 export const WorkSuiteTasksPage: React.FC = () => {
@@ -30,7 +24,6 @@ export const WorkSuiteTasksPage: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<StatusFilter>('ALL');
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [title, setTitle] = useState('');
@@ -40,6 +33,11 @@ export const WorkSuiteTasksPage: React.FC = () => {
   const [dueDate, setDueDate] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Drag-and-drop state — which card is being dragged, and which column
+  // it's currently hovering over (for the drop-target highlight).
+  const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<Task['status'] | null>(null);
 
   const load = async () => {
     setIsLoading(true);
@@ -59,7 +57,7 @@ export const WorkSuiteTasksPage: React.FC = () => {
     if (!isGuest) load();
   }, [isGuest, projectIdFilter]);
 
-  const openCreate = () => {
+  const openCreate = (status?: Task['status']) => {
     setEditing(null);
     setTitle('');
     setDescription('');
@@ -68,7 +66,11 @@ export const WorkSuiteTasksPage: React.FC = () => {
     setDueDate('');
     setError(null);
     setShowModal(true);
+    // Stash the target column so a card created from a specific column's
+    // "+" button lands there instead of always defaulting to To Do.
+    pendingCreateStatus.current = status || 'TODO';
   };
+  const pendingCreateStatus = React.useRef<Task['status']>('TODO');
 
   const openEdit = (task: Task) => {
     setEditing(task);
@@ -96,7 +98,10 @@ export const WorkSuiteTasksPage: React.FC = () => {
       if (editing) {
         await workSuiteService.updateTask(editing.id, payload);
       } else {
-        await workSuiteService.createTask(payload);
+        const created = await workSuiteService.createTask(payload);
+        if (pendingCreateStatus.current !== 'TODO') {
+          await workSuiteService.updateTaskStatus(created.id, pendingCreateStatus.current);
+        }
       }
       setShowModal(false);
       await load();
@@ -107,9 +112,16 @@ export const WorkSuiteTasksPage: React.FC = () => {
     }
   };
 
-  const advanceStatus = async (task: Task) => {
-    await workSuiteService.updateTaskStatus(task.id, NEXT_STATUS[task.status]);
-    await load();
+  const moveTask = async (task: Task, status: Task['status']) => {
+    if (task.status === status) return;
+    // Optimistic update so the card jumps columns instantly instead of
+    // waiting on the round trip.
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status } : t)));
+    try {
+      await workSuiteService.updateTaskStatus(task.id, status);
+    } catch {
+      await load(); // reconcile with the server if the update failed
+    }
   };
 
   const handleDelete = async (task: Task) => {
@@ -117,8 +129,27 @@ export const WorkSuiteTasksPage: React.FC = () => {
     await load();
   };
 
-  const filtered = filter === 'ALL' ? tasks : tasks.filter((t) => t.status === filter);
   const activeProjectName = projects.find((p) => p.id === projectIdFilter)?.name;
+
+  const handleDragStart = (e: React.DragEvent, task: Task) => {
+    setDraggingTaskId(task.id);
+    e.dataTransfer.setData('text/plain', task.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragEnd = () => {
+    setDraggingTaskId(null);
+    setDragOverColumn(null);
+  };
+
+  const handleColumnDrop = (e: React.DragEvent, status: Task['status']) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('text/plain');
+    const task = tasks.find((t) => t.id === taskId);
+    setDragOverColumn(null);
+    setDraggingTaskId(null);
+    if (task) moveTask(task, status);
+  };
 
   return (
     <div className="worksuite-page">
@@ -130,64 +161,101 @@ export const WorkSuiteTasksPage: React.FC = () => {
           <button className="worksuite-breadcrumb" onClick={() => navigate('/work-suite')}>← Work Suite</button>
           <h1 className="worksuite-page__title">Tasks</h1>
           <p className="worksuite-page__subtitle">
-            {activeProjectName ? `Filtered to project: ${activeProjectName}` : 'Everything on your plate, organized by status and priority.'}
+            {activeProjectName ? `Filtered to project: ${activeProjectName}` : 'Drag cards between columns, or use the menu on each card.'}
           </p>
         </div>
       </div>
 
       <div className="worksuite-page__container">
         <div className="worksuite-page__header-row">
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div className="worksuite-tabs" style={{ marginBottom: 0, borderBottom: 'none' }}>
-              {(['ALL', 'TODO', 'IN_PROGRESS', 'DONE'] as StatusFilter[]).map((s) => (
-                <button
-                  key={s}
-                  className={`worksuite-tab${filter === s ? ' worksuite-tab--active' : ''}`}
-                  onClick={() => setFilter(s)}
-                >
-                  {s === 'ALL' ? 'All' : STATUS_LABEL[s as Task['status']]}
-                </button>
-              ))}
-            </div>
-            <select
-              className="worksuite-select"
-              value={projectIdFilter}
-              onChange={(e) => setSearchParams(e.target.value ? { projectId: e.target.value } : {})}
-            >
-              <option value="">All Projects</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-          <button className="worksuite-create-btn" onClick={openCreate}>+ New Task</button>
+          <select
+            className="worksuite-select"
+            value={projectIdFilter}
+            onChange={(e) => setSearchParams(e.target.value ? { projectId: e.target.value } : {})}
+          >
+            <option value="">All Projects</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <button className="worksuite-create-btn" onClick={() => openCreate()}>+ New Task</button>
         </div>
 
         {isLoading ? (
           <div className="worksuite-empty">Loading tasks…</div>
-        ) : filtered.length === 0 ? (
-          <div className="worksuite-empty">No tasks here yet — create one to get started.</div>
         ) : (
-          filtered.map((task) => (
-            <div key={task.id} className="worksuite-task-row">
-              <div className="worksuite-task-row__main">
-                <div className="worksuite-task-row__title">{task.title}</div>
-                <div className="worksuite-task-row__meta">
-                  {task.project && <span>📁 {task.project.name}</span>}
-                  {task.dueDate && <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>}
+          <div className="worksuite-kanban">
+            {COLUMNS.map((status) => {
+              const columnTasks = tasks.filter((t) => t.status === status);
+              return (
+                <div
+                  key={status}
+                  className={`worksuite-kanban__column${dragOverColumn === status ? ' worksuite-kanban__column--drag-over' : ''}`}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverColumn(status); }}
+                  onDragLeave={() => setDragOverColumn((prev) => (prev === status ? null : prev))}
+                  onDrop={(e) => handleColumnDrop(e, status)}
+                >
+                  <div className="worksuite-kanban__column-header">
+                    <span>{STATUS_LABEL[status]}</span>
+                    <span className="worksuite-kanban__column-count">{columnTasks.length}</span>
+                  </div>
+
+                  <div className="worksuite-kanban__cards">
+                    {columnTasks.length === 0 ? (
+                      <div className="worksuite-kanban__empty">Drop a task here</div>
+                    ) : (
+                      columnTasks.map((task) => (
+                        <div
+                          key={task.id}
+                          className={`worksuite-kanban-card${draggingTaskId === task.id ? ' worksuite-kanban-card--dragging' : ''}`}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, task)}
+                          onDragEnd={handleDragEnd}
+                        >
+                          <div className="worksuite-kanban-card__top">
+                            <h3 className="worksuite-kanban-card__title">{task.title}</h3>
+                            <span className={`worksuite-badge worksuite-badge--${task.priority.toLowerCase()}`}>{task.priority}</span>
+                          </div>
+
+                          {(task.project || task.dueDate) && (
+                            <div className="worksuite-kanban-card__meta">
+                              {task.project && <span>📁 {task.project.name}</span>}
+                              {task.dueDate && <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>}
+                            </div>
+                          )}
+
+                          <div className="worksuite-kanban-card__footer">
+                            <select
+                              className="worksuite-kanban-card__move-select"
+                              value={task.status}
+                              onChange={(e) => moveTask(task, e.target.value as Task['status'])}
+                              title="Move to another column"
+                            >
+                              {COLUMNS.map((s) => (
+                                <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+                              ))}
+                            </select>
+                            <div className="worksuite-kanban-card__actions">
+                              <button className="worksuite-kanban-card__icon-btn" onClick={() => openEdit(task)} title="Edit">✎</button>
+                              <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDelete(task)} title="Delete">✕</button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <button
+                    className="worksuite-kanban-card__move-select"
+                    style={{ width: '100%', marginTop: '10px', padding: '8px', cursor: 'pointer' }}
+                    onClick={() => openCreate(status)}
+                  >
+                    + Add task
+                  </button>
                 </div>
-              </div>
-              <span className={`worksuite-badge worksuite-badge--${task.priority.toLowerCase()}`}>{task.priority}</span>
-              <span className={`worksuite-badge worksuite-badge--${task.status.toLowerCase()}`}>{STATUS_LABEL[task.status]}</span>
-              <div className="worksuite-task-row__actions">
-                <button className="worksuite-btn" onClick={() => advanceStatus(task)}>
-                  {task.status === 'DONE' ? 'Reopen' : `Mark ${STATUS_LABEL[NEXT_STATUS[task.status]]}`}
-                </button>
-                <button className="worksuite-btn" onClick={() => openEdit(task)}>Edit</button>
-                <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDelete(task)}>Delete</button>
-              </div>
-            </div>
-          ))
+              );
+            })}
+          </div>
         )}
       </div>
 
