@@ -6,8 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc --pretty false || echo TypeScript build issues detected",
-    "build:strict": "tsc --pretty false",
+    "build": "prisma generate && tsc --pretty false && node write-dist-package-json.cjs",
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

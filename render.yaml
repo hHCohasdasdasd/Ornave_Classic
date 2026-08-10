@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: ornave-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_EXPIRY
+        value: 7d
+      # Secrets — not stored in the repo. Render will prompt for these when
+      # the blueprint is applied; fill them in from backend/.env locally
+      # (DATABASE_URL/DIRECT_URL use the least-privilege ornave_app role,
+      # not the Supabase superuser). CORS_ORIGIN should be a comma-separated
+      # list including wherever the frontend actually runs (e.g.
+      # http://localhost:5175 for now, plus its real origin once deployed).
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false

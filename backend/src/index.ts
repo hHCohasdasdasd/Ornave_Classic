@@ -36,6 +36,14 @@ import adminRoutes from './routes/adminRoutes';
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust the first hop's proxy (Render, or any single reverse proxy in front
+// of this app) so req.ip reflects the real client — used by rate limiting
+// and the auth audit log — and so secure cookies work correctly behind
+// TLS-terminating infrastructure.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // ============================================
 // MIDDLEWARE SETUP
 // ============================================
