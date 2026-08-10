@@ -433,8 +433,21 @@ export const ProfilePage: React.FC = () => {
         if (real && typeof real.memberNumber === 'number') {
           setViewedMemberNumber(real.memberNumber);
         }
-        if (real && real.id && real.id !== profile.id) {
-          setViewedUser((prev: any) => (prev ? { ...prev, id: real.id } : prev));
+        if (real && real.id) {
+          setViewedUser((prev: any) => (prev ? {
+            ...prev,
+            id: real.id,
+            firstName: real.firstName || prev.firstName,
+            lastName: real.lastName !== undefined ? real.lastName : prev.lastName,
+            headline: real.headline || prev.headline,
+            bio: real.bio || prev.bio,
+            location: real.location || prev.location,
+            avatarUrl: real.profilePicture || prev.avatarUrl,
+            bannerUrl: real.bannerUrl || prev.bannerUrl,
+            website: real.website || prev.website,
+          } : prev));
+          if (real.firstName) setFirstName(real.firstName);
+          if (real.lastName !== undefined) setLastName(real.lastName);
           if (real.headline) setHeadline(real.headline);
           if (real.bio) setBio(real.bio);
           if (real.location) setLocation(real.location);
