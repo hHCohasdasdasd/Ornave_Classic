@@ -352,19 +352,36 @@ export const WorkSuitePersonalPage: React.FC = () => {
     }
   };
 
+  // Optimistic updates — mutate local state immediately so the ring/bar
+  // animates smoothly instead of the whole grid flashing to "Loading…"
+  // while a full re-fetch (loadGoals) plays out. Reconcile with the server
+  // only if the request actually fails.
   const bumpGoalProgress = async (goal: Goal, delta: number) => {
-    await workSuiteService.updateGoalProgress(goal.id, goal.progress + delta);
-    await loadGoals();
+    const newProgress = Math.max(0, Math.min(100, goal.progress + delta));
+    setGoals((prev) => prev.map((g) => (g.id === goal.id ? { ...g, progress: newProgress } : g)));
+    try {
+      await workSuiteService.updateGoalProgress(goal.id, newProgress);
+    } catch {
+      await loadGoals();
+    }
   };
 
   const setGoalStatus = async (goal: Goal, status: Goal['status']) => {
-    await workSuiteService.updateGoal(goal.id, { status });
-    await loadGoals();
+    setGoals((prev) => prev.map((g) => (g.id === goal.id ? { ...g, status } : g)));
+    try {
+      await workSuiteService.updateGoal(goal.id, { status });
+    } catch {
+      await loadGoals();
+    }
   };
 
   const handleDeleteGoal = async (goal: Goal) => {
-    await workSuiteService.deleteGoal(goal.id);
-    await loadGoals();
+    setGoals((prev) => prev.filter((g) => g.id !== goal.id));
+    try {
+      await workSuiteService.deleteGoal(goal.id);
+    } catch {
+      await loadGoals();
+    }
   };
 
   const filteredGoals = goalFilter === 'ALL' ? goals : goals.filter((g) => g.status === goalFilter);
