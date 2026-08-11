@@ -825,11 +825,15 @@
   color: var(--tech-text-dim);
   font-size: 0.8rem;
   cursor: pointer;
-  opacity: 0;
+  /* Always at least partly visible — hover-only (opacity: 0) meant there
+     was no way to discover or use this at all on touch devices, and it was
+     easy to miss even with a mouse. */
+  opacity: 0.55;
   transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
 }
 
-.sticky-note:hover .sticky-note__delete {
+.sticky-note:hover .sticky-note__delete,
+.sticky-note__delete:hover {
   opacity: 1;
 }
 
