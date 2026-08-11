@@ -697,11 +697,10 @@
   padding: 32px;
   border-radius: 20px;
   background:
-    radial-gradient(ellipse at top, rgba(120, 90, 60, 0.12), transparent 60%),
-    radial-gradient(circle, rgba(246, 243, 237, 0.06) 1px, transparent 1px);
-  background-size: auto, 18px 18px;
+    radial-gradient(ellipse at top, rgba(198, 161, 91, 0.07), transparent 60%),
+    var(--tech-card-bg);
   border: 1px solid var(--tech-border-dim);
-  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.35);
 }
 
 .sticky-note {
@@ -709,64 +708,55 @@
   break-inside: avoid;
   width: 100%;
   margin: 0 0 24px;
-  padding: 26px 18px 18px;
-  background: #f4d35e;
-  color: #2a2410;
-  border-radius: 2px 2px 10px 10px;
+  padding: 28px 20px 18px;
+  background: #1c1a1f;
+  color: var(--color-text);
+  border-radius: 10px;
+  border: 1px solid rgba(198, 161, 91, 0.28);
   box-shadow:
-    0 14px 22px -6px rgba(0, 0, 0, 0.45),
-    inset 0 -22px 26px -24px rgba(0, 0, 0, 0.25);
+    0 14px 28px -8px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(246, 243, 237, 0.04);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   display: inline-block;
 }
 
-.sticky-note::after {
-  /* folded-corner detail, bottom-right — a classic paper-note tell */
-  content: '';
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 0 16px 16px;
-  border-color: transparent transparent rgba(0, 0, 0, 0.16) transparent;
-  border-radius: 0 0 10px 0;
-}
-
 .sticky-note:hover {
-  transform: rotate(0deg) scale(1.035) !important;
+  transform: rotate(0deg) scale(1.03) !important;
+  border-color: rgba(198, 161, 91, 0.55);
   box-shadow:
-    0 20px 32px -6px rgba(0, 0, 0, 0.55),
-    inset 0 -22px 26px -24px rgba(0, 0, 0, 0.25);
+    0 20px 36px -8px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(198, 161, 91, 0.15),
+    inset 0 1px 0 rgba(246, 243, 237, 0.05);
   z-index: 2;
 }
 
 .sticky-note__pin {
   position: absolute;
-  top: -9px;
+  top: -8px;
   left: 50%;
   transform: translateX(-50%);
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #e8564f, #a02c26 75%);
-  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.5);
+  background: radial-gradient(circle at 35% 30%, #e8cd8a, var(--tech-accent-gold, #c6a15b) 75%);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.55);
 }
 
 .sticky-note__title {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1rem;
-  margin-bottom: 8px;
+  font-size: 1.05rem;
+  color: var(--tech-accent-gold-text);
+  margin-bottom: 10px;
   line-height: 1.3;
 }
 
 .sticky-note__content {
   font-family: var(--font-body);
   font-size: 0.85rem;
-  line-height: 1.55;
+  line-height: 1.6;
+  color: rgba(246, 243, 237, 0.82);
   white-space: pre-wrap;
   overflow: hidden;
   display: -webkit-box;
@@ -776,23 +766,27 @@
 
 .sticky-note__meta {
   font-family: var(--font-body);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 600;
-  opacity: 0.55;
-  margin-top: 10px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--tech-text-dim);
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(198, 161, 91, 0.15);
 }
 
 .sticky-note__delete {
   position: absolute;
-  top: 8px;
-  right: 10px;
+  top: 10px;
+  right: 12px;
   background: transparent;
   border: none;
-  color: rgba(0, 0, 0, 0.4);
-  font-size: 0.85rem;
+  color: var(--tech-text-dim);
+  font-size: 0.8rem;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
 }
 
 .sticky-note:hover .sticky-note__delete {
@@ -800,7 +794,7 @@
 }
 
 .sticky-note__delete:hover {
-  color: rgba(0, 0, 0, 0.75);
+  color: var(--color-danger);
   transform: scale(1.15);
 }
 
@@ -814,17 +808,19 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 2px solid transparent;
+  border: 1px solid rgba(198, 161, 91, 0.3);
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .sticky-color-swatch:hover {
   transform: scale(1.1);
+  border-color: rgba(198, 161, 91, 0.6);
 }
 
 .sticky-color-swatch--selected {
-  border-color: var(--color-text);
+  border-color: var(--tech-accent-gold);
+  box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.2);
 }
 
 /* Mind map */

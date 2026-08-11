@@ -93,7 +93,9 @@ function stripHtml(html: string): string {
 
 // Classic sticky-note colors — warm paper tones, not the app's usual gold/dark palette,
 // since the whole point of the sticky wall is to feel like a physical corkboard.
-const STICKY_COLORS = ['#f4d35e', '#f4a261', '#f28482', '#a7c957', '#8ecae6', '#cdb4db'];
+// Deep jewel tones with a gold foil border/pin, not bright paper-note
+// pastels — matches the app's dark luxury theme instead of clashing with it.
+const STICKY_COLORS = ['#1c1a1f', '#3b1418', '#10261c', '#131c30', '#251a30', '#2b2013'];
 
 function stickyRotation(id: string): number {
   let hash = 0;
