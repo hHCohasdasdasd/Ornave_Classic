@@ -13,6 +13,10 @@
     "type-check:strict": "tsc --noEmit --pretty false"
   },
   "dependencies": {
+    "@tiptap/extension-placeholder": "^3.30.0",
+    "@tiptap/extension-underline": "^3.30.0",
+    "@tiptap/react": "^3.30.0",
+    "@tiptap/starter-kit": "^3.30.0",
     "axios": "^1.6.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

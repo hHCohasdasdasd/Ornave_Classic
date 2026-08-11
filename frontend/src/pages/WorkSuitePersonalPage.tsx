@@ -5,6 +5,7 @@ import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
 import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { workSuiteService, Task, Project, Goal, Note, NoteType } from '@/services/workSuiteService';
 import { scopedKey } from '@/utils/storage';
 import './WorkSuite.css';
@@ -79,6 +80,15 @@ function accentColorFromId(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
   return GOAL_CATEGORY_COLORS[hash % GOAL_CATEGORY_COLORS.length];
+}
+
+/** Plain-text version of a NOTE's rich HTML content — for card previews and
+ * the title-fallback logic, which have no business rendering markup. Sticky
+ * and mind-map notes stay plain text at the source, so this is a no-op there. */
+function stripHtml(html: string): string {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return (div.textContent || '').replace(/\s+/g, ' ').trim();
 }
 
 // Classic sticky-note colors — warm paper tones, not the app's usual gold/dark palette,
@@ -479,7 +489,10 @@ export const WorkSuitePersonalPage: React.FC = () => {
   // Mind-map branches are meaningful by their label alone (content is just
   // optional detail); everything else needs real content, per the backend's
   // NOT NULL constraint on Note.content.
-  const noteSaveDisabled = noteType === 'MINDMAP' ? !noteTitle.trim() : !noteContent.trim();
+  // A NOTE's content is HTML from the rich editor — an "empty" editor still
+  // emits markup like "<p></p>", which .trim() alone would treat as non-blank.
+  const noteSaveDisabled =
+    noteType === 'MINDMAP' ? !noteTitle.trim() : noteType === 'NOTE' ? !stripHtml(noteContent) : !noteContent.trim();
 
   const handleSaveNote = async () => {
     if (noteSaveDisabled) return;
@@ -550,9 +563,12 @@ export const WorkSuitePersonalPage: React.FC = () => {
 
   const noteDisplayTitle = (note: Note) => {
     if (note.title?.trim()) return note.title;
-    const firstLine = note.content.split('\n')[0].trim();
+    const plain = note.type === 'NOTE' ? stripHtml(note.content) : note.content;
+    const firstLine = plain.split('\n')[0].trim();
     return firstLine.length > 48 ? `${firstLine.slice(0, 48)}…` : firstLine || 'Untitled';
   };
+
+  const notePreviewText = (note: Note) => (note.type === 'NOTE' ? stripHtml(note.content) : note.content);
 
   const formatRelativeShort = (value: string) => {
     const date = new Date(value);
@@ -1132,7 +1148,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                               {note.pinned ? '★' : '☆'}
                             </button>
                           </div>
-                          <p className="worksuite-card__description note-card__content">{note.content}</p>
+                          <p className="worksuite-card__description note-card__content">{notePreviewText(note)}</p>
                           <div className="worksuite-card__meta note-card__meta">
                             Edited {formatRelativeShort(note.updatedAt)}
                           </div>
@@ -1473,13 +1489,17 @@ export const WorkSuitePersonalPage: React.FC = () => {
             )}
 
             <label>{noteType === 'MINDMAP' ? 'Details (optional)' : 'Content'}</label>
-            <textarea
-              value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
-              rows={noteType === 'MINDMAP' ? 3 : 8}
-              placeholder={noteType === 'MINDMAP' ? 'Optional notes for this branch…' : 'Write something…'}
-              maxLength={5000}
-            />
+            {noteType === 'NOTE' ? (
+              <RichTextEditor content={noteContent} onChange={setNoteContent} placeholder="Write something…" />
+            ) : (
+              <textarea
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+                rows={noteType === 'MINDMAP' ? 3 : 6}
+                placeholder={noteType === 'MINDMAP' ? 'Optional notes for this branch…' : 'Write something…'}
+                maxLength={2000}
+              />
+            )}
             {noteError && <p className="worksuite-modal__error">{noteError}</p>}
             <div className="worksuite-modal__actions">
               <button className="worksuite-modal__cancel" onClick={() => setShowNoteModal(false)}>Cancel</button>
