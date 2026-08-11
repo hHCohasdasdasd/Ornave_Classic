@@ -7,7 +7,7 @@ import { workSuiteService, WorkSuiteSummary, WorkSuiteInsight } from '@/services
 import './WorkSuite.css';
 
 const GROWTH_MODULES = [
-  { icon: '🧭', title: 'Personal Growth', description: 'Your board, goals, and achievements — all in one place.', route: '/work-suite/personal' },
+  { icon: '🧭', title: 'Planning', description: 'Your board, goals, and achievements — all in one place.', route: '/work-suite/personal' },
 ];
 
 const FREELANCE_MODULES = [
@@ -202,7 +202,7 @@ export const WorkSuiteHomePage: React.FC = () => {
         ) : (
           <>
             <div className="worksuite-section-header">
-              <h2>Personal Growth</h2>
+              <h2>Planning</h2>
             </div>
             <ModuleGrid items={GROWTH_MODULES} onNavigate={navigate} />
 

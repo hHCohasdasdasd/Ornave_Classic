@@ -387,7 +387,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
       <div className="worksuite-page__banner">
         <div className="worksuite-page__banner-inner">
           <button className="worksuite-breadcrumb" onClick={() => navigate('/work-suite')}>← Work Suite</button>
-          <h1 className="worksuite-page__title">Personal Growth</h1>
+          <h1 className="worksuite-page__title">Planning</h1>
           <p className="worksuite-page__subtitle">Your board, goals, and achievements — all in one place.</p>
         </div>
       </div>

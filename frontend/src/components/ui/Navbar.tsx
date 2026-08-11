@@ -122,7 +122,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
     },
     {
       icon: <IconCompass />,
-      label: 'Personal Growth',
+      label: 'Planning',
       description: 'Your board, goals, and achievements — all in one place.',
       route: '/work-suite/personal',
     },

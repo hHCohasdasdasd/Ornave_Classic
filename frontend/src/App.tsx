@@ -31,7 +31,7 @@ const ProfilePageWithKey = () => {
   return <ProfilePage key={location.pathname + location.search} />;
 };
 
-// Tasks/Goals/Achievements were merged into one Personal Growth page — old
+// Tasks/Goals/Achievements were merged into one Planning page — old
 // links (including ?projectId= from the Projects page) still redirect there.
 const WorkSuiteLegacyRedirect: React.FC<{ tab: 'board' | 'goals' | 'achievements' }> = ({ tab }) => {
   const location = useLocation();
@@ -283,7 +283,7 @@ function App() {
             <Route path="/work-suite/personal" element={<WorkSuitePersonalPage />} />
             <Route path="/work-suite/clients" element={<WorkSuiteClientsPage />} />
             <Route path="/work-suite/invoices" element={<WorkSuiteInvoicesPage />} />
-            {/* Tasks/Goals/Achievements were merged into one Personal Growth page — keep old links working. */}
+            {/* Tasks/Goals/Achievements were merged into one Planning page — keep old links working. */}
             <Route path="/work-suite/tasks" element={<WorkSuiteLegacyRedirect tab="board" />} />
             <Route path="/work-suite/goals" element={<WorkSuiteLegacyRedirect tab="goals" />} />
             <Route path="/work-suite/achievements" element={<WorkSuiteLegacyRedirect tab="achievements" />} />
