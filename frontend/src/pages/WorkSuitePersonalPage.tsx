@@ -1182,6 +1182,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                       style={{ background: note.color || STICKY_COLORS[0], transform: `rotate(${stickyRotation(note.id)}deg)` }}
                       onClick={() => openEditNote(note)}
                     >
+                      <div className="sticky-note__pin" />
                       <button
                         className="sticky-note__delete"
                         onClick={(e) => { e.stopPropagation(); handleDeleteNote(note); }}
@@ -1191,6 +1192,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                       </button>
                       {note.title && <div className="sticky-note__title">{note.title}</div>}
                       <div className="sticky-note__content">{note.content}</div>
+                      <div className="sticky-note__meta">{formatRelativeShort(note.updatedAt)}</div>
                     </div>
                   ))}
                 </div>
