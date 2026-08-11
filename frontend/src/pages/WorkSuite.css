@@ -1727,12 +1727,13 @@
 /* Notes get a bigger writing surface — the rich text toolbar and editor
    feel cramped in the standard 460px modal used for short forms elsewhere. */
 .worksuite-modal--large {
-  max-width: 720px;
+  max-width: 1040px;
+  width: 92vw;
 }
 
 .worksuite-modal--large .rte-content {
-  min-height: 320px;
-  max-height: 55vh;
+  min-height: 480px;
+  max-height: 70vh;
 }
 
 .worksuite-modal h2 {
