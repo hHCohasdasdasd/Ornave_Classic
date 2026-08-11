@@ -823,22 +823,65 @@
   transform: scale(0.96);
 }
 
-.focus-timer__duration-input {
-  width: 60px;
-  background: var(--color-input-bg, rgba(246, 243, 237, 0.04));
-  border: 1px solid var(--tech-border-dim);
-  border-radius: 8px;
-  padding: 4px 8px;
-  color: var(--color-text);
-  font-family: inherit;
-  font-size: 0.82rem;
-  text-align: center;
-  transition: border-color 0.2s ease;
+.focus-timer__durations {
+  display: flex;
+  gap: 20px;
 }
 
-.focus-timer__duration-input:focus {
-  outline: none;
+.focus-timer__duration-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.focus-timer__duration-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--tech-text-dim);
+  margin-right: 2px;
+}
+
+.focus-timer__duration-value {
+  min-width: 34px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.focus-timer__duration-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-dark);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.focus-timer__duration-btn:hover:not(:disabled) {
   border-color: var(--tech-accent-gold);
+  color: var(--tech-accent-gold-text);
+  background: rgba(198, 161, 91, 0.08);
+}
+
+.focus-timer__duration-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.focus-timer__duration-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 @media (prefers-reduced-motion: reduce) {

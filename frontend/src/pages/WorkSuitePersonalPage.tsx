@@ -552,9 +552,14 @@ export const WorkSuitePersonalPage: React.FC = () => {
   };
 
   const applyFocusDuration = (mode: FocusMode, minutes: number) => {
-    const clamped = Math.max(1, Math.min(120, minutes));
+    const clamped = Math.max(5, Math.min(120, minutes));
     updateFocusPrefs(mode === 'work' ? { workMinutes: clamped } : { breakMinutes: clamped });
     if (!focusRunning && focusMode === mode) setFocusSecondsLeft(clamped * 60);
+  };
+
+  const stepFocusDuration = (mode: FocusMode, delta: number) => {
+    const current = mode === 'work' ? focusPrefs.workMinutes : focusPrefs.breakMinutes;
+    applyFocusDuration(mode, current + delta);
   };
 
   const formatClock = (totalSeconds: number) => {
@@ -1043,6 +1048,46 @@ export const WorkSuitePersonalPage: React.FC = () => {
                 <div className="focus-timer__linked-task">Working on: {focusLinkedTask.title}</div>
               )}
 
+              <div className="focus-timer__durations">
+                <div className="focus-timer__duration-group">
+                  <span className="focus-timer__duration-label">Focus</span>
+                  <button
+                    className="focus-timer__duration-btn"
+                    onClick={() => stepFocusDuration('work', -5)}
+                    disabled={focusRunning || focusPrefs.workMinutes <= 5}
+                  >
+                    −
+                  </button>
+                  <span className="focus-timer__duration-value">{focusPrefs.workMinutes}m</span>
+                  <button
+                    className="focus-timer__duration-btn"
+                    onClick={() => stepFocusDuration('work', 5)}
+                    disabled={focusRunning || focusPrefs.workMinutes >= 120}
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="focus-timer__duration-group">
+                  <span className="focus-timer__duration-label">Break</span>
+                  <button
+                    className="focus-timer__duration-btn"
+                    onClick={() => stepFocusDuration('break', -5)}
+                    disabled={focusRunning || focusPrefs.breakMinutes <= 5}
+                  >
+                    −
+                  </button>
+                  <span className="focus-timer__duration-value">{focusPrefs.breakMinutes}m</span>
+                  <button
+                    className="focus-timer__duration-btn"
+                    onClick={() => stepFocusDuration('break', 5)}
+                    disabled={focusRunning || focusPrefs.breakMinutes >= 120}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              {focusRunning && <p className="worksuite-tasks-settings__hint">Pause to change durations.</p>}
+
               <div className="focus-timer__controls">
                 <button className="worksuite-create-btn focus-timer__primary-btn" onClick={() => setFocusRunning((r) => !r)}>
                   {focusRunning ? 'Pause' : focusSecondsLeft === focusModeDurationSec ? 'Start' : 'Resume'}
@@ -1066,32 +1111,6 @@ export const WorkSuitePersonalPage: React.FC = () => {
                   onChange={setFocusLinkedTaskId}
                 />
                 <p className="worksuite-tasks-settings__hint">Just a label for this session — doesn't change the task itself.</p>
-              </div>
-
-              <div className="worksuite-tasks-sidebar__section">
-                <h4>Durations</h4>
-                <div className="worksuite-tasks-settings__color-row">
-                  <span>Focus (min)</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={120}
-                    className="focus-timer__duration-input"
-                    value={focusPrefs.workMinutes}
-                    onChange={(e) => applyFocusDuration('work', parseInt(e.target.value, 10) || 1)}
-                  />
-                </div>
-                <div className="worksuite-tasks-settings__color-row">
-                  <span>Break (min)</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={120}
-                    className="focus-timer__duration-input"
-                    value={focusPrefs.breakMinutes}
-                    onChange={(e) => applyFocusDuration('break', parseInt(e.target.value, 10) || 1)}
-                  />
-                </div>
                 <p className="worksuite-tasks-settings__hint">
                   Sessions and durations live on this device only — they don't sync across devices yet.
                 </p>
