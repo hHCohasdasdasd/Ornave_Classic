@@ -1449,7 +1449,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
 
       {showNoteModal && (
         <div className="worksuite-modal-overlay" onClick={() => setShowNoteModal(false)}>
-          <div className="worksuite-modal" onClick={(e) => e.stopPropagation()}>
+          <div className={`worksuite-modal${noteType === 'NOTE' ? ' worksuite-modal--large' : ''}`} onClick={(e) => e.stopPropagation()}>
             <h2>
               {editingNote
                 ? noteType === 'STICKY' ? 'Edit Sticky' : noteType === 'MINDMAP' ? 'Edit Branch' : 'Edit Note'

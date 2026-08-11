@@ -1724,6 +1724,17 @@
   overflow-y: auto;
 }
 
+/* Notes get a bigger writing surface — the rich text toolbar and editor
+   feel cramped in the standard 460px modal used for short forms elsewhere. */
+.worksuite-modal--large {
+  max-width: 720px;
+}
+
+.worksuite-modal--large .rte-content {
+  min-height: 320px;
+  max-height: 55vh;
+}
+
 .worksuite-modal h2 {
   font-family: var(--font-display);
   margin: 0 0 8px;
