@@ -6,7 +6,7 @@ import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
 import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
-import { workSuiteService, Task, Project, Goal, Note, NoteType } from '@/services/workSuiteService';
+import { workSuiteService, Task, Project, Goal, Note, NoteType, NoteShape, NoteFontSize } from '@/services/workSuiteService';
 import { scopedKey } from '@/utils/storage';
 import './WorkSuite.css';
 
@@ -102,6 +102,23 @@ function mindMapBranchOffset(index: number, total: number, radius = 150): { x: n
   const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
   return { x: Math.round(Math.cos(angle) * radius), y: Math.round(Math.sin(angle) * radius) };
 }
+
+const MINDMAP_SHAPES: { key: NoteShape; label: string }[] = [
+  { key: 'pill', label: 'Pill' },
+  { key: 'rect', label: 'Rectangle' },
+  { key: 'diamond', label: 'Diamond' },
+  { key: 'hexagon', label: 'Hexagon' },
+];
+
+// Muted, desaturated tones — same restraint as the plaque palette, so a
+// colored node reads as a deliberate accent rather than a clashing sticker.
+const MINDMAP_COLORS = ['#c9b896', '#8fa89a', '#8b9dc3', '#c48b8b', '#c9a86b'];
+
+const MINDMAP_FONT_SIZES: { key: NoteFontSize; label: string; px: string }[] = [
+  { key: 'sm', label: 'S', px: '0.7rem' },
+  { key: 'md', label: 'M', px: '0.8rem' },
+  { key: 'lg', label: 'L', px: '0.98rem' },
+];
 
 function goalDeadlineInfo(targetDate?: string): { label: string; overdue: boolean; soon: boolean } | null {
   if (!targetDate) return null;
@@ -548,6 +565,49 @@ export const WorkSuitePersonalPage: React.FC = () => {
   const mindMapNotes = notes.filter((n) => n.type === 'MINDMAP');
   const mindMapRoots = mindMapNotes.filter((n) => !n.parentId);
   const mindMapBranchesOf = (rootId: string) => mindMapNotes.filter((n) => n.parentId === rootId);
+
+  // ---------------------------------------------------------------------
+  // Mind map tools panel — select a node, then style it (shape/color/size)
+  // from the sidebar, or drag a shape chip straight onto the canvas/a node.
+  // ---------------------------------------------------------------------
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const selectedNode = mindMapNotes.find((n) => n.id === selectedNodeId) || null;
+
+  const updateNodeStyle = async (id: string, patch: Partial<Pick<Note, 'shape' | 'color' | 'fontSize'>>) => {
+    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...patch } : n)));
+    try {
+      await workSuiteService.updateNote(id, patch);
+    } catch {
+      await loadNotes();
+    }
+  };
+
+  const handleShapeDropOnCanvas = async (e: React.DragEvent, rootId: string) => {
+    e.preventDefault();
+    const shape = e.dataTransfer.getData('shape') as NoteShape;
+    if (!shape) return;
+    try {
+      const created = await workSuiteService.createNote({
+        type: 'MINDMAP',
+        title: 'New idea',
+        content: 'New idea',
+        shape,
+        parentId: rootId,
+      });
+      setNotes((prev) => [created, ...prev]);
+      openEditNote(created);
+    } catch {
+      setNoteError('Could not add that branch — try again.');
+    }
+  };
+
+  const handleShapeDropOnNode = (e: React.DragEvent, nodeId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const shape = e.dataTransfer.getData('shape') as NoteShape;
+    if (!shape) return;
+    updateNodeStyle(nodeId, { shape });
+  };
 
   const [noteSearch, setNoteSearch] = useState('');
   const filteredNotes = plainNotes.filter((n) => {
@@ -1208,83 +1268,167 @@ export const WorkSuitePersonalPage: React.FC = () => {
                   <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'MINDMAP' })}>+ New Mind Map</button>
                 </div>
               ) : (
-                <div className="mindmap-canvas">
-                  <div className="mindmap-list">
-                    {mindMapRoots.map((root) => {
-                      const branches = mindMapBranchesOf(root.id);
-                      const slots = branches.length + 1; // + one open slot for the "add branch" node
-                      const size = 380;
-                      const center = size / 2;
-                      const addOffset = mindMapBranchOffset(branches.length, slots);
-                      return (
-                        <div key={root.id} className="mindmap-tree-wrap">
-                          <div className="mindmap-tree" style={{ width: size, height: size }}>
-                            <svg className="mindmap-tree__lines" width={size} height={size}>
+                <div className="mindmap-layout">
+                  <div className="mindmap-canvas" onClick={() => setSelectedNodeId(null)}>
+                    <div className="mindmap-list">
+                      {mindMapRoots.map((root) => {
+                        const branches = mindMapBranchesOf(root.id);
+                        const slots = branches.length + 1; // + one open slot for the "add branch" node
+                        const size = 380;
+                        const center = size / 2;
+                        const addOffset = mindMapBranchOffset(branches.length, slots);
+                        const rootFontPx = MINDMAP_FONT_SIZES.find((f) => f.key === (root.fontSize || 'md'))?.px;
+                        return (
+                          <div key={root.id} className="mindmap-tree-wrap">
+                            <div
+                              className="mindmap-tree"
+                              style={{ width: size, height: size }}
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => handleShapeDropOnCanvas(e, root.id)}
+                            >
+                              <svg className="mindmap-tree__lines" width={size} height={size}>
+                                {branches.map((b, i) => {
+                                  const { x, y } = mindMapBranchOffset(i, slots);
+                                  const midX = center + x / 2;
+                                  const midY = center + y / 2;
+                                  const len = Math.sqrt(x * x + y * y) || 1;
+                                  const bow = 16 * (i % 2 === 0 ? 1 : -1);
+                                  const ctrlX = midX + (-y / len) * bow;
+                                  const ctrlY = midY + (x / len) * bow;
+                                  return (
+                                    <path
+                                      key={b.id}
+                                      d={`M ${center} ${center} Q ${ctrlX} ${ctrlY} ${center + x} ${center + y}`}
+                                      fill="none"
+                                      stroke="rgba(201, 184, 150, 0.35)"
+                                      strokeWidth={1.5}
+                                    />
+                                  );
+                                })}
+                              </svg>
+
+                              <div
+                                className={`mindmap-node mindmap-node--root mindmap-node--shape-${root.shape || 'pill'}${selectedNodeId === root.id ? ' mindmap-node--selected' : ''}`}
+                                style={{ left: center, top: center, fontSize: rootFontPx, ...(root.color ? { borderColor: root.color, color: root.color } : {}) }}
+                                onClick={(e) => { e.stopPropagation(); setSelectedNodeId(root.id); }}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) => handleShapeDropOnNode(e, root.id)}
+                              >
+                                <span>{noteDisplayTitle(root)}</span>
+                                <button
+                                  className="mindmap-node__edit"
+                                  onClick={(e) => { e.stopPropagation(); openEditNote(root); }}
+                                  title="Edit"
+                                >
+                                  ✎
+                                </button>
+                              </div>
+
                               {branches.map((b, i) => {
                                 const { x, y } = mindMapBranchOffset(i, slots);
-                                const midX = center + x / 2;
-                                const midY = center + y / 2;
-                                const len = Math.sqrt(x * x + y * y) || 1;
-                                const bow = 16 * (i % 2 === 0 ? 1 : -1);
-                                const ctrlX = midX + (-y / len) * bow;
-                                const ctrlY = midY + (x / len) * bow;
+                                const fontPx = MINDMAP_FONT_SIZES.find((f) => f.key === (b.fontSize || 'md'))?.px;
                                 return (
-                                  <path
+                                  <div
                                     key={b.id}
-                                    d={`M ${center} ${center} Q ${ctrlX} ${ctrlY} ${center + x} ${center + y}`}
-                                    fill="none"
-                                    stroke="rgba(201, 184, 150, 0.35)"
-                                    strokeWidth={1.5}
-                                  />
+                                    className={`mindmap-node mindmap-node--branch mindmap-node--shape-${b.shape || 'pill'}${selectedNodeId === b.id ? ' mindmap-node--selected' : ''}`}
+                                    style={{ left: center + x, top: center + y, fontSize: fontPx, ...(b.color ? { borderColor: b.color, color: b.color } : {}) }}
+                                    onClick={(e) => { e.stopPropagation(); setSelectedNodeId(b.id); }}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={(e) => handleShapeDropOnNode(e, b.id)}
+                                  >
+                                    <span>{noteDisplayTitle(b)}</span>
+                                    <button
+                                      className="mindmap-node__edit"
+                                      onClick={(e) => { e.stopPropagation(); openEditNote(b); }}
+                                      title="Edit"
+                                    >
+                                      ✎
+                                    </button>
+                                    <button
+                                      className="mindmap-node__delete"
+                                      onClick={(e) => { e.stopPropagation(); handleDeleteNote(b); }}
+                                      title="Remove branch"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
                                 );
                               })}
-                            </svg>
 
-                            <div
-                              className="mindmap-node mindmap-node--root"
-                              style={{ left: center, top: center }}
-                              onClick={() => openEditNote(root)}
-                            >
-                              <span>{noteDisplayTitle(root)}</span>
+                              <button
+                                className="mindmap-node mindmap-node--add"
+                                style={{ left: center + addOffset.x, top: center + addOffset.y }}
+                                onClick={(e) => { e.stopPropagation(); openCreateNote({ type: 'MINDMAP', parentId: root.id }); }}
+                                title="Add branch"
+                              >
+                                +
+                              </button>
                             </div>
-
-                            {branches.map((b, i) => {
-                              const { x, y } = mindMapBranchOffset(i, slots);
-                              return (
-                                <div
-                                  key={b.id}
-                                  className="mindmap-node mindmap-node--branch"
-                                  style={{ left: center + x, top: center + y }}
-                                  onClick={() => openEditNote(b)}
-                                >
-                                  <span>{noteDisplayTitle(b)}</span>
-                                  <button
-                                    className="mindmap-node__delete"
-                                    onClick={(e) => { e.stopPropagation(); handleDeleteNote(b); }}
-                                    title="Remove branch"
-                                  >
-                                    ✕
-                                  </button>
-                                </div>
-                              );
-                            })}
-
-                            <button
-                              className="mindmap-node mindmap-node--add"
-                              style={{ left: center + addOffset.x, top: center + addOffset.y }}
-                              onClick={() => openCreateNote({ type: 'MINDMAP', parentId: root.id })}
-                              title="Add branch"
-                            >
-                              +
-                            </button>
+                            <div className="mindmap-tree__actions">
+                              <button className="worksuite-btn worksuite-btn--danger" onClick={(e) => { e.stopPropagation(); handleDeleteNote(root); }}>✕ Delete map</button>
+                            </div>
                           </div>
-                          <div className="mindmap-tree__actions">
-                            <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteNote(root)}>✕ Delete map</button>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
+
+                  <aside className="worksuite-tasks-sidebar">
+                    <div className="worksuite-tasks-sidebar__section">
+                      <h4>Shapes</h4>
+                      <div className="mindmap-shape-palette">
+                        {MINDMAP_SHAPES.map((s) => (
+                          <div
+                            key={s.key}
+                            className={`mindmap-shape-chip mindmap-shape-chip--${s.key}`}
+                            draggable
+                            onDragStart={(e) => e.dataTransfer.setData('shape', s.key)}
+                            onClick={() => selectedNode && updateNodeStyle(selectedNode.id, { shape: s.key })}
+                            title={s.label}
+                          />
+                        ))}
+                      </div>
+                      <p className="worksuite-tasks-settings__hint">
+                        Drag a shape onto the canvas to add a node, onto an existing node to restyle it, or click one with a node selected.
+                      </p>
+                    </div>
+
+                    <div className="worksuite-tasks-sidebar__section">
+                      <h4>Color</h4>
+                      <div className="sticky-color-picker">
+                        {MINDMAP_COLORS.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            className={`sticky-color-swatch${selectedNode?.color === c ? ' sticky-color-swatch--selected' : ''}`}
+                            style={{ background: c }}
+                            disabled={!selectedNode}
+                            onClick={() => selectedNode && updateNodeStyle(selectedNode.id, { color: c })}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="worksuite-tasks-sidebar__section">
+                      <h4>Text Size</h4>
+                      <div className="mindmap-size-picker">
+                        {MINDMAP_FONT_SIZES.map((s) => (
+                          <button
+                            key={s.key}
+                            className={`worksuite-tab${(selectedNode?.fontSize || 'md') === s.key ? ' worksuite-tab--active' : ''}`}
+                            disabled={!selectedNode}
+                            onClick={() => selectedNode && updateNodeStyle(selectedNode.id, { fontSize: s.key })}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="worksuite-tasks-settings__hint">
+                        {selectedNode ? `Styling "${noteDisplayTitle(selectedNode)}"` : 'Select a node on the canvas to style it.'}
+                      </p>
+                    </div>
+                  </aside>
                 </div>
               )
             )}

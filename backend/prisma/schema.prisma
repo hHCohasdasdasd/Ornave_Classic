@@ -788,7 +788,9 @@ model Note {
   type      String   @default("NOTE") // NOTE | STICKY | MINDMAP
   title     String?
   content   String
-  color     String? // sticky-note background color, e.g. "#f4d35e"
+  color     String? // sticky-note background color, or mind-map node accent color
+  shape     String? // mind-map node shape: pill | rect | diamond | hexagon
+  fontSize  String? // mind-map node text size: sm | md | lg
   pinned    Boolean  @default(false)
   parentId  String? // MINDMAP branches point at the root/parent node they hang off
   createdAt DateTime @default(now())

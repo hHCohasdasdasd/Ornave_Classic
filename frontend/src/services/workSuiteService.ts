@@ -42,12 +42,17 @@ export interface Achievement {
 
 export type NoteType = 'NOTE' | 'STICKY' | 'MINDMAP';
 
+export type NoteShape = 'pill' | 'rect' | 'diamond' | 'hexagon';
+export type NoteFontSize = 'sm' | 'md' | 'lg';
+
 export interface Note {
   id: string;
   type: NoteType;
   title?: string;
   content: string;
   color?: string;
+  shape?: NoteShape;
+  fontSize?: NoteFontSize;
   pinned: boolean;
   parentId?: string;
   createdAt: string;
@@ -249,12 +254,20 @@ class WorkSuiteService {
     return response.data.data || [];
   }
 
-  async createNote(data: { type?: NoteType; title?: string; content: string; color?: string; parentId?: string }): Promise<Note> {
+  async createNote(data: {
+    type?: NoteType;
+    title?: string;
+    content: string;
+    color?: string;
+    shape?: NoteShape;
+    fontSize?: NoteFontSize;
+    parentId?: string;
+  }): Promise<Note> {
     const response = await apiClient.post('/work-suite/notes', data);
     return response.data.data;
   }
 
-  async updateNote(id: string, data: Partial<Pick<Note, 'title' | 'content' | 'pinned' | 'color'>>): Promise<Note> {
+  async updateNote(id: string, data: Partial<Pick<Note, 'title' | 'content' | 'pinned' | 'color' | 'shape' | 'fontSize'>>): Promise<Note> {
     const response = await apiClient.put(`/work-suite/notes/${id}`, data);
     return response.data.data;
   }

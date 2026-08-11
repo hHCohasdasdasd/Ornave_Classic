@@ -869,6 +869,19 @@
 
 /* Mind map — same dark/beige language as the plaque wall, framed as its
    own canvas rather than nodes floating loose on the page background. */
+.mindmap-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .mindmap-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .mindmap-canvas {
   padding: 40px;
   border-radius: 16px;
@@ -953,6 +966,43 @@
   z-index: 1;
 }
 
+.mindmap-node--selected {
+  border-color: #c9b896 !important;
+  box-shadow: 0 0 0 3px rgba(201, 184, 150, 0.25), 0 10px 20px -8px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Shapes — pill is the default (border-radius set on .mindmap-node itself),
+   these override it. Diamond/hexagon get extra padding since their clipped
+   corners eat into the usable text area. */
+.mindmap-node--shape-rect {
+  border-radius: 6px;
+}
+
+.mindmap-node--shape-diamond {
+  border-radius: 4px;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  padding: 38px 18px;
+  max-width: 130px;
+}
+
+.mindmap-node--shape-diamond span {
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.mindmap-node--shape-hexagon {
+  border-radius: 4px;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  padding: 16px 36px;
+  max-width: 160px;
+}
+
+.mindmap-node--shape-hexagon span {
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.mindmap-node__edit,
 .mindmap-node__delete {
   flex-shrink: 0;
   background: transparent;
@@ -963,6 +1013,10 @@
   cursor: pointer;
   padding: 0;
   transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.mindmap-node__edit:hover {
+  opacity: 1;
 }
 
 .mindmap-node__delete:hover {
@@ -994,6 +1048,73 @@
 .mindmap-tree__actions {
   display: flex;
   gap: 10px;
+}
+
+.mindmap-shape-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mindmap-shape-chip {
+  width: 32px;
+  height: 32px;
+  background: #1a1a1a;
+  border: 1px solid rgba(201, 184, 150, 0.3);
+  cursor: grab;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.mindmap-shape-chip:hover {
+  transform: scale(1.08);
+  border-color: rgba(201, 184, 150, 0.65);
+}
+
+.mindmap-shape-chip:active {
+  cursor: grabbing;
+}
+
+.mindmap-shape-chip--pill {
+  border-radius: 999px;
+}
+
+.mindmap-shape-chip--rect {
+  border-radius: 6px;
+}
+
+.mindmap-shape-chip--diamond {
+  border-radius: 3px;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+.mindmap-shape-chip--hexagon {
+  border-radius: 3px;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+.mindmap-size-picker {
+  display: flex;
+  gap: 6px;
+}
+
+.mindmap-size-picker .worksuite-tab {
+  flex: 1;
+  text-align: center;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 184, 150, 0.2);
+  padding: 8px 0;
+}
+
+.mindmap-size-picker .worksuite-tab--active {
+  color: #c9b896;
+  border-color: rgba(201, 184, 150, 0.6);
+  background: rgba(201, 184, 150, 0.08);
+}
+
+.mindmap-size-picker .worksuite-tab:disabled,
+.sticky-color-swatch:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* Focus timer */

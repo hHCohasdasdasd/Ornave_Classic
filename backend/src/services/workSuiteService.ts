@@ -338,7 +338,15 @@ export class NoteService {
 
   static async create(
     userId: string,
-    data: { type?: string; title?: string; content: string; color?: string; parentId?: string }
+    data: {
+      type?: string;
+      title?: string;
+      content: string;
+      color?: string;
+      shape?: string;
+      fontSize?: string;
+      parentId?: string;
+    }
   ) {
     // A branch must hang off a mind-map node the caller actually owns —
     // otherwise this would let one user silently attach notes onto another
@@ -353,6 +361,8 @@ export class NoteService {
         title: data.title,
         content: data.content,
         color: data.color,
+        shape: data.shape,
+        fontSize: data.fontSize,
         parentId: data.parentId,
       },
     });
@@ -361,7 +371,14 @@ export class NoteService {
   static async update(
     userId: string,
     id: string,
-    data: { title?: string | null; content?: string; pinned?: boolean; color?: string | null }
+    data: {
+      title?: string | null;
+      content?: string;
+      pinned?: boolean;
+      color?: string | null;
+      shape?: string | null;
+      fontSize?: string | null;
+    }
   ) {
     await this.getById(userId, id);
     return prisma.note.update({ where: { id }, data });
