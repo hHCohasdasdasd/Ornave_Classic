@@ -91,17 +91,11 @@ function stripHtml(html: string): string {
   return (div.textContent || '').replace(/\s+/g, ' ').trim();
 }
 
-// Classic sticky-note colors — warm paper tones, not the app's usual gold/dark palette,
-// since the whole point of the sticky wall is to feel like a physical corkboard.
-// Deep jewel tones with a gold foil border/pin, not bright paper-note
-// pastels — matches the app's dark luxury theme instead of clashing with it.
-const STICKY_COLORS = ['#1c1a1f', '#3b1418', '#10261c', '#131c30', '#251a30', '#2b2013'];
-
-function stickyRotation(id: string): number {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  return (hash % 9) - 4; // -4deg..4deg, deterministic per note so it doesn't jitter on re-render
-}
+// Muted metal-plaque finishes — near-neutral dark tones (gunmetal, bronze,
+// graphite) rather than bright jewel colors, so a note reads as an engraved
+// plate in the app's own dark/gold palette instead of a colorful object
+// sitting on top of it.
+const STICKY_COLORS = ['#1a1a1a', '#241a12', '#20242b', '#262626', '#1e1a16', '#171a1a'];
 
 /** Evenly spaced point on a circle around a mind-map root, starting at the top. */
 function mindMapBranchOffset(index: number, total: number, radius = 150): { x: number; y: number } {
@@ -1078,14 +1072,14 @@ export const WorkSuitePersonalPage: React.FC = () => {
             <div className="worksuite-page__header-row">
               <div className="worksuite-tabs" style={{ marginBottom: 0, borderBottom: 'none' }}>
                 <button className={`worksuite-tab${noteView === 'list' ? ' worksuite-tab--active' : ''}`} onClick={() => setNoteView('list')}>List</button>
-                <button className={`worksuite-tab${noteView === 'sticky' ? ' worksuite-tab--active' : ''}`} onClick={() => setNoteView('sticky')}>Sticky Wall</button>
+                <button className={`worksuite-tab${noteView === 'sticky' ? ' worksuite-tab--active' : ''}`} onClick={() => setNoteView('sticky')}>Plaque Wall</button>
                 <button className={`worksuite-tab${noteView === 'mindmap' ? ' worksuite-tab--active' : ''}`} onClick={() => setNoteView('mindmap')}>Mind Map</button>
               </div>
               {noteView === 'list' && (
                 <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'NOTE' })}>+ New Note</button>
               )}
               {noteView === 'sticky' && (
-                <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'STICKY' })}>+ New Sticky</button>
+                <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'STICKY' })}>+ New Plaque</button>
               )}
               {noteView === 'mindmap' && (
                 <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'MINDMAP' })}>+ New Mind Map</button>
@@ -1171,9 +1165,9 @@ export const WorkSuitePersonalPage: React.FC = () => {
                 <div className="worksuite-empty">Loading notes…</div>
               ) : stickyNotes.length === 0 ? (
                 <div className="worksuite-empty worksuite-empty--goals">
-                  <div className="worksuite-empty__icon">📌</div>
-                  <p>No sticky notes yet — pin something to the wall.</p>
-                  <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'STICKY' })}>+ New Sticky</button>
+                  <div className="worksuite-empty__icon">🏅</div>
+                  <p>No plaques yet — mount your first one.</p>
+                  <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'STICKY' })}>+ New Plaque</button>
                 </div>
               ) : (
                 <div className="sticky-wall">
@@ -1181,12 +1175,13 @@ export const WorkSuitePersonalPage: React.FC = () => {
                     <div
                       key={note.id}
                       className="sticky-note"
-                      style={{ background: note.color || STICKY_COLORS[0], transform: `rotate(${stickyRotation(note.id)}deg)` }}
+                      style={{ background: note.color || STICKY_COLORS[0] }}
                       onClick={() => openEditNote(note)}
                     >
-                      <div className="sticky-note__pin" />
-                      <span className="sticky-note__corner sticky-note__corner--tl" />
-                      <span className="sticky-note__corner sticky-note__corner--br" />
+                      <span className="sticky-note__rivet sticky-note__rivet--tl" />
+                      <span className="sticky-note__rivet sticky-note__rivet--tr" />
+                      <span className="sticky-note__rivet sticky-note__rivet--bl" />
+                      <span className="sticky-note__rivet sticky-note__rivet--br" />
                       <button
                         className="sticky-note__delete"
                         onClick={(e) => { e.stopPropagation(); handleDeleteNote(note); }}
@@ -1458,8 +1453,8 @@ export const WorkSuitePersonalPage: React.FC = () => {
           <div className={`worksuite-modal${noteType === 'NOTE' ? ' worksuite-modal--large' : ''}`} onClick={(e) => e.stopPropagation()}>
             <h2>
               {editingNote
-                ? noteType === 'STICKY' ? 'Edit Sticky' : noteType === 'MINDMAP' ? 'Edit Branch' : 'Edit Note'
-                : noteType === 'STICKY' ? 'New Sticky' : noteType === 'MINDMAP' ? (noteParentId ? 'New Branch' : 'New Mind Map') : 'New Note'}
+                ? noteType === 'STICKY' ? 'Edit Plaque' : noteType === 'MINDMAP' ? 'Edit Branch' : 'Edit Note'
+                : noteType === 'STICKY' ? 'New Plaque' : noteType === 'MINDMAP' ? (noteParentId ? 'New Branch' : 'New Mind Map') : 'New Note'}
             </h2>
 
             {!editingNote && noteType === 'MINDMAP' && noteParentId && (
@@ -1478,7 +1473,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
 
             {noteType === 'STICKY' && (
               <>
-                <label>Color</label>
+                <label>Finish</label>
                 <div className="sticky-color-picker">
                   {STICKY_COLORS.map((c) => (
                     <button

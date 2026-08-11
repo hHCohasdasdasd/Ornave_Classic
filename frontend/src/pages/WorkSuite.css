@@ -690,114 +690,99 @@
   margin-bottom: 14px;
 }
 
-/* Sticky wall */
+/* Plaque wall — engraved brass/gunmetal plates, not paper sticky notes */
 .sticky-wall {
-  columns: 220px 5;
-  column-gap: 24px;
-  padding: 32px;
-  border-radius: 20px;
+  columns: 240px 4;
+  column-gap: 28px;
+  padding: 36px;
+  border-radius: 16px;
   background:
-    radial-gradient(ellipse at top, rgba(198, 161, 91, 0.07), transparent 60%),
+    radial-gradient(ellipse at top, rgba(198, 161, 91, 0.05), transparent 60%),
     var(--tech-card-bg);
   border: 1px solid var(--tech-border-dim);
-  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.4);
 }
 
 .sticky-note {
   position: relative;
   break-inside: avoid;
   width: 100%;
-  margin: 0 0 26px;
-  padding: 30px 22px 18px;
-  background: #1c1a1f;
+  margin: 0 0 28px;
+  padding: 26px 26px 18px;
+  background: #1a1a1a;
   color: var(--color-text);
-  border-radius: 3px;
-  border: 1px solid rgba(198, 161, 91, 0.3);
+  border-radius: 2px;
   box-shadow:
-    0 16px 32px -10px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(246, 243, 237, 0.06),
-    inset 0 -30px 40px -32px rgba(0, 0, 0, 0.5);
+    0 14px 26px -10px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 0 0 2px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: inline-block;
   overflow: hidden;
 }
 
 .sticky-note::before {
-  /* diagonal lacquer sheen — sits over whatever base color is set inline,
-     so every note gets the same two-tone depth regardless of its color */
+  /* brushed-metal sheen — sits over whatever base finish is set inline, so
+     every plaque gets the same directional highlight regardless of tone */
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 30%, transparent 45%, rgba(0, 0, 0, 0.18) 100%);
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0.05) 0%, transparent 12%, transparent 88%, rgba(0, 0, 0, 0.22) 100%);
   pointer-events: none;
 }
 
 .sticky-note:hover {
-  transform: rotate(0deg) scale(1.03) !important;
-  border-color: rgba(198, 161, 91, 0.6);
+  transform: translateY(-3px) !important;
   box-shadow:
-    0 24px 40px -10px rgba(0, 0, 0, 0.7),
-    0 0 24px -4px rgba(198, 161, 91, 0.25),
-    inset 0 1px 0 rgba(246, 243, 237, 0.07),
-    inset 0 -30px 40px -32px rgba(0, 0, 0, 0.5);
+    0 22px 36px -10px rgba(0, 0, 0, 0.8),
+    0 0 20px -2px rgba(198, 161, 91, 0.2),
+    inset 0 0 0 1px rgba(198, 161, 91, 0.35),
+    inset 0 0 0 2px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   z-index: 2;
 }
 
-.sticky-note__corner {
+.sticky-note__rivet {
   position: absolute;
-  width: 14px;
-  height: 14px;
-  pointer-events: none;
-}
-
-.sticky-note__corner--tl {
-  top: 8px;
-  left: 8px;
-  border-top: 1.5px solid rgba(198, 161, 91, 0.55);
-  border-left: 1.5px solid rgba(198, 161, 91, 0.55);
-}
-
-.sticky-note__corner--br {
-  bottom: 8px;
-  right: 8px;
-  border-bottom: 1.5px solid rgba(198, 161, 91, 0.3);
-  border-right: 1.5px solid rgba(198, 161, 91, 0.3);
-}
-
-.sticky-note__pin {
-  position: absolute;
-  top: -7px;
-  left: 50%;
-  width: 12px;
-  height: 12px;
-  transform: translateX(-50%) rotate(45deg);
-  background: linear-gradient(135deg, #f3dfa0, var(--tech-accent-gold, #c6a15b) 55%, #9a7940);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  border-radius: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #d9bd82, #6e5a34 80%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.7), inset 0 0 1px rgba(255, 255, 255, 0.3);
   z-index: 1;
 }
 
+.sticky-note__rivet--tl { top: 9px; left: 9px; }
+.sticky-note__rivet--tr { top: 9px; right: 9px; }
+.sticky-note__rivet--bl { bottom: 9px; left: 9px; }
+.sticky-note__rivet--br { bottom: 9px; right: 9px; }
+
 .sticky-note__title {
   position: relative;
+  z-index: 1;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.08rem;
+  font-size: 1.1rem;
   color: var(--tech-accent-gold-text);
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6), 0 -1px 0 rgba(255, 255, 255, 0.05);
+  text-align: center;
   margin-bottom: 14px;
-  padding-bottom: 10px;
+  padding-bottom: 12px;
   line-height: 1.3;
 }
 
 .sticky-note__title::after {
   content: '';
   position: absolute;
-  left: 0;
+  left: 50%;
   bottom: 0;
-  width: 32px;
+  transform: translateX(-50%);
+  width: 44px;
   height: 1px;
-  background: linear-gradient(90deg, rgba(198, 161, 91, 0.7), transparent);
+  background: linear-gradient(90deg, transparent, rgba(198, 161, 91, 0.7), transparent);
 }
 
 .sticky-note__content {
@@ -805,8 +790,9 @@
   z-index: 1;
   font-family: var(--font-body);
   font-size: 0.85rem;
-  line-height: 1.6;
-  color: rgba(246, 243, 237, 0.82);
+  line-height: 1.65;
+  color: rgba(246, 243, 237, 0.94);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
   white-space: pre-wrap;
   overflow: hidden;
   display: -webkit-box;
@@ -818,12 +804,13 @@
   position: relative;
   z-index: 1;
   font-family: var(--font-body);
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  text-align: center;
   color: var(--tech-text-dim);
-  margin-top: 12px;
+  margin-top: 14px;
   padding-top: 10px;
   border-top: 1px solid rgba(198, 161, 91, 0.15);
 }
@@ -831,7 +818,7 @@
 .sticky-note__delete {
   position: absolute;
   top: 10px;
-  right: 12px;
+  right: 14px;
   z-index: 1;
   background: transparent;
   border: none;
