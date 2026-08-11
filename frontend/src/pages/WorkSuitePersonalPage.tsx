@@ -1345,7 +1345,6 @@ export const WorkSuitePersonalPage: React.FC = () => {
                             ? { x: b.posX, y: b.posY }
                             : mindMapBranchOffset(autoIdx++, Math.max(autoCount, 1))
                         );
-                        const addOffset = mindMapBranchOffset(autoCount, Math.max(autoCount + 1, 1));
                         const rootFontPx = MINDMAP_FONT_SIZES.find((f) => f.key === (root.fontSize || 'md'))?.px;
                         return (
                           <div key={root.id} className="mindmap-tree-wrap">
@@ -1425,17 +1424,6 @@ export const WorkSuitePersonalPage: React.FC = () => {
                                 );
                               })}
 
-                              <button
-                                className="mindmap-node mindmap-node--add"
-                                style={{ left: center + addOffset.x, top: center + addOffset.y }}
-                                onClick={(e) => { e.stopPropagation(); openCreateNote({ type: 'MINDMAP', parentId: root.id }); }}
-                                title="Add branch"
-                              >
-                                +
-                              </button>
-                            </div>
-                            <div className="mindmap-tree__actions">
-                              <button className="worksuite-btn worksuite-btn--danger" onClick={(e) => { e.stopPropagation(); handleDeleteNote(root); }}>✕ Delete map</button>
                             </div>
                           </div>
                         );
