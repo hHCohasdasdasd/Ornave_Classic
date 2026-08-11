@@ -5,7 +5,7 @@ import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
 import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
-import { workSuiteService, Task, Project, Goal, Note } from '@/services/workSuiteService';
+import { workSuiteService, Task, Project, Goal, Note, NoteType } from '@/services/workSuiteService';
 import { scopedKey } from '@/utils/storage';
 import './WorkSuite.css';
 
@@ -79,6 +79,22 @@ function accentColorFromId(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
   return GOAL_CATEGORY_COLORS[hash % GOAL_CATEGORY_COLORS.length];
+}
+
+// Classic sticky-note colors — warm paper tones, not the app's usual gold/dark palette,
+// since the whole point of the sticky wall is to feel like a physical corkboard.
+const STICKY_COLORS = ['#f4d35e', '#f4a261', '#f28482', '#a7c957', '#8ecae6', '#cdb4db'];
+
+function stickyRotation(id: string): number {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return (hash % 9) - 4; // -4deg..4deg, deterministic per note so it doesn't jitter on re-render
+}
+
+/** Evenly spaced point on a circle around a mind-map root, starting at the top. */
+function mindMapBranchOffset(index: number, total: number, radius = 150): { x: number; y: number } {
+  const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
+  return { x: Math.round(Math.cos(angle) * radius), y: Math.round(Math.sin(angle) * radius) };
 }
 
 function goalDeadlineInfo(targetDate?: string): { label: string; overdue: boolean; soon: boolean } | null {
@@ -403,14 +419,25 @@ export const WorkSuitePersonalPage: React.FC = () => {
     : 0;
 
   // ---------------------------------------------------------------------
-  // Notes
+  // Notes — three flavors sharing one Note model (type field): plain NOTE
+  // (the original list view), STICKY (a corkboard of colorful tilted
+  // cards), and MINDMAP (a root node with branches radiating around it,
+  // one level deep). Which view is open determines what a "+ New…" button
+  // creates — the create modal itself doesn't expose a type switcher, since
+  // that only matters at creation time and keeping it out of the modal
+  // keeps the common "just jot a note" case simple.
   // ---------------------------------------------------------------------
+  type NoteView = 'list' | 'sticky' | 'mindmap';
+  const [noteView, setNoteView] = useState<NoteView>('list');
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoadingNotes, setIsLoadingNotes] = useState(true);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [noteType, setNoteType] = useState<NoteType>('NOTE');
+  const [noteParentId, setNoteParentId] = useState<string | undefined>(undefined);
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
+  const [noteColor, setNoteColor] = useState(STICKY_COLORS[0]);
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [noteError, setNoteError] = useState<string | null>(null);
 
@@ -427,32 +454,54 @@ export const WorkSuitePersonalPage: React.FC = () => {
     if (!isGuest) loadNotes();
   }, [isGuest]);
 
-  const openCreateNote = () => {
+  const openCreateNote = (opts?: { type?: NoteType; parentId?: string }) => {
     setEditingNote(null);
+    setNoteType(opts?.type || 'NOTE');
+    setNoteParentId(opts?.parentId);
     setNoteTitle('');
     setNoteContent('');
+    setNoteColor(STICKY_COLORS[Math.floor(Math.random() * STICKY_COLORS.length)]);
     setNoteError(null);
     setShowNoteModal(true);
   };
 
   const openEditNote = (note: Note) => {
     setEditingNote(note);
+    setNoteType(note.type);
+    setNoteParentId(note.parentId);
     setNoteTitle(note.title || '');
     setNoteContent(note.content);
+    setNoteColor(note.color || STICKY_COLORS[0]);
     setNoteError(null);
     setShowNoteModal(true);
   };
 
+  // Mind-map branches are meaningful by their label alone (content is just
+  // optional detail); everything else needs real content, per the backend's
+  // NOT NULL constraint on Note.content.
+  const noteSaveDisabled = noteType === 'MINDMAP' ? !noteTitle.trim() : !noteContent.trim();
+
   const handleSaveNote = async () => {
-    if (!noteContent.trim()) return;
+    if (noteSaveDisabled) return;
     setIsSavingNote(true);
     setNoteError(null);
     try {
-      const payload = { title: noteTitle.trim() || undefined, content: noteContent.trim() };
+      const title = noteTitle.trim() || undefined;
+      const content = noteContent.trim() || noteTitle.trim();
       if (editingNote) {
-        await workSuiteService.updateNote(editingNote.id, payload);
+        await workSuiteService.updateNote(editingNote.id, {
+          title,
+          content,
+          color: editingNote.type === 'STICKY' ? noteColor : undefined,
+        });
       } else {
-        await workSuiteService.createNote(payload);
+        await workSuiteService.createNote({
+          type: noteType,
+          title,
+          content,
+          color: noteType === 'STICKY' ? noteColor : undefined,
+          parentId: noteParentId,
+        });
       }
       setShowNoteModal(false);
       await loadNotes();
@@ -485,13 +534,19 @@ export const WorkSuitePersonalPage: React.FC = () => {
     }
   };
 
+  const plainNotes = notes.filter((n) => n.type === 'NOTE');
+  const stickyNotes = notes.filter((n) => n.type === 'STICKY');
+  const mindMapNotes = notes.filter((n) => n.type === 'MINDMAP');
+  const mindMapRoots = mindMapNotes.filter((n) => !n.parentId);
+  const mindMapBranchesOf = (rootId: string) => mindMapNotes.filter((n) => n.parentId === rootId);
+
   const [noteSearch, setNoteSearch] = useState('');
-  const filteredNotes = notes.filter((n) => {
+  const filteredNotes = plainNotes.filter((n) => {
     const q = noteSearch.trim().toLowerCase();
     if (!q) return true;
     return (n.title || '').toLowerCase().includes(q) || n.content.toLowerCase().includes(q);
   });
-  const pinnedNoteCount = notes.filter((n) => n.pinned).length;
+  const pinnedNoteCount = plainNotes.filter((n) => n.pinned).length;
 
   const noteDisplayTitle = (note: Note) => {
     if (note.title?.trim()) return note.title;
@@ -1002,75 +1057,205 @@ export const WorkSuitePersonalPage: React.FC = () => {
 
         {activeTab === 'notes' && (
           <>
-            {!isLoadingNotes && notes.length > 0 && (
-              <div className="goal-stats-strip">
-                <div className="goal-stats-strip__item">
-                  <span className="goal-stats-strip__value">{notes.length}</span>
-                  <span className="goal-stats-strip__label">Notes</span>
-                </div>
-                <div className="goal-stats-strip__item">
-                  <span className="goal-stats-strip__value">{pinnedNoteCount}</span>
-                  <span className="goal-stats-strip__label">Pinned</span>
-                </div>
-              </div>
-            )}
-
             <div className="worksuite-page__header-row">
-              {notes.length > 0 ? (
-                <input
-                  className="note-search"
-                  value={noteSearch}
-                  onChange={(e) => setNoteSearch(e.target.value)}
-                  placeholder="Search notes…"
-                />
-              ) : <div />}
-              <button className="worksuite-create-btn" onClick={openCreateNote}>+ New Note</button>
-            </div>
-
-            <div className="worksuite-grid">
-              {isLoadingNotes ? (
-                <div className="worksuite-empty">Loading notes…</div>
-              ) : notes.length === 0 ? (
-                <div className="worksuite-empty worksuite-empty--goals">
-                  <div className="worksuite-empty__icon">📝</div>
-                  <p>No notes yet — jot something down.</p>
-                  <button className="worksuite-create-btn" onClick={openCreateNote}>+ New Note</button>
-                </div>
-              ) : filteredNotes.length === 0 ? (
-                <div className="worksuite-empty">No notes match "{noteSearch}".</div>
-              ) : (
-                filteredNotes.map((note) => {
-                  const accent = accentColorFromId(note.id);
-                  return (
-                    <div
-                      key={note.id}
-                      className={`worksuite-card note-card${note.pinned ? ' note-card--pinned' : ''}`}
-                      style={{ borderLeft: `3px solid ${accent}` }}
-                      onClick={() => openEditNote(note)}
-                    >
-                      <div className="note-card__header">
-                        <div className="worksuite-card__title">{noteDisplayTitle(note)}</div>
-                        <button
-                          className={`note-card__pin${note.pinned ? ' note-card__pin--active' : ''}`}
-                          onClick={(e) => { e.stopPropagation(); toggleNotePinned(note); }}
-                          title={note.pinned ? 'Unpin' : 'Pin to top'}
-                        >
-                          {note.pinned ? '★' : '☆'}
-                        </button>
-                      </div>
-                      <p className="worksuite-card__description note-card__content">{note.content}</p>
-                      <div className="worksuite-card__meta note-card__meta">
-                        Edited {formatRelativeShort(note.updatedAt)}
-                      </div>
-                      <div className="worksuite-card__actions">
-                        <button className="worksuite-btn" onClick={(e) => { e.stopPropagation(); openEditNote(note); }}>✎ Edit</button>
-                        <button className="worksuite-btn worksuite-btn--danger" onClick={(e) => { e.stopPropagation(); handleDeleteNote(note); }}>✕ Delete</button>
-                      </div>
-                    </div>
-                  );
-                })
+              <div className="worksuite-tabs" style={{ marginBottom: 0, borderBottom: 'none' }}>
+                <button className={`worksuite-tab${noteView === 'list' ? ' worksuite-tab--active' : ''}`} onClick={() => setNoteView('list')}>List</button>
+                <button className={`worksuite-tab${noteView === 'sticky' ? ' worksuite-tab--active' : ''}`} onClick={() => setNoteView('sticky')}>Sticky Wall</button>
+                <button className={`worksuite-tab${noteView === 'mindmap' ? ' worksuite-tab--active' : ''}`} onClick={() => setNoteView('mindmap')}>Mind Map</button>
+              </div>
+              {noteView === 'list' && (
+                <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'NOTE' })}>+ New Note</button>
+              )}
+              {noteView === 'sticky' && (
+                <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'STICKY' })}>+ New Sticky</button>
+              )}
+              {noteView === 'mindmap' && (
+                <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'MINDMAP' })}>+ New Mind Map</button>
               )}
             </div>
+
+            {noteView === 'list' && (
+              <>
+                {!isLoadingNotes && plainNotes.length > 0 && (
+                  <div className="goal-stats-strip">
+                    <div className="goal-stats-strip__item">
+                      <span className="goal-stats-strip__value">{plainNotes.length}</span>
+                      <span className="goal-stats-strip__label">Notes</span>
+                    </div>
+                    <div className="goal-stats-strip__item">
+                      <span className="goal-stats-strip__value">{pinnedNoteCount}</span>
+                      <span className="goal-stats-strip__label">Pinned</span>
+                    </div>
+                  </div>
+                )}
+
+                {!isLoadingNotes && plainNotes.length > 0 && (
+                  <div className="worksuite-page__header-row" style={{ marginTop: '-6px' }}>
+                    <input
+                      className="note-search"
+                      value={noteSearch}
+                      onChange={(e) => setNoteSearch(e.target.value)}
+                      placeholder="Search notes…"
+                    />
+                    <div />
+                  </div>
+                )}
+
+                <div className="worksuite-grid">
+                  {isLoadingNotes ? (
+                    <div className="worksuite-empty">Loading notes…</div>
+                  ) : plainNotes.length === 0 ? (
+                    <div className="worksuite-empty worksuite-empty--goals">
+                      <div className="worksuite-empty__icon">📝</div>
+                      <p>No notes yet — jot something down.</p>
+                      <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'NOTE' })}>+ New Note</button>
+                    </div>
+                  ) : filteredNotes.length === 0 ? (
+                    <div className="worksuite-empty">No notes match "{noteSearch}".</div>
+                  ) : (
+                    filteredNotes.map((note) => {
+                      const accent = accentColorFromId(note.id);
+                      return (
+                        <div
+                          key={note.id}
+                          className={`worksuite-card note-card${note.pinned ? ' note-card--pinned' : ''}`}
+                          style={{ borderLeft: `3px solid ${accent}` }}
+                          onClick={() => openEditNote(note)}
+                        >
+                          <div className="note-card__header">
+                            <div className="worksuite-card__title">{noteDisplayTitle(note)}</div>
+                            <button
+                              className={`note-card__pin${note.pinned ? ' note-card__pin--active' : ''}`}
+                              onClick={(e) => { e.stopPropagation(); toggleNotePinned(note); }}
+                              title={note.pinned ? 'Unpin' : 'Pin to top'}
+                            >
+                              {note.pinned ? '★' : '☆'}
+                            </button>
+                          </div>
+                          <p className="worksuite-card__description note-card__content">{note.content}</p>
+                          <div className="worksuite-card__meta note-card__meta">
+                            Edited {formatRelativeShort(note.updatedAt)}
+                          </div>
+                          <div className="worksuite-card__actions">
+                            <button className="worksuite-btn" onClick={(e) => { e.stopPropagation(); openEditNote(note); }}>✎ Edit</button>
+                            <button className="worksuite-btn worksuite-btn--danger" onClick={(e) => { e.stopPropagation(); handleDeleteNote(note); }}>✕ Delete</button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            )}
+
+            {noteView === 'sticky' && (
+              isLoadingNotes ? (
+                <div className="worksuite-empty">Loading notes…</div>
+              ) : stickyNotes.length === 0 ? (
+                <div className="worksuite-empty worksuite-empty--goals">
+                  <div className="worksuite-empty__icon">📌</div>
+                  <p>No sticky notes yet — pin something to the wall.</p>
+                  <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'STICKY' })}>+ New Sticky</button>
+                </div>
+              ) : (
+                <div className="sticky-wall">
+                  {stickyNotes.map((note) => (
+                    <div
+                      key={note.id}
+                      className="sticky-note"
+                      style={{ background: note.color || STICKY_COLORS[0], transform: `rotate(${stickyRotation(note.id)}deg)` }}
+                      onClick={() => openEditNote(note)}
+                    >
+                      <button
+                        className="sticky-note__delete"
+                        onClick={(e) => { e.stopPropagation(); handleDeleteNote(note); }}
+                        title="Remove"
+                      >
+                        ✕
+                      </button>
+                      {note.title && <div className="sticky-note__title">{note.title}</div>}
+                      <div className="sticky-note__content">{note.content}</div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+
+            {noteView === 'mindmap' && (
+              isLoadingNotes ? (
+                <div className="worksuite-empty">Loading notes…</div>
+              ) : mindMapRoots.length === 0 ? (
+                <div className="worksuite-empty worksuite-empty--goals">
+                  <div className="worksuite-empty__icon">🧠</div>
+                  <p>No mind maps yet — start one and branch out your ideas.</p>
+                  <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'MINDMAP' })}>+ New Mind Map</button>
+                </div>
+              ) : (
+                <div className="mindmap-list">
+                  {mindMapRoots.map((root) => {
+                    const branches = mindMapBranchesOf(root.id);
+                    const size = 360;
+                    const center = size / 2;
+                    return (
+                      <div key={root.id} className="mindmap-tree-wrap">
+                        <div className="mindmap-tree" style={{ width: size, height: size }}>
+                          <svg className="mindmap-tree__lines" width={size} height={size}>
+                            {branches.map((b, i) => {
+                              const { x, y } = mindMapBranchOffset(i, branches.length);
+                              return (
+                                <line
+                                  key={b.id}
+                                  x1={center}
+                                  y1={center}
+                                  x2={center + x}
+                                  y2={center + y}
+                                  stroke="var(--tech-border-dim, rgba(246,243,237,0.15))"
+                                  strokeWidth={2}
+                                />
+                              );
+                            })}
+                          </svg>
+
+                          <div
+                            className="mindmap-node mindmap-node--root"
+                            style={{ left: center, top: center, borderColor: accentColorFromId(root.id) }}
+                            onClick={() => openEditNote(root)}
+                          >
+                            <span>{noteDisplayTitle(root)}</span>
+                          </div>
+
+                          {branches.map((b, i) => {
+                            const { x, y } = mindMapBranchOffset(i, branches.length);
+                            const accent = accentColorFromId(b.id);
+                            return (
+                              <div
+                                key={b.id}
+                                className="mindmap-node mindmap-node--branch"
+                                style={{ left: center + x, top: center + y, borderColor: accent, color: accent }}
+                                onClick={() => openEditNote(b)}
+                              >
+                                <span>{noteDisplayTitle(b)}</span>
+                                <button
+                                  className="mindmap-node__delete"
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteNote(b); }}
+                                  title="Remove branch"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="mindmap-tree__actions">
+                          <button className="worksuite-btn" onClick={() => openCreateNote({ type: 'MINDMAP', parentId: root.id })}>+ Add branch</button>
+                          <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteNote(root)}>✕ Delete map</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            )}
           </>
         )}
 
@@ -1249,16 +1434,57 @@ export const WorkSuitePersonalPage: React.FC = () => {
       {showNoteModal && (
         <div className="worksuite-modal-overlay" onClick={() => setShowNoteModal(false)}>
           <div className="worksuite-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{editingNote ? 'Edit Note' : 'New Note'}</h2>
-            <label>Title (optional)</label>
-            <input value={noteTitle} onChange={(e) => setNoteTitle(e.target.value)} placeholder="Untitled" maxLength={160} />
-            <label>Content</label>
-            <textarea value={noteContent} onChange={(e) => setNoteContent(e.target.value)} rows={8} placeholder="Write something…" maxLength={5000} />
+            <h2>
+              {editingNote
+                ? noteType === 'STICKY' ? 'Edit Sticky' : noteType === 'MINDMAP' ? 'Edit Branch' : 'Edit Note'
+                : noteType === 'STICKY' ? 'New Sticky' : noteType === 'MINDMAP' ? (noteParentId ? 'New Branch' : 'New Mind Map') : 'New Note'}
+            </h2>
+
+            {!editingNote && noteType === 'MINDMAP' && noteParentId && (
+              <p className="worksuite-modal__hint">
+                Branching off "{noteDisplayTitle(notes.find((n) => n.id === noteParentId)!)}"
+              </p>
+            )}
+
+            <label>{noteType === 'MINDMAP' ? 'Label' : 'Title (optional)'}</label>
+            <input
+              value={noteTitle}
+              onChange={(e) => setNoteTitle(e.target.value)}
+              placeholder={noteType === 'MINDMAP' ? 'Idea, topic, next step…' : 'Untitled'}
+              maxLength={160}
+            />
+
+            {noteType === 'STICKY' && (
+              <>
+                <label>Color</label>
+                <div className="sticky-color-picker">
+                  {STICKY_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`sticky-color-swatch${noteColor === c ? ' sticky-color-swatch--selected' : ''}`}
+                      style={{ background: c }}
+                      onClick={() => setNoteColor(c)}
+                      title={c}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            <label>{noteType === 'MINDMAP' ? 'Details (optional)' : 'Content'}</label>
+            <textarea
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              rows={noteType === 'MINDMAP' ? 3 : 8}
+              placeholder={noteType === 'MINDMAP' ? 'Optional notes for this branch…' : 'Write something…'}
+              maxLength={5000}
+            />
             {noteError && <p className="worksuite-modal__error">{noteError}</p>}
             <div className="worksuite-modal__actions">
               <button className="worksuite-modal__cancel" onClick={() => setShowNoteModal(false)}>Cancel</button>
-              <button className="worksuite-modal__submit" onClick={handleSaveNote} disabled={!noteContent.trim() || isSavingNote}>
-                {isSavingNote ? 'Saving…' : editingNote ? 'Save Changes' : 'Create Note'}
+              <button className="worksuite-modal__submit" onClick={handleSaveNote} disabled={noteSaveDisabled || isSavingNote}>
+                {isSavingNote ? 'Saving…' : editingNote ? 'Save Changes' : 'Create'}
               </button>
             </div>
           </div>

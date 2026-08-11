@@ -785,14 +785,20 @@ model Achievement {
 model Note {
   id        String   @id @default(cuid())
   userId    String
+  type      String   @default("NOTE") // NOTE | STICKY | MINDMAP
   title     String?
   content   String
+  color     String? // sticky-note background color, e.g. "#f4d35e"
   pinned    Boolean  @default(false)
+  parentId  String? // MINDMAP branches point at the root/parent node they hang off
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Note?    @relation("NoteBranches", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Note[]   @relation("NoteBranches")
 
   @@index([userId])
+  @@index([parentId])
 }
 
 model Event {

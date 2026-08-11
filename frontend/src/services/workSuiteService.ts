@@ -40,11 +40,16 @@ export interface Achievement {
   createdAt: string;
 }
 
+export type NoteType = 'NOTE' | 'STICKY' | 'MINDMAP';
+
 export interface Note {
   id: string;
+  type: NoteType;
   title?: string;
   content: string;
+  color?: string;
   pinned: boolean;
+  parentId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -244,12 +249,12 @@ class WorkSuiteService {
     return response.data.data || [];
   }
 
-  async createNote(data: { title?: string; content: string }): Promise<Note> {
+  async createNote(data: { type?: NoteType; title?: string; content: string; color?: string; parentId?: string }): Promise<Note> {
     const response = await apiClient.post('/work-suite/notes', data);
     return response.data.data;
   }
 
-  async updateNote(id: string, data: Partial<Pick<Note, 'title' | 'content' | 'pinned'>>): Promise<Note> {
+  async updateNote(id: string, data: Partial<Pick<Note, 'title' | 'content' | 'pinned' | 'color'>>): Promise<Note> {
     const response = await apiClient.put(`/work-suite/notes/${id}`, data);
     return response.data.data;
   }

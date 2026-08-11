@@ -336,16 +336,32 @@ export class NoteService {
     return note;
   }
 
-  static async create(userId: string, data: { title?: string; content: string }) {
+  static async create(
+    userId: string,
+    data: { type?: string; title?: string; content: string; color?: string; parentId?: string }
+  ) {
+    // A branch must hang off a mind-map node the caller actually owns —
+    // otherwise this would let one user silently attach notes onto another
+    // user's mind map by guessing/reusing a parentId.
+    if (data.parentId) {
+      await this.getById(userId, data.parentId);
+    }
     return prisma.note.create({
-      data: { userId, title: data.title, content: data.content },
+      data: {
+        userId,
+        type: data.type || 'NOTE',
+        title: data.title,
+        content: data.content,
+        color: data.color,
+        parentId: data.parentId,
+      },
     });
   }
 
   static async update(
     userId: string,
     id: string,
-    data: { title?: string | null; content?: string; pinned?: boolean }
+    data: { title?: string | null; content?: string; pinned?: boolean; color?: string | null }
   ) {
     await this.getById(userId, id);
     return prisma.note.update({ where: { id }, data });
