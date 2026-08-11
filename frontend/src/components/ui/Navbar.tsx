@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { networkService } from '@/services/networkService';
 import { apiClient } from '@/services/api';
+import { workSuiteService } from '@/services/workSuiteService';
+import { scopedKey } from '@/utils/storage';
 import {
   IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel,
   IconBuilding, IconBriefcase, IconSearch, IconUsers, IconCard, IconUser, IconChart, IconSpark,
@@ -189,17 +191,33 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
     navigate('/profile');
   };
 
+  // Board notification-channel prefs are client-side only (set on the
+  // Planning page), scoped per user so they don't bleed across accounts.
+  const getTaskNotifyPrefs = () => {
+    const defaults = { notifyOverdue: true, notifyDueSoon: true, notifyChannelApp: true };
+    if (!user) return defaults;
+    try {
+      const raw = localStorage.getItem(scopedKey('worksuite_task_prefs', user.id));
+      return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
+    } catch {
+      return defaults;
+    }
+  };
+
   const loadNotifications = async () => {
     try {
       setIsLoadingNotifications(true);
 
-      // Two separate notification sources: company-level "Global Requests"
-      // activity (GlobalRequest model), and personal incoming connection
-      // requests (UserConnection model) — these used to only show the
-      // former, silently dropping "so-and-so wants to connect" entirely.
-      const [activityResponse, connectionRequests] = await Promise.all([
+      // Three notification sources: company-level "Global Requests" activity
+      // (GlobalRequest model), personal incoming connection requests
+      // (UserConnection model), and task due/overdue reminders from the
+      // Planning board's insights — gated by the board's own App-channel
+      // preference so turning that off here also silences it there.
+      const taskPrefs = getTaskNotifyPrefs();
+      const [activityResponse, connectionRequests, insights] = await Promise.all([
         apiClient.getGlobalActivity().catch(() => ({ data: [] })),
         networkService.getConnectionRequests().catch(() => []),
+        taskPrefs.notifyChannelApp ? workSuiteService.getInsights().catch(() => []) : Promise.resolve([]),
       ]);
 
       const activityItems = (activityResponse?.data || []).map((item: any) => ({
@@ -218,7 +236,22 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
         type: 'connection' as const,
       }));
 
-      const merged = [...connectionItems, ...activityItems].sort(
+      const now = new Date().toISOString();
+      const taskItems = insights
+        .filter((i: any) =>
+          (i.id === 'overdue-tasks' && taskPrefs.notifyOverdue) ||
+          (i.id === 'due-soon-tasks' && taskPrefs.notifyDueSoon)
+        )
+        .map((i: any) => ({
+          requestId: `task-${i.id}`,
+          title: i.message,
+          description: i.id === 'overdue-tasks' ? 'Overdue task on your board' : 'Due soon on your board',
+          lastUpdate: now,
+          type: 'task' as const,
+          actionRoute: i.actionRoute,
+        }));
+
+      const merged = [...taskItems, ...connectionItems, ...activityItems].sort(
         (a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime()
       );
 
@@ -303,7 +336,8 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
                           style={{ cursor: 'pointer' }}
                           onClick={() => {
                             setIsNotificationsOpen(false);
-                            navigate(item.type === 'connection' ? '/network' : '/global/activity');
+                            if (item.type === 'task') navigate(item.actionRoute || '/work-suite/personal?tab=board');
+                            else navigate(item.type === 'connection' ? '/network' : '/global/activity');
                           }}
                         >
                           <div className="navbar__notification-title">{item.title}</div>

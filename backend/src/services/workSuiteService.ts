@@ -379,7 +379,7 @@ export class WorkSuiteService {
           ? `"${overdueTasks[0].title}" is overdue.`
           : `${overdueTasks.length} tasks are overdue, including "${overdueTasks[0].title}".`,
         actionLabel: 'Review tasks',
-        actionRoute: '/work-suite/tasks',
+        actionRoute: '/work-suite/personal?tab=board',
       });
     }
 
@@ -391,7 +391,7 @@ export class WorkSuiteService {
           ? `"${dueSoonTasks[0].title}" is due soon.`
           : `${dueSoonTasks.length} tasks are due in the next couple of days.`,
         actionLabel: 'View tasks',
-        actionRoute: '/work-suite/tasks',
+        actionRoute: '/work-suite/personal?tab=board',
       });
     }
 
@@ -415,7 +415,7 @@ export class WorkSuiteService {
         icon: '🎯',
         message: `"${first.title}" is at ${first.progress}% with its target date coming up.`,
         actionLabel: 'Update progress',
-        actionRoute: '/work-suite/goals',
+        actionRoute: '/work-suite/personal?tab=goals',
       });
     }
 
@@ -426,7 +426,7 @@ export class WorkSuiteService {
         icon: '💭',
         message: `You haven't touched "${first.title}" in a couple of weeks — still on track?`,
         actionLabel: 'Check in',
-        actionRoute: '/work-suite/goals',
+        actionRoute: '/work-suite/personal?tab=goals',
       });
     }
 

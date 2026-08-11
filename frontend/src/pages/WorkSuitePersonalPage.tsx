@@ -34,12 +34,18 @@ interface TaskBoardPrefs {
   columnColors: Record<Task['status'], string>;
   notifyOverdue: boolean;
   notifyDueSoon: boolean;
+  /** Delivery channels for the above — in-app is real (Navbar bell); email is
+   * saved but not yet sent anywhere, since there's no email sender wired up. */
+  notifyChannelApp: boolean;
+  notifyChannelEmail: boolean;
 }
 
 const DEFAULT_PREFS: TaskBoardPrefs = {
   columnColors: DEFAULT_COLUMN_COLORS,
   notifyOverdue: true,
   notifyDueSoon: true,
+  notifyChannelApp: true,
+  notifyChannelEmail: false,
 };
 
 function isOverdue(task: Task): boolean {
@@ -617,8 +623,27 @@ export const WorkSuitePersonalPage: React.FC = () => {
                       />
                       <span>Flag tasks due within 3 days</span>
                     </label>
+
+                    <h4 style={{ marginTop: '16px' }}>Notify me via</h4>
+                    <label className="worksuite-tasks-settings__checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={prefs.notifyChannelApp}
+                        onChange={(e) => updatePrefs({ notifyChannelApp: e.target.checked })}
+                      />
+                      <span>App (Navbar notification bell)</span>
+                    </label>
+                    <label className="worksuite-tasks-settings__checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={prefs.notifyChannelEmail}
+                        onChange={(e) => updatePrefs({ notifyChannelEmail: e.target.checked })}
+                      />
+                      <span>Email</span>
+                    </label>
                     <p className="worksuite-tasks-settings__hint">
-                      These show as banners and badges here on the board — there's no email/push delivery yet.
+                      App notifications show up here on the board and in the Navbar bell. Email delivery isn't
+                      connected yet — this saves your preference for once it is, but no emails will send.
                     </p>
                   </div>
                 </aside>
