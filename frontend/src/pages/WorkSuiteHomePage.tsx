@@ -228,7 +228,7 @@ export const WorkSuiteHomePage: React.FC = () => {
             )}
 
             <div className="worksuite-section-header">
-              <h2>Freelance Tools</h2>
+              <h2>Tools</h2>
             </div>
             <ModuleGrid items={FREELANCE_MODULES} onNavigate={navigate} />
           </>
