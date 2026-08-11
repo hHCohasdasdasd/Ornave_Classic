@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
+import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
 import { workSuiteService, Task, Project, Goal, Achievement } from '@/services/workSuiteService';
 import { scopedKey } from '@/utils/storage';
 import './WorkSuite.css';
@@ -898,7 +899,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
               onChange={(v) => setTaskPriority(v as Task['priority'])}
             />
             <label>Due Date</label>
-            <input type="date" value={taskDueDate} onChange={(e) => setTaskDueDate(e.target.value)} />
+            <ThemedDatePicker value={taskDueDate} onChange={setTaskDueDate} />
             {taskError && <p className="worksuite-modal__error">{taskError}</p>}
             <div className="worksuite-modal__actions">
               <button className="worksuite-modal__cancel" onClick={() => setShowTaskModal(false)}>Cancel</button>
@@ -921,7 +922,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
             <label>Category</label>
             <input value={goalCategory} onChange={(e) => setGoalCategory(e.target.value)} placeholder="Fitness, Career, Learning…" maxLength={60} />
             <label>Target Date</label>
-            <input type="date" value={goalTargetDate} onChange={(e) => setGoalTargetDate(e.target.value)} />
+            <ThemedDatePicker value={goalTargetDate} onChange={setGoalTargetDate} />
             {goalError && <p className="worksuite-modal__error">{goalError}</p>}
             <div className="worksuite-modal__actions">
               <button className="worksuite-modal__cancel" onClick={() => setShowGoalModal(false)}>Cancel</button>
@@ -944,7 +945,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
             <label>Category</label>
             <input value={achievementCategory} onChange={(e) => setAchievementCategory(e.target.value)} placeholder="Fitness, Career, Learning…" maxLength={60} />
             <label>Date</label>
-            <input type="date" value={achievedAt} onChange={(e) => setAchievedAt(e.target.value)} />
+            <ThemedDatePicker value={achievedAt} onChange={setAchievedAt} />
             {achievementError && <p className="worksuite-modal__error">{achievementError}</p>}
             <div className="worksuite-modal__actions">
               <button className="worksuite-modal__cancel" onClick={() => setShowAchievementModal(false)}>Cancel</button>
