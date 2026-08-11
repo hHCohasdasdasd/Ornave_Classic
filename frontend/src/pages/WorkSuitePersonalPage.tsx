@@ -61,6 +61,53 @@ function isDueSoon(task: Task): boolean {
 
 type GoalStatusFilter = 'ACTIVE' | 'COMPLETED' | 'ABANDONED' | 'ALL';
 
+const GOAL_CATEGORY_COLORS = ['#c6a15b', '#6b8cae', '#7c9473', '#b5714f', '#8a6a92', '#7d8694'];
+
+function goalCategoryColor(category?: string): string {
+  if (!category) return GOAL_CATEGORY_COLORS[0];
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) hash = (hash * 31 + category.charCodeAt(i)) >>> 0;
+  return GOAL_CATEGORY_COLORS[hash % GOAL_CATEGORY_COLORS.length];
+}
+
+function goalDeadlineInfo(targetDate?: string): { label: string; overdue: boolean; soon: boolean } | null {
+  if (!targetDate) return null;
+  const days = Math.ceil((new Date(targetDate).setHours(23, 59, 59, 999) - Date.now()) / 86400000);
+  if (days < 0) return { label: `${Math.abs(days)}d overdue`, overdue: true, soon: false };
+  if (days === 0) return { label: 'Due today', overdue: false, soon: true };
+  if (days <= 7) return { label: `${days}d left`, overdue: false, soon: true };
+  return { label: `${days}d left`, overdue: false, soon: false };
+}
+
+const GOAL_RING_RADIUS = 30;
+const GOAL_RING_CIRCUMFERENCE = 2 * Math.PI * GOAL_RING_RADIUS;
+
+const GoalProgressRing: React.FC<{ progress: number; color: string }> = ({ progress, color }) => {
+  const clamped = Math.max(0, Math.min(100, progress));
+  const offset = GOAL_RING_CIRCUMFERENCE * (1 - clamped / 100);
+  return (
+    <div className="goal-card__ring">
+      <svg width="72" height="72" viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r={GOAL_RING_RADIUS} fill="none" stroke="rgba(246, 243, 237, 0.1)" strokeWidth="6" />
+        <circle
+          cx="36"
+          cy="36"
+          r={GOAL_RING_RADIUS}
+          fill="none"
+          stroke={color}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={GOAL_RING_CIRCUMFERENCE}
+          strokeDashoffset={offset}
+          transform="rotate(-90 36 36)"
+          style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+        />
+      </svg>
+      <span className="goal-card__ring-value">{clamped}%</span>
+    </div>
+  );
+};
+
 export const WorkSuitePersonalPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -321,6 +368,11 @@ export const WorkSuitePersonalPage: React.FC = () => {
   };
 
   const filteredGoals = goalFilter === 'ALL' ? goals : goals.filter((g) => g.status === goalFilter);
+  const activeGoals = goals.filter((g) => g.status === 'ACTIVE');
+  const completedGoals = goals.filter((g) => g.status === 'COMPLETED');
+  const avgActiveProgress = activeGoals.length
+    ? Math.round(activeGoals.reduce((sum, g) => sum + g.progress, 0) / activeGoals.length)
+    : 0;
 
   // ---------------------------------------------------------------------
   // Achievements
@@ -654,6 +706,23 @@ export const WorkSuitePersonalPage: React.FC = () => {
 
         {activeTab === 'goals' && (
           <>
+            {!isLoadingGoals && goals.length > 0 && (
+              <div className="goal-stats-strip">
+                <div className="goal-stats-strip__item">
+                  <span className="goal-stats-strip__value">{activeGoals.length}</span>
+                  <span className="goal-stats-strip__label">Active</span>
+                </div>
+                <div className="goal-stats-strip__item">
+                  <span className="goal-stats-strip__value">{completedGoals.length}</span>
+                  <span className="goal-stats-strip__label">Completed</span>
+                </div>
+                <div className="goal-stats-strip__item">
+                  <span className="goal-stats-strip__value">{avgActiveProgress}%</span>
+                  <span className="goal-stats-strip__label">Avg. progress</span>
+                </div>
+              </div>
+            )}
+
             <div className="worksuite-page__header-row">
               <div className="worksuite-tabs" style={{ marginBottom: 0, borderBottom: 'none' }}>
                 {(['ACTIVE', 'COMPLETED', 'ABANDONED', 'ALL'] as GoalStatusFilter[]).map((s) => (
@@ -673,49 +742,82 @@ export const WorkSuitePersonalPage: React.FC = () => {
               {isLoadingGoals ? (
                 <div className="worksuite-empty">Loading goals…</div>
               ) : filteredGoals.length === 0 ? (
-                <div className="worksuite-empty">No goals here yet — set one to start tracking progress.</div>
+                <div className="worksuite-empty worksuite-empty--goals">
+                  <div className="worksuite-empty__icon">🎯</div>
+                  <p>No goals here yet — set one to start tracking progress.</p>
+                  {goalFilter !== 'ALL' && (
+                    <button className="worksuite-create-btn" onClick={openCreateGoal}>+ New Goal</button>
+                  )}
+                </div>
               ) : (
-                filteredGoals.map((goal) => (
-                  <div key={goal.id} className="worksuite-card">
-                    <div className="worksuite-card__header">
-                      <div>
-                        <div className="worksuite-card__title">{goal.title}</div>
-                        {goal.category && <div className="worksuite-card__meta">{goal.category}</div>}
+                filteredGoals.map((goal) => {
+                  const catColor = goalCategoryColor(goal.category);
+                  const deadline = goalDeadlineInfo(goal.targetDate);
+                  return (
+                    <div key={goal.id} className="worksuite-card goal-card">
+                      <div className="goal-card__top">
+                        <GoalProgressRing progress={goal.progress} color={catColor} />
+                        <div className="goal-card__top-info">
+                          <div className="goal-card__title-row">
+                            <div className="worksuite-card__title">{goal.title}</div>
+                            <span className={`worksuite-badge worksuite-badge--${goal.status.toLowerCase()}`}>
+                              {goal.status.charAt(0) + goal.status.slice(1).toLowerCase()}
+                            </span>
+                          </div>
+                          {goal.category && (
+                            <span className="goal-card__category" style={{ color: catColor, borderColor: `${catColor}66`, background: `${catColor}14` }}>
+                              {goal.category}
+                            </span>
+                          )}
+                          {deadline && (
+                            <span className={`goal-card__deadline${deadline.overdue ? ' goal-card__deadline--overdue' : deadline.soon ? ' goal-card__deadline--soon' : ''}`}>
+                              {deadline.overdue ? '⚠' : '🎯'} {new Date(goal.targetDate!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {deadline.label}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <span className={`worksuite-badge worksuite-badge--${goal.status.toLowerCase()}`}>
-                        {goal.status.charAt(0) + goal.status.slice(1).toLowerCase()}
-                      </span>
-                    </div>
-                    <p className="worksuite-card__description">
-                      {goal.description || 'No description yet.'}
-                      {goal.targetDate && <><br />Target: {new Date(goal.targetDate).toLocaleDateString()}</>}
-                    </p>
-                    <div className="worksuite-progress">
-                      <div className="worksuite-progress__track">
-                        <div className="worksuite-progress__fill" style={{ width: `${goal.progress}%` }} />
-                      </div>
-                      <div className="worksuite-progress__label">
-                        <span>{goal.progress}% complete</span>
-                      </div>
-                    </div>
-                    <div className="worksuite-card__actions">
+
+                      <p className="worksuite-card__description goal-card__description">
+                        {goal.description || 'No description yet.'}
+                      </p>
+
                       {goal.status === 'ACTIVE' && (
-                        <>
-                          <button className="worksuite-btn" onClick={() => bumpGoalProgress(goal, -10)} disabled={goal.progress <= 0}>-10%</button>
-                          <button className="worksuite-btn" onClick={() => bumpGoalProgress(goal, 10)} disabled={goal.progress >= 100}>+10%</button>
-                        </>
+                        <div className="goal-card__progress-row">
+                          <button
+                            className="goal-card__step-btn"
+                            onClick={() => bumpGoalProgress(goal, -10)}
+                            disabled={goal.progress <= 0}
+                            title="-10%"
+                          >
+                            −
+                          </button>
+                          <div className="worksuite-progress__track goal-card__progress-track">
+                            <div className="worksuite-progress__fill" style={{ width: `${goal.progress}%`, background: catColor }} />
+                          </div>
+                          <button
+                            className="goal-card__step-btn"
+                            onClick={() => bumpGoalProgress(goal, 10)}
+                            disabled={goal.progress >= 100}
+                            title="+10%"
+                          >
+                            +
+                          </button>
+                        </div>
                       )}
-                      <button className="worksuite-btn" onClick={() => openEditGoal(goal)}>Edit</button>
-                      {goal.status === 'ACTIVE' && (
-                        <button className="worksuite-btn" onClick={() => setGoalStatus(goal, 'ABANDONED')}>Abandon</button>
-                      )}
-                      {goal.status !== 'ACTIVE' && (
-                        <button className="worksuite-btn" onClick={() => setGoalStatus(goal, 'ACTIVE')}>Reactivate</button>
-                      )}
-                      <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteGoal(goal)}>Delete</button>
+
+                      <div className="worksuite-card__actions">
+                        <button className="worksuite-btn" onClick={() => openEditGoal(goal)}>✎ Edit</button>
+                        {goal.status === 'ACTIVE' && (
+                          <button className="worksuite-btn" onClick={() => setGoalStatus(goal, 'ABANDONED')}>Abandon</button>
+                        )}
+                        {goal.status !== 'ACTIVE' && (
+                          <button className="worksuite-btn" onClick={() => setGoalStatus(goal, 'ACTIVE')}>↺ Reactivate</button>
+                        )}
+                        <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteGoal(goal)}>✕ Delete</button>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </>
