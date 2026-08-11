@@ -7,9 +7,7 @@ import { workSuiteService, WorkSuiteSummary, WorkSuiteInsight } from '@/services
 import './WorkSuite.css';
 
 const GROWTH_MODULES = [
-  { icon: '✅', title: 'Tasks', description: 'Everything on your plate, organized by status and priority.', route: '/work-suite/tasks' },
-  { icon: '🎯', title: 'Goals', description: 'Set a target, track progress, and see it through.', route: '/work-suite/goals' },
-  { icon: '🏆', title: 'Achievements', description: 'A record of the milestones you\'ve earned.', route: '/work-suite/achievements' },
+  { icon: '🧭', title: 'Personal Growth', description: 'Your board, goals, and achievements — all in one place.', route: '/work-suite/personal' },
 ];
 
 const FREELANCE_MODULES = [
@@ -20,7 +18,7 @@ const FREELANCE_MODULES = [
 
 const COMPANY_MODULES = [
   { icon: '📁', title: 'Projects', description: 'Track initiatives from kickoff to completion.', route: '/work-suite/projects' },
-  { icon: '✅', title: 'Tasks', description: 'Everything on your plate, organized by status and priority.', route: '/work-suite/tasks' },
+  { icon: '✅', title: 'Tasks', description: 'Everything on your plate, organized by status and priority.', route: '/work-suite/personal?tab=board' },
   { icon: '🤝', title: 'Clients', description: 'A lightweight CRM for the people and firms you work with.', route: '/work-suite/clients' },
   { icon: '🧾', title: 'Invoices', description: 'Bill clients and track what is owed.', route: '/work-suite/invoices' },
 ];
@@ -212,7 +210,7 @@ export const WorkSuiteHomePage: React.FC = () => {
               <>
                 <div className="worksuite-section-header">
                   <h2>Recent Achievements</h2>
-                  <button className="worksuite-btn" onClick={() => navigate('/work-suite/achievements')}>View all</button>
+                  <button className="worksuite-btn" onClick={() => navigate('/work-suite/personal?tab=achievements')}>View all</button>
                 </div>
                 {summary.recentAchievements.map((a) => (
                   <div key={a.id} className="worksuite-achievement">

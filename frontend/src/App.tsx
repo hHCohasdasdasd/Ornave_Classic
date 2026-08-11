@@ -31,6 +31,15 @@ const ProfilePageWithKey = () => {
   return <ProfilePage key={location.pathname + location.search} />;
 };
 
+// Tasks/Goals/Achievements were merged into one Personal Growth page — old
+// links (including ?projectId= from the Projects page) still redirect there.
+const WorkSuiteLegacyRedirect: React.FC<{ tab: 'board' | 'goals' | 'achievements' }> = ({ tab }) => {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  params.set('tab', tab);
+  return <Navigate to={`/work-suite/personal?${params.toString()}`} replace />;
+};
+
 import { ProfileEditPage } from '@/pages/ProfileEditPage';
 import { ProfileResourcesPage } from '@/pages/ProfileResourcesPage';
 import { OpenToWorkSettingsPage } from '@/pages/OpenToWorkSettingsPage';
@@ -61,11 +70,9 @@ import { FirmServiceOverviewPage } from '@/pages/FirmServiceOverviewPage';
 import { FirmClientManagementPage } from '@/pages/FirmClientManagementPage';
 import { WorkSuiteHomePage } from '@/pages/WorkSuiteHomePage';
 import { WorkSuiteProjectsPage } from '@/pages/WorkSuiteProjectsPage';
-import { WorkSuiteTasksPage } from '@/pages/WorkSuiteTasksPage';
+import { WorkSuitePersonalPage } from '@/pages/WorkSuitePersonalPage';
 import { WorkSuiteClientsPage } from '@/pages/WorkSuiteClientsPage';
 import { WorkSuiteInvoicesPage } from '@/pages/WorkSuiteInvoicesPage';
-import { WorkSuiteGoalsPage } from '@/pages/WorkSuiteGoalsPage';
-import { WorkSuiteAchievementsPage } from '@/pages/WorkSuiteAchievementsPage';
 import { AuthModal } from '@/components/ui/AuthModal';
 import { CreatePostModal } from '@/components/personal/CreatePostModal';
 import { CreatePublicationModal } from '@/components/personal/CreatePublicationModal';
@@ -273,11 +280,13 @@ function App() {
             {/* Work Suite Routes */}
             <Route path="/work-suite" element={<WorkSuiteHomePage />} />
             <Route path="/work-suite/projects" element={<WorkSuiteProjectsPage />} />
-            <Route path="/work-suite/tasks" element={<WorkSuiteTasksPage />} />
+            <Route path="/work-suite/personal" element={<WorkSuitePersonalPage />} />
             <Route path="/work-suite/clients" element={<WorkSuiteClientsPage />} />
             <Route path="/work-suite/invoices" element={<WorkSuiteInvoicesPage />} />
-            <Route path="/work-suite/goals" element={<WorkSuiteGoalsPage />} />
-            <Route path="/work-suite/achievements" element={<WorkSuiteAchievementsPage />} />
+            {/* Tasks/Goals/Achievements were merged into one Personal Growth page — keep old links working. */}
+            <Route path="/work-suite/tasks" element={<WorkSuiteLegacyRedirect tab="board" />} />
+            <Route path="/work-suite/goals" element={<WorkSuiteLegacyRedirect tab="goals" />} />
+            <Route path="/work-suite/achievements" element={<WorkSuiteLegacyRedirect tab="achievements" />} />
 
             {/* For Business Routes */}
             <Route path="/leads" element={<LeadsPage />} />

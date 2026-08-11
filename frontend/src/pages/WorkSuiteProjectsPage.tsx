@@ -133,7 +133,7 @@ export const WorkSuiteProjectsPage: React.FC = () => {
                 </div>
                 <p className="worksuite-card__description">{project.description || 'No description yet.'}</p>
                 <div className="worksuite-card__actions">
-                  <button className="worksuite-btn" onClick={() => navigate(`/work-suite/tasks?projectId=${project.id}`)}>
+                  <button className="worksuite-btn" onClick={() => navigate(`/work-suite/personal?tab=board&projectId=${project.id}`)}>
                     View Tasks
                   </button>
                   <button className="worksuite-btn" onClick={() => openEdit(project)}>Edit</button>

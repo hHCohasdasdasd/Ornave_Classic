@@ -6,7 +6,7 @@ import { apiClient } from '@/services/api';
 import {
   IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel,
   IconBuilding, IconBriefcase, IconSearch, IconUsers, IconCard, IconUser, IconChart, IconSpark,
-  IconLogout, IconBag, IconLayers, IconCheck, IconHandshake, IconArticle, IconCompass, IconTrophy,
+  IconLogout, IconBag, IconLayers, IconHandshake, IconArticle, IconCompass,
 } from './Icons';
 interface NavbarProps {
   /** True when the global left nav rail (ProfileSidebar, rendered once in
@@ -109,12 +109,6 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
       route: '/work-suite/projects',
     },
     {
-      icon: <IconCheck />,
-      label: 'Tasks',
-      description: 'Everything on your plate, by status and priority.',
-      route: '/work-suite/tasks',
-    },
-    {
       icon: <IconHandshake />,
       label: 'Clients',
       description: 'A lightweight CRM for who you work with.',
@@ -128,15 +122,9 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
     },
     {
       icon: <IconCompass />,
-      label: 'Goals',
-      description: 'Set a target, track progress, and see it through.',
-      route: '/work-suite/goals',
-    },
-    {
-      icon: <IconTrophy />,
-      label: 'Achievements',
-      description: 'A record of the milestones you\'ve earned.',
-      route: '/work-suite/achievements',
+      label: 'Personal Growth',
+      description: 'Your board, goals, and achievements — all in one place.',
+      route: '/work-suite/personal',
     },
   ];
 
