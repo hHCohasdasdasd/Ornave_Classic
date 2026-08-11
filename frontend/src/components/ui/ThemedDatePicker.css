@@ -34,11 +34,9 @@
 }
 
 .themed-date__panel {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 50;
-  width: 260px;
+  /* position/top/bottom/left/width are set inline by ThemedDatePicker,
+     computed from the trigger's on-screen position (see reposition()). */
+  z-index: 1100;
   background: var(--tech-card-bg, #161616);
   border: 1px solid var(--tech-border, rgba(246, 243, 237, 0.08));
   border-radius: 12px;

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './ThemedDatePicker.css';
 
 interface ThemedDatePickerProps {
@@ -10,6 +11,8 @@ interface ThemedDatePickerProps {
 }
 
 const WEEKDAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+const PANEL_HEIGHT_ESTIMATE = 320;
+const PANEL_WIDTH = 260;
 
 function toDateOnly(d: Date): string {
   const y = d.getFullYear();
@@ -31,32 +34,74 @@ function parseDateOnly(value: string): Date | null {
  * Windows Chromium it's a plain white/light widget regardless of the page's
  * theme. This renders its own calendar grid instead, same approach as
  * ThemedSelect for the same reason.
+ *
+ * The open panel is portaled to <body> and fixed-positioned from the
+ * trigger's on-screen rect (flipping above it when there isn't room below)
+ * rather than living inside normal document flow. Modal dialogs on this
+ * site cap their height and scroll internally — an in-flow panel would
+ * count toward that scrollable content and force the user to scroll to see
+ * both the calendar and the modal's action buttons at once.
  */
 export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ value, onChange, placeholder, className }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selected = parseDateOnly(value);
   const [viewMonth, setViewMonth] = useState(() => selected || new Date());
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     if (isOpen) setViewMonth(selected || new Date());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  const reposition = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const openAbove = window.innerHeight - rect.bottom < PANEL_HEIGHT_ESTIMATE && rect.top > PANEL_HEIGHT_ESTIMATE;
+    const left = Math.min(rect.left, window.innerWidth - PANEL_WIDTH - 8);
+    setPanelStyle({
+      position: 'fixed',
+      left: Math.max(8, left),
+      width: PANEL_WIDTH,
+      ...(openAbove
+        ? { bottom: window.innerHeight - rect.top + 4 }
+        : { top: rect.bottom + 4 }),
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    reposition();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setIsOpen(false);
+      const target = e.target as Node;
+      if (rootRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      setIsOpen(false);
     };
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsOpen(false);
     };
+    const handleReposition = () => reposition();
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleEscape);
+    window.addEventListener('resize', handleReposition);
+    // Capture phase so this also fires for scrolling inside the modal's
+    // own scroll container, not just the window.
+    document.addEventListener('scroll', handleReposition, true);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
+      window.removeEventListener('resize', handleReposition);
+      document.removeEventListener('scroll', handleReposition, true);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const year = viewMonth.getFullYear();
@@ -85,6 +130,7 @@ export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ value, onCha
   return (
     <div className={`themed-date${className ? ` ${className}` : ''}`} ref={rootRef}>
       <button
+        ref={triggerRef}
         type="button"
         className="themed-date__trigger"
         onClick={(e) => { e.stopPropagation(); setIsOpen((o) => !o); }}
@@ -92,8 +138,8 @@ export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ value, onCha
         <span className={selected ? '' : 'themed-date__trigger-placeholder'}>{displayLabel}</span>
         <span className="themed-date__icon">📅</span>
       </button>
-      {isOpen && (
-        <div className="themed-date__panel" role="dialog">
+      {isOpen && createPortal(
+        <div className="themed-date__panel" role="dialog" ref={panelRef} style={panelStyle}>
           <div className="themed-date__header">
             <button type="button" className="themed-date__nav" onClick={() => setViewMonth(new Date(year, month - 1, 1))}>‹</button>
             <span className="themed-date__month-label">{monthLabel}</span>
@@ -132,7 +178,8 @@ export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ value, onCha
               </button>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
