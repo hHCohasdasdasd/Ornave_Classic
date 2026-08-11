@@ -983,6 +983,13 @@
   border-radius: 6px;
 }
 
+.mindmap-node--shape-diamond,
+.mindmap-node--shape-hexagon {
+  border: none;
+  background: #2c2820;
+  filter: drop-shadow(0 0 1.5px rgba(201, 184, 150, 0.95)) drop-shadow(0 0 1.5px rgba(201, 184, 150, 0.95));
+}
+
 .mindmap-node--shape-diamond {
   border-radius: 4px;
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
