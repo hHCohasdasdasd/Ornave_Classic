@@ -72,6 +72,15 @@ function goalCategoryColor(category?: string): string {
   return GOAL_CATEGORY_COLORS[hash % GOAL_CATEGORY_COLORS.length];
 }
 
+/** Deterministic accent color from an id — used for note cards, which have
+ * no category field of their own to color by. Same palette as goals so the
+ * app's color language stays consistent. */
+function accentColorFromId(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return GOAL_CATEGORY_COLORS[hash % GOAL_CATEGORY_COLORS.length];
+}
+
 function goalDeadlineInfo(targetDate?: string): { label: string; overdue: boolean; soon: boolean } | null {
   if (!targetDate) return null;
   const days = Math.ceil((new Date(targetDate).setHours(23, 59, 59, 999) - Date.now()) / 86400000);
@@ -474,6 +483,33 @@ export const WorkSuitePersonalPage: React.FC = () => {
     } catch {
       await loadNotes();
     }
+  };
+
+  const [noteSearch, setNoteSearch] = useState('');
+  const filteredNotes = notes.filter((n) => {
+    const q = noteSearch.trim().toLowerCase();
+    if (!q) return true;
+    return (n.title || '').toLowerCase().includes(q) || n.content.toLowerCase().includes(q);
+  });
+  const pinnedNoteCount = notes.filter((n) => n.pinned).length;
+
+  const noteDisplayTitle = (note: Note) => {
+    if (note.title?.trim()) return note.title;
+    const firstLine = note.content.split('\n')[0].trim();
+    return firstLine.length > 48 ? `${firstLine.slice(0, 48)}…` : firstLine || 'Untitled';
+  };
+
+  const formatRelativeShort = (value: string) => {
+    const date = new Date(value);
+    const diffMs = Date.now() - date.getTime();
+    const diffMin = Math.round(diffMs / 60000);
+    if (diffMin < 1) return 'just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHr = Math.round(diffMin / 60);
+    if (diffHr < 24) return `${diffHr}h ago`;
+    const diffDay = Math.round(diffHr / 24);
+    if (diffDay < 7) return `${diffDay}d ago`;
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
   // ---------------------------------------------------------------------
@@ -966,8 +1002,28 @@ export const WorkSuitePersonalPage: React.FC = () => {
 
         {activeTab === 'notes' && (
           <>
+            {!isLoadingNotes && notes.length > 0 && (
+              <div className="goal-stats-strip">
+                <div className="goal-stats-strip__item">
+                  <span className="goal-stats-strip__value">{notes.length}</span>
+                  <span className="goal-stats-strip__label">Notes</span>
+                </div>
+                <div className="goal-stats-strip__item">
+                  <span className="goal-stats-strip__value">{pinnedNoteCount}</span>
+                  <span className="goal-stats-strip__label">Pinned</span>
+                </div>
+              </div>
+            )}
+
             <div className="worksuite-page__header-row">
-              <div />
+              {notes.length > 0 ? (
+                <input
+                  className="note-search"
+                  value={noteSearch}
+                  onChange={(e) => setNoteSearch(e.target.value)}
+                  placeholder="Search notes…"
+                />
+              ) : <div />}
               <button className="worksuite-create-btn" onClick={openCreateNote}>+ New Note</button>
             </div>
 
@@ -980,29 +1036,39 @@ export const WorkSuitePersonalPage: React.FC = () => {
                   <p>No notes yet — jot something down.</p>
                   <button className="worksuite-create-btn" onClick={openCreateNote}>+ New Note</button>
                 </div>
+              ) : filteredNotes.length === 0 ? (
+                <div className="worksuite-empty">No notes match "{noteSearch}".</div>
               ) : (
-                notes.map((note) => (
-                  <div key={note.id} className={`worksuite-card note-card${note.pinned ? ' note-card--pinned' : ''}`}>
-                    <div className="note-card__header">
-                      <div className="worksuite-card__title">{note.title || 'Untitled'}</div>
-                      <button
-                        className={`note-card__pin${note.pinned ? ' note-card__pin--active' : ''}`}
-                        onClick={() => toggleNotePinned(note)}
-                        title={note.pinned ? 'Unpin' : 'Pin to top'}
-                      >
-                        {note.pinned ? '★' : '☆'}
-                      </button>
+                filteredNotes.map((note) => {
+                  const accent = accentColorFromId(note.id);
+                  return (
+                    <div
+                      key={note.id}
+                      className={`worksuite-card note-card${note.pinned ? ' note-card--pinned' : ''}`}
+                      style={{ borderLeft: `3px solid ${accent}` }}
+                      onClick={() => openEditNote(note)}
+                    >
+                      <div className="note-card__header">
+                        <div className="worksuite-card__title">{noteDisplayTitle(note)}</div>
+                        <button
+                          className={`note-card__pin${note.pinned ? ' note-card__pin--active' : ''}`}
+                          onClick={(e) => { e.stopPropagation(); toggleNotePinned(note); }}
+                          title={note.pinned ? 'Unpin' : 'Pin to top'}
+                        >
+                          {note.pinned ? '★' : '☆'}
+                        </button>
+                      </div>
+                      <p className="worksuite-card__description note-card__content">{note.content}</p>
+                      <div className="worksuite-card__meta note-card__meta">
+                        Edited {formatRelativeShort(note.updatedAt)}
+                      </div>
+                      <div className="worksuite-card__actions">
+                        <button className="worksuite-btn" onClick={(e) => { e.stopPropagation(); openEditNote(note); }}>✎ Edit</button>
+                        <button className="worksuite-btn worksuite-btn--danger" onClick={(e) => { e.stopPropagation(); handleDeleteNote(note); }}>✕ Delete</button>
+                      </div>
                     </div>
-                    <p className="worksuite-card__description note-card__content">{note.content}</p>
-                    <div className="worksuite-card__meta note-card__meta">
-                      Edited {new Date(note.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                    </div>
-                    <div className="worksuite-card__actions">
-                      <button className="worksuite-btn" onClick={() => openEditNote(note)}>✎ Edit</button>
-                      <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteNote(note)}>✕ Delete</button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </>

@@ -618,9 +618,31 @@
 }
 
 /* Notes */
+.note-search {
+  width: 260px;
+  background: var(--color-input-bg, rgba(246, 243, 237, 0.04));
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 999px;
+  padding: 8px 16px;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  transition: border-color 0.2s ease;
+}
+
+.note-search:focus {
+  outline: none;
+  border-color: var(--tech-accent-gold);
+}
+
+.note-search::placeholder {
+  color: var(--tech-text-dim);
+}
+
 .note-card {
   display: flex;
   flex-direction: column;
+  cursor: pointer;
 }
 
 .note-card--pinned {
