@@ -5,16 +5,17 @@ import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
 import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
-import { workSuiteService, Task, Project, Goal, Achievement } from '@/services/workSuiteService';
+import { workSuiteService, Task, Project, Goal, Note } from '@/services/workSuiteService';
 import { scopedKey } from '@/utils/storage';
 import './WorkSuite.css';
 
-type SectionTab = 'board' | 'goals' | 'achievements';
+type SectionTab = 'board' | 'goals' | 'notes' | 'focus';
 
 const SECTIONS: { key: SectionTab; label: string }[] = [
   { key: 'board', label: 'Board' },
   { key: 'goals', label: 'Goals' },
-  { key: 'achievements', label: 'Achievements' },
+  { key: 'notes', label: 'Notes' },
+  { key: 'focus', label: 'Focus' },
 ];
 
 const COLUMNS: Task['status'][] = ['TODO', 'IN_PROGRESS', 'DONE'];
@@ -393,64 +394,178 @@ export const WorkSuitePersonalPage: React.FC = () => {
     : 0;
 
   // ---------------------------------------------------------------------
-  // Achievements
+  // Notes
   // ---------------------------------------------------------------------
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [isLoadingAchievements, setIsLoadingAchievements] = useState(true);
-  const [showAchievementModal, setShowAchievementModal] = useState(false);
-  const [achievementTitle, setAchievementTitle] = useState('');
-  const [achievementDescription, setAchievementDescription] = useState('');
-  const [achievementCategory, setAchievementCategory] = useState('');
-  const [achievedAt, setAchievedAt] = useState('');
-  const [isSavingAchievement, setIsSavingAchievement] = useState(false);
-  const [achievementError, setAchievementError] = useState<string | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(true);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteContent, setNoteContent] = useState('');
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [noteError, setNoteError] = useState<string | null>(null);
 
-  const loadAchievements = async () => {
-    setIsLoadingAchievements(true);
+  const loadNotes = async () => {
+    setIsLoadingNotes(true);
     try {
-      setAchievements(await workSuiteService.listAchievements());
+      setNotes(await workSuiteService.listNotes());
     } finally {
-      setIsLoadingAchievements(false);
+      setIsLoadingNotes(false);
     }
   };
 
   useEffect(() => {
-    if (!isGuest) loadAchievements();
+    if (!isGuest) loadNotes();
   }, [isGuest]);
 
-  const openCreateAchievement = () => {
-    setAchievementTitle('');
-    setAchievementDescription('');
-    setAchievementCategory('');
-    setAchievedAt('');
-    setAchievementError(null);
-    setShowAchievementModal(true);
+  const openCreateNote = () => {
+    setEditingNote(null);
+    setNoteTitle('');
+    setNoteContent('');
+    setNoteError(null);
+    setShowNoteModal(true);
   };
 
-  const handleSaveAchievement = async () => {
-    if (!achievementTitle.trim()) return;
-    setIsSavingAchievement(true);
-    setAchievementError(null);
+  const openEditNote = (note: Note) => {
+    setEditingNote(note);
+    setNoteTitle(note.title || '');
+    setNoteContent(note.content);
+    setNoteError(null);
+    setShowNoteModal(true);
+  };
+
+  const handleSaveNote = async () => {
+    if (!noteContent.trim()) return;
+    setIsSavingNote(true);
+    setNoteError(null);
     try {
-      await workSuiteService.createAchievement({
-        title: achievementTitle.trim(),
-        description: achievementDescription.trim() || undefined,
-        category: achievementCategory.trim() || undefined,
-        achievedAt: achievedAt || undefined,
-      });
-      setShowAchievementModal(false);
-      await loadAchievements();
+      const payload = { title: noteTitle.trim() || undefined, content: noteContent.trim() };
+      if (editingNote) {
+        await workSuiteService.updateNote(editingNote.id, payload);
+      } else {
+        await workSuiteService.createNote(payload);
+      }
+      setShowNoteModal(false);
+      await loadNotes();
     } catch {
-      setAchievementError('Something went wrong logging that achievement — try again.');
+      setNoteError('Something went wrong saving that note — try again.');
     } finally {
-      setIsSavingAchievement(false);
+      setIsSavingNote(false);
     }
   };
 
-  const handleDeleteAchievement = async (achievement: Achievement) => {
-    await workSuiteService.deleteAchievement(achievement.id);
-    await loadAchievements();
+  const toggleNotePinned = async (note: Note) => {
+    setNotes((prev) =>
+      [...prev]
+        .map((n) => (n.id === note.id ? { ...n, pinned: !n.pinned } : n))
+        .sort((a, b) => (a.pinned === b.pinned ? 0 : a.pinned ? -1 : 1))
+    );
+    try {
+      await workSuiteService.updateNote(note.id, { pinned: !note.pinned });
+    } catch {
+      await loadNotes();
+    }
   };
+
+  const handleDeleteNote = async (note: Note) => {
+    setNotes((prev) => prev.filter((n) => n.id !== note.id));
+    try {
+      await workSuiteService.deleteNote(note.id);
+    } catch {
+      await loadNotes();
+    }
+  };
+
+  // ---------------------------------------------------------------------
+  // Focus (Pomodoro timer) — entirely client-side. Session durations are a
+  // saved preference; the running countdown itself and today's completed
+  // session count are session/day state, not synced across devices.
+  // ---------------------------------------------------------------------
+  type FocusMode = 'work' | 'break';
+
+  interface FocusPrefs {
+    workMinutes: number;
+    breakMinutes: number;
+  }
+
+  const DEFAULT_FOCUS_PREFS: FocusPrefs = { workMinutes: 25, breakMinutes: 5 };
+  const focusPrefsKey = scopedKey('worksuite_focus_prefs', user?.id);
+  const [focusPrefs, setFocusPrefs] = useState<FocusPrefs>(() => {
+    try {
+      const raw = localStorage.getItem(focusPrefsKey);
+      return raw ? { ...DEFAULT_FOCUS_PREFS, ...JSON.parse(raw) } : DEFAULT_FOCUS_PREFS;
+    } catch {
+      return DEFAULT_FOCUS_PREFS;
+    }
+  });
+
+  const updateFocusPrefs = (next: Partial<FocusPrefs>) => {
+    setFocusPrefs((prev) => {
+      const merged = { ...prev, ...next };
+      localStorage.setItem(focusPrefsKey, JSON.stringify(merged));
+      return merged;
+    });
+  };
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const focusSessionsKey = scopedKey(`worksuite_focus_sessions_${todayKey}`, user?.id);
+  const [sessionsToday, setSessionsToday] = useState<number>(() => {
+    const raw = localStorage.getItem(focusSessionsKey);
+    return raw ? parseInt(raw, 10) || 0 : 0;
+  });
+
+  const [focusMode, setFocusMode] = useState<FocusMode>('work');
+  const [focusSecondsLeft, setFocusSecondsLeft] = useState(focusPrefs.workMinutes * 60);
+  const [focusRunning, setFocusRunning] = useState(false);
+  const [focusLinkedTaskId, setFocusLinkedTaskId] = useState('');
+
+  const focusModeDurationSec = (focusMode === 'work' ? focusPrefs.workMinutes : focusPrefs.breakMinutes) * 60;
+
+  useEffect(() => {
+    if (!focusRunning) return;
+    const interval = setInterval(() => {
+      setFocusSecondsLeft((prev) => {
+        if (prev > 1) return prev - 1;
+
+        // Countdown hit zero — switch modes and pause for the user to start the next phase.
+        if (focusMode === 'work') {
+          const next = sessionsToday + 1;
+          setSessionsToday(next);
+          localStorage.setItem(focusSessionsKey, String(next));
+          setFocusMode('break');
+          setFocusSecondsLeft(focusPrefs.breakMinutes * 60);
+        } else {
+          setFocusMode('work');
+          setFocusSecondsLeft(focusPrefs.workMinutes * 60);
+        }
+        setFocusRunning(false);
+        return 0;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRunning, focusMode, focusPrefs, sessionsToday]);
+
+  const resetFocusTimer = () => {
+    setFocusRunning(false);
+    setFocusSecondsLeft(focusModeDurationSec);
+  };
+
+  const applyFocusDuration = (mode: FocusMode, minutes: number) => {
+    const clamped = Math.max(1, Math.min(120, minutes));
+    updateFocusPrefs(mode === 'work' ? { workMinutes: clamped } : { breakMinutes: clamped });
+    if (!focusRunning && focusMode === mode) setFocusSecondsLeft(clamped * 60);
+  };
+
+  const formatClock = (totalSeconds: number) => {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  const focusColor = focusMode === 'work' ? '#c6a15b' : '#7c9473';
+  const focusRingProgress = focusModeDurationSec > 0 ? ((focusModeDurationSec - focusSecondsLeft) / focusModeDurationSec) * 100 : 0;
+  const focusLinkedTask = tasks.find((t) => t.id === focusLinkedTaskId);
 
   // ---------------------------------------------------------------------
   // Render
@@ -464,11 +579,14 @@ export const WorkSuitePersonalPage: React.FC = () => {
         <div className="worksuite-page__banner-inner">
           <button className="worksuite-breadcrumb" onClick={() => navigate('/work-suite')}>← Work Suite</button>
           <h1 className="worksuite-page__title">Planning</h1>
-          <p className="worksuite-page__subtitle">Your board, goals, and achievements — all in one place.</p>
+          <p className="worksuite-page__subtitle">Your board, goals, notes, and focus timer — all in one place.</p>
         </div>
       </div>
 
-      <div className={`worksuite-page__container${activeTab === 'board' ? ' worksuite-page__container--wide' : ''}`}>
+      {/* Always the wide variant, regardless of tab — this container is centered via
+          margin:auto, so toggling its max-width per-tab used to shift the tab bar
+          itself sideways every time you switched tabs. */}
+      <div className="worksuite-page__container worksuite-page__container--wide">
         <div className="worksuite-tabs">
           {SECTIONS.map((s) => (
             <button
@@ -841,36 +959,140 @@ export const WorkSuitePersonalPage: React.FC = () => {
           </>
         )}
 
-        {activeTab === 'achievements' && (
+        {activeTab === 'notes' && (
           <>
             <div className="worksuite-page__header-row">
               <div />
-              <button className="worksuite-create-btn" onClick={openCreateAchievement}>+ Log Achievement</button>
+              <button className="worksuite-create-btn" onClick={openCreateNote}>+ New Note</button>
             </div>
 
-            {isLoadingAchievements ? (
-              <div className="worksuite-empty">Loading achievements…</div>
-            ) : achievements.length === 0 ? (
-              <div className="worksuite-empty">Nothing logged yet — record your first win.</div>
-            ) : (
-              achievements.map((achievement) => (
-                <div key={achievement.id} className="worksuite-achievement">
-                  <div className="worksuite-achievement__icon">🏆</div>
-                  <div className="worksuite-achievement__main">
-                    <div className="worksuite-achievement__title">{achievement.title}</div>
-                    <div className="worksuite-achievement__meta">
-                      <span>{new Date(achievement.achievedAt).toLocaleDateString()}</span>
-                      {achievement.category && <span>{achievement.category}</span>}
-                    </div>
-                    {achievement.description && (
-                      <p className="worksuite-achievement__description">{achievement.description}</p>
-                    )}
-                  </div>
-                  <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteAchievement(achievement)}>Delete</button>
+            <div className="worksuite-grid">
+              {isLoadingNotes ? (
+                <div className="worksuite-empty">Loading notes…</div>
+              ) : notes.length === 0 ? (
+                <div className="worksuite-empty worksuite-empty--goals">
+                  <div className="worksuite-empty__icon">📝</div>
+                  <p>No notes yet — jot something down.</p>
+                  <button className="worksuite-create-btn" onClick={openCreateNote}>+ New Note</button>
                 </div>
-              ))
-            )}
+              ) : (
+                notes.map((note) => (
+                  <div key={note.id} className={`worksuite-card note-card${note.pinned ? ' note-card--pinned' : ''}`}>
+                    <div className="note-card__header">
+                      <div className="worksuite-card__title">{note.title || 'Untitled'}</div>
+                      <button
+                        className={`note-card__pin${note.pinned ? ' note-card__pin--active' : ''}`}
+                        onClick={() => toggleNotePinned(note)}
+                        title={note.pinned ? 'Unpin' : 'Pin to top'}
+                      >
+                        {note.pinned ? '★' : '☆'}
+                      </button>
+                    </div>
+                    <p className="worksuite-card__description note-card__content">{note.content}</p>
+                    <div className="worksuite-card__meta note-card__meta">
+                      Edited {new Date(note.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </div>
+                    <div className="worksuite-card__actions">
+                      <button className="worksuite-btn" onClick={() => openEditNote(note)}>✎ Edit</button>
+                      <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteNote(note)}>✕ Delete</button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </>
+        )}
+
+        {activeTab === 'focus' && (
+          <div className="focus-layout">
+            <div className="focus-timer">
+              <div className="focus-timer__mode-tabs">
+                <span className={`focus-timer__mode-pill${focusMode === 'work' ? ' focus-timer__mode-pill--active' : ''}`}>Focus</span>
+                <span className={`focus-timer__mode-pill${focusMode === 'break' ? ' focus-timer__mode-pill--active' : ''}`}>Break</span>
+              </div>
+
+              <div className="focus-timer__ring">
+                <svg width="220" height="220" viewBox="0 0 220 220">
+                  <circle cx="110" cy="110" r="98" fill="none" stroke="rgba(246, 243, 237, 0.08)" strokeWidth="10" />
+                  <circle
+                    cx="110"
+                    cy="110"
+                    r="98"
+                    fill="none"
+                    stroke={focusColor}
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 98}
+                    strokeDashoffset={2 * Math.PI * 98 * (1 - focusRingProgress / 100)}
+                    transform="rotate(-90 110 110)"
+                    style={{ transition: 'stroke-dashoffset 1s linear' }}
+                  />
+                </svg>
+                <div className="focus-timer__ring-center">
+                  <span className="focus-timer__clock">{formatClock(focusSecondsLeft)}</span>
+                  <span className="focus-timer__mode-label">{focusMode === 'work' ? 'Focus time' : 'Break time'}</span>
+                </div>
+              </div>
+
+              {focusLinkedTask && (
+                <div className="focus-timer__linked-task">Working on: {focusLinkedTask.title}</div>
+              )}
+
+              <div className="focus-timer__controls">
+                <button className="worksuite-create-btn" onClick={() => setFocusRunning((r) => !r)}>
+                  {focusRunning ? 'Pause' : focusSecondsLeft === focusModeDurationSec ? 'Start' : 'Resume'}
+                </button>
+                <button className="worksuite-btn" onClick={resetFocusTimer}>Reset</button>
+              </div>
+            </div>
+
+            <aside className="worksuite-tasks-sidebar">
+              <div className="worksuite-tasks-sidebar__section">
+                <h4>Today</h4>
+                <div className="worksuite-tasks-overview__total">{sessionsToday}</div>
+                <div className="worksuite-tasks-overview__total-label">Focus sessions completed</div>
+              </div>
+
+              <div className="worksuite-tasks-sidebar__section">
+                <h4>Working on</h4>
+                <ThemedSelect
+                  value={focusLinkedTaskId}
+                  options={[{ value: '', label: 'No linked task' }, ...tasks.filter((t) => t.status !== 'DONE').map((t) => ({ value: t.id, label: t.title }))]}
+                  onChange={setFocusLinkedTaskId}
+                />
+                <p className="worksuite-tasks-settings__hint">Just a label for this session — doesn't change the task itself.</p>
+              </div>
+
+              <div className="worksuite-tasks-sidebar__section">
+                <h4>Durations</h4>
+                <div className="worksuite-tasks-settings__color-row">
+                  <span>Focus (min)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={120}
+                    className="focus-timer__duration-input"
+                    value={focusPrefs.workMinutes}
+                    onChange={(e) => applyFocusDuration('work', parseInt(e.target.value, 10) || 1)}
+                  />
+                </div>
+                <div className="worksuite-tasks-settings__color-row">
+                  <span>Break (min)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={120}
+                    className="focus-timer__duration-input"
+                    value={focusPrefs.breakMinutes}
+                    onChange={(e) => applyFocusDuration('break', parseInt(e.target.value, 10) || 1)}
+                  />
+                </div>
+                <p className="worksuite-tasks-settings__hint">
+                  Sessions and durations live on this device only — they don't sync across devices yet.
+                </p>
+              </div>
+            </aside>
+          </div>
         )}
       </div>
 
@@ -934,23 +1156,19 @@ export const WorkSuitePersonalPage: React.FC = () => {
         </div>
       )}
 
-      {showAchievementModal && (
-        <div className="worksuite-modal-overlay" onClick={() => setShowAchievementModal(false)}>
+      {showNoteModal && (
+        <div className="worksuite-modal-overlay" onClick={() => setShowNoteModal(false)}>
           <div className="worksuite-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Log Achievement</h2>
-            <label>Title</label>
-            <input value={achievementTitle} onChange={(e) => setAchievementTitle(e.target.value)} placeholder="Finished my first 5K" maxLength={160} />
-            <label>Description</label>
-            <textarea value={achievementDescription} onChange={(e) => setAchievementDescription(e.target.value)} rows={3} placeholder="Optional details" maxLength={500} />
-            <label>Category</label>
-            <input value={achievementCategory} onChange={(e) => setAchievementCategory(e.target.value)} placeholder="Fitness, Career, Learning…" maxLength={60} />
-            <label>Date</label>
-            <ThemedDatePicker value={achievedAt} onChange={setAchievedAt} />
-            {achievementError && <p className="worksuite-modal__error">{achievementError}</p>}
+            <h2>{editingNote ? 'Edit Note' : 'New Note'}</h2>
+            <label>Title (optional)</label>
+            <input value={noteTitle} onChange={(e) => setNoteTitle(e.target.value)} placeholder="Untitled" maxLength={160} />
+            <label>Content</label>
+            <textarea value={noteContent} onChange={(e) => setNoteContent(e.target.value)} rows={8} placeholder="Write something…" maxLength={5000} />
+            {noteError && <p className="worksuite-modal__error">{noteError}</p>}
             <div className="worksuite-modal__actions">
-              <button className="worksuite-modal__cancel" onClick={() => setShowAchievementModal(false)}>Cancel</button>
-              <button className="worksuite-modal__submit" onClick={handleSaveAchievement} disabled={!achievementTitle.trim() || isSavingAchievement}>
-                {isSavingAchievement ? 'Saving…' : 'Log Achievement'}
+              <button className="worksuite-modal__cancel" onClick={() => setShowNoteModal(false)}>Cancel</button>
+              <button className="worksuite-modal__submit" onClick={handleSaveNote} disabled={!noteContent.trim() || isSavingNote}>
+                {isSavingNote ? 'Saving…' : editingNote ? 'Save Changes' : 'Create Note'}
               </button>
             </div>
           </div>

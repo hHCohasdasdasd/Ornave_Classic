@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
-import { ProjectService, TaskService, ClientService, InvoiceService, GoalService, AchievementService, WorkSuiteService } from '../services/workSuiteService';
+import { ProjectService, TaskService, ClientService, InvoiceService, GoalService, AchievementService, NoteService, WorkSuiteService } from '../services/workSuiteService';
 
 export const workSuiteRoutes = Router();
 
@@ -292,6 +292,44 @@ workSuiteRoutes.delete(
   asyncHandler(async (req: any, res: Response) => {
     await AchievementService.remove(req.user.userId, req.params.id);
     return ApiResponseHandler.success(res, {}, 'Achievement deleted successfully', 200);
+  })
+);
+
+/**
+ * Notes
+ */
+workSuiteRoutes.get(
+  '/notes',
+  asyncHandler(async (req: any, res: Response) => {
+    const notes = await NoteService.list(req.user.userId);
+    return ApiResponseHandler.success(res, notes, 'Notes retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.post(
+  '/notes',
+  asyncHandler(async (req: any, res: Response) => {
+    const { title, content } = req.body;
+    if (!content?.trim()) return ApiResponseHandler.error(res, 'Note content is required', undefined, 400);
+    const note = await NoteService.create(req.user.userId, { title, content });
+    return ApiResponseHandler.success(res, note, 'Note created successfully', 201);
+  })
+);
+
+workSuiteRoutes.put(
+  '/notes/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    const { title, content, pinned } = req.body;
+    const note = await NoteService.update(req.user.userId, req.params.id, { title, content, pinned });
+    return ApiResponseHandler.success(res, note, 'Note updated successfully', 200);
+  })
+);
+
+workSuiteRoutes.delete(
+  '/notes/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    await NoteService.remove(req.user.userId, req.params.id);
+    return ApiResponseHandler.success(res, {}, 'Note deleted successfully', 200);
   })
 );
 

@@ -617,6 +617,159 @@
   opacity: 0.6;
 }
 
+/* Notes */
+.note-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.note-card--pinned {
+  border-color: rgba(198, 161, 91, 0.4);
+}
+
+.note-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.note-card__pin {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--tech-text-dim);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.note-card__pin:hover {
+  color: var(--tech-accent-gold-text);
+  transform: scale(1.15);
+}
+
+.note-card__pin--active {
+  color: var(--tech-accent-gold);
+}
+
+.note-card__content {
+  white-space: pre-wrap;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+}
+
+.note-card__meta {
+  margin-bottom: 14px;
+}
+
+/* Focus timer */
+.focus-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.focus-timer {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 20px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.focus-timer__mode-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.focus-timer__mode-pill {
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tech-text-dim);
+  border: 1px solid var(--tech-border-dim);
+}
+
+.focus-timer__mode-pill--active {
+  color: var(--tech-accent-gold-text);
+  border-color: rgba(198, 161, 91, 0.4);
+  background: rgba(198, 161, 91, 0.08);
+}
+
+.focus-timer__ring {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.focus-timer__ring-center {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.focus-timer__clock {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-timer__mode-label {
+  font-size: 0.72rem;
+  color: var(--tech-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.focus-timer__linked-task {
+  font-size: 0.82rem;
+  color: var(--tech-text-dim);
+}
+
+.focus-timer__controls {
+  display: flex;
+  gap: 12px;
+}
+
+.focus-timer__duration-input {
+  width: 60px;
+  background: var(--color-input-bg, rgba(246, 243, 237, 0.04));
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 8px;
+  padding: 4px 8px;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .focus-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Achievements timeline */
 .worksuite-achievement {
   display: flex;

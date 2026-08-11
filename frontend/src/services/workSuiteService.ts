@@ -40,6 +40,15 @@ export interface Achievement {
   createdAt: string;
 }
 
+export interface Note {
+  id: string;
+  title?: string;
+  content: string;
+  pinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -227,6 +236,26 @@ class WorkSuiteService {
 
   async deleteAchievement(id: string): Promise<void> {
     await apiClient.delete(`/work-suite/achievements/${id}`);
+  }
+
+  // Notes
+  async listNotes(): Promise<Note[]> {
+    const response = await apiClient.get('/work-suite/notes');
+    return response.data.data || [];
+  }
+
+  async createNote(data: { title?: string; content: string }): Promise<Note> {
+    const response = await apiClient.post('/work-suite/notes', data);
+    return response.data.data;
+  }
+
+  async updateNote(id: string, data: Partial<Pick<Note, 'title' | 'content' | 'pinned'>>): Promise<Note> {
+    const response = await apiClient.put(`/work-suite/notes/${id}`, data);
+    return response.data.data;
+  }
+
+  async deleteNote(id: string): Promise<void> {
+    await apiClient.delete(`/work-suite/notes/${id}`);
   }
 }
 

@@ -31,10 +31,12 @@ const ProfilePageWithKey = () => {
   return <ProfilePage key={location.pathname + location.search} />;
 };
 
-// Tasks/Goals/Achievements were merged into one Planning page — old
-// links (including ?projectId= from the Projects page) still redirect there.
-const WorkSuiteLegacyRedirect: React.FC<{ tab: 'board' | 'goals' | 'achievements' }> = ({ tab }) => {
+// Tasks/Goals were merged into the Planning page's tabs; Achievements moved
+// to the Work Suite home page instead. Old links (including ?projectId=
+// from the Projects page) still redirect to wherever that content lives now.
+const WorkSuiteLegacyRedirect: React.FC<{ tab?: 'board' | 'goals' }> = ({ tab }) => {
   const location = useLocation();
+  if (!tab) return <Navigate to="/work-suite" replace />;
   const params = new URLSearchParams(location.search);
   params.set('tab', tab);
   return <Navigate to={`/work-suite/personal?${params.toString()}`} replace />;
@@ -286,7 +288,7 @@ function App() {
             {/* Tasks/Goals/Achievements were merged into one Planning page — keep old links working. */}
             <Route path="/work-suite/tasks" element={<WorkSuiteLegacyRedirect tab="board" />} />
             <Route path="/work-suite/goals" element={<WorkSuiteLegacyRedirect tab="goals" />} />
-            <Route path="/work-suite/achievements" element={<WorkSuiteLegacyRedirect tab="achievements" />} />
+            <Route path="/work-suite/achievements" element={<WorkSuiteLegacyRedirect />} />
 
             {/* For Business Routes */}
             <Route path="/leads" element={<LeadsPage />} />

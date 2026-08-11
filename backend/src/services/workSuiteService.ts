@@ -322,6 +322,41 @@ export class AchievementService {
   }
 }
 
+export class NoteService {
+  static async list(userId: string) {
+    return prisma.note.findMany({
+      where: { userId },
+      orderBy: [{ pinned: 'desc' }, { updatedAt: 'desc' }],
+    });
+  }
+
+  static async getById(userId: string, id: string) {
+    const note = await prisma.note.findFirst({ where: { id, userId } });
+    if (!note) throw new Error('Note not found');
+    return note;
+  }
+
+  static async create(userId: string, data: { title?: string; content: string }) {
+    return prisma.note.create({
+      data: { userId, title: data.title, content: data.content },
+    });
+  }
+
+  static async update(
+    userId: string,
+    id: string,
+    data: { title?: string | null; content?: string; pinned?: boolean }
+  ) {
+    await this.getById(userId, id);
+    return prisma.note.update({ where: { id }, data });
+  }
+
+  static async remove(userId: string, id: string) {
+    await this.getById(userId, id);
+    await prisma.note.delete({ where: { id } });
+  }
+}
+
 export class WorkSuiteService {
   static async getSummary(userId: string) {
     const [activeProjects, openTasks, clients, openInvoices, activeGoals, achievements, recentAchievements] = await Promise.all([
