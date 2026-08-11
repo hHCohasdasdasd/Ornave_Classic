@@ -689,25 +689,42 @@
 }
 
 .focus-timer__mode-tabs {
+  position: relative;
   display: flex;
-  gap: 8px;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--tech-border-dim);
+  background: rgba(246, 243, 237, 0.03);
+}
+
+.focus-timer__mode-indicator {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  border-radius: 999px;
+  opacity: 0.14;
+  transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1), background 0.5s ease;
 }
 
 .focus-timer__mode-pill {
-  padding: 5px 16px;
+  position: relative;
+  z-index: 1;
+  padding: 5px 20px;
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--tech-text-dim);
-  border: 1px solid var(--tech-border-dim);
+  border: none;
+  transition: color 0.4s ease;
 }
 
 .focus-timer__mode-pill--active {
   color: var(--tech-accent-gold-text);
-  border-color: rgba(198, 161, 91, 0.4);
-  background: rgba(198, 161, 91, 0.08);
 }
 
 .focus-timer__ring {
@@ -719,12 +736,50 @@
   justify-content: center;
 }
 
+.focus-timer__ring-glow {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  filter: blur(28px);
+  opacity: 0.12;
+  transition: background 0.5s ease;
+}
+
+.focus-timer__ring--running .focus-timer__ring-glow {
+  animation: focus-glow-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes focus-glow-pulse {
+  0%, 100% { opacity: 0.1; transform: scale(0.97); }
+  50% { opacity: 0.28; transform: scale(1.04); }
+}
+
+.focus-timer__ring-progress {
+  transition: stroke-dashoffset 0.9s linear, stroke 0.5s ease;
+}
+
+.focus-timer__ring--running svg {
+  animation: focus-ring-breathe 2.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes focus-ring-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.012); }
+}
+
 .focus-timer__ring-center {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  animation: focus-mode-fade 0.5s ease;
+}
+
+@keyframes focus-mode-fade {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .focus-timer__clock {
@@ -745,11 +800,27 @@
 .focus-timer__linked-task {
   font-size: 0.82rem;
   color: var(--tech-text-dim);
+  animation: focus-mode-fade 0.4s ease;
 }
 
 .focus-timer__controls {
   display: flex;
   gap: 12px;
+}
+
+.focus-timer__primary-btn,
+.focus-timer__reset-btn {
+  transition: transform 0.15s ease, border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.focus-timer__primary-btn:hover,
+.focus-timer__reset-btn:hover {
+  transform: translateY(-1px);
+}
+
+.focus-timer__primary-btn:active,
+.focus-timer__reset-btn:active {
+  transform: scale(0.96);
 }
 
 .focus-timer__duration-input {
@@ -762,6 +833,21 @@
   font-family: inherit;
   font-size: 0.82rem;
   text-align: center;
+  transition: border-color 0.2s ease;
+}
+
+.focus-timer__duration-input:focus {
+  outline: none;
+  border-color: var(--tech-accent-gold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-timer__ring-glow,
+  .focus-timer__ring--running svg,
+  .focus-timer__ring-center,
+  .focus-timer__linked-task {
+    animation: none;
+  }
 }
 
 @media (max-width: 900px) {

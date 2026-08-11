@@ -1007,11 +1007,16 @@ export const WorkSuitePersonalPage: React.FC = () => {
           <div className="focus-layout">
             <div className="focus-timer">
               <div className="focus-timer__mode-tabs">
+                <span
+                  className="focus-timer__mode-indicator"
+                  style={{ transform: focusMode === 'work' ? 'translateX(0%)' : 'translateX(100%)', background: focusColor }}
+                />
                 <span className={`focus-timer__mode-pill${focusMode === 'work' ? ' focus-timer__mode-pill--active' : ''}`}>Focus</span>
                 <span className={`focus-timer__mode-pill${focusMode === 'break' ? ' focus-timer__mode-pill--active' : ''}`}>Break</span>
               </div>
 
-              <div className="focus-timer__ring">
+              <div className={`focus-timer__ring${focusRunning ? ' focus-timer__ring--running' : ''}`}>
+                <div className="focus-timer__ring-glow" style={{ background: focusColor }} />
                 <svg width="220" height="220" viewBox="0 0 220 220">
                   <circle cx="110" cy="110" r="98" fill="none" stroke="rgba(246, 243, 237, 0.08)" strokeWidth="10" />
                   <circle
@@ -1025,10 +1030,10 @@ export const WorkSuitePersonalPage: React.FC = () => {
                     strokeDasharray={2 * Math.PI * 98}
                     strokeDashoffset={2 * Math.PI * 98 * (1 - focusRingProgress / 100)}
                     transform="rotate(-90 110 110)"
-                    style={{ transition: 'stroke-dashoffset 1s linear' }}
+                    className="focus-timer__ring-progress"
                   />
                 </svg>
-                <div className="focus-timer__ring-center">
+                <div className="focus-timer__ring-center" key={focusMode}>
                   <span className="focus-timer__clock">{formatClock(focusSecondsLeft)}</span>
                   <span className="focus-timer__mode-label">{focusMode === 'work' ? 'Focus time' : 'Break time'}</span>
                 </div>
@@ -1039,10 +1044,10 @@ export const WorkSuitePersonalPage: React.FC = () => {
               )}
 
               <div className="focus-timer__controls">
-                <button className="worksuite-create-btn" onClick={() => setFocusRunning((r) => !r)}>
+                <button className="worksuite-create-btn focus-timer__primary-btn" onClick={() => setFocusRunning((r) => !r)}>
                   {focusRunning ? 'Pause' : focusSecondsLeft === focusModeDurationSec ? 'Start' : 'Resume'}
                 </button>
-                <button className="worksuite-btn" onClick={resetFocusTimer}>Reset</button>
+                <button className="worksuite-btn focus-timer__reset-btn" onClick={resetFocusTimer}>Reset</button>
               </div>
             </div>
 
