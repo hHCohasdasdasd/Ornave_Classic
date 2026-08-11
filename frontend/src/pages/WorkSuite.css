@@ -707,52 +707,102 @@
   position: relative;
   break-inside: avoid;
   width: 100%;
-  margin: 0 0 24px;
-  padding: 28px 20px 18px;
+  margin: 0 0 26px;
+  padding: 30px 22px 18px;
   background: #1c1a1f;
   color: var(--color-text);
-  border-radius: 10px;
-  border: 1px solid rgba(198, 161, 91, 0.28);
+  border-radius: 3px;
+  border: 1px solid rgba(198, 161, 91, 0.3);
   box-shadow:
-    0 14px 28px -8px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(246, 243, 237, 0.04);
+    0 16px 32px -10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(246, 243, 237, 0.06),
+    inset 0 -30px 40px -32px rgba(0, 0, 0, 0.5);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   display: inline-block;
+  overflow: hidden;
+}
+
+.sticky-note::before {
+  /* diagonal lacquer sheen — sits over whatever base color is set inline,
+     so every note gets the same two-tone depth regardless of its color */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 30%, transparent 45%, rgba(0, 0, 0, 0.18) 100%);
+  pointer-events: none;
 }
 
 .sticky-note:hover {
   transform: rotate(0deg) scale(1.03) !important;
-  border-color: rgba(198, 161, 91, 0.55);
+  border-color: rgba(198, 161, 91, 0.6);
   box-shadow:
-    0 20px 36px -8px rgba(0, 0, 0, 0.65),
-    0 0 0 1px rgba(198, 161, 91, 0.15),
-    inset 0 1px 0 rgba(246, 243, 237, 0.05);
+    0 24px 40px -10px rgba(0, 0, 0, 0.7),
+    0 0 24px -4px rgba(198, 161, 91, 0.25),
+    inset 0 1px 0 rgba(246, 243, 237, 0.07),
+    inset 0 -30px 40px -32px rgba(0, 0, 0, 0.5);
   z-index: 2;
+}
+
+.sticky-note__corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.sticky-note__corner--tl {
+  top: 8px;
+  left: 8px;
+  border-top: 1.5px solid rgba(198, 161, 91, 0.55);
+  border-left: 1.5px solid rgba(198, 161, 91, 0.55);
+}
+
+.sticky-note__corner--br {
+  bottom: 8px;
+  right: 8px;
+  border-bottom: 1.5px solid rgba(198, 161, 91, 0.3);
+  border-right: 1.5px solid rgba(198, 161, 91, 0.3);
 }
 
 .sticky-note__pin {
   position: absolute;
-  top: -8px;
+  top: -7px;
   left: 50%;
-  transform: translateX(-50%);
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #e8cd8a, var(--tech-accent-gold, #c6a15b) 75%);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.55);
+  width: 12px;
+  height: 12px;
+  transform: translateX(-50%) rotate(45deg);
+  background: linear-gradient(135deg, #f3dfa0, var(--tech-accent-gold, #c6a15b) 55%, #9a7940);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-radius: 2px;
+  z-index: 1;
 }
 
 .sticky-note__title {
+  position: relative;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   color: var(--tech-accent-gold-text);
-  margin-bottom: 10px;
+  letter-spacing: 0.01em;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
   line-height: 1.3;
 }
 
+.sticky-note__title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 32px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(198, 161, 91, 0.7), transparent);
+}
+
 .sticky-note__content {
+  position: relative;
+  z-index: 1;
   font-family: var(--font-body);
   font-size: 0.85rem;
   line-height: 1.6;
@@ -765,6 +815,8 @@
 }
 
 .sticky-note__meta {
+  position: relative;
+  z-index: 1;
   font-family: var(--font-body);
   font-size: 0.66rem;
   font-weight: 600;
@@ -780,6 +832,7 @@
   position: absolute;
   top: 10px;
   right: 12px;
+  z-index: 1;
   background: transparent;
   border: none;
   color: var(--tech-text-dim);

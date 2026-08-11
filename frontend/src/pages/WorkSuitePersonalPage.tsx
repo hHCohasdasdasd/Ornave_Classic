@@ -1185,6 +1185,8 @@ export const WorkSuitePersonalPage: React.FC = () => {
                       onClick={() => openEditNote(note)}
                     >
                       <div className="sticky-note__pin" />
+                      <span className="sticky-note__corner sticky-note__corner--tl" />
+                      <span className="sticky-note__corner sticky-note__corner--br" />
                       <button
                         className="sticky-note__delete"
                         onClick={(e) => { e.stopPropagation(); handleDeleteNote(note); }}
