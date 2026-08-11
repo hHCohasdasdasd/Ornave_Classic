@@ -1208,68 +1208,83 @@ export const WorkSuitePersonalPage: React.FC = () => {
                   <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'MINDMAP' })}>+ New Mind Map</button>
                 </div>
               ) : (
-                <div className="mindmap-list">
-                  {mindMapRoots.map((root) => {
-                    const branches = mindMapBranchesOf(root.id);
-                    const size = 360;
-                    const center = size / 2;
-                    return (
-                      <div key={root.id} className="mindmap-tree-wrap">
-                        <div className="mindmap-tree" style={{ width: size, height: size }}>
-                          <svg className="mindmap-tree__lines" width={size} height={size}>
+                <div className="mindmap-canvas">
+                  <div className="mindmap-list">
+                    {mindMapRoots.map((root) => {
+                      const branches = mindMapBranchesOf(root.id);
+                      const slots = branches.length + 1; // + one open slot for the "add branch" node
+                      const size = 380;
+                      const center = size / 2;
+                      const addOffset = mindMapBranchOffset(branches.length, slots);
+                      return (
+                        <div key={root.id} className="mindmap-tree-wrap">
+                          <div className="mindmap-tree" style={{ width: size, height: size }}>
+                            <svg className="mindmap-tree__lines" width={size} height={size}>
+                              {branches.map((b, i) => {
+                                const { x, y } = mindMapBranchOffset(i, slots);
+                                const midX = center + x / 2;
+                                const midY = center + y / 2;
+                                const len = Math.sqrt(x * x + y * y) || 1;
+                                const bow = 16 * (i % 2 === 0 ? 1 : -1);
+                                const ctrlX = midX + (-y / len) * bow;
+                                const ctrlY = midY + (x / len) * bow;
+                                return (
+                                  <path
+                                    key={b.id}
+                                    d={`M ${center} ${center} Q ${ctrlX} ${ctrlY} ${center + x} ${center + y}`}
+                                    fill="none"
+                                    stroke="rgba(201, 184, 150, 0.35)"
+                                    strokeWidth={1.5}
+                                  />
+                                );
+                              })}
+                            </svg>
+
+                            <div
+                              className="mindmap-node mindmap-node--root"
+                              style={{ left: center, top: center }}
+                              onClick={() => openEditNote(root)}
+                            >
+                              <span>{noteDisplayTitle(root)}</span>
+                            </div>
+
                             {branches.map((b, i) => {
-                              const { x, y } = mindMapBranchOffset(i, branches.length);
+                              const { x, y } = mindMapBranchOffset(i, slots);
                               return (
-                                <line
+                                <div
                                   key={b.id}
-                                  x1={center}
-                                  y1={center}
-                                  x2={center + x}
-                                  y2={center + y}
-                                  stroke="var(--tech-border-dim, rgba(246,243,237,0.15))"
-                                  strokeWidth={2}
-                                />
+                                  className="mindmap-node mindmap-node--branch"
+                                  style={{ left: center + x, top: center + y }}
+                                  onClick={() => openEditNote(b)}
+                                >
+                                  <span>{noteDisplayTitle(b)}</span>
+                                  <button
+                                    className="mindmap-node__delete"
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteNote(b); }}
+                                    title="Remove branch"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
                               );
                             })}
-                          </svg>
 
-                          <div
-                            className="mindmap-node mindmap-node--root"
-                            style={{ left: center, top: center, borderColor: accentColorFromId(root.id) }}
-                            onClick={() => openEditNote(root)}
-                          >
-                            <span>{noteDisplayTitle(root)}</span>
+                            <button
+                              className="mindmap-node mindmap-node--add"
+                              style={{ left: center + addOffset.x, top: center + addOffset.y }}
+                              onClick={() => openCreateNote({ type: 'MINDMAP', parentId: root.id })}
+                              title="Add branch"
+                            >
+                              +
+                            </button>
                           </div>
-
-                          {branches.map((b, i) => {
-                            const { x, y } = mindMapBranchOffset(i, branches.length);
-                            const accent = accentColorFromId(b.id);
-                            return (
-                              <div
-                                key={b.id}
-                                className="mindmap-node mindmap-node--branch"
-                                style={{ left: center + x, top: center + y, borderColor: accent, color: accent }}
-                                onClick={() => openEditNote(b)}
-                              >
-                                <span>{noteDisplayTitle(b)}</span>
-                                <button
-                                  className="mindmap-node__delete"
-                                  onClick={(e) => { e.stopPropagation(); handleDeleteNote(b); }}
-                                  title="Remove branch"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            );
-                          })}
+                          <div className="mindmap-tree__actions">
+                            <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteNote(root)}>✕ Delete map</button>
+                          </div>
                         </div>
-                        <div className="mindmap-tree__actions">
-                          <button className="worksuite-btn" onClick={() => openCreateNote({ type: 'MINDMAP', parentId: root.id })}>+ Add branch</button>
-                          <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteNote(root)}>✕ Delete map</button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               )
             )}
