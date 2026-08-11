@@ -885,6 +885,10 @@
 .mindmap-canvas {
   padding: 40px;
   border-radius: 16px;
+  min-height: 460px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background:
     radial-gradient(ellipse at top, rgba(201, 184, 150, 0.05), transparent 60%),
     var(--tech-card-bg);
@@ -895,6 +899,7 @@
 .mindmap-list {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 48px;
 }
 
