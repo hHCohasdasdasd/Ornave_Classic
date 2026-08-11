@@ -53,6 +53,8 @@ export interface Note {
   color?: string;
   shape?: NoteShape;
   fontSize?: NoteFontSize;
+  posX?: number;
+  posY?: number;
   pinned: boolean;
   parentId?: string;
   createdAt: string;
@@ -261,13 +263,15 @@ class WorkSuiteService {
     color?: string;
     shape?: NoteShape;
     fontSize?: NoteFontSize;
+    posX?: number;
+    posY?: number;
     parentId?: string;
   }): Promise<Note> {
     const response = await apiClient.post('/work-suite/notes', data);
     return response.data.data;
   }
 
-  async updateNote(id: string, data: Partial<Pick<Note, 'title' | 'content' | 'pinned' | 'color' | 'shape' | 'fontSize'>>): Promise<Note> {
+  async updateNote(id: string, data: Partial<Pick<Note, 'title' | 'content' | 'pinned' | 'color' | 'shape' | 'fontSize' | 'posX' | 'posY'>>): Promise<Note> {
     const response = await apiClient.put(`/work-suite/notes/${id}`, data);
     return response.data.data;
   }

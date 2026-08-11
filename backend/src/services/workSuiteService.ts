@@ -345,6 +345,8 @@ export class NoteService {
       color?: string;
       shape?: string;
       fontSize?: string;
+      posX?: number;
+      posY?: number;
       parentId?: string;
     }
   ) {
@@ -363,6 +365,8 @@ export class NoteService {
         color: data.color,
         shape: data.shape,
         fontSize: data.fontSize,
+        posX: data.posX,
+        posY: data.posY,
         parentId: data.parentId,
       },
     });
@@ -378,6 +382,8 @@ export class NoteService {
       color?: string | null;
       shape?: string | null;
       fontSize?: string | null;
+      posX?: number | null;
+      posY?: number | null;
     }
   ) {
     await this.getById(userId, id);

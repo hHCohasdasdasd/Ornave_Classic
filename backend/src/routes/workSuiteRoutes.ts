@@ -309,13 +309,23 @@ workSuiteRoutes.get(
 workSuiteRoutes.post(
   '/notes',
   asyncHandler(async (req: any, res: Response) => {
-    const { type, title, content, color, shape, fontSize, parentId } = req.body;
+    const { type, title, content, color, shape, fontSize, posX, posY, parentId } = req.body;
     if (!content?.trim()) return ApiResponseHandler.error(res, 'Note content is required', undefined, 400);
     if (type && !['NOTE', 'STICKY', 'MINDMAP'].includes(type)) {
       return ApiResponseHandler.error(res, 'Invalid note type', undefined, 400);
     }
     try {
-      const note = await NoteService.create(req.user.userId, { type, title, content, color, shape, fontSize, parentId });
+      const note = await NoteService.create(req.user.userId, {
+        type,
+        title,
+        content,
+        color,
+        shape,
+        fontSize,
+        posX: posX === undefined ? undefined : Number(posX),
+        posY: posY === undefined ? undefined : Number(posY),
+        parentId,
+      });
       return ApiResponseHandler.success(res, note, 'Note created successfully', 201);
     } catch {
       return ApiResponseHandler.error(res, 'Parent note not found', undefined, 404);
@@ -326,8 +336,17 @@ workSuiteRoutes.post(
 workSuiteRoutes.put(
   '/notes/:id',
   asyncHandler(async (req: any, res: Response) => {
-    const { title, content, pinned, color, shape, fontSize } = req.body;
-    const note = await NoteService.update(req.user.userId, req.params.id, { title, content, pinned, color, shape, fontSize });
+    const { title, content, pinned, color, shape, fontSize, posX, posY } = req.body;
+    const note = await NoteService.update(req.user.userId, req.params.id, {
+      title,
+      content,
+      pinned,
+      color,
+      shape,
+      fontSize,
+      posX: posX === undefined ? undefined : Number(posX),
+      posY: posY === undefined ? undefined : Number(posY),
+    });
     return ApiResponseHandler.success(res, note, 'Note updated successfully', 200);
   })
 );

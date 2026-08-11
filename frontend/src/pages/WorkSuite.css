@@ -1092,6 +1092,30 @@
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
 }
 
+/* The floating chip that follows the cursor while dragging a shape in from
+   the sidebar — created imperatively (not React-rendered), so it needs
+   fixed positioning and to sit above literally everything else. */
+.mindmap-shape-chip--ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.85;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+}
+
+.mindmap-node--branch {
+  cursor: grab;
+}
+
+.mindmap-node--dragging {
+  cursor: grabbing;
+  opacity: 0.85;
+  transition: none !important;
+  z-index: 5 !important;
+}
+
 .mindmap-size-picker {
   display: flex;
   gap: 6px;

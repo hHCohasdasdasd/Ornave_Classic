@@ -791,6 +791,8 @@ model Note {
   color     String? // sticky-note background color, or mind-map node accent color
   shape     String? // mind-map node shape: pill | rect | diamond | hexagon
   fontSize  String? // mind-map node text size: sm | md | lg
+  posX      Float? // mind-map branch position, relative to the tree's center — null means "not manually placed, use auto layout"
+  posY      Float?
   pinned    Boolean  @default(false)
   parentId  String? // MINDMAP branches point at the root/parent node they hang off
   createdAt DateTime @default(now())

@@ -568,12 +568,20 @@ export const WorkSuitePersonalPage: React.FC = () => {
 
   // ---------------------------------------------------------------------
   // Mind map tools panel — select a node, then style it (shape/color/size)
-  // from the sidebar, or drag a shape chip straight onto the canvas/a node.
+  // from the sidebar. Dragging (both a shape chip in from the sidebar, and
+  // repositioning an existing node) uses plain pointer events rather than
+  // native HTML5 drag-and-drop — native DnD's dataTransfer-based session
+  // turned out to be unreliable for this, so this tracks mousemove/mouseup
+  // directly, same as any custom drag implementation.
   // ---------------------------------------------------------------------
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const selectedNode = mindMapNotes.find((n) => n.id === selectedNodeId) || null;
+  // While a node is being dragged, its live on-screen position overrides
+  // whatever loadNotes() last gave it, so the drag tracks the cursor smoothly
+  // instead of waiting on a round trip for every pixel of movement.
+  const [dragPreview, setDragPreview] = useState<{ id: string; x: number; y: number } | null>(null);
 
-  const updateNodeStyle = async (id: string, patch: Partial<Pick<Note, 'shape' | 'color' | 'fontSize'>>) => {
+  const updateNodeStyle = async (id: string, patch: Partial<Pick<Note, 'shape' | 'color' | 'fontSize' | 'posX' | 'posY'>>) => {
     setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...patch } : n)));
     try {
       await workSuiteService.updateNote(id, patch);
@@ -582,31 +590,86 @@ export const WorkSuitePersonalPage: React.FC = () => {
     }
   };
 
-  const handleShapeDropOnCanvas = async (e: React.DragEvent, rootId: string) => {
-    e.preventDefault();
-    const shape = e.dataTransfer.getData('shape') as NoteShape;
-    if (!shape) return;
-    try {
-      const created = await workSuiteService.createNote({
-        type: 'MINDMAP',
-        title: 'New idea',
-        content: 'New idea',
-        shape,
-        parentId: rootId,
-      });
-      setNotes((prev) => [created, ...prev]);
-      openEditNote(created);
-    } catch {
-      setNoteError('Could not add that branch — try again.');
-    }
+  /** Reposition an existing node — mousedown on the node, drag, release to commit. */
+  const handleNodeDragStart = (e: React.MouseEvent, node: Note, startX: number, startY: number) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+    let moved = false;
+    setSelectedNodeId(node.id);
+
+    const onMove = (ev: MouseEvent) => {
+      const dx = ev.clientX - startMouseX;
+      const dy = ev.clientY - startMouseY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+      setDragPreview({ id: node.id, x: startX + dx, y: startY + dy });
+    };
+    const onUp = async (ev: MouseEvent) => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      setDragPreview(null);
+      if (!moved) return; // a plain click — selection above already handled it
+      const dx = ev.clientX - startMouseX;
+      const dy = ev.clientY - startMouseY;
+      await updateNodeStyle(node.id, { posX: startX + dx, posY: startY + dy });
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
   };
 
-  const handleShapeDropOnNode = (e: React.DragEvent, nodeId: string) => {
+  /** Drag a shape chip in from the sidebar — creates a new branch at the drop point when
+   * released over a tree's canvas, or restyles an existing node if released on top of one. */
+  const handleShapeChipDragStart = (e: React.MouseEvent, shape: NoteShape) => {
+    if (e.button !== 0) return;
     e.preventDefault();
-    e.stopPropagation();
-    const shape = e.dataTransfer.getData('shape') as NoteShape;
-    if (!shape) return;
-    updateNodeStyle(nodeId, { shape });
+
+    const ghost = document.createElement('div');
+    ghost.className = `mindmap-shape-chip mindmap-shape-chip--${shape} mindmap-shape-chip--ghost`;
+    ghost.style.left = `${e.clientX - 16}px`;
+    ghost.style.top = `${e.clientY - 16}px`;
+    document.body.appendChild(ghost);
+
+    const onMove = (ev: MouseEvent) => {
+      ghost.style.left = `${ev.clientX - 16}px`;
+      ghost.style.top = `${ev.clientY - 16}px`;
+    };
+
+    const onUp = async (ev: MouseEvent) => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      ghost.remove();
+
+      const target = document.elementFromPoint(ev.clientX, ev.clientY);
+      const nodeEl = target?.closest<HTMLElement>('[data-node-id]');
+      if (nodeEl) {
+        updateNodeStyle(nodeEl.dataset.nodeId!, { shape });
+        return;
+      }
+      const treeEl = target?.closest<HTMLElement>('[data-root-id]');
+      if (!treeEl) return;
+      const rect = treeEl.getBoundingClientRect();
+      const dropX = ev.clientX - rect.left - rect.width / 2;
+      const dropY = ev.clientY - rect.top - rect.height / 2;
+      try {
+        const created = await workSuiteService.createNote({
+          type: 'MINDMAP',
+          title: 'New idea',
+          content: 'New idea',
+          shape,
+          posX: dropX,
+          posY: dropY,
+          parentId: treeEl.dataset.rootId,
+        });
+        setNotes((prev) => [created, ...prev]);
+        openEditNote(created);
+      } catch {
+        setNoteError('Could not add that branch — try again.');
+      }
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
   };
 
   const [noteSearch, setNoteSearch] = useState('');
@@ -1273,22 +1336,24 @@ export const WorkSuitePersonalPage: React.FC = () => {
                     <div className="mindmap-list">
                       {mindMapRoots.map((root) => {
                         const branches = mindMapBranchesOf(root.id);
-                        const slots = branches.length + 1; // + one open slot for the "add branch" node
+                        const autoCount = branches.filter((b) => b.posX == null || b.posY == null).length;
                         const size = 380;
                         const center = size / 2;
-                        const addOffset = mindMapBranchOffset(branches.length, slots);
+                        let autoIdx = 0;
+                        const branchPositions = branches.map((b) =>
+                          b.posX != null && b.posY != null
+                            ? { x: b.posX, y: b.posY }
+                            : mindMapBranchOffset(autoIdx++, Math.max(autoCount, 1))
+                        );
+                        const addOffset = mindMapBranchOffset(autoCount, Math.max(autoCount + 1, 1));
                         const rootFontPx = MINDMAP_FONT_SIZES.find((f) => f.key === (root.fontSize || 'md'))?.px;
                         return (
                           <div key={root.id} className="mindmap-tree-wrap">
-                            <div
-                              className="mindmap-tree"
-                              style={{ width: size, height: size }}
-                              onDragOver={(e) => e.preventDefault()}
-                              onDrop={(e) => handleShapeDropOnCanvas(e, root.id)}
-                            >
+                            <div className="mindmap-tree" style={{ width: size, height: size }} data-root-id={root.id}>
                               <svg className="mindmap-tree__lines" width={size} height={size}>
                                 {branches.map((b, i) => {
-                                  const { x, y } = mindMapBranchOffset(i, slots);
+                                  const pos = branchPositions[i];
+                                  const { x, y } = dragPreview?.id === b.id ? dragPreview : pos;
                                   const midX = center + x / 2;
                                   const midY = center + y / 2;
                                   const len = Math.sqrt(x * x + y * y) || 1;
@@ -1310,13 +1375,14 @@ export const WorkSuitePersonalPage: React.FC = () => {
                               <div
                                 className={`mindmap-node mindmap-node--root mindmap-node--shape-${root.shape || 'pill'}${selectedNodeId === root.id ? ' mindmap-node--selected' : ''}`}
                                 style={{ left: center, top: center, fontSize: rootFontPx, ...(root.color ? { borderColor: root.color, color: root.color } : {}) }}
-                                onClick={(e) => { e.stopPropagation(); setSelectedNodeId(root.id); }}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={(e) => handleShapeDropOnNode(e, root.id)}
+                                data-node-id={root.id}
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => { e.stopPropagation(); setSelectedNodeId(root.id); }}
                               >
                                 <span>{noteDisplayTitle(root)}</span>
                                 <button
                                   className="mindmap-node__edit"
+                                  onMouseDown={(e) => e.stopPropagation()}
                                   onClick={(e) => { e.stopPropagation(); openEditNote(root); }}
                                   title="Edit"
                                 >
@@ -1325,20 +1391,23 @@ export const WorkSuitePersonalPage: React.FC = () => {
                               </div>
 
                               {branches.map((b, i) => {
-                                const { x, y } = mindMapBranchOffset(i, slots);
+                                const pos = branchPositions[i];
+                                const isDragging = dragPreview?.id === b.id;
+                                const { x, y } = isDragging ? dragPreview : pos;
                                 const fontPx = MINDMAP_FONT_SIZES.find((f) => f.key === (b.fontSize || 'md'))?.px;
                                 return (
                                   <div
                                     key={b.id}
-                                    className={`mindmap-node mindmap-node--branch mindmap-node--shape-${b.shape || 'pill'}${selectedNodeId === b.id ? ' mindmap-node--selected' : ''}`}
+                                    className={`mindmap-node mindmap-node--branch mindmap-node--shape-${b.shape || 'pill'}${selectedNodeId === b.id ? ' mindmap-node--selected' : ''}${isDragging ? ' mindmap-node--dragging' : ''}`}
                                     style={{ left: center + x, top: center + y, fontSize: fontPx, ...(b.color ? { borderColor: b.color, color: b.color } : {}) }}
-                                    onClick={(e) => { e.stopPropagation(); setSelectedNodeId(b.id); }}
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={(e) => handleShapeDropOnNode(e, b.id)}
+                                    data-node-id={b.id}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => handleNodeDragStart(e, b, pos.x, pos.y)}
                                   >
                                     <span>{noteDisplayTitle(b)}</span>
                                     <button
                                       className="mindmap-node__edit"
+                                      onMouseDown={(e) => e.stopPropagation()}
                                       onClick={(e) => { e.stopPropagation(); openEditNote(b); }}
                                       title="Edit"
                                     >
@@ -1346,6 +1415,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                                     </button>
                                     <button
                                       className="mindmap-node__delete"
+                                      onMouseDown={(e) => e.stopPropagation()}
                                       onClick={(e) => { e.stopPropagation(); handleDeleteNote(b); }}
                                       title="Remove branch"
                                     >
@@ -1381,15 +1451,14 @@ export const WorkSuitePersonalPage: React.FC = () => {
                           <div
                             key={s.key}
                             className={`mindmap-shape-chip mindmap-shape-chip--${s.key}`}
-                            draggable
-                            onDragStart={(e) => e.dataTransfer.setData('shape', s.key)}
+                            onMouseDown={(e) => handleShapeChipDragStart(e, s.key)}
                             onClick={() => selectedNode && updateNodeStyle(selectedNode.id, { shape: s.key })}
                             title={s.label}
                           />
                         ))}
                       </div>
                       <p className="worksuite-tasks-settings__hint">
-                        Drag a shape onto the canvas to add a node, onto an existing node to restyle it, or click one with a node selected.
+                        Drag a shape onto the canvas to add a node, onto an existing node to restyle it, or click one with a node selected. Drag a branch itself to move it.
                       </p>
                     </div>
 
