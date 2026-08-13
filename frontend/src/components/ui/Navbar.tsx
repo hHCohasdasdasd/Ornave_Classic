@@ -8,7 +8,7 @@ import { scopedKey } from '@/utils/storage';
 import {
   IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel,
   IconBuilding, IconBriefcase, IconSearch, IconUsers, IconCard, IconUser, IconChart, IconSpark,
-  IconLogout, IconBag, IconLayers, IconHandshake, IconArticle, IconCompass,
+  IconLogout, IconBag, IconLayers, IconHandshake, IconCompass,
   IconPaperclip,
 } from './Icons';
 interface NavbarProps {
@@ -102,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
     {
       icon: <IconLayers />,
       label: 'Work Suite Home',
-      description: 'Your mini-ERP hub — files, tasks, clients, invoices.',
+      description: 'Your mini-ERP hub — files, tasks, connections.',
       route: '/work-suite',
     },
     {
@@ -113,15 +113,9 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
     },
     {
       icon: <IconHandshake />,
-      label: 'Clients',
-      description: 'A lightweight CRM for who you work with.',
-      route: '/work-suite/clients',
-    },
-    {
-      icon: <IconArticle />,
-      label: 'Invoices',
-      description: 'Bill clients and track what is owed.',
-      route: '/work-suite/invoices',
+      label: 'Connections',
+      description: "Your network — the people you're connected with on Ornave.",
+      route: '/work-suite/connections',
     },
     {
       icon: <IconCompass />,

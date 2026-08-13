@@ -72,8 +72,7 @@ import { FirmClientManagementPage } from '@/pages/FirmClientManagementPage';
 import { WorkSuiteHomePage } from '@/pages/WorkSuiteHomePage';
 import { WorkSuiteFilesPage } from '@/pages/WorkSuiteFilesPage';
 import { WorkSuitePersonalPage } from '@/pages/WorkSuitePersonalPage';
-import { WorkSuiteClientsPage } from '@/pages/WorkSuiteClientsPage';
-import { WorkSuiteInvoicesPage } from '@/pages/WorkSuiteInvoicesPage';
+import { WorkSuiteConnectionsPage } from '@/pages/WorkSuiteConnectionsPage';
 import { WorkSuiteAchievementsPage } from '@/pages/WorkSuiteAchievementsPage';
 import { AuthModal } from '@/components/ui/AuthModal';
 import { CreatePostModal } from '@/components/personal/CreatePostModal';
@@ -283,13 +282,15 @@ function App() {
             <Route path="/work-suite" element={<WorkSuiteHomePage />} />
             <Route path="/work-suite/files" element={<WorkSuiteFilesPage />} />
             <Route path="/work-suite/personal" element={<WorkSuitePersonalPage />} />
-            <Route path="/work-suite/clients" element={<WorkSuiteClientsPage />} />
-            <Route path="/work-suite/invoices" element={<WorkSuiteInvoicesPage />} />
+            <Route path="/work-suite/connections" element={<WorkSuiteConnectionsPage />} />
             <Route path="/work-suite/achievements" element={<WorkSuiteAchievementsPage />} />
-            {/* Tasks/Goals were merged into one Planning page, and Projects became Files — keep old links working. */}
+            {/* Tasks/Goals were merged into one Planning page, Projects became Files, and
+                Clients became Connections; Invoices was removed outright. Keep old links working. */}
             <Route path="/work-suite/tasks" element={<WorkSuiteLegacyRedirect tab="board" />} />
             <Route path="/work-suite/goals" element={<WorkSuiteLegacyRedirect tab="goals" />} />
             <Route path="/work-suite/projects" element={<Navigate to="/work-suite/files" replace />} />
+            <Route path="/work-suite/clients" element={<Navigate to="/work-suite/connections" replace />} />
+            <Route path="/work-suite/invoices" element={<Navigate to="/work-suite" replace />} />
 
             {/* For Business Routes */}
             <Route path="/leads" element={<LeadsPage />} />

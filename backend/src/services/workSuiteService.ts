@@ -496,10 +496,9 @@ export class WorkSuiteService {
 
   /**
    * Assistant briefing: a short list of things worth surfacing right now —
-   * overdue/due-soon tasks, invoices past their due date, goals nearing
-   * their target, and goals that haven't moved in a while. Each insight
-   * carries an actionRoute so the UI can render it as a one-click nudge
-   * rather than just a notice.
+   * overdue/due-soon tasks, goals nearing their target, and goals that
+   * haven't moved in a while. Each insight carries an actionRoute so the UI
+   * can render it as a one-click nudge rather than just a notice.
    */
   static async getInsights(userId: string) {
     const now = new Date();
@@ -507,10 +506,9 @@ export class WorkSuiteService {
     const weekOut = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const staleCutoff = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-    const [overdueTasks, dueSoonTasks, overdueInvoices, goalsNearDeadline, staleGoals] = await Promise.all([
+    const [overdueTasks, dueSoonTasks, goalsNearDeadline, staleGoals] = await Promise.all([
       prisma.task.findMany({ where: { userId, status: { not: 'DONE' }, dueDate: { lt: now } }, orderBy: { dueDate: 'asc' } }),
       prisma.task.findMany({ where: { userId, status: { not: 'DONE' }, dueDate: { gte: now, lte: soon } }, orderBy: { dueDate: 'asc' } }),
-      prisma.invoice.findMany({ where: { userId, status: { in: ['DRAFT', 'SENT'] }, dueDate: { lt: now } }, include: { client: { select: { name: true } } } }),
       prisma.goal.findMany({ where: { userId, status: 'ACTIVE', targetDate: { gte: now, lte: weekOut } } }),
       prisma.goal.findMany({ where: { userId, status: 'ACTIVE', updatedAt: { lt: staleCutoff } } }),
     ]);
@@ -538,19 +536,6 @@ export class WorkSuiteService {
           : `${dueSoonTasks.length} tasks are due in the next couple of days.`,
         actionLabel: 'View tasks',
         actionRoute: '/work-suite/personal?tab=board',
-      });
-    }
-
-    if (overdueInvoices.length > 0) {
-      const first = overdueInvoices[0];
-      insights.push({
-        id: 'overdue-invoices',
-        icon: '🧾',
-        message: overdueInvoices.length === 1
-          ? `Invoice ${first.invoiceNumber}${first.client ? ` to ${first.client.name}` : ''} is past due.`
-          : `${overdueInvoices.length} invoices are past due.`,
-        actionLabel: 'Review invoices',
-        actionRoute: '/work-suite/invoices',
       });
     }
 

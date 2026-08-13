@@ -2380,3 +2380,22 @@
   opacity: 1;
   color: #e08080;
 }
+
+/* Connections — card avatars */
+.worksuite-connection-avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--tech-border-dim);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tech-accent-gold-text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--tech-border);
+}
