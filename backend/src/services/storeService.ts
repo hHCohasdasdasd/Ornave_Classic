@@ -324,7 +324,7 @@ export class OrderDocumentService {
     return prisma.orderDocument.findMany({ where: { orderId }, orderBy: { createdAt: 'desc' } });
   }
 
-  static async create(orderId: string, data: { name: string; size: number; mimeType: string; storageKey: string }) {
+  static async create(orderId: string, data: { name: string; size: number; mimeType: string; storageKey: string; uploadedByCompany: boolean }) {
     return prisma.orderDocument.create({ data: { orderId, ...data } });
   }
 
@@ -338,5 +338,15 @@ export class OrderDocumentService {
     const doc = await this.getById(orderId, id);
     await prisma.orderDocument.delete({ where: { id } });
     return doc;
+  }
+}
+
+export class OrderMessageService {
+  static async list(orderId: string) {
+    return prisma.orderMessage.findMany({ where: { orderId }, orderBy: { createdAt: 'asc' } });
+  }
+
+  static async create(orderId: string, senderIsCompany: boolean, content: string) {
+    return prisma.orderMessage.create({ data: { orderId, senderIsCompany, content } });
   }
 }

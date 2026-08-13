@@ -629,24 +629,41 @@ model Order {
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   items              OrderItem[]
   documents          OrderDocument[]
+  messages           OrderMessage[]
 
   @@index([userId])
   @@index([companyId])
   @@index([status])
 }
 
-// A receipt/document the SELLING company attaches to one of the buyer's
-// orders (e.g. a receipt or shipping confirmation) — company-uploaded,
-// buyer-visible. Uses the same Supabase Storage bucket as personal Files.
+// A receipt/document attached to an order — either side can upload
+// (uploadedByCompany distinguishes who, and gates who can delete it), both
+// can see it. Uses the same Supabase Storage bucket as personal Files.
 model OrderDocument {
-  id         String   @id @default(cuid())
-  orderId    String
-  name       String
-  size       Int
-  mimeType   String
-  storageKey String   @unique
-  createdAt  DateTime @default(now())
-  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id                String   @id @default(cuid())
+  orderId           String
+  uploadedByCompany Boolean  @default(true)
+  name              String
+  size              Int
+  mimeType          String
+  storageKey        String   @unique
+  createdAt         DateTime @default(now())
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+// A flat message thread scoped to one order — the buyer and the selling
+// company writing directly to each other about that specific purchase.
+// Only these two exact parties exist in Order, so `senderIsCompany` alone
+// is enough to attribute a message without extra relations.
+model OrderMessage {
+  id              String   @id @default(cuid())
+  orderId         String
+  senderIsCompany Boolean
+  content         String
+  createdAt       DateTime @default(now())
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
 }

@@ -3,7 +3,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
-import { StoreService, OrderDocumentService } from '../services/storeService';
+import { StoreService, OrderDocumentService, OrderMessageService } from '../services/storeService';
 import { ApiResponseHandler } from '../utils/apiResponse';
 import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
 
@@ -165,7 +165,8 @@ storeRoutes.patch(
 );
 
 /**
- * ORDER DOCUMENTS (receipts the selling company attaches to an order)
+ * ORDER DOCUMENTS — either the buyer or the selling company can attach one;
+ * each side can only delete what it uploaded.
  */
 
 storeRoutes.get(
@@ -186,11 +187,10 @@ storeRoutes.post(
   authMiddleware,
   upload.single('file'),
   asyncHandler(async (req: any, res: Response) => {
-    if (!req.user.companyId) {
-      return ApiResponseHandler.error(res, 'Only the selling company can attach a document', undefined, 403);
-    }
     const order = await StoreService.getOrderById(req.params.orderId);
-    if (!order || order.companyId !== req.user.companyId) {
+    const isCompanySide = !!order && order.companyId === req.user.companyId;
+    const isBuyerSide = !!order && order.userId === req.user.userId;
+    if (!order || (!isCompanySide && !isBuyerSide)) {
       return ApiResponseHandler.error(res, 'Order not found', undefined, 404);
     }
     if (!req.file) return ApiResponseHandler.error(res, 'No file provided', undefined, 400);
@@ -211,6 +211,7 @@ storeRoutes.post(
       size: req.file.size,
       mimeType: req.file.mimetype,
       storageKey,
+      uploadedByCompany: isCompanySide,
     });
     return ApiResponseHandler.success(res, document, 'Document uploaded successfully', 201);
   })
@@ -240,17 +241,54 @@ storeRoutes.delete(
   '/orders/:orderId/documents/:docId',
   authMiddleware,
   asyncHandler(async (req: any, res: Response) => {
-    if (!req.user.companyId) {
-      return ApiResponseHandler.error(res, 'Only the selling company can remove a document', undefined, 403);
-    }
     const order = await StoreService.getOrderById(req.params.orderId);
-    if (!order || order.companyId !== req.user.companyId) {
+    if (!order || (order.userId !== req.user.userId && order.companyId !== req.user.companyId)) {
       return ApiResponseHandler.error(res, 'Order not found', undefined, 404);
     }
-    const doc = await OrderDocumentService.remove(order.id, req.params.docId);
+    const doc = await OrderDocumentService.getById(order.id, req.params.docId);
+    const isCompanySide = order.companyId === req.user.companyId;
+    if (doc.uploadedByCompany !== isCompanySide) {
+      return ApiResponseHandler.error(res, 'You can only remove documents you uploaded', undefined, 403);
+    }
+    await OrderDocumentService.remove(order.id, doc.id);
     const supabase = requireSupabaseAdmin();
     await supabase.storage.from(FILES_BUCKET).remove([doc.storageKey]);
     return ApiResponseHandler.success(res, {}, 'Document deleted successfully');
+  })
+);
+
+/**
+ * ORDER MESSAGES — the buyer and selling company writing directly to each
+ * other about this specific order.
+ */
+
+storeRoutes.get(
+  '/orders/:orderId/messages',
+  authMiddleware,
+  asyncHandler(async (req: any, res: Response) => {
+    const order = await StoreService.getOrderById(req.params.orderId);
+    if (!order || (order.userId !== req.user.userId && order.companyId !== req.user.companyId)) {
+      return ApiResponseHandler.error(res, 'Order not found', undefined, 404);
+    }
+    const messages = await OrderMessageService.list(order.id);
+    return ApiResponseHandler.success(res, messages, 'Messages retrieved successfully');
+  })
+);
+
+storeRoutes.post(
+  '/orders/:orderId/messages',
+  authMiddleware,
+  asyncHandler(async (req: any, res: Response) => {
+    const order = await StoreService.getOrderById(req.params.orderId);
+    const isCompanySide = !!order && order.companyId === req.user.companyId;
+    const isBuyerSide = !!order && order.userId === req.user.userId;
+    if (!order || (!isCompanySide && !isBuyerSide)) {
+      return ApiResponseHandler.error(res, 'Order not found', undefined, 404);
+    }
+    const content = (req.body.content || '').trim();
+    if (!content) return ApiResponseHandler.error(res, 'Message content is required', undefined, 400);
+    const message = await OrderMessageService.create(order.id, isCompanySide, content);
+    return ApiResponseHandler.success(res, message, 'Message sent successfully', 201);
   })
 );
 

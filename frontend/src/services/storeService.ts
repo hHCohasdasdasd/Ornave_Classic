@@ -75,6 +75,14 @@ export interface OrderDocument {
   name: string;
   size: number;
   mimeType: string;
+  uploadedByCompany: boolean;
+  createdAt: string;
+}
+
+export interface OrderMessage {
+  id: string;
+  senderIsCompany: boolean;
+  content: string;
   createdAt: string;
 }
 
@@ -285,6 +293,16 @@ class StoreService {
 
   async deleteOrderDocument(orderId: string, docId: string): Promise<void> {
     await apiClient.delete(`/store/orders/${orderId}/documents/${docId}`);
+  }
+
+  async getOrderMessages(orderId: string): Promise<OrderMessage[]> {
+    const response = await apiClient.get(`/store/orders/${orderId}/messages`);
+    return response.data.data || [];
+  }
+
+  async sendOrderMessage(orderId: string, content: string): Promise<OrderMessage> {
+    const response = await apiClient.post(`/store/orders/${orderId}/messages`, { content });
+    return response.data.data;
   }
 }
 

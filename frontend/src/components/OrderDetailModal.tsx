@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Order, OrderDocument, storeService } from '@/services/storeService';
+import { Order, OrderDocument, OrderMessage, storeService } from '@/services/storeService';
 import { getProductMedia } from '@/services/storeService';
 import { IconImage, IconCard } from '@/components/ui/Icons';
 import './OrderDetailModal.css';
@@ -47,6 +47,11 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order: initi
   const [isSavingStatus, setIsSavingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [messages, setMessages] = useState<OrderMessage[]>([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+  const [messageDraft, setMessageDraft] = useState('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const billing = formatAddress(order.billingAddress, order.billingCity, order.billingState, order.billingPostalCode, order.billingCountry);
   const delivery = formatAddress(order.deliveryAddress, order.deliveryCity, order.deliveryState, order.deliveryPostalCode, order.deliveryCountry);
@@ -56,7 +61,31 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order: initi
     storeService.getOrderDocuments(order.id)
       .then(setDocuments)
       .finally(() => setIsLoadingDocs(false));
+
+    setIsLoadingMessages(true);
+    storeService.getOrderMessages(order.id)
+      .then(setMessages)
+      .finally(() => setIsLoadingMessages(false));
   }, [order.id]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [messages.length]);
+
+  const handleSendMessage = async () => {
+    const content = messageDraft.trim();
+    if (!content) return;
+    setIsSendingMessage(true);
+    try {
+      const sent = await storeService.sendOrderMessage(order.id, content);
+      setMessages((prev) => [...prev, sent]);
+      setMessageDraft('');
+    } catch {
+      setError('Could not send that message — try again.');
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
 
   const handleSaveStatus = async () => {
     setIsSavingStatus(true);
@@ -189,9 +218,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order: initi
         <div className="order-modal__section">
           <div className="order-modal__section-header-row">
             <h3 className="order-modal__section-title" style={{ margin: 0 }}>Receipts &amp; Documents</h3>
-            {isCompanyView && (
-              <button className="order-modal__upload-btn" onClick={() => fileInputRef.current?.click()}>+ Upload</button>
-            )}
+            <button className="order-modal__upload-btn" onClick={() => fileInputRef.current?.click()}>+ Upload</button>
             <input
               ref={fileInputRef}
               type="file"
@@ -217,27 +244,70 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order: initi
           {isLoadingDocs ? (
             <p className="order-modal__block-text">Loading…</p>
           ) : documents.length === 0 ? (
-            <p className="order-modal__block-text">
-              {isCompanyView ? 'No documents attached yet.' : "The seller hasn't attached anything for this order yet."}
-            </p>
+            <p className="order-modal__block-text">Nothing attached to this order yet — either side can add one.</p>
           ) : (
             <div className="order-modal__documents">
-              {documents.map((doc) => (
-                <div key={doc.id} className="order-modal__document">
-                  <div>
-                    <span className="order-modal__document-name">{doc.name}</span>
-                    <span className="order-modal__document-meta">{formatBytes(doc.size)}</span>
+              {documents.map((doc) => {
+                const uploadedByMe = doc.uploadedByCompany === !!isCompanyView;
+                return (
+                  <div key={doc.id} className="order-modal__document">
+                    <div>
+                      <span className="order-modal__document-name">{doc.name}</span>
+                      <span className="order-modal__document-meta">
+                        {formatBytes(doc.size)} · {uploadedByMe ? 'You' : doc.uploadedByCompany ? 'Seller' : 'Buyer'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="order-modal__doc-btn" onClick={() => handleDownload(doc)}>Download</button>
+                      {uploadedByMe && (
+                        <button className="order-modal__doc-btn order-modal__doc-btn--danger" onClick={() => handleDeleteDoc(doc)}>Delete</button>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button className="order-modal__doc-btn" onClick={() => handleDownload(doc)}>Download</button>
-                    {isCompanyView && (
-                      <button className="order-modal__doc-btn order-modal__doc-btn--danger" onClick={() => handleDeleteDoc(doc)}>Delete</button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+        </div>
+
+        <div className="order-modal__section">
+          <h3 className="order-modal__section-title">Messages</h3>
+          <div className="order-modal__thread">
+            {isLoadingMessages ? (
+              <p className="order-modal__block-text">Loading…</p>
+            ) : messages.length === 0 ? (
+              <p className="order-modal__block-text">
+                No messages yet — {isCompanyView ? 'write to the buyer' : 'write to the seller'} about this order below.
+              </p>
+            ) : (
+              <div className="order-modal__thread-list">
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`order-modal__bubble${msg.senderIsCompany === !!isCompanyView ? ' order-modal__bubble--own' : ''}`}
+                  >
+                    <p className="order-modal__bubble-text">{msg.content}</p>
+                    <span className="order-modal__bubble-time">
+                      {new Date(msg.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </div>
+          <div className="order-modal__composer">
+            <input
+              placeholder={isCompanyView ? 'Message the buyer…' : 'Message the seller…'}
+              value={messageDraft}
+              onChange={(e) => setMessageDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
+              maxLength={2000}
+            />
+            <button onClick={handleSendMessage} disabled={!messageDraft.trim() || isSendingMessage}>
+              {isSendingMessage ? 'Sending…' : 'Send'}
+            </button>
+          </div>
         </div>
 
         <div className="order-modal__section order-modal__section--split">
