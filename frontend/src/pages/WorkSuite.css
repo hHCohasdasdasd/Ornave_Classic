@@ -2399,3 +2399,8 @@
   cursor: pointer;
   border: 1px solid var(--tech-border);
 }
+
+.worksuite-connection-avatar--square {
+  border-radius: 10px;
+  font-size: 1.15rem;
+}

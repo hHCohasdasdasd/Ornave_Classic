@@ -37,6 +37,21 @@ export interface ConnectionRequest {
   status: 'pending' | 'accepted' | 'rejected';
 }
 
+export interface FirmConnection {
+  id: string;
+  companyId: string;
+  relationshipType: string;
+  status: 'PENDING' | 'ACTIVE' | 'REVOKED';
+  company: {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    logo?: string;
+    industry?: string;
+  };
+}
+
 export interface DiscoveryFilters {
   industry?: string;
   location?: string;

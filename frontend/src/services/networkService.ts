@@ -1,4 +1,4 @@
-import { ConnectionRequest, UserProfile } from '@/types/discovery';
+import { ConnectionRequest, FirmConnection, UserProfile } from '@/types/discovery';
 import { apiClient } from './api';
 import { firmService } from './firmService';
 
@@ -64,6 +64,16 @@ class NetworkService {
   async getRecentConnections(): Promise<UserProfile[]> {
     const response = await apiClient.getMyConnections();
     return (response?.data || []).map((u: any) => ({ ...u, isConnected: true }));
+  }
+
+  /** This user's active connections to companies/firms (as opposed to other individual members). */
+  async getFirmConnections(): Promise<FirmConnection[]> {
+    try {
+      const response = await apiClient.getGlobalConnections();
+      return (response?.data || []).filter((c: FirmConnection) => c.status === 'ACTIVE');
+    } catch {
+      return [];
+    }
   }
 
   /** Real "people you may know" suggestions — other registered users not already connected/pending. */

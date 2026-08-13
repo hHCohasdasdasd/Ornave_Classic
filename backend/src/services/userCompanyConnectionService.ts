@@ -70,7 +70,7 @@ export class UserCompanyConnectionService {
     return prisma.userCompanyConnection.findMany({
       where: { userId },
       include: {
-        company: { select: { id: true, name: true, slug: true, description: true } },
+        company: { select: { id: true, name: true, slug: true, description: true, logo: true, industry: true } },
       },
       orderBy: { updatedAt: 'desc' },
     });
