@@ -12,13 +12,13 @@ const GROWTH_MODULES = [
 ];
 
 const FREELANCE_MODULES = [
-  { icon: '📁', title: 'Projects', description: 'Track initiatives from kickoff to completion.', route: '/work-suite/projects' },
+  { icon: '☁️', title: 'Files', description: 'Your own cloud — upload, store, and get back anything, anytime.', route: '/work-suite/files' },
   { icon: '🤝', title: 'Clients', description: 'A lightweight CRM for the people and firms you work with.', route: '/work-suite/clients' },
   { icon: '🧾', title: 'Invoices', description: 'Bill clients and track what is owed.', route: '/work-suite/invoices' },
 ];
 
 const COMPANY_MODULES = [
-  { icon: '📁', title: 'Projects', description: 'Track initiatives from kickoff to completion.', route: '/work-suite/projects' },
+  { icon: '☁️', title: 'Files', description: 'Your own cloud — upload, store, and get back anything, anytime.', route: '/work-suite/files' },
   { icon: '✅', title: 'Tasks', description: 'Everything on your plate, organized by status and priority.', route: '/work-suite/personal?tab=board' },
   { icon: '🤝', title: 'Clients', description: 'A lightweight CRM for the people and firms you work with.', route: '/work-suite/clients' },
   { icon: '🧾', title: 'Invoices', description: 'Bill clients and track what is owed.', route: '/work-suite/invoices' },
@@ -90,7 +90,7 @@ export const WorkSuiteHomePage: React.FC = () => {
   const eyebrow = isCompany ? 'Company Workspace' : 'Personal Workspace';
   const title = isCompany ? (company?.name || 'Your Company') : `${timeGreeting()}, ${user?.firstName || 'there'}`;
   const subtitle = isCompany
-    ? `Your assistant for running ${company?.name || 'the business'} — projects, tasks, clients, and invoicing, plus the full company ERP below.`
+    ? `Your assistant for running ${company?.name || 'the business'} — files, tasks, clients, and invoicing, plus the full company ERP below.`
     : "I'm here to help you stay on top of things — tasks, goals, and everything in between.";
 
   return (

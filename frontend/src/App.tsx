@@ -31,9 +31,8 @@ const ProfilePageWithKey = () => {
   return <ProfilePage key={location.pathname + location.search} />;
 };
 
-// Tasks/Goals were merged into the Planning page's tabs. Old links (including
-// ?projectId= from the Projects page) still redirect to wherever that
-// content lives now.
+// Tasks/Goals were merged into the Planning page's tabs, and Projects became
+// Files. Old links still redirect to wherever that content lives now.
 const WorkSuiteLegacyRedirect: React.FC<{ tab?: 'board' | 'goals' }> = ({ tab }) => {
   const location = useLocation();
   if (!tab) return <Navigate to="/work-suite" replace />;
@@ -71,7 +70,7 @@ import { PurchasedServicesPage } from '@/pages/PurchasedServicesPage';
 import { FirmServiceOverviewPage } from '@/pages/FirmServiceOverviewPage';
 import { FirmClientManagementPage } from '@/pages/FirmClientManagementPage';
 import { WorkSuiteHomePage } from '@/pages/WorkSuiteHomePage';
-import { WorkSuiteProjectsPage } from '@/pages/WorkSuiteProjectsPage';
+import { WorkSuiteFilesPage } from '@/pages/WorkSuiteFilesPage';
 import { WorkSuitePersonalPage } from '@/pages/WorkSuitePersonalPage';
 import { WorkSuiteClientsPage } from '@/pages/WorkSuiteClientsPage';
 import { WorkSuiteInvoicesPage } from '@/pages/WorkSuiteInvoicesPage';
@@ -282,14 +281,15 @@ function App() {
 
             {/* Work Suite Routes */}
             <Route path="/work-suite" element={<WorkSuiteHomePage />} />
-            <Route path="/work-suite/projects" element={<WorkSuiteProjectsPage />} />
+            <Route path="/work-suite/files" element={<WorkSuiteFilesPage />} />
             <Route path="/work-suite/personal" element={<WorkSuitePersonalPage />} />
             <Route path="/work-suite/clients" element={<WorkSuiteClientsPage />} />
             <Route path="/work-suite/invoices" element={<WorkSuiteInvoicesPage />} />
             <Route path="/work-suite/achievements" element={<WorkSuiteAchievementsPage />} />
-            {/* Tasks/Goals were merged into one Planning page — keep old links working. */}
+            {/* Tasks/Goals were merged into one Planning page, and Projects became Files — keep old links working. */}
             <Route path="/work-suite/tasks" element={<WorkSuiteLegacyRedirect tab="board" />} />
             <Route path="/work-suite/goals" element={<WorkSuiteLegacyRedirect tab="goals" />} />
+            <Route path="/work-suite/projects" element={<Navigate to="/work-suite/files" replace />} />
 
             {/* For Business Routes */}
             <Route path="/leads" element={<LeadsPage />} />

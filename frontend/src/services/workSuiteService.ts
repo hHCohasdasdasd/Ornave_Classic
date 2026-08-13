@@ -70,6 +70,14 @@ export interface Project {
   updatedAt: string;
 }
 
+export interface UserFile {
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  createdAt: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -278,6 +286,39 @@ class WorkSuiteService {
 
   async deleteNote(id: string): Promise<void> {
     await apiClient.delete(`/work-suite/notes/${id}`);
+  }
+
+  // Files
+  async listFiles(): Promise<UserFile[]> {
+    const response = await apiClient.get('/work-suite/files');
+    return response.data.data || [];
+  }
+
+  async uploadFile(file: File, onProgress?: (percent: number) => void): Promise<UserFile> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/work-suite/files', formData, {
+      // The api client's default 'Content-Type: application/json' header
+      // makes axios JSON-serialize FormData bodies (dropping the actual file
+      // content) unless explicitly unset here, letting it fall through to
+      // multipart/form-data with the correct boundary instead.
+      headers: { 'Content-Type': undefined },
+      onUploadProgress: onProgress
+        ? (e: { loaded: number; total?: number }) => {
+            if (e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        : undefined,
+    });
+    return response.data.data;
+  }
+
+  async getFileDownloadUrl(id: string): Promise<string> {
+    const response = await apiClient.get(`/work-suite/files/${id}/download`);
+    return response.data.data.url;
+  }
+
+  async deleteFile(id: string): Promise<void> {
+    await apiClient.delete(`/work-suite/files/${id}`);
   }
 }
 

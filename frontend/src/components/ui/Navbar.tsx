@@ -9,6 +9,7 @@ import {
   IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel,
   IconBuilding, IconBriefcase, IconSearch, IconUsers, IconCard, IconUser, IconChart, IconSpark,
   IconLogout, IconBag, IconLayers, IconHandshake, IconArticle, IconCompass,
+  IconPaperclip,
 } from './Icons';
 interface NavbarProps {
   /** True when the global left nav rail (ProfileSidebar, rendered once in
@@ -101,14 +102,14 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
     {
       icon: <IconLayers />,
       label: 'Work Suite Home',
-      description: 'Your mini-ERP hub — projects, tasks, clients, invoices.',
+      description: 'Your mini-ERP hub — files, tasks, clients, invoices.',
       route: '/work-suite',
     },
     {
-      icon: <IconLayers />,
-      label: 'Projects',
-      description: 'Track initiatives from kickoff to completion.',
-      route: '/work-suite/projects',
+      icon: <IconPaperclip />,
+      label: 'Files',
+      description: 'Your own cloud — upload, store, and get back anything, anytime.',
+      route: '/work-suite/files',
     },
     {
       icon: <IconHandshake />,

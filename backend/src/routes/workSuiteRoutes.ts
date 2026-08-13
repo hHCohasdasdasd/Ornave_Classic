@@ -1,8 +1,16 @@
 import { Router, Response } from 'express';
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
-import { ProjectService, TaskService, ClientService, InvoiceService, GoalService, AchievementService, NoteService, WorkSuiteService } from '../services/workSuiteService';
+import { ProjectService, TaskService, ClientService, InvoiceService, GoalService, AchievementService, NoteService, FileService, WorkSuiteService } from '../services/workSuiteService';
+import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB per file
+});
 
 export const workSuiteRoutes = Router();
 
@@ -356,6 +364,70 @@ workSuiteRoutes.delete(
   asyncHandler(async (req: any, res: Response) => {
     await NoteService.remove(req.user.userId, req.params.id);
     return ApiResponseHandler.success(res, {}, 'Note deleted successfully', 200);
+  })
+);
+
+/**
+ * Files (personal cloud storage)
+ */
+workSuiteRoutes.get(
+  '/files',
+  asyncHandler(async (req: any, res: Response) => {
+    const files = await FileService.list(req.user.userId);
+    return ApiResponseHandler.success(res, files, 'Files retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.post(
+  '/files',
+  upload.single('file'),
+  asyncHandler(async (req: any, res: Response) => {
+    if (!req.file) return ApiResponseHandler.error(res, 'No file provided', undefined, 400);
+
+    const supabase = requireSupabaseAdmin();
+    const safeName = req.file.originalname.replace(/[^\w.\-() ]/g, '_');
+    const storageKey = `${req.user.userId}/${uuidv4()}-${safeName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(FILES_BUCKET)
+      .upload(storageKey, req.file.buffer, { contentType: req.file.mimetype });
+    if (uploadError) {
+      return ApiResponseHandler.error(res, 'Failed to upload file', uploadError.message, 502);
+    }
+
+    const file = await FileService.create({
+      userId: req.user.userId,
+      name: req.file.originalname,
+      size: req.file.size,
+      mimeType: req.file.mimetype,
+      storageKey,
+    });
+    return ApiResponseHandler.success(res, file, 'File uploaded successfully', 201);
+  })
+);
+
+workSuiteRoutes.get(
+  '/files/:id/download',
+  asyncHandler(async (req: any, res: Response) => {
+    const file = await FileService.getById(req.user.userId, req.params.id);
+    const supabase = requireSupabaseAdmin();
+    const { data, error } = await supabase.storage
+      .from(FILES_BUCKET)
+      .createSignedUrl(file.storageKey, 60, { download: file.name });
+    if (error || !data) {
+      return ApiResponseHandler.error(res, 'Failed to generate download link', error?.message, 502);
+    }
+    return ApiResponseHandler.success(res, { url: data.signedUrl }, 'Download link generated', 200);
+  })
+);
+
+workSuiteRoutes.delete(
+  '/files/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    const file = await FileService.remove(req.user.userId, req.params.id);
+    const supabase = requireSupabaseAdmin();
+    await supabase.storage.from(FILES_BUCKET).remove([file.storageKey]);
+    return ApiResponseHandler.success(res, {}, 'File deleted successfully', 200);
   })
 );
 

@@ -58,6 +58,7 @@ model User {
   goals                      Goal[]
   achievements               Achievement[]
   notes                      Note[]
+  files                      UserFile[]
 
   @@index([companyId])
   @@index([email])
@@ -690,6 +691,21 @@ model Project {
 
   @@index([userId])
   @@index([status])
+}
+
+// Files: personal cloud storage — each row is metadata for one object
+// uploaded to Supabase Storage (storageKey is the path within the bucket).
+model UserFile {
+  id         String   @id @default(cuid())
+  userId     String
+  name       String
+  size       Int
+  mimeType   String
+  storageKey String   @unique
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Task {

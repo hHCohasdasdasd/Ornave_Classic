@@ -396,6 +396,28 @@ export class NoteService {
   }
 }
 
+export class FileService {
+  static async list(userId: string) {
+    return prisma.userFile.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
+  }
+
+  static async getById(userId: string, id: string) {
+    const file = await prisma.userFile.findFirst({ where: { id, userId } });
+    if (!file) throw new Error('File not found');
+    return file;
+  }
+
+  static async create(data: { userId: string; name: string; size: number; mimeType: string; storageKey: string }) {
+    return prisma.userFile.create({ data });
+  }
+
+  static async remove(userId: string, id: string) {
+    const file = await this.getById(userId, id);
+    await prisma.userFile.delete({ where: { id } });
+    return file;
+  }
+}
+
 export class WorkSuiteService {
   static async getSummary(userId: string) {
     const [activeProjects, openTasks, clients, openInvoices, activeGoals, achievements, recentAchievements] = await Promise.all([
