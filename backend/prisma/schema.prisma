@@ -505,20 +505,38 @@ model PostLike {
 }
 
 model UserCompanyConnection {
-  id               String   @id @default(cuid())
+  id               String        @id @default(cuid())
   userId           String
   companyId        String
-  relationshipType String   @default("CLIENT")
-  status           String   @default("PENDING")
-  permissions      String   @default("{}")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relationshipType String        @default("CLIENT")
+  status           String        @default("PENDING")
+  permissions      String        @default("{}")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  company          Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices         FirmInvoice[]
+  files            UserFile[]
 
   @@unique([userId, companyId])
   @@index([companyId])
   @@index([status])
+}
+
+// An invoice the user received FROM a connected firm (not one they billed
+// to someone else — that's the separate, unrelated company-ERP Invoice
+// model). Manually logged, scoped to one specific firm connection.
+model FirmInvoice {
+  id           String                @id @default(cuid())
+  connectionId String
+  title        String
+  amount       Float
+  currency     String                @default("USD")
+  issuedDate   DateTime
+  createdAt    DateTime              @default(now())
+  connection   UserCompanyConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId])
 }
 
 model GlobalRequest {
@@ -698,19 +716,22 @@ model Project {
 // uploaded to Supabase Storage (storageKey is the path within the bucket).
 // folderId null means the file sits at the root of the user's Files.
 model UserFile {
-  id         String      @id @default(cuid())
-  userId     String
-  folderId   String?
-  name       String
-  size       Int
-  mimeType   String
-  storageKey String      @unique
-  createdAt  DateTime    @default(now())
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  folder     UserFolder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  id           String                 @id @default(cuid())
+  userId       String
+  folderId     String?
+  connectionId String?
+  name         String
+  size         Int
+  mimeType     String
+  storageKey   String                 @unique
+  createdAt    DateTime               @default(now())
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder       UserFolder?            @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  connection   UserCompanyConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([folderId])
+  @@index([connectionId])
 }
 
 // A folder is just a grouping of files (and other folders) — parentId null

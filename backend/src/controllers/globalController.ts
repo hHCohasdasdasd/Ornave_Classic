@@ -1,12 +1,22 @@
 import { Response } from 'express';
 import { z } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { UserCompanyConnectionService } from '../services/userCompanyConnectionService';
+import { UserCompanyConnectionService, FirmInvoiceService } from '../services/userCompanyConnectionService';
 import { GlobalRequestService } from '../services/globalRequestService';
 import { UserDocumentService } from '../services/userDocumentService';
 import { GlobalPaymentService } from '../services/globalPaymentService';
+import { FileService } from '../services/workSuiteService';
+import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
+
+const FirmInvoiceSchema = z.object({
+  title: z.string().min(1),
+  amount: z.number().positive(),
+  currency: z.string().optional(),
+  issuedDate: z.string().min(1),
+});
 
 const ConnectionRequestSchema = z.object({
   companyId: z.string().min(1),
@@ -87,9 +97,121 @@ export class GlobalController {
     }
 
     const validated = ConnectionRequestSchema.parse(req.body);
-    const connection = await UserCompanyConnectionService.requestConnection(req.user.userId, validated as any);
+    const connection = await UserCompanyConnectionService.ensureConnection(req.user.userId, validated.companyId);
 
     return ApiResponseHandler.success(res, connection, 'Connection requested', 201);
+  });
+
+  static revokeConnection = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+
+    await UserCompanyConnectionService.revoke(req.user.userId, req.params.companyId);
+    return ApiResponseHandler.success(res, {}, 'Connection removed', 200);
+  });
+
+  static getConnectionInvoices = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+
+    const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
+    const invoices = await FirmInvoiceService.list(connection.id);
+    return ApiResponseHandler.success(res, invoices, 'Invoices retrieved', 200);
+  });
+
+  static createConnectionInvoice = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+
+    const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
+    const validated = FirmInvoiceSchema.parse(req.body);
+    const invoice = await FirmInvoiceService.create(connection.id, {
+      title: validated.title,
+      amount: validated.amount,
+      currency: validated.currency,
+      issuedDate: new Date(validated.issuedDate),
+    });
+    return ApiResponseHandler.success(res, invoice, 'Invoice logged', 201);
+  });
+
+  static deleteConnectionInvoice = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+
+    const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
+    await FirmInvoiceService.remove(connection.id, req.params.invoiceId);
+    return ApiResponseHandler.success(res, {}, 'Invoice deleted', 200);
+  });
+
+  static getConnectionFiles = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+
+    const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
+    const files = await FileService.listByConnection(req.user.userId, connection.id);
+    return ApiResponseHandler.success(res, files, 'Files retrieved', 200);
+  });
+
+  static uploadConnectionFile = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+    const file = (req as any).file;
+    if (!file) return ApiResponseHandler.error(res, 'No file provided', undefined, 400);
+
+    const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
+    const supabase = requireSupabaseAdmin();
+    const safeName = file.originalname.replace(/[^\w.\-() ]/g, '_');
+    const storageKey = `${req.user.userId}/${uuidv4()}-${safeName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(FILES_BUCKET)
+      .upload(storageKey, file.buffer, { contentType: file.mimetype });
+    if (uploadError) {
+      return ApiResponseHandler.error(res, 'Failed to upload file', uploadError.message, 502);
+    }
+
+    const created = await FileService.create({
+      userId: req.user.userId,
+      connectionId: connection.id,
+      name: file.originalname,
+      size: file.size,
+      mimeType: file.mimetype,
+      storageKey,
+    });
+    return ApiResponseHandler.success(res, created, 'File uploaded successfully', 201);
+  });
+
+  static downloadConnectionFile = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+
+    const file = await FileService.getById(req.user.userId, req.params.fileId);
+    const supabase = requireSupabaseAdmin();
+    const { data, error } = await supabase.storage
+      .from(FILES_BUCKET)
+      .createSignedUrl(file.storageKey, 60, { download: file.name });
+    if (error || !data) {
+      return ApiResponseHandler.error(res, 'Failed to generate download link', error?.message, 502);
+    }
+    return ApiResponseHandler.success(res, { url: data.signedUrl }, 'Download link generated', 200);
+  });
+
+  static deleteConnectionFile = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+
+    const file = await FileService.remove(req.user.userId, req.params.fileId);
+    const supabase = requireSupabaseAdmin();
+    await supabase.storage.from(FILES_BUCKET).remove([file.storageKey]);
+    return ApiResponseHandler.success(res, {}, 'File deleted successfully', 200);
   });
 
   static getRequests = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

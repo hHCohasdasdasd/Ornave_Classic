@@ -1,4 +1,4 @@
-import { ConnectionRequest, FirmConnection, UserProfile } from '@/types/discovery';
+import { ConnectionRequest, FirmConnection, FirmConnectionFile, FirmInvoiceEntry, UserProfile } from '@/types/discovery';
 import { apiClient } from './api';
 import { firmService } from './firmService';
 
@@ -78,6 +78,62 @@ class NetworkService {
 
   async unfollowFirmConnection(firmId: string): Promise<void> {
     await firmService.unfollowFirm(firmId);
+  }
+
+  // ── Firm connection detail (real backend-tracked connection — invoices/
+  // files need somewhere durable to live, unlike the browser-local follow
+  // list above). Returns null if `firmId` isn't a real registered company
+  // (e.g. one of the demo firms auto-seeded into the local follow list). ──
+
+  async ensureFirmConnection(companyId: string): Promise<{ id: string; company: { id: string; name: string; logo?: string; industry?: string; description?: string } } | null> {
+    try {
+      const response = await apiClient.post('/global/connections', { companyId });
+      return response.data.data;
+    } catch {
+      return null;
+    }
+  }
+
+  async listFirmInvoices(connectionId: string): Promise<FirmInvoiceEntry[]> {
+    const response = await apiClient.get(`/global/connections/${connectionId}/invoices`);
+    return response.data.data || [];
+  }
+
+  async addFirmInvoice(connectionId: string, data: { title: string; amount: number; currency?: string; issuedDate: string }): Promise<FirmInvoiceEntry> {
+    const response = await apiClient.post(`/global/connections/${connectionId}/invoices`, data);
+    return response.data.data;
+  }
+
+  async deleteFirmInvoice(connectionId: string, invoiceId: string): Promise<void> {
+    await apiClient.delete(`/global/connections/${connectionId}/invoices/${invoiceId}`);
+  }
+
+  async listFirmFiles(connectionId: string): Promise<FirmConnectionFile[]> {
+    const response = await apiClient.get(`/global/connections/${connectionId}/files`);
+    return response.data.data || [];
+  }
+
+  async uploadFirmFile(connectionId: string, file: File, onProgress?: (percent: number) => void): Promise<FirmConnectionFile> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post(`/global/connections/${connectionId}/files`, formData, {
+      headers: { 'Content-Type': undefined },
+      onUploadProgress: onProgress
+        ? (e: { loaded: number; total?: number }) => {
+            if (e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        : undefined,
+    });
+    return response.data.data;
+  }
+
+  async getFirmFileDownloadUrl(connectionId: string, fileId: string): Promise<string> {
+    const response = await apiClient.get(`/global/connections/${connectionId}/files/${fileId}/download`);
+    return response.data.data.url;
+  }
+
+  async deleteFirmFile(connectionId: string, fileId: string): Promise<void> {
+    await apiClient.delete(`/global/connections/${connectionId}/files/${fileId}`);
   }
 
   /** Real "people you may know" suggestions — other registered users not already connected/pending. */

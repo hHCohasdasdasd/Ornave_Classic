@@ -2404,3 +2404,119 @@
   border-radius: 10px;
   font-size: 1.15rem;
 }
+
+/* Firm connection detail — a "smaller tab" opened over the Connections
+   grid, not a full page navigation. Roomier than the standard 460px form
+   modal (it holds two whole sections) but well short of the --large one. */
+.firm-detail-modal {
+  position: relative;
+  max-width: 600px;
+}
+
+.firm-detail-modal__close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: transparent;
+  border: none;
+  color: var(--tech-text-dim);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.firm-detail-modal__close:hover {
+  color: var(--color-text);
+}
+
+.firm-detail-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-right: 24px;
+}
+
+.firm-detail-modal__section {
+  border-top: 1px solid var(--tech-border-dim);
+  padding-top: 18px;
+  margin-top: 18px;
+}
+
+.firm-detail-modal__section:first-of-type {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.firm-detail-modal__section-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.firm-detail-modal__section-header h3 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.firm-detail-modal__invoice-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.firm-detail-modal__invoice-form input {
+  background: var(--color-input-bg);
+  border: 1px solid var(--tech-border-dim);
+  color: var(--color-text);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.firm-detail-modal__invoice-form input:focus {
+  outline: none;
+  border-color: var(--tech-accent-gold);
+}
+
+.firm-detail-modal__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.firm-detail-modal__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.firm-detail-modal__row-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.firm-detail-modal__amount {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--tech-accent-gold-text);
+  white-space: nowrap;
+}

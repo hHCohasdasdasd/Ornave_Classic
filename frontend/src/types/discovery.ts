@@ -44,6 +44,23 @@ export interface FirmConnection {
   location?: string;
 }
 
+export interface FirmInvoiceEntry {
+  id: string;
+  title: string;
+  amount: number;
+  currency: string;
+  issuedDate: string;
+  createdAt: string;
+}
+
+export interface FirmConnectionFile {
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  createdAt: string;
+}
+
 export interface DiscoveryFilters {
   industry?: string;
   location?: string;

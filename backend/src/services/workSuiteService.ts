@@ -448,17 +448,21 @@ export class FileService {
     return prisma.userFile.findMany({ where: { userId, folderId: { in: folderIds } } });
   }
 
+  static async listByConnection(userId: string, connectionId: string) {
+    return prisma.userFile.findMany({ where: { userId, connectionId }, orderBy: { createdAt: 'desc' } });
+  }
+
   static async getById(userId: string, id: string) {
     const file = await prisma.userFile.findFirst({ where: { id, userId } });
     if (!file) throw new Error('File not found');
     return file;
   }
 
-  static async create(data: { userId: string; folderId?: string | null; name: string; size: number; mimeType: string; storageKey: string }) {
+  static async create(data: { userId: string; folderId?: string | null; connectionId?: string | null; name: string; size: number; mimeType: string; storageKey: string }) {
     if (data.folderId) {
       await FolderService.getById(data.userId, data.folderId);
     }
-    return prisma.userFile.create({ data: { ...data, folderId: data.folderId || null } });
+    return prisma.userFile.create({ data: { ...data, folderId: data.folderId || null, connectionId: data.connectionId || null } });
   }
 
   static async remove(userId: string, id: string) {
