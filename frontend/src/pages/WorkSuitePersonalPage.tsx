@@ -770,6 +770,9 @@ export const WorkSuitePersonalPage: React.FC = () => {
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
+  const formatDate = (value: string) =>
+    new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
   // ---------------------------------------------------------------------
   // Focus (Pomodoro timer) — entirely client-side. Session durations are a
   // saved preference; the running countdown itself and today's completed
@@ -1382,7 +1385,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                       </button>
                       {note.title && <div className="sticky-note__title">{note.title}</div>}
                       <div className="sticky-note__content">{note.content}</div>
-                      <div className="sticky-note__meta">{formatRelativeShort(note.updatedAt)}</div>
+                      <div className="sticky-note__meta">{formatDate(note.createdAt)}</div>
                     </div>
                   ))}
                 </div>
