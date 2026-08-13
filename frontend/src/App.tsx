@@ -31,9 +31,9 @@ const ProfilePageWithKey = () => {
   return <ProfilePage key={location.pathname + location.search} />;
 };
 
-// Tasks/Goals were merged into the Planning page's tabs; Achievements moved
-// to the Work Suite home page instead. Old links (including ?projectId=
-// from the Projects page) still redirect to wherever that content lives now.
+// Tasks/Goals were merged into the Planning page's tabs. Old links (including
+// ?projectId= from the Projects page) still redirect to wherever that
+// content lives now.
 const WorkSuiteLegacyRedirect: React.FC<{ tab?: 'board' | 'goals' }> = ({ tab }) => {
   const location = useLocation();
   if (!tab) return <Navigate to="/work-suite" replace />;
@@ -75,6 +75,7 @@ import { WorkSuiteProjectsPage } from '@/pages/WorkSuiteProjectsPage';
 import { WorkSuitePersonalPage } from '@/pages/WorkSuitePersonalPage';
 import { WorkSuiteClientsPage } from '@/pages/WorkSuiteClientsPage';
 import { WorkSuiteInvoicesPage } from '@/pages/WorkSuiteInvoicesPage';
+import { WorkSuiteAchievementsPage } from '@/pages/WorkSuiteAchievementsPage';
 import { AuthModal } from '@/components/ui/AuthModal';
 import { CreatePostModal } from '@/components/personal/CreatePostModal';
 import { CreatePublicationModal } from '@/components/personal/CreatePublicationModal';
@@ -285,10 +286,10 @@ function App() {
             <Route path="/work-suite/personal" element={<WorkSuitePersonalPage />} />
             <Route path="/work-suite/clients" element={<WorkSuiteClientsPage />} />
             <Route path="/work-suite/invoices" element={<WorkSuiteInvoicesPage />} />
-            {/* Tasks/Goals/Achievements were merged into one Planning page — keep old links working. */}
+            <Route path="/work-suite/achievements" element={<WorkSuiteAchievementsPage />} />
+            {/* Tasks/Goals were merged into one Planning page — keep old links working. */}
             <Route path="/work-suite/tasks" element={<WorkSuiteLegacyRedirect tab="board" />} />
             <Route path="/work-suite/goals" element={<WorkSuiteLegacyRedirect tab="goals" />} />
-            <Route path="/work-suite/achievements" element={<WorkSuiteLegacyRedirect />} />
 
             {/* For Business Routes */}
             <Route path="/leads" element={<LeadsPage />} />

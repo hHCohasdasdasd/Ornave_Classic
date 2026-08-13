@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
-import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
-import { workSuiteService, WorkSuiteSummary, WorkSuiteInsight, Achievement } from '@/services/workSuiteService';
+import { workSuiteService, WorkSuiteSummary, WorkSuiteInsight } from '@/services/workSuiteService';
 import './WorkSuite.css';
 
 const GROWTH_MODULES = [
   { icon: '🧭', title: 'Planning', description: 'Your board, goals, notes, and focus timer — all in one place.', route: '/work-suite/personal' },
+  { icon: '🏆', title: 'Achievements', description: 'Every win worth remembering, logged in one place.', route: '/work-suite/achievements' },
 ];
 
 const FREELANCE_MODULES = [
@@ -84,75 +84,6 @@ export const WorkSuiteHomePage: React.FC = () => {
       refresh();
     } finally {
       setIsAdding(false);
-    }
-  };
-
-  // ---------------------------------------------------------------------
-  // Achievements — lives here on the Work Suite home page rather than as a
-  // tab buried inside Planning, since "what have I actually accomplished"
-  // is more of a home-page thing to see at a glance.
-  // ---------------------------------------------------------------------
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [isLoadingAchievements, setIsLoadingAchievements] = useState(true);
-  const [showAchievementModal, setShowAchievementModal] = useState(false);
-  const [achievementTitle, setAchievementTitle] = useState('');
-  const [achievementDescription, setAchievementDescription] = useState('');
-  const [achievementCategory, setAchievementCategory] = useState('');
-  const [achievedAt, setAchievedAt] = useState('');
-  const [isSavingAchievement, setIsSavingAchievement] = useState(false);
-  const [achievementError, setAchievementError] = useState<string | null>(null);
-
-  const loadAchievements = async () => {
-    setIsLoadingAchievements(true);
-    try {
-      setAchievements(await workSuiteService.listAchievements());
-    } finally {
-      setIsLoadingAchievements(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!isGuest && !isCompany) loadAchievements();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isGuest, isCompany]);
-
-  const openCreateAchievement = () => {
-    setAchievementTitle('');
-    setAchievementDescription('');
-    setAchievementCategory('');
-    setAchievedAt('');
-    setAchievementError(null);
-    setShowAchievementModal(true);
-  };
-
-  const handleSaveAchievement = async () => {
-    if (!achievementTitle.trim()) return;
-    setIsSavingAchievement(true);
-    setAchievementError(null);
-    try {
-      await workSuiteService.createAchievement({
-        title: achievementTitle.trim(),
-        description: achievementDescription.trim() || undefined,
-        category: achievementCategory.trim() || undefined,
-        achievedAt: achievedAt || undefined,
-      });
-      setShowAchievementModal(false);
-      await loadAchievements();
-      refresh();
-    } catch {
-      setAchievementError('Something went wrong logging that achievement — try again.');
-    } finally {
-      setIsSavingAchievement(false);
-    }
-  };
-
-  const handleDeleteAchievement = async (achievement: Achievement) => {
-    setAchievements((prev) => prev.filter((a) => a.id !== achievement.id));
-    try {
-      await workSuiteService.deleteAchievement(achievement.id);
-      refresh();
-    } catch {
-      await loadAchievements();
     }
   };
 
@@ -277,66 +208,12 @@ export const WorkSuiteHomePage: React.FC = () => {
             <ModuleGrid items={GROWTH_MODULES} onNavigate={navigate} />
 
             <div className="worksuite-section-header">
-              <h2>Achievements</h2>
-              <button className="worksuite-create-btn" onClick={openCreateAchievement}>+ Log Achievement</button>
-            </div>
-            {isLoadingAchievements ? (
-              <div className="worksuite-empty">Loading achievements…</div>
-            ) : achievements.length === 0 ? (
-              <div className="worksuite-empty worksuite-empty--goals">
-                <div className="worksuite-empty__icon">🏆</div>
-                <p>Nothing logged yet — record your first win.</p>
-                <button className="worksuite-create-btn" onClick={openCreateAchievement}>+ Log Achievement</button>
-              </div>
-            ) : (
-              achievements.map((a) => (
-                <div key={a.id} className="worksuite-achievement">
-                  <div className="worksuite-achievement__icon">{a.category === 'Milestone' ? '🥇' : '🏆'}</div>
-                  <div className="worksuite-achievement__main">
-                    <div className="worksuite-achievement__title">{a.title}</div>
-                    <div className="worksuite-achievement__meta">
-                      <span>{new Date(a.achievedAt).toLocaleDateString()}</span>
-                      {a.category && <span>{a.category}</span>}
-                    </div>
-                    {a.description && (
-                      <p className="worksuite-achievement__description">{a.description}</p>
-                    )}
-                  </div>
-                  <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteAchievement(a)}>Delete</button>
-                </div>
-              ))
-            )}
-
-            <div className="worksuite-section-header">
               <h2>Tools</h2>
             </div>
             <ModuleGrid items={FREELANCE_MODULES} onNavigate={navigate} />
           </>
         )}
       </div>
-
-      {showAchievementModal && (
-        <div className="worksuite-modal-overlay" onClick={() => setShowAchievementModal(false)}>
-          <div className="worksuite-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Log Achievement</h2>
-            <label>Title</label>
-            <input value={achievementTitle} onChange={(e) => setAchievementTitle(e.target.value)} placeholder="Finished my first 5K" maxLength={160} />
-            <label>Description</label>
-            <textarea value={achievementDescription} onChange={(e) => setAchievementDescription(e.target.value)} rows={3} placeholder="Optional details" maxLength={500} />
-            <label>Category</label>
-            <input value={achievementCategory} onChange={(e) => setAchievementCategory(e.target.value)} placeholder="Fitness, Career, Learning…" maxLength={60} />
-            <label>Date</label>
-            <ThemedDatePicker value={achievedAt} onChange={setAchievedAt} />
-            {achievementError && <p className="worksuite-modal__error">{achievementError}</p>}
-            <div className="worksuite-modal__actions">
-              <button className="worksuite-modal__cancel" onClick={() => setShowAchievementModal(false)}>Cancel</button>
-              <button className="worksuite-modal__submit" onClick={handleSaveAchievement} disabled={!achievementTitle.trim() || isSavingAchievement}>
-                {isSavingAchievement ? 'Saving…' : 'Log Achievement'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
