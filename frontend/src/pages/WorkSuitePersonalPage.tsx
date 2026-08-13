@@ -653,6 +653,22 @@ export const WorkSuitePersonalPage: React.FC = () => {
     window.addEventListener('mouseup', onUp);
   };
 
+  // Zooming the canvas — scroll/pinch over it. Bound as a native listener
+  // (rather than React's onWheel) so preventDefault actually stops the page
+  // itself from scrolling while the cursor is over the canvas.
+  const [canvasZoom, setCanvasZoom] = useState(1);
+  const [mindmapCanvasEl, setMindmapCanvasEl] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!mindmapCanvasEl) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      setCanvasZoom((z) => Math.min(2, Math.max(0.4, Math.round((z - e.deltaY * 0.001) * 100) / 100)));
+    };
+    mindmapCanvasEl.addEventListener('wheel', onWheel, { passive: false });
+    return () => mindmapCanvasEl.removeEventListener('wheel', onWheel);
+  }, [mindmapCanvasEl]);
+
   /** Drag a shape chip in from the sidebar — creates a new branch at the drop point when
    * released over a tree's canvas, or restyles an existing node if released on top of one. */
   const handleShapeChipDragStart = (e: React.MouseEvent, shape: NoteShape) => {
@@ -1369,6 +1385,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                 <div className="mindmap-layout">
                   <div
                     className="mindmap-canvas"
+                    ref={setMindmapCanvasEl}
                     onMouseDown={handleCanvasPanStart}
                     onClick={() => {
                       if (didPanRef.current) { didPanRef.current = false; return; }
@@ -1377,7 +1394,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                   >
                     <div
                       className="mindmap-list"
-                      style={{ transform: `translate(${(panPreview || canvasPan).x}px, ${(panPreview || canvasPan).y}px)` }}
+                      style={{ transform: `translate(${(panPreview || canvasPan).x}px, ${(panPreview || canvasPan).y}px) scale(${canvasZoom})` }}
                     >
                       {mindMapRoots.map((root) => {
                         const branches = mindMapBranchesOf(root.id);
