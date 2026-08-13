@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
-import { workSuiteService, UserFile } from '@/services/workSuiteService';
+import { workSuiteService, UserFile, UserFolder } from '@/services/workSuiteService';
 import './WorkSuite.css';
 
 const formatBytes = (bytes: number): string => {
@@ -38,27 +38,81 @@ export const WorkSuiteFilesPage: React.FC = () => {
   const { user } = useAuth();
   const isGuest = !user || user.id === 'guest';
 
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [path, setPath] = useState<UserFolder[]>([]);
+  const [folders, setFolders] = useState<UserFolder[]>([]);
   const [files, setFiles] = useState<UserFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [uploading, setUploading] = useState<UploadingFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [showNewFolderModal, setShowNewFolderModal] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
 
-  const load = async () => {
+  const load = async (folderId: string | null) => {
     setIsLoading(true);
     try {
-      setFiles(await workSuiteService.listFiles());
+      const [folderList, fileList] = await Promise.all([
+        workSuiteService.listFolders(folderId),
+        workSuiteService.listFiles(folderId),
+      ]);
+      setFolders(folderList);
+      setFiles(fileList);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!isGuest) load();
-  }, [isGuest]);
+    if (!isGuest) load(currentFolderId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGuest, currentFolderId]);
+
+  const openFolder = (folder: UserFolder) => {
+    setPath((prev) => [...prev, folder]);
+    setCurrentFolderId(folder.id);
+  };
+
+  const jumpToBreadcrumb = (index: number) => {
+    // index -1 means "My Files" (root)
+    if (index < 0) {
+      setPath([]);
+      setCurrentFolderId(null);
+      return;
+    }
+    setPath((prev) => prev.slice(0, index + 1));
+    setCurrentFolderId(path[index].id);
+  };
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    setIsCreatingFolder(true);
+    setError(null);
+    try {
+      await workSuiteService.createFolder(newFolderName.trim(), currentFolderId);
+      setShowNewFolderModal(false);
+      setNewFolderName('');
+      await load(currentFolderId);
+    } catch {
+      setError('Could not create that folder — try again.');
+    } finally {
+      setIsCreatingFolder(false);
+    }
+  };
+
+  const handleDeleteFolder = async (folder: UserFolder) => {
+    if (!window.confirm(`Delete "${folder.name}" and everything inside it? This can't be undone.`)) return;
+    setFolders((prev) => prev.filter((f) => f.id !== folder.id));
+    try {
+      await workSuiteService.deleteFolder(folder.id);
+    } catch {
+      await load(currentFolderId);
+    }
+  };
 
   const uploadFiles = async (fileList: FileList | File[]) => {
     setError(null);
@@ -67,11 +121,11 @@ export const WorkSuiteFilesPage: React.FC = () => {
       const key = `${file.name}-${Date.now()}-${Math.random()}`;
       setUploading((prev) => [...prev, { key, name: file.name, percent: 0 }]);
       try {
-        await workSuiteService.uploadFile(file, (percent) => {
+        await workSuiteService.uploadFile(file, currentFolderId, (percent) => {
           setUploading((prev) => prev.map((u) => (u.key === key ? { ...u, percent } : u)));
         });
         setUploading((prev) => prev.filter((u) => u.key !== key));
-        await load();
+        await load(currentFolderId);
       } catch {
         setUploading((prev) => prev.map((u) => (u.key === key ? { ...u, error: 'Upload failed' } : u)));
         setTimeout(() => setUploading((prev) => prev.filter((u) => u.key !== key)), 4000);
@@ -117,14 +171,14 @@ export const WorkSuiteFilesPage: React.FC = () => {
     try {
       await workSuiteService.deleteFile(file.id);
     } catch {
-      await load();
+      await load(currentFolderId);
     }
   };
 
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-  const filtered = search.trim()
-    ? files.filter((f) => f.name.toLowerCase().includes(search.trim().toLowerCase()))
-    : files;
+  const q = search.trim().toLowerCase();
+  const filteredFolders = q ? folders.filter((f) => f.name.toLowerCase().includes(q)) : folders;
+  const filteredFiles = q ? files.filter((f) => f.name.toLowerCase().includes(q)) : files;
 
   return (
     <div className="worksuite-page">
@@ -181,46 +235,115 @@ export const WorkSuiteFilesPage: React.FC = () => {
 
         {error && <p className="worksuite-modal__error">{error}</p>}
 
+        <div className="files-breadcrumbs">
+          <button className="files-breadcrumbs__item" onClick={() => jumpToBreadcrumb(-1)} disabled={path.length === 0}>
+            My Files
+          </button>
+          {path.map((folder, i) => (
+            <React.Fragment key={folder.id}>
+              <span className="files-breadcrumbs__sep">/</span>
+              <button
+                className="files-breadcrumbs__item"
+                onClick={() => jumpToBreadcrumb(i)}
+                disabled={i === path.length - 1}
+              >
+                {folder.name}
+              </button>
+            </React.Fragment>
+          ))}
+        </div>
+
         <div className="worksuite-page__header-row">
           <input
             className="worksuite-select"
             style={{ minWidth: '240px' }}
-            placeholder="Search files…"
+            placeholder="Search this folder…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <span className="files-storage-total">
-            {files.length} file{files.length === 1 ? '' : 's'} · {formatBytes(totalSize)}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <span className="files-storage-total">
+              {files.length} file{files.length === 1 ? '' : 's'} · {formatBytes(totalSize)}
+            </span>
+            <button className="worksuite-create-btn" onClick={() => { setNewFolderName(''); setError(null); setShowNewFolderModal(true); }}>
+              + New Folder
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
-          <div className="worksuite-empty">Loading files…</div>
-        ) : filtered.length === 0 ? (
+          <div className="worksuite-empty">Loading…</div>
+        ) : filteredFolders.length === 0 && filteredFiles.length === 0 ? (
           <div className="worksuite-empty worksuite-empty--goals">
             <div className="worksuite-empty__icon">☁️</div>
-            <p>{search ? 'No files match your search.' : 'Nothing uploaded yet — drop a file above to get started.'}</p>
+            <p>{search ? 'Nothing here matches your search.' : 'Nothing here yet — drop a file or make a folder to get started.'}</p>
           </div>
         ) : (
-          <div className="files-list">
-            {filtered.map((file) => (
-              <div key={file.id} className="files-row">
-                <span className="files-row__icon">{iconForMime(file.mimeType)}</span>
-                <div className="files-row__main">
-                  <div className="files-row__name">{file.name}</div>
-                  <div className="files-row__meta">
-                    {formatBytes(file.size)} · {new Date(file.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+          <>
+            {filteredFolders.length > 0 && (
+              <div className="files-folder-grid">
+                {filteredFolders.map((folder) => (
+                  <div key={folder.id} className="files-folder" onClick={() => openFolder(folder)}>
+                    <span className="files-folder__icon">📁</span>
+                    <span className="files-folder__name">{folder.name}</span>
+                    <button
+                      className="files-folder__delete"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder); }}
+                      title="Delete folder"
+                    >
+                      ✕
+                    </button>
                   </div>
-                </div>
-                <div className="files-row__actions">
-                  <button className="worksuite-btn" onClick={() => handleDownload(file)}>Download</button>
-                  <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDelete(file)}>Delete</button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+
+            {filteredFiles.length > 0 && (
+              <div className="files-list">
+                {filteredFiles.map((file) => (
+                  <div key={file.id} className="files-row">
+                    <span className="files-row__icon">{iconForMime(file.mimeType)}</span>
+                    <div className="files-row__main">
+                      <div className="files-row__name">{file.name}</div>
+                      <div className="files-row__meta">
+                        {formatBytes(file.size)} · {new Date(file.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                    </div>
+                    <div className="files-row__actions">
+                      <button className="worksuite-btn" onClick={() => handleDownload(file)}>Download</button>
+                      <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDelete(file)}>Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
+
+      {showNewFolderModal && (
+        <div className="worksuite-modal-overlay" onClick={() => setShowNewFolderModal(false)}>
+          <div className="worksuite-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>New Folder</h2>
+            <label>Name</label>
+            <input
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder="Tax Documents"
+              maxLength={120}
+              autoFocus
+              onKeyDown={(e) => { if (e.key === 'Enter') handleCreateFolder(); }}
+            />
+            {error && <p className="worksuite-modal__error">{error}</p>}
+            <div className="worksuite-modal__actions">
+              <button className="worksuite-modal__cancel" onClick={() => setShowNewFolderModal(false)}>Cancel</button>
+              <button className="worksuite-modal__submit" onClick={handleCreateFolder} disabled={!newFolderName.trim() || isCreatingFolder}>
+                {isCreatingFolder ? 'Creating…' : 'Create Folder'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

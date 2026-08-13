@@ -396,9 +396,56 @@ export class NoteService {
   }
 }
 
+export class FolderService {
+  static async list(userId: string, parentId: string | null) {
+    return prisma.userFolder.findMany({ where: { userId, parentId }, orderBy: { name: 'asc' } });
+  }
+
+  static async getById(userId: string, id: string) {
+    const folder = await prisma.userFolder.findFirst({ where: { id, userId } });
+    if (!folder) throw new Error('Folder not found');
+    return folder;
+  }
+
+  static async create(userId: string, data: { name: string; parentId?: string | null }) {
+    // A subfolder must hang off a folder the caller actually owns — otherwise
+    // this would let one user nest folders inside another user's tree.
+    if (data.parentId) {
+      await this.getById(userId, data.parentId);
+    }
+    return prisma.userFolder.create({
+      data: { userId, name: data.name, parentId: data.parentId || null },
+    });
+  }
+
+  /** This folder's id plus every nested folder id beneath it, however deep. */
+  static async getSubtreeIds(userId: string, id: string): Promise<string[]> {
+    const ids = [id];
+    let frontier = [id];
+    while (frontier.length) {
+      const children = await prisma.userFolder.findMany({
+        where: { userId, parentId: { in: frontier } },
+        select: { id: true },
+      });
+      frontier = children.map((c) => c.id);
+      ids.push(...frontier);
+    }
+    return ids;
+  }
+
+  static async remove(userId: string, id: string) {
+    await this.getById(userId, id);
+    await prisma.userFolder.delete({ where: { id } });
+  }
+}
+
 export class FileService {
-  static async list(userId: string) {
-    return prisma.userFile.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
+  static async list(userId: string, folderId: string | null) {
+    return prisma.userFile.findMany({ where: { userId, folderId }, orderBy: { createdAt: 'desc' } });
+  }
+
+  static async listByFolderIds(userId: string, folderIds: string[]) {
+    return prisma.userFile.findMany({ where: { userId, folderId: { in: folderIds } } });
   }
 
   static async getById(userId: string, id: string) {
@@ -407,8 +454,11 @@ export class FileService {
     return file;
   }
 
-  static async create(data: { userId: string; name: string; size: number; mimeType: string; storageKey: string }) {
-    return prisma.userFile.create({ data });
+  static async create(data: { userId: string; folderId?: string | null; name: string; size: number; mimeType: string; storageKey: string }) {
+    if (data.folderId) {
+      await FolderService.getById(data.userId, data.folderId);
+    }
+    return prisma.userFile.create({ data: { ...data, folderId: data.folderId || null } });
   }
 
   static async remove(userId: string, id: string) {

@@ -2290,3 +2290,93 @@
   gap: 8px;
   flex-shrink: 0;
 }
+
+.files-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.files-breadcrumbs__item {
+  background: none;
+  border: none;
+  color: var(--tech-text-dim);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 0;
+  font-family: inherit;
+}
+
+.files-breadcrumbs__item:hover:not(:disabled) {
+  color: var(--tech-accent-gold-text);
+}
+
+.files-breadcrumbs__item:disabled {
+  color: var(--color-text);
+  cursor: default;
+}
+
+.files-breadcrumbs__sep {
+  color: var(--tech-text-dim);
+  font-size: 0.8rem;
+}
+
+.files-folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.files-folder {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.files-folder:hover {
+  border-color: var(--color-border-dark);
+  transform: translateY(-1px);
+}
+
+.files-folder__icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.files-folder__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.files-folder__delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: var(--tech-text-dim);
+  font-size: 0.7rem;
+  cursor: pointer;
+  opacity: 0.55;
+  padding: 2px 5px;
+}
+
+.files-folder__delete:hover {
+  opacity: 1;
+  color: #e08080;
+}

@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
-import { ProjectService, TaskService, ClientService, InvoiceService, GoalService, AchievementService, NoteService, FileService, WorkSuiteService } from '../services/workSuiteService';
+import { ProjectService, TaskService, ClientService, InvoiceService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService } from '../services/workSuiteService';
 import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
 
 const upload = multer({
@@ -368,12 +368,57 @@ workSuiteRoutes.delete(
 );
 
 /**
+ * Folders (personal cloud storage — grouping for Files)
+ */
+workSuiteRoutes.get(
+  '/folders',
+  asyncHandler(async (req: any, res: Response) => {
+    const parentId = (req.query.parentId as string | undefined) || null;
+    const folders = await FolderService.list(req.user.userId, parentId);
+    return ApiResponseHandler.success(res, folders, 'Folders retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.post(
+  '/folders',
+  asyncHandler(async (req: any, res: Response) => {
+    const { name, parentId } = req.body;
+    if (!name?.trim()) return ApiResponseHandler.error(res, 'Folder name is required', undefined, 400);
+    try {
+      const folder = await FolderService.create(req.user.userId, { name: name.trim(), parentId });
+      return ApiResponseHandler.success(res, folder, 'Folder created successfully', 201);
+    } catch {
+      return ApiResponseHandler.error(res, 'Parent folder not found', undefined, 404);
+    }
+  })
+);
+
+workSuiteRoutes.delete(
+  '/folders/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    // The DB cascade wipes out nested folder/file rows on its own, but it
+    // doesn't know about the actual objects sitting in Supabase Storage —
+    // those have to be deleted explicitly first, or they'd sit there
+    // orphaned (and billed) forever with no metadata pointing back to them.
+    const subtreeIds = await FolderService.getSubtreeIds(req.user.userId, req.params.id);
+    const orphanedFiles = await FileService.listByFolderIds(req.user.userId, subtreeIds);
+    if (orphanedFiles.length) {
+      const supabase = requireSupabaseAdmin();
+      await supabase.storage.from(FILES_BUCKET).remove(orphanedFiles.map((f) => f.storageKey));
+    }
+    await FolderService.remove(req.user.userId, req.params.id);
+    return ApiResponseHandler.success(res, {}, 'Folder deleted successfully', 200);
+  })
+);
+
+/**
  * Files (personal cloud storage)
  */
 workSuiteRoutes.get(
   '/files',
   asyncHandler(async (req: any, res: Response) => {
-    const files = await FileService.list(req.user.userId);
+    const folderId = (req.query.folderId as string | undefined) || null;
+    const files = await FileService.list(req.user.userId, folderId);
     return ApiResponseHandler.success(res, files, 'Files retrieved successfully', 200);
   })
 );
@@ -383,6 +428,14 @@ workSuiteRoutes.post(
   upload.single('file'),
   asyncHandler(async (req: any, res: Response) => {
     if (!req.file) return ApiResponseHandler.error(res, 'No file provided', undefined, 400);
+    const folderId = (req.body.folderId as string | undefined) || null;
+    if (folderId) {
+      try {
+        await FolderService.getById(req.user.userId, folderId);
+      } catch {
+        return ApiResponseHandler.error(res, 'Folder not found', undefined, 404);
+      }
+    }
 
     const supabase = requireSupabaseAdmin();
     const safeName = req.file.originalname.replace(/[^\w.\-() ]/g, '_');
@@ -397,6 +450,7 @@ workSuiteRoutes.post(
 
     const file = await FileService.create({
       userId: req.user.userId,
+      folderId,
       name: req.file.originalname,
       size: req.file.size,
       mimeType: req.file.mimetype,

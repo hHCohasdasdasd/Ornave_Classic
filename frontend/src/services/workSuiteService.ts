@@ -72,9 +72,17 @@ export interface Project {
 
 export interface UserFile {
   id: string;
+  folderId?: string | null;
   name: string;
   size: number;
   mimeType: string;
+  createdAt: string;
+}
+
+export interface UserFolder {
+  id: string;
+  parentId?: string | null;
+  name: string;
   createdAt: string;
 }
 
@@ -289,14 +297,15 @@ class WorkSuiteService {
   }
 
   // Files
-  async listFiles(): Promise<UserFile[]> {
-    const response = await apiClient.get('/work-suite/files');
+  async listFiles(folderId?: string | null): Promise<UserFile[]> {
+    const response = await apiClient.get('/work-suite/files', { params: folderId ? { folderId } : undefined });
     return response.data.data || [];
   }
 
-  async uploadFile(file: File, onProgress?: (percent: number) => void): Promise<UserFile> {
+  async uploadFile(file: File, folderId?: string | null, onProgress?: (percent: number) => void): Promise<UserFile> {
     const formData = new FormData();
     formData.append('file', file);
+    if (folderId) formData.append('folderId', folderId);
     const response = await apiClient.post('/work-suite/files', formData, {
       // The api client's default 'Content-Type: application/json' header
       // makes axios JSON-serialize FormData bodies (dropping the actual file
@@ -319,6 +328,21 @@ class WorkSuiteService {
 
   async deleteFile(id: string): Promise<void> {
     await apiClient.delete(`/work-suite/files/${id}`);
+  }
+
+  // Folders
+  async listFolders(parentId?: string | null): Promise<UserFolder[]> {
+    const response = await apiClient.get('/work-suite/folders', { params: parentId ? { parentId } : undefined });
+    return response.data.data || [];
+  }
+
+  async createFolder(name: string, parentId?: string | null): Promise<UserFolder> {
+    const response = await apiClient.post('/work-suite/folders', { name, parentId });
+    return response.data.data;
+  }
+
+  async deleteFolder(id: string): Promise<void> {
+    await apiClient.delete(`/work-suite/folders/${id}`);
   }
 }
 
