@@ -35,11 +35,16 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
   };
 
   const viewFirm = (firm: FirmConnection) => {
-    navigate(`/profile?view=${firm.company.id}`);
+    navigate(`/profile?view=${firm.id}`);
   };
 
   const message = (person: UserProfile) => {
     navigate(`/messages?to=${person.id}`);
+  };
+
+  const unfollowFirm = async (firm: FirmConnection) => {
+    setFirms((prev) => prev.filter((f) => f.id !== firm.id));
+    await networkService.unfollowFirmConnection(firm.id);
   };
 
   const q = search.trim().toLowerCase();
@@ -50,7 +55,7 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
     : people;
   const filteredFirms = q
     ? firms.filter((c) =>
-        c.company.name.toLowerCase().includes(q) || (c.company.industry || '').toLowerCase().includes(q)
+        c.name.toLowerCase().includes(q) || (c.headline || '').toLowerCase().includes(q)
       )
     : firms;
 
@@ -140,26 +145,21 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
               <div key={firm.id} className="worksuite-card">
                 <div className="worksuite-card__header">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div
-                      className="worksuite-connection-avatar worksuite-connection-avatar--square"
-                      onClick={() => viewFirm(firm)}
-                      style={firm.company.logo ? { backgroundImage: `url(${firm.company.logo})` } : undefined}
-                    >
-                      {!firm.company.logo && '🏢'}
+                    <div className="worksuite-connection-avatar worksuite-connection-avatar--square" onClick={() => viewFirm(firm)}>
+                      🏢
                     </div>
                     <div>
                       <div className="worksuite-card__title" style={{ cursor: 'pointer' }} onClick={() => viewFirm(firm)}>
-                        {firm.company.name}
+                        {firm.name}
                       </div>
-                      {firm.company.industry && <div className="worksuite-card__meta">{firm.company.industry}</div>}
+                      {firm.headline && <div className="worksuite-card__meta">{firm.headline}</div>}
+                      {firm.location && <div className="worksuite-card__meta">{firm.location}</div>}
                     </div>
                   </div>
                 </div>
-                {firm.company.description && (
-                  <p className="worksuite-card__description">{firm.company.description}</p>
-                )}
                 <div className="worksuite-card__actions">
                   <button className="worksuite-btn" onClick={() => viewFirm(firm)}>View Profile</button>
+                  <button className="worksuite-btn worksuite-btn--danger" onClick={() => unfollowFirm(firm)}>Unfollow</button>
                 </div>
               </div>
             ))

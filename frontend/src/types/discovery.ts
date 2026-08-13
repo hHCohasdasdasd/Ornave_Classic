@@ -39,17 +39,9 @@ export interface ConnectionRequest {
 
 export interface FirmConnection {
   id: string;
-  companyId: string;
-  relationshipType: string;
-  status: 'PENDING' | 'ACTIVE' | 'REVOKED';
-  company: {
-    id: string;
-    name: string;
-    slug: string;
-    description?: string;
-    logo?: string;
-    industry?: string;
-  };
+  name: string;
+  headline?: string;
+  location?: string;
 }
 
 export interface DiscoveryFilters {

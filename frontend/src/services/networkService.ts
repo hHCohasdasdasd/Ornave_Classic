@@ -66,14 +66,18 @@ class NetworkService {
     return (response?.data || []).map((u: any) => ({ ...u, isConnected: true }));
   }
 
-  /** This user's active connections to companies/firms (as opposed to other individual members). */
+  /** Firms this user follows — the same list FirmsPage's Follow button writes
+   * to (browser-local, not yet backed by a real server-side connection). */
   async getFirmConnections(): Promise<FirmConnection[]> {
     try {
-      const response = await apiClient.getGlobalConnections();
-      return (response?.data || []).filter((c: FirmConnection) => c.status === 'ACTIVE');
+      return await firmService.getFollowedFirms();
     } catch {
       return [];
     }
+  }
+
+  async unfollowFirmConnection(firmId: string): Promise<void> {
+    await firmService.unfollowFirm(firmId);
   }
 
   /** Real "people you may know" suggestions — other registered users not already connected/pending. */
