@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
@@ -613,6 +613,41 @@ export const WorkSuitePersonalPage: React.FC = () => {
       const dx = ev.clientX - startMouseX;
       const dy = ev.clientY - startMouseY;
       await updateNodeStyle(node.id, { posX: startX + dx, posY: startY + dy });
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  // Panning the canvas itself — mousedown on empty canvas space (nodes and
+  // shape chips stop propagation before this fires) drags the whole tree view.
+  const [canvasPan, setCanvasPan] = useState({ x: 0, y: 0 });
+  const [panPreview, setPanPreview] = useState<{ x: number; y: number } | null>(null);
+  const didPanRef = useRef(false);
+
+  const handleCanvasPanStart = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+    const startPanX = canvasPan.x;
+    const startPanY = canvasPan.y;
+    let moved = false;
+
+    const onMove = (ev: MouseEvent) => {
+      const dx = ev.clientX - startMouseX;
+      const dy = ev.clientY - startMouseY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+      if (moved) setPanPreview({ x: startPanX + dx, y: startPanY + dy });
+    };
+    const onUp = (ev: MouseEvent) => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      if (moved) {
+        const dx = ev.clientX - startMouseX;
+        const dy = ev.clientY - startMouseY;
+        setCanvasPan({ x: startPanX + dx, y: startPanY + dy });
+        setPanPreview(null);
+      }
+      didPanRef.current = moved;
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
@@ -1332,8 +1367,18 @@ export const WorkSuitePersonalPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="mindmap-layout">
-                  <div className="mindmap-canvas" onClick={() => setSelectedNodeId(null)}>
-                    <div className="mindmap-list">
+                  <div
+                    className="mindmap-canvas"
+                    onMouseDown={handleCanvasPanStart}
+                    onClick={() => {
+                      if (didPanRef.current) { didPanRef.current = false; return; }
+                      setSelectedNodeId(null);
+                    }}
+                  >
+                    <div
+                      className="mindmap-list"
+                      style={{ transform: `translate(${(panPreview || canvasPan).x}px, ${(panPreview || canvasPan).y}px)` }}
+                    >
                       {mindMapRoots.map((root) => {
                         const branches = mindMapBranchesOf(root.id);
                         const autoCount = branches.filter((b) => b.posX == null || b.posY == null).length;
