@@ -883,6 +883,7 @@
 }
 
 .mindmap-canvas {
+  position: relative;
   padding: 40px;
   border-radius: 16px;
   min-height: 460px;
@@ -900,6 +901,50 @@
 
 .mindmap-canvas:active {
   cursor: grabbing;
+}
+
+.mindmap-canvas__expand {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 6;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(20, 18, 14, 0.7);
+  border: 1px solid rgba(201, 184, 150, 0.3);
+  color: rgba(201, 184, 150, 0.85);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.mindmap-canvas__expand:hover {
+  border-color: rgba(201, 184, 150, 0.6);
+  color: #c9b896;
+  background: rgba(20, 18, 14, 0.9);
+}
+
+.mindmap-layout--expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  padding: 24px;
+  background: var(--tech-bg);
+  align-items: stretch;
+}
+
+.mindmap-layout--expanded .mindmap-canvas {
+  min-height: 0;
+  height: 100%;
+}
+
+.mindmap-layout--expanded .worksuite-tasks-sidebar {
+  height: 100%;
+  overflow-y: auto;
 }
 
 .mindmap-list {

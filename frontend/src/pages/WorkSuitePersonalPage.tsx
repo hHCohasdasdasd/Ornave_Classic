@@ -669,6 +669,23 @@ export const WorkSuitePersonalPage: React.FC = () => {
     return () => mindmapCanvasEl.removeEventListener('wheel', onWheel);
   }, [mindmapCanvasEl]);
 
+  // Expanded "mini fullscreen" view — takes over the viewport so there's more
+  // room to work, without the ceremony of the real browser Fullscreen API.
+  const [mindmapExpanded, setMindmapExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!mindmapExpanded) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMindmapExpanded(false);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [mindmapExpanded]);
+
   /** Drag a shape chip in from the sidebar — creates a new branch at the drop point when
    * released over a tree's canvas, or restyles an existing node if released on top of one. */
   const handleShapeChipDragStart = (e: React.MouseEvent, shape: NoteShape) => {
@@ -1382,7 +1399,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                   <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'MINDMAP' })}>+ New Mind Map</button>
                 </div>
               ) : (
-                <div className="mindmap-layout">
+                <div className={`mindmap-layout${mindmapExpanded ? ' mindmap-layout--expanded' : ''}`}>
                   <div
                     className="mindmap-canvas"
                     ref={setMindmapCanvasEl}
@@ -1392,6 +1409,14 @@ export const WorkSuitePersonalPage: React.FC = () => {
                       setSelectedNodeId(null);
                     }}
                   >
+                    <button
+                      className="mindmap-canvas__expand"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); setMindmapExpanded((v) => !v); }}
+                      title={mindmapExpanded ? 'Exit expanded view' : 'Expand canvas'}
+                    >
+                      {mindmapExpanded ? '⤡' : '⤢'}
+                    </button>
                     <div
                       className="mindmap-list"
                       style={{ transform: `translate(${(panPreview || canvasPan).x}px, ${(panPreview || canvasPan).y}px) scale(${canvasZoom})` }}
