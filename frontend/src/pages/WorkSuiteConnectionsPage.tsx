@@ -47,6 +47,10 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
   const [files, setFiles] = useState<FirmConnectionFile[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<{ key: string; name: string; percent: number }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [messages, setMessages] = useState<{ id: string; senderIsCompany: boolean; content: string; createdAt: string }[]>([]);
+  const [messageDraft, setMessageDraft] = useState('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isGuest) return;
@@ -76,14 +80,35 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
   const loadDetail = async (connectionId: string, companyId: string) => {
     setIsLoadingDetail(true);
     try {
-      const [ords, fls] = await Promise.all([
+      const [ords, fls, msgs] = await Promise.all([
         storeService.getOrdersWithCompany(companyId),
         networkService.listFirmFiles(connectionId),
+        networkService.getFirmMessages(connectionId),
       ]);
       setOrders(ords);
       setFiles(fls);
+      setMessages(msgs);
     } finally {
       setIsLoadingDetail(false);
+    }
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [messages.length]);
+
+  const handleSendMessage = async () => {
+    const content = messageDraft.trim();
+    if (!content || !detail) return;
+    setIsSendingMessage(true);
+    try {
+      const sent = await networkService.sendFirmMessage(detail.id, content);
+      setMessages((prev) => [...prev, sent]);
+      setMessageDraft('');
+    } catch {
+      setError('Could not send that message — try again.');
+    } finally {
+      setIsSendingMessage(false);
     }
   };
 
@@ -107,6 +132,8 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
     setDetail(null);
     setOrders([]);
     setFiles([]);
+    setMessages([]);
+    setMessageDraft('');
   };
 
   const handleFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -360,6 +387,41 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
                       ))}
                     </div>
                   )}
+                </div>
+
+                <div className="firm-detail-modal__section">
+                  <div className="firm-detail-modal__section-header">
+                    <h3>Messages</h3>
+                  </div>
+                  <div className="order-modal__thread">
+                    {messages.length === 0 ? (
+                      <p className="worksuite-card__meta">No messages yet — write to {detail.company.name} below.</p>
+                    ) : (
+                      <div className="order-modal__thread-list">
+                        {messages.map((msg) => (
+                          <div key={msg.id} className={`order-modal__bubble${!msg.senderIsCompany ? ' order-modal__bubble--own' : ''}`}>
+                            <p className="order-modal__bubble-text">{msg.content}</p>
+                            <span className="order-modal__bubble-time">
+                              {new Date(msg.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        ))}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="order-modal__composer">
+                    <input
+                      placeholder={`Message ${detail.company.name}…`}
+                      value={messageDraft}
+                      onChange={(e) => setMessageDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
+                      maxLength={2000}
+                    />
+                    <button onClick={handleSendMessage} disabled={!messageDraft.trim() || isSendingMessage}>
+                      {isSendingMessage ? 'Sending…' : 'Send'}
+                    </button>
+                  </div>
                 </div>
               </>
             )}

@@ -26,6 +26,10 @@ router.post('/connections/:connectionId/files', upload.single('file'), GlobalCon
 router.get('/connections/:connectionId/files/:fileId/download', GlobalController.downloadConnectionFile);
 router.delete('/connections/:connectionId/files/:fileId', GlobalController.deleteConnectionFile);
 
+// Per-connection direct messages (buyer ↔ firm, independent of any order)
+router.get('/connections/:connectionId/messages', GlobalController.getConnectionMessages);
+router.post('/connections/:connectionId/messages', GlobalController.sendConnectionMessage);
+
 // Structured requests
 router.get('/requests', GlobalController.getRequests);
 router.post('/requests', GlobalController.createRequest);

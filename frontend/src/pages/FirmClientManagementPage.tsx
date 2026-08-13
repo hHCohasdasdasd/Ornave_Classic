@@ -1,18 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { erpNavigation } from '@/constants/navigation';
-import { firmService } from '@/services/firmService';
 import { storeService, Order } from '@/services/storeService';
+import { companyClientService, CompanyClientConnection, ConnectionMessage } from '@/services/companyClientService';
 import '@/pages/NetworkPage.css';
+import '@/components/OrderDetailModal.css';
 
 export const FirmClientManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, company } = useAuth();
-  const [followers, setFollowers] = useState<any[]>([]);
+  const [followers, setFollowers] = useState<CompanyClientConnection[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [activeClient, setActiveClient] = useState<CompanyClientConnection | null>(null);
+  const [messages, setMessages] = useState<ConnectionMessage[]>([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [messageDraft, setMessageDraft] = useState('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user || !company) {
@@ -22,21 +30,53 @@ export const FirmClientManagementPage: React.FC = () => {
     loadData();
   }, [user, company, navigate]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [messages.length]);
+
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [firmFollowers, allOrders] = await Promise.all([
-        firmService.getFirmFollowers(company?.id || ''),
-        storeService.getUserOrders() // In real app: storeService.getCompanyOrders()
+      const [clients, companyOrders] = await Promise.all([
+        companyClientService.getClients(),
+        storeService.getCompanyOrders(),
       ]);
-      
-      setFollowers(firmFollowers);
-      // Filter orders for this company
-      setOrders(allOrders.filter(o => o.companyId === company?.id));
+
+      setFollowers(clients);
+      setOrders(companyOrders);
     } catch (error) {
       console.error('Failed to load client data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const openMessages = async (client: CompanyClientConnection) => {
+    setActiveClient(client);
+    setIsLoadingMessages(true);
+    try {
+      setMessages(await companyClientService.getMessages(client.id));
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  const closeMessages = () => {
+    setActiveClient(null);
+    setMessages([]);
+    setMessageDraft('');
+  };
+
+  const handleSendMessage = async () => {
+    const content = messageDraft.trim();
+    if (!content || !activeClient) return;
+    setIsSendingMessage(true);
+    try {
+      const sent = await companyClientService.sendMessage(activeClient.id, content);
+      setMessages((prev) => [...prev, sent]);
+      setMessageDraft('');
+    } finally {
+      setIsSendingMessage(false);
     }
   };
 
@@ -129,15 +169,15 @@ export const FirmClientManagementPage: React.FC = () => {
                       👤
                     </div>
                     <div style={{ flex: 1 }}>
-                      <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text)' }}>{follower.name}</h4>
-                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--tech-text-dim)' }}>{follower.headline}</p>
+                      <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text)' }}>{follower.user.firstName} {follower.user.lastName}</h4>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--tech-text-dim)' }}>{follower.user.email}</p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <span className="tech-tag" style={{ fontSize: '0.6rem', borderColor: 'rgba(139, 163, 120, 0.35)', color: '#8ba378' }}>CORE_LINK</span>
-                      <button 
-                        className="btn-sm-primary" 
+                      <button
+                        className="btn-sm-primary"
                         style={{ display: 'block', marginTop: '5px', fontSize: '0.65rem', padding: '4px 12px' }}
-                        onClick={() => navigate(`/messages?to=${follower.id}`)}
+                        onClick={() => openMessages(follower)}
                       >MESSAGE</button>
                     </div>
                   </div>
@@ -212,6 +252,55 @@ export const FirmClientManagementPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {activeClient && (
+        <div className="order-modal-overlay" onClick={closeMessages}>
+          <div className="order-modal" style={{ maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
+            <button className="order-modal__close" onClick={closeMessages}>×</button>
+            <div className="order-modal__header">
+              <div>
+                <span className="order-modal__order-id">Direct Message</span>
+                <h2 className="order-modal__company">{activeClient.user.firstName} {activeClient.user.lastName}</h2>
+                <span className="order-modal__date">{activeClient.user.email}</span>
+              </div>
+            </div>
+
+            <div className="order-modal__section" style={{ marginBottom: 0 }}>
+              <div className="order-modal__thread">
+                {isLoadingMessages ? (
+                  <p className="order-modal__block-text">Loading…</p>
+                ) : messages.length === 0 ? (
+                  <p className="order-modal__block-text">No messages yet — write to {activeClient.user.firstName} below.</p>
+                ) : (
+                  <div className="order-modal__thread-list">
+                    {messages.map((msg) => (
+                      <div key={msg.id} className={`order-modal__bubble${msg.senderIsCompany ? ' order-modal__bubble--own' : ''}`}>
+                        <p className="order-modal__bubble-text">{msg.content}</p>
+                        <span className="order-modal__bubble-time">
+                          {new Date(msg.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+              </div>
+              <div className="order-modal__composer">
+                <input
+                  placeholder={`Message ${activeClient.user.firstName}…`}
+                  value={messageDraft}
+                  onChange={(e) => setMessageDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
+                  maxLength={2000}
+                />
+                <button onClick={handleSendMessage} disabled={!messageDraft.trim() || isSendingMessage}>
+                  {isSendingMessage ? 'Sending…' : 'Send'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </PageContainer>
   );
 };

@@ -516,10 +516,24 @@ model UserCompanyConnection {
   company          Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   files            UserFile[]
+  messages         ConnectionMessage[]
 
   @@unique([userId, companyId])
   @@index([companyId])
   @@index([status])
+}
+
+// A direct message thread between a user and a firm they're connected to,
+// independent of any specific order.
+model ConnectionMessage {
+  id              String             @id @default(cuid())
+  connectionId    String
+  senderIsCompany Boolean
+  content         String
+  createdAt       DateTime           @default(now())
+  connection      UserCompanyConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId])
 }
 
 model GlobalRequest {

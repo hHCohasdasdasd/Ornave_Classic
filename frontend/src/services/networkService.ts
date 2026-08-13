@@ -124,6 +124,16 @@ class NetworkService {
     await apiClient.delete(`/global/connections/${connectionId}/files/${fileId}`);
   }
 
+  async getFirmMessages(connectionId: string): Promise<{ id: string; senderIsCompany: boolean; content: string; createdAt: string }[]> {
+    const response = await apiClient.get(`/global/connections/${connectionId}/messages`);
+    return response.data.data || [];
+  }
+
+  async sendFirmMessage(connectionId: string, content: string): Promise<{ id: string; senderIsCompany: boolean; content: string; createdAt: string }> {
+    const response = await apiClient.post(`/global/connections/${connectionId}/messages`, { content });
+    return response.data.data;
+  }
+
   /** Real "people you may know" suggestions — other registered users not already connected/pending. */
   async getSuggestedUsers(limit = 10): Promise<UserProfile[]> {
     try {

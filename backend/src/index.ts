@@ -32,6 +32,7 @@ import talentRoutes from './routes/talentRoutes';
 import companyBillingRoutes from './routes/companyBillingRoutes';
 import jobsFeedRoutes from './routes/jobsFeedRoutes';
 import adminRoutes from './routes/adminRoutes';
+import companyClientRoutes from './routes/companyClientRoutes';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -158,6 +159,7 @@ app.use(`${API_BASE}/companies/:companyId/candidates`, talentRoutes);
 app.use(`${API_BASE}/companies/:companyId/invoices`, companyBillingRoutes);
 app.use(`${API_BASE}/jobs`, jobsFeedRoutes);
 app.use(`${API_BASE}/admin`, adminRoutes);
+app.use(`${API_BASE}/company-clients`, companyClientRoutes);
 
 // ============================================
 // 404 HANDLER

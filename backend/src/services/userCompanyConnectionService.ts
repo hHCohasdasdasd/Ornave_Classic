@@ -166,4 +166,34 @@ export class UserCompanyConnectionService {
     if (!connection) throw new Error('Connection not found');
     return connection;
   }
+
+  /** Same guard as getOwned, but for the company side of the connection. */
+  static async getOwnedByCompany(companyId: string, connectionId: string) {
+    const connection = await prisma.userCompanyConnection.findFirst({
+      where: { id: connectionId, companyId },
+      include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } },
+    });
+    if (!connection) throw new Error('Connection not found');
+    return connection;
+  }
+
+  /** All active/pending connections a company has with personal users —
+   * the client list a company sees on its side. */
+  static async listForCompany(companyId: string) {
+    return prisma.userCompanyConnection.findMany({
+      where: { companyId, status: { not: UserConnectionStatus.REVOKED } },
+      include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+}
+
+export class ConnectionMessageService {
+  static async list(connectionId: string) {
+    return prisma.connectionMessage.findMany({ where: { connectionId }, orderBy: { createdAt: 'asc' } });
+  }
+
+  static async create(connectionId: string, senderIsCompany: boolean, content: string) {
+    return prisma.connectionMessage.create({ data: { connectionId, senderIsCompany, content } });
+  }
 }

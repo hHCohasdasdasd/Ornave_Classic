@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { UserCompanyConnectionService } from '../services/userCompanyConnectionService';
+import { UserCompanyConnectionService, ConnectionMessageService } from '../services/userCompanyConnectionService';
 import { GlobalRequestService } from '../services/globalRequestService';
 import { UserDocumentService } from '../services/userDocumentService';
 import { GlobalPaymentService } from '../services/globalPaymentService';
@@ -169,6 +169,26 @@ export class GlobalController {
     const supabase = requireSupabaseAdmin();
     await supabase.storage.from(FILES_BUCKET).remove([file.storageKey]);
     return ApiResponseHandler.success(res, {}, 'File deleted successfully', 200);
+  });
+
+  static getConnectionMessages = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+    const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
+    const messages = await ConnectionMessageService.list(connection.id);
+    return ApiResponseHandler.success(res, messages, 'Messages retrieved', 200);
+  });
+
+  static sendConnectionMessage = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+    const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
+    const content = (req.body.content || '').trim();
+    if (!content) return ApiResponseHandler.error(res, 'Message content is required', undefined, 400);
+    const message = await ConnectionMessageService.create(connection.id, false, content);
+    return ApiResponseHandler.success(res, message, 'Message sent', 201);
   });
 
   static getRequests = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
