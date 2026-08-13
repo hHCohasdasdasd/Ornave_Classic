@@ -20,11 +20,6 @@ router.get('/connections', GlobalController.getConnections);
 router.post('/connections', GlobalController.requestConnection);
 router.delete('/connections/:companyId', GlobalController.revokeConnection);
 
-// Per-connection invoices (what the user received FROM that firm)
-router.get('/connections/:connectionId/invoices', GlobalController.getConnectionInvoices);
-router.post('/connections/:connectionId/invoices', GlobalController.createConnectionInvoice);
-router.delete('/connections/:connectionId/invoices/:invoiceId', GlobalController.deleteConnectionInvoice);
-
 // Per-connection files
 router.get('/connections/:connectionId/files', GlobalController.getConnectionFiles);
 router.post('/connections/:connectionId/files', upload.single('file'), GlobalController.uploadConnectionFile);

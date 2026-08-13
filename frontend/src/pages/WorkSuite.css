@@ -2465,32 +2465,6 @@
   margin: 0;
 }
 
-.firm-detail-modal__invoice-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: var(--tech-card-bg);
-  border: 1px solid var(--tech-border-dim);
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 14px;
-}
-
-.firm-detail-modal__invoice-form input {
-  background: var(--color-input-bg);
-  border: 1px solid var(--tech-border-dim);
-  color: var(--color-text);
-  border-radius: 8px;
-  padding: 9px 12px;
-  font-size: 0.85rem;
-  font-family: inherit;
-}
-
-.firm-detail-modal__invoice-form input:focus {
-  outline: none;
-  border-color: var(--tech-accent-gold);
-}
-
 .firm-detail-modal__list {
   display: flex;
   flex-direction: column;

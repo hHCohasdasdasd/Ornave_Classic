@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { storeService, Product, Order, ProductMediaItem, getProductMedia } from '@/services/storeService';
+import { OrderDetailModal } from '@/components/OrderDetailModal';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { Card } from '@/components/ui/Card';
 import { globalNavigation } from '@/constants/navigation';
@@ -11,6 +12,7 @@ export const StoreManagementPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const [openOrder, setOpenOrder] = useState<Order | null>(null);
 
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -238,7 +240,7 @@ export const StoreManagementPage: React.FC = () => {
               </thead>
               <tbody>
                 {orders.map(order => (
-                  <tr key={order.id}>
+                  <tr key={order.id} onClick={() => setOpenOrder(order)} style={{ cursor: 'pointer' }}>
                     <td>#{order.id.slice(-6)}</td>
                     <td>{order.user?.firstName} {order.user?.lastName}</td>
                     <td>{new Date(order.createdAt).toLocaleDateString()}</td>
@@ -251,6 +253,18 @@ export const StoreManagementPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {openOrder && (
+        <OrderDetailModal
+          order={openOrder}
+          isCompanyView
+          onClose={() => setOpenOrder(null)}
+          onOrderUpdated={(updated) => {
+            setOpenOrder(updated);
+            setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+          }}
+        />
+      )}
     </PageContainer>
   );
 };

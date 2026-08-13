@@ -1,8 +1,16 @@
 import { Router, Request, Response } from 'express';
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
-import { StoreService } from '../services/storeService';
+import { StoreService, OrderDocumentService } from '../services/storeService';
 import { ApiResponseHandler } from '../utils/apiResponse';
+import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB per file
+});
 
 export const storeRoutes = Router();
 
@@ -112,6 +120,137 @@ storeRoutes.get(
     }
     const orders = await StoreService.getCompanyOrders(req.user.companyId);
     return ApiResponseHandler.success(res, orders, 'Company orders retrieved successfully');
+  })
+);
+
+// Get this user's orders with one specific company (a firm connection's order history)
+storeRoutes.get(
+  '/orders/with-company/:companyId',
+  authMiddleware,
+  asyncHandler(async (req: any, res: Response) => {
+    const orders = await StoreService.getUserOrdersWithCompany(req.user.userId, req.params.companyId);
+    return ApiResponseHandler.success(res, orders, 'Orders retrieved successfully');
+  })
+);
+
+// Get a single order — the buyer or the selling company only
+storeRoutes.get(
+  '/orders/:orderId',
+  authMiddleware,
+  asyncHandler(async (req: any, res: Response) => {
+    const order = await StoreService.getOrderById(req.params.orderId);
+    if (!order || (order.userId !== req.user.userId && order.companyId !== req.user.companyId)) {
+      return ApiResponseHandler.error(res, 'Order not found', undefined, 404);
+    }
+    return ApiResponseHandler.success(res, order, 'Order retrieved successfully');
+  })
+);
+
+// Update an order's status/tracking — the selling company only
+storeRoutes.patch(
+  '/orders/:orderId/status',
+  authMiddleware,
+  asyncHandler(async (req: any, res: Response) => {
+    if (!req.user.companyId) {
+      return ApiResponseHandler.error(res, 'Only the selling company can update an order', undefined, 403);
+    }
+    const { status, trackingNumber } = req.body;
+    try {
+      const order = await StoreService.updateOrderStatus(req.user.companyId, req.params.orderId, { status, trackingNumber });
+      return ApiResponseHandler.success(res, order, 'Order updated successfully');
+    } catch {
+      return ApiResponseHandler.error(res, 'Order not found', undefined, 404);
+    }
+  })
+);
+
+/**
+ * ORDER DOCUMENTS (receipts the selling company attaches to an order)
+ */
+
+storeRoutes.get(
+  '/orders/:orderId/documents',
+  authMiddleware,
+  asyncHandler(async (req: any, res: Response) => {
+    const order = await StoreService.getOrderById(req.params.orderId);
+    if (!order || (order.userId !== req.user.userId && order.companyId !== req.user.companyId)) {
+      return ApiResponseHandler.error(res, 'Order not found', undefined, 404);
+    }
+    const documents = await OrderDocumentService.list(order.id);
+    return ApiResponseHandler.success(res, documents, 'Documents retrieved successfully');
+  })
+);
+
+storeRoutes.post(
+  '/orders/:orderId/documents',
+  authMiddleware,
+  upload.single('file'),
+  asyncHandler(async (req: any, res: Response) => {
+    if (!req.user.companyId) {
+      return ApiResponseHandler.error(res, 'Only the selling company can attach a document', undefined, 403);
+    }
+    const order = await StoreService.getOrderById(req.params.orderId);
+    if (!order || order.companyId !== req.user.companyId) {
+      return ApiResponseHandler.error(res, 'Order not found', undefined, 404);
+    }
+    if (!req.file) return ApiResponseHandler.error(res, 'No file provided', undefined, 400);
+
+    const supabase = requireSupabaseAdmin();
+    const safeName = req.file.originalname.replace(/[^\w.\-() ]/g, '_');
+    const storageKey = `${order.userId}/orders/${order.id}/${uuidv4()}-${safeName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(FILES_BUCKET)
+      .upload(storageKey, req.file.buffer, { contentType: req.file.mimetype });
+    if (uploadError) {
+      return ApiResponseHandler.error(res, 'Failed to upload file', uploadError.message, 502);
+    }
+
+    const document = await OrderDocumentService.create(order.id, {
+      name: req.file.originalname,
+      size: req.file.size,
+      mimeType: req.file.mimetype,
+      storageKey,
+    });
+    return ApiResponseHandler.success(res, document, 'Document uploaded successfully', 201);
+  })
+);
+
+storeRoutes.get(
+  '/orders/:orderId/documents/:docId/download',
+  authMiddleware,
+  asyncHandler(async (req: any, res: Response) => {
+    const order = await StoreService.getOrderById(req.params.orderId);
+    if (!order || (order.userId !== req.user.userId && order.companyId !== req.user.companyId)) {
+      return ApiResponseHandler.error(res, 'Order not found', undefined, 404);
+    }
+    const doc = await OrderDocumentService.getById(order.id, req.params.docId);
+    const supabase = requireSupabaseAdmin();
+    const { data, error } = await supabase.storage
+      .from(FILES_BUCKET)
+      .createSignedUrl(doc.storageKey, 60, { download: doc.name });
+    if (error || !data) {
+      return ApiResponseHandler.error(res, 'Failed to generate download link', error?.message, 502);
+    }
+    return ApiResponseHandler.success(res, { url: data.signedUrl }, 'Download link generated');
+  })
+);
+
+storeRoutes.delete(
+  '/orders/:orderId/documents/:docId',
+  authMiddleware,
+  asyncHandler(async (req: any, res: Response) => {
+    if (!req.user.companyId) {
+      return ApiResponseHandler.error(res, 'Only the selling company can remove a document', undefined, 403);
+    }
+    const order = await StoreService.getOrderById(req.params.orderId);
+    if (!order || order.companyId !== req.user.companyId) {
+      return ApiResponseHandler.error(res, 'Order not found', undefined, 404);
+    }
+    const doc = await OrderDocumentService.remove(order.id, req.params.docId);
+    const supabase = requireSupabaseAdmin();
+    await supabase.storage.from(FILES_BUCKET).remove([doc.storageKey]);
+    return ApiResponseHandler.success(res, {}, 'Document deleted successfully');
   })
 );
 

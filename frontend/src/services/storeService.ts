@@ -49,6 +49,7 @@ export interface Order {
   userId: string;
   companyId: string;
   status: string;
+  trackingNumber?: string | null;
   totalAmount: number;
   currency: string;
   items: OrderItem[];
@@ -66,6 +67,14 @@ export interface Order {
   deliveryCountry?: string | null;
   paymentBrand?: string | null;
   paymentLast4?: string | null;
+  createdAt: string;
+}
+
+export interface OrderDocument {
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
   createdAt: string;
 }
 
@@ -230,6 +239,52 @@ class StoreService {
   async getCompanyOrders(): Promise<Order[]> {
     const response = await apiClient.get('/store/company-orders');
     return response.data.data || response.data;
+  }
+
+  async getOrdersWithCompany(companyId: string): Promise<Order[]> {
+    const response = await apiClient.get(`/store/orders/with-company/${companyId}`);
+    return response.data.data || response.data;
+  }
+
+  async getOrder(orderId: string): Promise<Order> {
+    const response = await apiClient.get(`/store/orders/${orderId}`);
+    return response.data.data;
+  }
+
+  async updateOrderStatus(orderId: string, data: { status?: string; trackingNumber?: string }): Promise<Order> {
+    const response = await apiClient.patch(`/store/orders/${orderId}/status`, data);
+    return response.data.data;
+  }
+
+  async getOrderDocuments(orderId: string): Promise<OrderDocument[]> {
+    const response = await apiClient.get(`/store/orders/${orderId}/documents`);
+    return response.data.data || [];
+  }
+
+  async uploadOrderDocument(orderId: string, file: File, onProgress?: (percent: number) => void): Promise<OrderDocument> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post(`/store/orders/${orderId}/documents`, formData, {
+      // The api client's default 'Content-Type: application/json' header
+      // makes axios JSON-serialize FormData bodies unless explicitly unset
+      // here, letting it fall through to multipart/form-data instead.
+      headers: { 'Content-Type': undefined },
+      onUploadProgress: onProgress
+        ? (e: { loaded: number; total?: number }) => {
+            if (e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        : undefined,
+    });
+    return response.data.data;
+  }
+
+  async getOrderDocumentDownloadUrl(orderId: string, docId: string): Promise<string> {
+    const response = await apiClient.get(`/store/orders/${orderId}/documents/${docId}/download`);
+    return response.data.data.url;
+  }
+
+  async deleteOrderDocument(orderId: string, docId: string): Promise<void> {
+    await apiClient.delete(`/store/orders/${orderId}/documents/${docId}`);
   }
 }
 

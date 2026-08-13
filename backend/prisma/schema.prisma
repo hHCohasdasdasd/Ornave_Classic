@@ -505,38 +505,21 @@ model PostLike {
 }
 
 model UserCompanyConnection {
-  id               String        @id @default(cuid())
+  id               String     @id @default(cuid())
   userId           String
   companyId        String
-  relationshipType String        @default("CLIENT")
-  status           String        @default("PENDING")
-  permissions      String        @default("{}")
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  company          Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  invoices         FirmInvoice[]
+  relationshipType String     @default("CLIENT")
+  status           String     @default("PENDING")
+  permissions      String     @default("{}")
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  company          Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   files            UserFile[]
 
   @@unique([userId, companyId])
   @@index([companyId])
   @@index([status])
-}
-
-// An invoice the user received FROM a connected firm (not one they billed
-// to someone else — that's the separate, unrelated company-ERP Invoice
-// model). Manually logged, scoped to one specific firm connection.
-model FirmInvoice {
-  id           String                @id @default(cuid())
-  connectionId String
-  title        String
-  amount       Float
-  currency     String                @default("USD")
-  issuedDate   DateTime
-  createdAt    DateTime              @default(now())
-  connection   UserCompanyConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-
-  @@index([connectionId])
 }
 
 model GlobalRequest {
@@ -621,12 +604,13 @@ model Product {
 }
 
 model Order {
-  id                 String      @id @default(cuid())
+  id                 String          @id @default(cuid())
   userId             String
   companyId          String
-  status             String      @default("PENDING")
+  status             String          @default("PENDING")
+  trackingNumber     String?
   totalAmount        Float
-  currency           String      @default("USD")
+  currency           String          @default("USD")
   billingAddress     String?
   billingCity        String?
   billingState       String?
@@ -639,15 +623,32 @@ model Order {
   deliveryCountry    String?
   paymentBrand       String?
   paymentLast4       String?
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-  company            Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  company            Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   items              OrderItem[]
+  documents          OrderDocument[]
 
   @@index([userId])
   @@index([companyId])
   @@index([status])
+}
+
+// A receipt/document the SELLING company attaches to one of the buyer's
+// orders (e.g. a receipt or shipping confirmation) — company-uploaded,
+// buyer-visible. Uses the same Supabase Storage bucket as personal Files.
+model OrderDocument {
+  id         String   @id @default(cuid())
+  orderId    String
+  name       String
+  size       Int
+  mimeType   String
+  storageKey String   @unique
+  createdAt  DateTime @default(now())
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
 }
 
 model OrderItem {

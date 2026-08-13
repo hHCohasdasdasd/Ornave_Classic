@@ -4,7 +4,9 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { networkService } from '@/services/networkService';
-import { FirmConnection, FirmConnectionFile, FirmInvoiceEntry, UserProfile } from '@/types/discovery';
+import { storeService, Order } from '@/services/storeService';
+import { OrderDetailModal } from '@/components/OrderDetailModal';
+import { FirmConnection, FirmConnectionFile, UserProfile } from '@/types/discovery';
 import './WorkSuite.css';
 
 const getInitials = (firstName: string, lastName: string) => `${firstName[0] || ''}${lastName[0] || ''}`;
@@ -40,13 +42,9 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
   const [detail, setDetail] = useState<OpenConnection | null>(null);
   const [isOpeningDetail, setIsOpeningDetail] = useState<string | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
-  const [invoices, setInvoices] = useState<FirmInvoiceEntry[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [files, setFiles] = useState<FirmConnectionFile[]>([]);
-  const [showAddInvoice, setShowAddInvoice] = useState(false);
-  const [invoiceTitle, setInvoiceTitle] = useState('');
-  const [invoiceAmount, setInvoiceAmount] = useState('');
-  const [invoiceDate, setInvoiceDate] = useState('');
-  const [isSavingInvoice, setIsSavingInvoice] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<{ key: string; name: string; percent: number }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,14 +73,14 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
     await networkService.unfollowFirmConnection(firm.id);
   };
 
-  const loadDetail = async (connectionId: string) => {
+  const loadDetail = async (connectionId: string, companyId: string) => {
     setIsLoadingDetail(true);
     try {
-      const [inv, fls] = await Promise.all([
-        networkService.listFirmInvoices(connectionId),
+      const [ords, fls] = await Promise.all([
+        storeService.getOrdersWithCompany(companyId),
         networkService.listFirmFiles(connectionId),
       ]);
-      setInvoices(inv);
+      setOrders(ords);
       setFiles(fls);
     } finally {
       setIsLoadingDetail(false);
@@ -99,7 +97,7 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
         return;
       }
       setDetail(connection);
-      await loadDetail(connection.id);
+      await loadDetail(connection.id, connection.company.id);
     } finally {
       setIsOpeningDetail(null);
     }
@@ -107,39 +105,8 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
 
   const closeDetail = () => {
     setDetail(null);
-    setInvoices([]);
+    setOrders([]);
     setFiles([]);
-    setShowAddInvoice(false);
-    setInvoiceTitle('');
-    setInvoiceAmount('');
-    setInvoiceDate('');
-  };
-
-  const handleAddInvoice = async () => {
-    if (!detail || !invoiceTitle.trim() || !invoiceAmount || !invoiceDate) return;
-    setIsSavingInvoice(true);
-    try {
-      const created = await networkService.addFirmInvoice(detail.id, {
-        title: invoiceTitle.trim(),
-        amount: Number(invoiceAmount),
-        issuedDate: invoiceDate,
-      });
-      setInvoices((prev) => [created, ...prev]);
-      setShowAddInvoice(false);
-      setInvoiceTitle('');
-      setInvoiceAmount('');
-      setInvoiceDate('');
-    } catch {
-      setError('Could not log that invoice — try again.');
-    } finally {
-      setIsSavingInvoice(false);
-    }
-  };
-
-  const handleDeleteInvoice = async (invoice: FirmInvoiceEntry) => {
-    if (!detail) return;
-    setInvoices((prev) => prev.filter((i) => i.id !== invoice.id));
-    await networkService.deleteFirmInvoice(detail.id, invoice.id);
   };
 
   const handleFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -326,40 +293,22 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
               <>
                 <div className="firm-detail-modal__section">
                   <div className="firm-detail-modal__section-header">
-                    <h3>Invoices</h3>
-                    <button className="worksuite-create-btn" onClick={() => setShowAddInvoice((v) => !v)}>
-                      {showAddInvoice ? 'Cancel' : '+ Add'}
-                    </button>
+                    <h3>Orders</h3>
                   </div>
 
-                  {showAddInvoice && (
-                    <div className="firm-detail-modal__invoice-form">
-                      <input placeholder="Title (e.g. Dinner, 4 guests)" value={invoiceTitle} onChange={(e) => setInvoiceTitle(e.target.value)} maxLength={160} />
-                      <input placeholder="Amount" type="number" min="0" step="0.01" value={invoiceAmount} onChange={(e) => setInvoiceAmount(e.target.value)} />
-                      <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
-                      <button
-                        className="worksuite-modal__submit"
-                        onClick={handleAddInvoice}
-                        disabled={!invoiceTitle.trim() || !invoiceAmount || !invoiceDate || isSavingInvoice}
-                      >
-                        {isSavingInvoice ? 'Saving…' : 'Log Invoice'}
-                      </button>
-                    </div>
-                  )}
-
-                  {invoices.length === 0 ? (
-                    <p className="worksuite-card__meta">No invoices logged for this firm yet.</p>
+                  {orders.length === 0 ? (
+                    <p className="worksuite-card__meta">No orders placed with this firm yet.</p>
                   ) : (
                     <div className="firm-detail-modal__list">
-                      {invoices.map((inv) => (
-                        <div key={inv.id} className="firm-detail-modal__row">
+                      {orders.map((order) => (
+                        <div key={order.id} className="firm-detail-modal__row" style={{ cursor: 'pointer' }} onClick={() => setViewingOrder(order)}>
                           <div>
-                            <div className="firm-detail-modal__row-title">{inv.title}</div>
-                            <div className="worksuite-card__meta">{new Date(inv.issuedDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                            <div className="firm-detail-modal__row-title">Order #{order.id.slice(-8).toUpperCase()}</div>
+                            <div className="worksuite-card__meta">{new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span className="firm-detail-modal__amount">{inv.currency} {inv.amount.toFixed(2)}</span>
-                            <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteInvoice(inv)}>Delete</button>
+                            <span className={`order-modal__status order-modal__status--${order.status.toLowerCase()}`} style={{ position: 'static' }}>{order.status}</span>
+                            <span className="firm-detail-modal__amount">{order.currency} {order.totalAmount.toFixed(2)}</span>
                           </div>
                         </div>
                       ))}
@@ -416,6 +365,10 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
             )}
           </div>
         </div>
+      )}
+
+      {viewingOrder && (
+        <OrderDetailModal order={viewingOrder} onClose={() => setViewingOrder(null)} />
       )}
     </div>
   );

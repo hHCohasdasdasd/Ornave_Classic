@@ -267,4 +267,76 @@ export class StoreService {
       },
     });
   }
+
+  /**
+   * One user's order history with one specific company — what a firm
+   * connection's detail view shows.
+   */
+  static async getUserOrdersWithCompany(userId: string, companyId: string) {
+    return await prisma.order.findMany({
+      where: { userId, companyId },
+      include: {
+        items: { include: { product: true } },
+        company: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  static async getOrderById(orderId: string) {
+    return await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: { include: { product: true } },
+        company: true,
+        user: true,
+      },
+    });
+  }
+
+  /**
+   * Update an order's status/tracking — the selling company only, scoped so
+   * one company can never touch another's order.
+   */
+  static async updateOrderStatus(companyId: string, orderId: string, data: { status?: string; trackingNumber?: string }) {
+    const order = await prisma.order.findFirst({ where: { id: orderId, companyId } });
+    if (!order) throw new Error('Order not found');
+    return await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        ...(data.status ? { status: data.status } : {}),
+        ...(data.trackingNumber !== undefined ? { trackingNumber: data.trackingNumber } : {}),
+      },
+      // Callers (the order detail modal) replace their whole Order object
+      // with this response, so it needs the same shape as getOrderById —
+      // items in particular, or rendering the item list crashes.
+      include: {
+        items: { include: { product: true } },
+        company: true,
+        user: true,
+      },
+    });
+  }
+}
+
+export class OrderDocumentService {
+  static async list(orderId: string) {
+    return prisma.orderDocument.findMany({ where: { orderId }, orderBy: { createdAt: 'desc' } });
+  }
+
+  static async create(orderId: string, data: { name: string; size: number; mimeType: string; storageKey: string }) {
+    return prisma.orderDocument.create({ data: { orderId, ...data } });
+  }
+
+  static async getById(orderId: string, id: string) {
+    const doc = await prisma.orderDocument.findFirst({ where: { id, orderId } });
+    if (!doc) throw new Error('Document not found');
+    return doc;
+  }
+
+  static async remove(orderId: string, id: string) {
+    const doc = await this.getById(orderId, id);
+    await prisma.orderDocument.delete({ where: { id } });
+    return doc;
+  }
 }

@@ -49,7 +49,7 @@ export class UserCompanyConnectionService {
 
     if (existing) {
       // Re-following after a previous unfollow — reactivate the same row
-      // (and its invoice/file history) instead of erroring or duplicating.
+      // (and its file history) instead of erroring or duplicating.
       if (existing.status === UserConnectionStatus.REVOKED) {
         return prisma.userCompanyConnection.update({
           where: { id: existing.id },
@@ -101,7 +101,7 @@ export class UserCompanyConnectionService {
   }
 
   /** Undo a follow — a soft delete (REVOKED) rather than a hard delete so any
-   * invoices/files already logged against the connection are preserved. */
+   * files already logged against the connection are preserved. */
   static async revoke(userId: string, companyId: string) {
     const connection = await prisma.userCompanyConnection.findUnique({
       where: { userId_companyId: { userId, companyId } },
@@ -157,7 +157,7 @@ export class UserCompanyConnectionService {
   }
 
   /** Fetch a connection by id, scoped to its owner — the guard every
-   * connection-detail route (invoices, files) needs before touching it. */
+   * connection-detail route (files) needs before touching it. */
   static async getOwned(userId: string, connectionId: string) {
     const connection = await prisma.userCompanyConnection.findFirst({
       where: { id: connectionId, userId },
@@ -165,29 +165,5 @@ export class UserCompanyConnectionService {
     });
     if (!connection) throw new Error('Connection not found');
     return connection;
-  }
-}
-
-export class FirmInvoiceService {
-  static async list(connectionId: string) {
-    return prisma.firmInvoice.findMany({ where: { connectionId }, orderBy: { issuedDate: 'desc' } });
-  }
-
-  static async create(connectionId: string, data: { title: string; amount: number; currency?: string; issuedDate: Date }) {
-    return prisma.firmInvoice.create({
-      data: {
-        connectionId,
-        title: data.title,
-        amount: data.amount,
-        currency: data.currency || 'USD',
-        issuedDate: data.issuedDate,
-      },
-    });
-  }
-
-  static async remove(connectionId: string, id: string) {
-    const invoice = await prisma.firmInvoice.findFirst({ where: { id, connectionId } });
-    if (!invoice) throw new Error('Invoice not found');
-    await prisma.firmInvoice.delete({ where: { id } });
   }
 }

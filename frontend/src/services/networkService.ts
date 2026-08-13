@@ -1,4 +1,4 @@
-import { ConnectionRequest, FirmConnection, FirmConnectionFile, FirmInvoiceEntry, UserProfile } from '@/types/discovery';
+import { ConnectionRequest, FirmConnection, FirmConnectionFile, UserProfile } from '@/types/discovery';
 import { apiClient } from './api';
 import { firmService } from './firmService';
 
@@ -80,10 +80,12 @@ class NetworkService {
     await firmService.unfollowFirm(firmId);
   }
 
-  // ── Firm connection detail (real backend-tracked connection — invoices/
-  // files need somewhere durable to live, unlike the browser-local follow
-  // list above). Returns null if `firmId` isn't a real registered company
-  // (e.g. one of the demo firms auto-seeded into the local follow list). ──
+  // ── Firm connection detail (real backend-tracked connection — files need
+  // somewhere durable to live, unlike the browser-local follow list above;
+  // orders are read separately from storeService, since they're real Order
+  // records rather than connection-scoped data). Returns null if `firmId`
+  // isn't a real registered company (e.g. one of the demo firms auto-seeded
+  // into the local follow list). ──
 
   async ensureFirmConnection(companyId: string): Promise<{ id: string; company: { id: string; name: string; logo?: string; industry?: string; description?: string } } | null> {
     try {
@@ -92,20 +94,6 @@ class NetworkService {
     } catch {
       return null;
     }
-  }
-
-  async listFirmInvoices(connectionId: string): Promise<FirmInvoiceEntry[]> {
-    const response = await apiClient.get(`/global/connections/${connectionId}/invoices`);
-    return response.data.data || [];
-  }
-
-  async addFirmInvoice(connectionId: string, data: { title: string; amount: number; currency?: string; issuedDate: string }): Promise<FirmInvoiceEntry> {
-    const response = await apiClient.post(`/global/connections/${connectionId}/invoices`, data);
-    return response.data.data;
-  }
-
-  async deleteFirmInvoice(connectionId: string, invoiceId: string): Promise<void> {
-    await apiClient.delete(`/global/connections/${connectionId}/invoices/${invoiceId}`);
   }
 
   async listFirmFiles(connectionId: string): Promise<FirmConnectionFile[]> {
