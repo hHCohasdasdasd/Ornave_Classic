@@ -2410,9 +2410,9 @@
    modal (it holds two whole sections) but well short of the --large one. */
 .firm-detail-modal {
   position: relative;
-  max-width: 1040px;
-  width: 92vw;
-  max-height: 88vh;
+  max-width: 1440px;
+  width: 96vw;
+  max-height: 94vh;
 }
 
 .firm-detail-modal__close {
@@ -2453,7 +2453,7 @@
 }
 
 .firm-detail-modal__thread--tall {
-  max-height: 46vh;
+  max-height: 56vh;
 }
 
 @media (max-width: 760px) {
