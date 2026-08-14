@@ -5,6 +5,7 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { UserCompanyConnectionService, ConnectionMessageService } from '../services/userCompanyConnectionService';
+import { TicketService } from '../services/ticketService';
 import { GlobalRequestService } from '../services/globalRequestService';
 import { UserDocumentService } from '../services/userDocumentService';
 import { GlobalPaymentService } from '../services/globalPaymentService';
@@ -189,6 +190,70 @@ export class GlobalController {
     if (!content) return ApiResponseHandler.error(res, 'Message content is required', undefined, 400);
     const message = await ConnectionMessageService.create(connection.id, false, content);
     return ApiResponseHandler.success(res, message, 'Message sent', 201);
+  });
+
+  static getConnectionTickets = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+    const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
+    const tickets = await TicketService.list(connection.id);
+    return ApiResponseHandler.success(res, tickets, 'Tickets retrieved', 200);
+  });
+
+  static openConnectionTicket = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+    const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
+    const subject = (req.body.subject || '').trim();
+    const message = (req.body.message || '').trim();
+    if (!subject || !message) {
+      return ApiResponseHandler.error(res, 'A subject and message are required', undefined, 400);
+    }
+    const ticket = await TicketService.create(connection.id, subject, message);
+    return ApiResponseHandler.success(res, ticket, 'Ticket opened', 201);
+  });
+
+  static getTicket = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+    try {
+      const ticket = await TicketService.getOwned(req.user.userId, req.params.ticketId);
+      const messages = await TicketService.listMessages(ticket.id);
+      return ApiResponseHandler.success(res, { ...ticket, messages }, 'Ticket retrieved', 200);
+    } catch {
+      return ApiResponseHandler.error(res, 'Ticket not found', undefined, 404);
+    }
+  });
+
+  static sendTicketMessage = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+    try {
+      const ticket = await TicketService.getOwned(req.user.userId, req.params.ticketId);
+      const content = (req.body.content || '').trim();
+      if (!content) return ApiResponseHandler.error(res, 'Message content is required', undefined, 400);
+      const message = await TicketService.addMessage(ticket.id, false, content);
+      return ApiResponseHandler.success(res, message, 'Message sent', 201);
+    } catch {
+      return ApiResponseHandler.error(res, 'Ticket not found', undefined, 404);
+    }
+  });
+
+  static closeTicket = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    }
+    try {
+      const ticket = await TicketService.getOwned(req.user.userId, req.params.ticketId);
+      const updated = await TicketService.updateStatus(ticket.id, 'CLOSED');
+      return ApiResponseHandler.success(res, updated, 'Ticket closed', 200);
+    } catch {
+      return ApiResponseHandler.error(res, 'Ticket not found', undefined, 404);
+    }
   });
 
   static getRequests = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

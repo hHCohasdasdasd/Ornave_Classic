@@ -518,6 +518,7 @@ model UserCompanyConnection {
   user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   files            UserFile[]
   messages         ConnectionMessage[]
+  tickets          Ticket[]
 
   @@unique([userId, companyId])
   @@index([companyId])
@@ -535,6 +536,34 @@ model ConnectionMessage {
   connection      UserCompanyConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 
   @@index([connectionId])
+}
+
+// A support ticket a buyer opens with a connected firm — always
+// buyer-initiated, tracked to resolution, distinct from the freeform
+// ConnectionMessage thread.
+model Ticket {
+  id           String                @id @default(cuid())
+  connectionId String
+  subject      String
+  status       String                @default("OPEN")
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  connection   UserCompanyConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  messages     TicketMessage[]
+
+  @@index([connectionId])
+  @@index([status])
+}
+
+model TicketMessage {
+  id              String   @id @default(cuid())
+  ticketId        String
+  senderIsCompany Boolean
+  content         String
+  createdAt       DateTime @default(now())
+  ticket          Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
 }
 
 model GlobalRequest {

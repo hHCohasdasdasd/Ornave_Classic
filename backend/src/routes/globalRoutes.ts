@@ -30,6 +30,13 @@ router.delete('/connections/:connectionId/files/:fileId', GlobalController.delet
 router.get('/connections/:connectionId/messages', GlobalController.getConnectionMessages);
 router.post('/connections/:connectionId/messages', GlobalController.sendConnectionMessage);
 
+// Support tickets — always opened by the buyer, tracked to resolution
+router.get('/connections/:connectionId/tickets', GlobalController.getConnectionTickets);
+router.post('/connections/:connectionId/tickets', GlobalController.openConnectionTicket);
+router.get('/tickets/:ticketId', GlobalController.getTicket);
+router.post('/tickets/:ticketId/messages', GlobalController.sendTicketMessage);
+router.post('/tickets/:ticketId/close', GlobalController.closeTicket);
+
 // Structured requests
 router.get('/requests', GlobalController.getRequests);
 router.post('/requests', GlobalController.createRequest);

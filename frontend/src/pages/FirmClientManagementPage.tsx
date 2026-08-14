@@ -5,6 +5,8 @@ import { PageContainer } from '@/components/ui/PageContainer';
 import { erpNavigation } from '@/constants/navigation';
 import { storeService, Order } from '@/services/storeService';
 import { companyClientService, CompanyClientConnection, ConnectionMessage } from '@/services/companyClientService';
+import { TicketThreadModal } from '@/components/TicketThreadModal';
+import { Ticket, TicketStatus, TicketWithMessages } from '@/types/discovery';
 import '@/pages/NetworkPage.css';
 import '@/components/OrderDetailModal.css';
 
@@ -22,6 +24,11 @@ export const FirmClientManagementPage: React.FC = () => {
   const [messageDraft, setMessageDraft] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const [ticketsClient, setTicketsClient] = useState<CompanyClientConnection | null>(null);
+  const [clientTickets, setClientTickets] = useState<Ticket[]>([]);
+  const [isLoadingTickets, setIsLoadingTickets] = useState(false);
+  const [viewingTicket, setViewingTicket] = useState<TicketWithMessages | null>(null);
 
   useEffect(() => {
     if (!user || !company) {
@@ -79,6 +86,39 @@ export const FirmClientManagementPage: React.FC = () => {
     } finally {
       setIsSendingMessage(false);
     }
+  };
+
+  const openTickets = async (client: CompanyClientConnection) => {
+    setTicketsClient(client);
+    setIsLoadingTickets(true);
+    try {
+      setClientTickets(await companyClientService.getTickets(client.id));
+    } finally {
+      setIsLoadingTickets(false);
+    }
+  };
+
+  const closeTickets = () => {
+    setTicketsClient(null);
+    setClientTickets([]);
+  };
+
+  const openTicketThread = async (ticketId: string) => {
+    const ticket = await companyClientService.getTicket(ticketId);
+    setViewingTicket(ticket);
+  };
+
+  const handleTicketMessage = async (content: string) => {
+    if (!viewingTicket) return;
+    const sent = await companyClientService.sendTicketMessage(viewingTicket.id, content);
+    setViewingTicket((prev) => (prev ? { ...prev, messages: [...prev.messages, sent] } : prev));
+  };
+
+  const handleUpdateTicketStatus = async (status: TicketStatus) => {
+    if (!viewingTicket) return;
+    const updated = await companyClientService.updateTicketStatus(viewingTicket.id, status);
+    setViewingTicket((prev) => (prev ? { ...prev, status: updated.status as TicketStatus } : prev));
+    setClientTickets((prev) => prev.map((t) => (t.id === updated.id ? { ...t, status: updated.status as TicketStatus } : t)));
   };
 
   const handleEditBanner = async () => {
@@ -195,11 +235,18 @@ export const FirmClientManagementPage: React.FC = () => {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <span className="tech-tag" style={{ fontSize: '0.6rem', borderColor: 'rgba(139, 163, 120, 0.35)', color: '#8ba378' }}>CORE_LINK</span>
-                      <button
-                        className="btn-sm-primary"
-                        style={{ display: 'block', marginTop: '5px', fontSize: '0.65rem', padding: '4px 12px' }}
-                        onClick={() => openMessages(follower)}
-                      >MESSAGE</button>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '5px' }}>
+                        <button
+                          className="btn-sm-primary"
+                          style={{ fontSize: '0.65rem', padding: '4px 12px' }}
+                          onClick={() => openMessages(follower)}
+                        >MESSAGE</button>
+                        <button
+                          className="btn-sm-primary"
+                          style={{ fontSize: '0.65rem', padding: '4px 12px' }}
+                          onClick={() => openTickets(follower)}
+                        >TICKETS</button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -321,6 +368,51 @@ export const FirmClientManagementPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {ticketsClient && (
+        <div className="order-modal-overlay" onClick={closeTickets}>
+          <div className="order-modal" style={{ maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
+            <button className="order-modal__close" onClick={closeTickets}>×</button>
+            <div className="order-modal__header">
+              <div>
+                <span className="order-modal__order-id">Tickets</span>
+                <h2 className="order-modal__company">{ticketsClient.user.firstName} {ticketsClient.user.lastName}</h2>
+                <span className="order-modal__date">{ticketsClient.user.email}</span>
+              </div>
+            </div>
+
+            {isLoadingTickets ? (
+              <p className="order-modal__block-text">Loading…</p>
+            ) : clientTickets.length === 0 ? (
+              <p className="order-modal__block-text">No tickets opened by this client yet.</p>
+            ) : (
+              <div className="firm-detail-modal__list">
+                {clientTickets.map((ticket) => (
+                  <div key={ticket.id} className="firm-detail-modal__row" style={{ cursor: 'pointer' }} onClick={() => openTicketThread(ticket.id)}>
+                    <div>
+                      <div className="firm-detail-modal__row-title">{ticket.subject}</div>
+                      <div className="worksuite-card__meta">{new Date(ticket.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                    </div>
+                    <span className={`ticket-modal__status-badge ticket-modal__status-badge--${ticket.status.toLowerCase()}`}>
+                      {ticket.status === 'IN_PROGRESS' ? 'In Progress' : ticket.status.charAt(0) + ticket.status.slice(1).toLowerCase()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {viewingTicket && (
+        <TicketThreadModal
+          ticket={viewingTicket}
+          onClose={() => setViewingTicket(null)}
+          isCompanyView
+          onSendMessage={handleTicketMessage}
+          onUpdateStatus={handleUpdateTicketStatus}
+        />
       )}
     </PageContainer>
   );

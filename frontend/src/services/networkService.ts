@@ -1,4 +1,4 @@
-import { ConnectionRequest, FirmConnection, FirmConnectionFile, UserProfile } from '@/types/discovery';
+import { ConnectionRequest, FirmConnection, FirmConnectionFile, Ticket, TicketWithMessages, UserProfile } from '@/types/discovery';
 import { apiClient } from './api';
 import { firmService } from './firmService';
 
@@ -151,6 +151,31 @@ class NetworkService {
 
   async sendFirmMessage(connectionId: string, content: string): Promise<{ id: string; senderIsCompany: boolean; content: string; createdAt: string }> {
     const response = await apiClient.post(`/global/connections/${connectionId}/messages`, { content });
+    return response.data.data;
+  }
+
+  async getFirmTickets(connectionId: string): Promise<Ticket[]> {
+    const response = await apiClient.get(`/global/connections/${connectionId}/tickets`);
+    return response.data.data || [];
+  }
+
+  async openFirmTicket(connectionId: string, subject: string, message: string): Promise<TicketWithMessages> {
+    const response = await apiClient.post(`/global/connections/${connectionId}/tickets`, { subject, message });
+    return response.data.data;
+  }
+
+  async getTicket(ticketId: string): Promise<TicketWithMessages> {
+    const response = await apiClient.get(`/global/tickets/${ticketId}`);
+    return response.data.data;
+  }
+
+  async sendTicketMessage(ticketId: string, content: string) {
+    const response = await apiClient.post(`/global/tickets/${ticketId}/messages`, { content });
+    return response.data.data;
+  }
+
+  async closeTicket(ticketId: string): Promise<Ticket> {
+    const response = await apiClient.post(`/global/tickets/${ticketId}/close`, {});
     return response.data.data;
   }
 

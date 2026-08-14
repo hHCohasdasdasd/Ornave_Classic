@@ -2672,6 +2672,39 @@
   margin-left: auto;
 }
 
+.ticket-new-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 14px;
+  background: rgba(246, 243, 237, 0.02);
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 12px;
+}
+
+.ticket-new-form input,
+.ticket-new-form textarea {
+  background: var(--color-input-bg, var(--color-bg));
+  border: 1px solid var(--color-border-dark);
+  color: var(--color-text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.ticket-new-form input:focus,
+.ticket-new-form textarea:focus {
+  outline: none;
+  border-color: var(--tech-accent-gold);
+}
+
+.ticket-new-form > button {
+  align-self: flex-end;
+}
+
 .firm-detail-page__services {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

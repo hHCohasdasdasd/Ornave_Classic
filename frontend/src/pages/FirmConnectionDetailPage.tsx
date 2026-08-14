@@ -7,7 +7,8 @@ import { networkService } from '@/services/networkService';
 import { storeService, Order } from '@/services/storeService';
 import { firmService } from '@/services/firmService';
 import { OrderDetailModal } from '@/components/OrderDetailModal';
-import { FirmConnectionFile } from '@/types/discovery';
+import { TicketThreadModal } from '@/components/TicketThreadModal';
+import { FirmConnectionFile, Ticket, TicketWithMessages } from '@/types/discovery';
 import { FirmProfileData } from '@/types/firm';
 import './WorkSuite.css';
 
@@ -49,6 +50,13 @@ export const FirmConnectionDetailPage: React.FC = () => {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [viewingTicket, setViewingTicket] = useState<TicketWithMessages | null>(null);
+  const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
+  const [newTicketSubject, setNewTicketSubject] = useState('');
+  const [newTicketMessage, setNewTicketMessage] = useState('');
+  const [isCreatingTicket, setIsCreatingTicket] = useState(false);
+
   useEffect(() => {
     if (isGuest || !firmId) return;
     openFirmDetail(firmId);
@@ -69,16 +77,18 @@ export const FirmConnectionDetailPage: React.FC = () => {
         return;
       }
       setDetail(connection);
-      const [ords, fls, msgs, profile] = await Promise.all([
+      const [ords, fls, msgs, profile, tix] = await Promise.all([
         storeService.getOrdersWithCompany(connection.company.id),
         networkService.listFirmFiles(connection.id),
         networkService.getFirmMessages(connection.id),
         firmService.getFirmProfile(connection.company.id),
+        networkService.getFirmTickets(connection.id),
       ]);
       setOrders(ords);
       setFiles(fls);
       setMessages(msgs);
       setFirmProfile(profile);
+      setTickets(tix);
     } finally {
       setIsLoadingDetail(false);
     }
@@ -97,6 +107,42 @@ export const FirmConnectionDetailPage: React.FC = () => {
     } finally {
       setIsSendingMessage(false);
     }
+  };
+
+  const handleOpenTicket = async () => {
+    const subject = newTicketSubject.trim();
+    const message = newTicketMessage.trim();
+    if (!subject || !message || !detail) return;
+    setIsCreatingTicket(true);
+    try {
+      const ticket = await networkService.openFirmTicket(detail.id, subject, message);
+      setTickets((prev) => [ticket, ...prev]);
+      setNewTicketSubject('');
+      setNewTicketMessage('');
+      setIsNewTicketOpen(false);
+    } catch {
+      setError('Could not open that ticket — try again.');
+    } finally {
+      setIsCreatingTicket(false);
+    }
+  };
+
+  const openTicketThread = async (ticketId: string) => {
+    const ticket = await networkService.getTicket(ticketId);
+    setViewingTicket(ticket);
+  };
+
+  const handleTicketMessage = async (content: string) => {
+    if (!viewingTicket) return;
+    const sent = await networkService.sendTicketMessage(viewingTicket.id, content);
+    setViewingTicket((prev) => (prev ? { ...prev, messages: [...prev.messages, sent] } : prev));
+  };
+
+  const handleCloseTicket = async () => {
+    if (!viewingTicket) return;
+    const updated = await networkService.closeTicket(viewingTicket.id);
+    setViewingTicket((prev) => (prev ? { ...prev, status: updated.status } : prev));
+    setTickets((prev) => prev.map((t) => (t.id === updated.id ? { ...t, status: updated.status } : t)));
   };
 
   const handleFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -332,6 +378,59 @@ export const FirmConnectionDetailPage: React.FC = () => {
                     </button>
                   </div>
                 </div>
+
+                <div className="firm-detail-page__card">
+                  <div className="firm-detail-page__card-header">
+                    <span className="firm-detail-page__card-icon">🎫</span>
+                    <h3>Tickets</h3>
+                    <button className="worksuite-create-btn firm-detail-page__card-action" onClick={() => setIsNewTicketOpen((v) => !v)}>
+                      {isNewTicketOpen ? 'Cancel' : '+ New Ticket'}
+                    </button>
+                  </div>
+
+                  {isNewTicketOpen && (
+                    <div className="ticket-new-form">
+                      <input
+                        placeholder="Subject"
+                        value={newTicketSubject}
+                        onChange={(e) => setNewTicketSubject(e.target.value)}
+                        maxLength={140}
+                      />
+                      <textarea
+                        placeholder="Describe the issue…"
+                        value={newTicketMessage}
+                        onChange={(e) => setNewTicketMessage(e.target.value)}
+                        rows={3}
+                        maxLength={2000}
+                      />
+                      <button
+                        className="worksuite-create-btn"
+                        onClick={handleOpenTicket}
+                        disabled={!newTicketSubject.trim() || !newTicketMessage.trim() || isCreatingTicket}
+                      >
+                        {isCreatingTicket ? 'Opening…' : 'Open Ticket'}
+                      </button>
+                    </div>
+                  )}
+
+                  {tickets.length === 0 ? (
+                    <p className="worksuite-card__meta">No tickets opened with this firm yet.</p>
+                  ) : (
+                    <div className="firm-detail-modal__list">
+                      {tickets.map((ticket) => (
+                        <div key={ticket.id} className="firm-detail-modal__row" style={{ cursor: 'pointer' }} onClick={() => openTicketThread(ticket.id)}>
+                          <div>
+                            <div className="firm-detail-modal__row-title">{ticket.subject}</div>
+                            <div className="worksuite-card__meta">{formatDate(ticket.updatedAt)}</div>
+                          </div>
+                          <span className={`ticket-modal__status-badge ticket-modal__status-badge--${ticket.status.toLowerCase()}`}>
+                            {ticket.status === 'IN_PROGRESS' ? 'In Progress' : ticket.status.charAt(0) + ticket.status.slice(1).toLowerCase()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </>
@@ -340,6 +439,15 @@ export const FirmConnectionDetailPage: React.FC = () => {
 
       {viewingOrder && (
         <OrderDetailModal order={viewingOrder} onClose={() => setViewingOrder(null)} />
+      )}
+
+      {viewingTicket && (
+        <TicketThreadModal
+          ticket={viewingTicket}
+          onClose={() => setViewingTicket(null)}
+          onSendMessage={handleTicketMessage}
+          onCloseTicket={handleCloseTicket}
+        />
       )}
     </div>
   );

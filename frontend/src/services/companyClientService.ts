@@ -1,4 +1,5 @@
 import { apiClient } from './api';
+import { Ticket, TicketStatus, TicketWithMessages } from '@/types/discovery';
 
 export interface CompanyClientConnection {
   id: string;
@@ -34,6 +35,26 @@ class CompanyClientService {
 
   async updateBanner(companyId: string, bannerUrl: string | null): Promise<{ id: string; bannerUrl: string | null }> {
     const response = await apiClient.put(`/companies/${companyId}/banner`, { bannerUrl });
+    return response.data.data;
+  }
+
+  async getTickets(connectionId: string): Promise<Ticket[]> {
+    const response = await apiClient.get(`/company-clients/${connectionId}/tickets`);
+    return response.data.data || [];
+  }
+
+  async getTicket(ticketId: string): Promise<TicketWithMessages> {
+    const response = await apiClient.get(`/company-clients/tickets/${ticketId}`);
+    return response.data.data;
+  }
+
+  async sendTicketMessage(ticketId: string, content: string) {
+    const response = await apiClient.post(`/company-clients/tickets/${ticketId}/messages`, { content });
+    return response.data.data;
+  }
+
+  async updateTicketStatus(ticketId: string, status: TicketStatus): Promise<Ticket> {
+    const response = await apiClient.patch(`/company-clients/tickets/${ticketId}/status`, { status });
     return response.data.data;
   }
 }

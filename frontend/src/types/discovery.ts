@@ -52,6 +52,28 @@ export interface FirmConnectionFile {
   createdAt: string;
 }
 
+export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+
+export interface Ticket {
+  id: string;
+  connectionId: string;
+  subject: string;
+  status: TicketStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TicketMessage {
+  id: string;
+  senderIsCompany: boolean;
+  content: string;
+  createdAt: string;
+}
+
+export interface TicketWithMessages extends Ticket {
+  messages: TicketMessage[];
+}
+
 export interface DiscoveryFilters {
   industry?: string;
   location?: string;
