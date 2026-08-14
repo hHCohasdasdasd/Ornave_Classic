@@ -6,6 +6,7 @@ import { ERROR_MESSAGES } from '../constants';
 import { sendEmail } from '../utils/email';
 
 const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+const PASSWORD_RESET_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
@@ -77,7 +78,9 @@ async function logAuthEvent(
     | 'ACCOUNT_PERMANENTLY_LOCKED'
     | 'ACCOUNT_UNLOCKED'
     | 'PASSWORD_CHANGED'
-    | 'EMAIL_VERIFIED',
+    | 'EMAIL_VERIFIED'
+    | 'PASSWORD_RESET_REQUESTED'
+    | 'PASSWORD_RESET_COMPLETED',
   email: string,
   userId?: string | null,
   meta?: RequestMeta
@@ -331,6 +334,18 @@ export class AuthService {
         });
 
         await logAuthEvent(goesPermanent ? 'ACCOUNT_PERMANENTLY_LOCKED' : 'ACCOUNT_LOCKED', user.email, user.id, meta);
+
+        const lockoutMinutes = goesPermanent ? null : Math.round(this.LOCKOUT_TIERS_MS[tierIndex] / 60000);
+        sendEmail(
+          user.email,
+          goesPermanent ? 'Your Ornave account has been locked' : 'Unusual sign-in activity on your Ornave account',
+          `<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+            <h2 style="color: #14140f;">${goesPermanent ? 'Account locked' : 'Too many failed sign-in attempts'}</h2>
+            <p>We locked your Ornave account after repeated failed login attempts${goesPermanent ? '' : ` for ${lockoutMinutes} minute(s)`}.</p>
+            ${goesPermanent ? '<p>This account is now permanently locked and needs a password reset to regain access.</p>' : ''}
+            <p>If this wasn't you, someone may be trying to guess your password — consider resetting it once you're back in.</p>
+          </div>`
+        ).catch(() => {});
       } else {
         await prisma.user.update({
           where: { id: user.id },
@@ -480,6 +495,72 @@ export class AuthService {
     });
 
     await logAuthEvent('PASSWORD_CHANGED', user.email, user.id, meta);
+  }
+
+  /**
+   * Issue a password-reset link. Always resolves silently regardless of
+   * whether the email is registered, so this can't be used to enumerate
+   * accounts — the frontend shows the same generic message either way.
+   */
+  static async forgotPassword(email: string): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return;
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetTokenHash: hashToken(rawToken),
+        passwordResetExpiry: new Date(Date.now() + PASSWORD_RESET_EXPIRY_MS),
+      },
+    });
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5175';
+    const resetLink = `${frontendUrl}/reset-password?token=${rawToken}`;
+    console.log(`[PasswordReset] Reset link for ${email}: ${resetLink}`);
+
+    await sendEmail(
+      email,
+      'Reset your Ornave password',
+      `<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2 style="color: #14140f;">Reset your password</h2>
+        <p>Someone (hopefully you) asked to reset the password on this account. This link expires in 1 hour and can only be used once.</p>
+        <p><a href="${resetLink}" style="display: inline-block; background: #c6a15b; color: #14140f; padding: 10px 20px; border-radius: 999px; text-decoration: none; font-weight: 700;">Reset password</a></p>
+        <p style="color: #888; font-size: 0.85rem;">If you didn't request this, you can safely ignore this email — your password won't change unless you click the link above.</p>
+        <p style="color: #888; font-size: 0.85rem;">If the button doesn't work, paste this link into your browser:<br>${resetLink}</p>
+      </div>`
+    );
+
+    await logAuthEvent('PASSWORD_RESET_REQUESTED', user.email, user.id);
+  }
+
+  /**
+   * Complete a password reset from the raw token in the link. Also clears
+   * any active lockout — successfully proving ownership of the mailbox is
+   * at least as strong a signal as the failed-attempt counter it resets.
+   */
+  static async resetPassword(rawToken: string, newPassword: string): Promise<void> {
+    const tokenHash = hashToken(rawToken);
+    const user = await prisma.user.findUnique({ where: { passwordResetTokenHash: tokenHash } });
+
+    if (!user || !user.passwordResetExpiry || user.passwordResetExpiry < new Date()) {
+      throw new Error('Reset link is invalid or has expired');
+    }
+
+    const hashedPassword = await PasswordManager.hashPassword(newPassword);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordResetTokenHash: null,
+        passwordResetExpiry: null,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        permanentlyLocked: false,
+      },
+    });
+
+    await logAuthEvent('PASSWORD_RESET_COMPLETED', user.email, user.id);
   }
 
   /**

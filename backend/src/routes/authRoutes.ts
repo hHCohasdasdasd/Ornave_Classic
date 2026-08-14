@@ -17,6 +17,8 @@ router.post('/login', loginRateLimiter, AuthController.login);
 router.post('/logout', AuthController.logout);
 router.get('/verify-email', AuthController.verifyEmail);
 router.post('/resend-verification-by-email', resendVerificationRateLimiter, AuthController.resendVerificationByEmail);
+router.post('/forgot-password', resendVerificationRateLimiter, AuthController.forgotPassword);
+router.post('/reset-password', resendVerificationRateLimiter, AuthController.resetPassword);
 
 // Protected routes
 router.get('/profile', authMiddleware, AuthController.getProfile);

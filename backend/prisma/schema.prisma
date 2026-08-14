@@ -30,6 +30,8 @@ model User {
   emailVerified              Boolean                 @default(false)
   emailVerificationTokenHash String?                 @unique
   emailVerificationExpiry    DateTime?
+  passwordResetTokenHash     String?                 @unique
+  passwordResetExpiry        DateTime?
   payments                   GlobalPayment[]
   globalRequests             GlobalRequest[]
   orders                     Order[]

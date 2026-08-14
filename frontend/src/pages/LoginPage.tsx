@@ -133,6 +133,9 @@ export const LoginPage: React.FC = () => {
               style={{ background: 'var(--color-input-bg)', color: 'white', border: '1px solid var(--tech-border-dim)' }}
             />
             {fieldErrors.password && <div style={{ color: 'var(--color-danger)', fontSize: '12px' }}>{fieldErrors.password}</div>}
+            <div style={{ textAlign: 'right', marginTop: '6px' }}>
+              <a href="/forgot-password" style={{ color: 'var(--tech-blue)', fontSize: '13px', fontWeight: 700 }}>Forgot password?</a>
+            </div>
           </div>
 
           <Button type="submit" disabled={isLoading} className="btn--primary">

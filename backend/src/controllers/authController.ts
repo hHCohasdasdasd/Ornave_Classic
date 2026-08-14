@@ -41,6 +41,15 @@ const ChangePasswordSchema = z.object({
   newPassword: z.string().min(8, 'New password must be at least 8 characters'),
 });
 
+const ForgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email format'),
+});
+
+const ResetPasswordSchema = z.object({
+  token: z.string().min(1, 'Reset token required'),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+});
+
 const UpdateProfileSchema = z.object({
   firstName: z.string().min(1, 'First name required').optional(),
   lastName: z.string().min(1, 'Last name required').optional(),
@@ -151,6 +160,34 @@ export class AuthController {
         'Password changed successfully',
         200
       );
+    } catch (error: any) {
+      return ApiResponseHandler.error(res, error.message, undefined, 400);
+    }
+  });
+
+  /**
+   * Request a password-reset link — always reports success, whether or not
+   * the email is actually registered, so this can't be used to enumerate
+   * accounts.
+   */
+  static forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const validated = ForgotPasswordSchema.parse(req.body);
+      await AuthService.forgotPassword(validated.email);
+    } catch {
+      // Fall through to the same generic response either way.
+    }
+    return ApiResponseHandler.success(res, null, 'If that email is registered, a reset link has been sent.', 200);
+  });
+
+  /**
+   * Complete a password reset from the token in the emailed link.
+   */
+  static resetPassword = asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const validated = ResetPasswordSchema.parse(req.body);
+      await AuthService.resetPassword(validated.token, validated.newPassword);
+      return ApiResponseHandler.success(res, null, 'Password reset successfully', 200);
     } catch (error: any) {
       return ApiResponseHandler.error(res, error.message, undefined, 400);
     }
