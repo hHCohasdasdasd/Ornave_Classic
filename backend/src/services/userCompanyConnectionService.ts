@@ -173,7 +173,10 @@ export class UserCompanyConnectionService {
   static async getOwnedByCompany(companyId: string, connectionId: string) {
     const connection = await prisma.userCompanyConnection.findFirst({
       where: { id: connectionId, companyId },
-      include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        company: { select: { name: true } },
+      },
     });
     if (!connection) throw new Error('Connection not found');
     return connection;

@@ -1,160 +1,123 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
+import { directMessageService } from '@/services/directMessageService';
+import { DirectConversation, DirectMessage, DirectMessageUser } from '@/types/discovery';
 import './MessagingPage.css';
 
-interface Message {
-  id: string;
-  senderId: string;
-  senderName: string;
-  senderInitials: string;
-  content: string;
-  timestamp: string;
-  isOwn: boolean;
-}
+const getInitials = (firstName: string, lastName: string) => `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
 
-interface Conversation {
-  id: string;
-  participantName: string;
-  participantTitle: string;
-  participantInitials: string;
-  lastMessage: string;
-  lastMessageTime: string;
-  unread: boolean;
-  isActive: boolean;
-}
+const formatTime = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 export const MessagingPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'inbox' | 'jobs' | 'unread' | 'connections' | 'inmail' | 'starred'>('inbox');
+  const [activeTab, setActiveTab] = useState<'inbox' | 'unread'>('inbox');
   const [isTabMenuOpen, setIsTabMenuOpen] = useState(false);
   const [isChatMenuOpen, setIsChatMenuOpen] = useState(false);
-  const [mutedConversationIds, setMutedConversationIds] = useState<Set<string>>(new Set());
   const chatMenuContainerRef = useRef<HTMLDivElement | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversationId, setSelectedConversationId] = useState<string>('1');
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversations, setConversations] = useState<DirectConversation[]>([]);
+  const [draftCounterpart, setDraftCounterpart] = useState<DirectMessageUser | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [messages, setMessages] = useState<DirectMessage[]>([]);
+  const [isLoadingThread, setIsLoadingThread] = useState(false);
   const [messageText, setMessageText] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const tabOptions: Array<{
-    key: 'inbox' | 'jobs' | 'unread' | 'connections' | 'inmail' | 'starred';
-    label: string;
-  }> = [
+  const tabOptions: Array<{ key: 'inbox' | 'unread'; label: string }> = [
     { key: 'inbox', label: 'Inbox' },
-    { key: 'jobs', label: 'Jobs' },
     { key: 'unread', label: 'Unread' },
-    { key: 'connections', label: 'Connections' },
-    { key: 'inmail', label: 'InMail' },
-    { key: 'starred', label: 'Starred' },
   ];
 
   const activeTabLabel = tabOptions.find((option) => option.key === activeTab)?.label || 'Inbox';
 
   useEffect(() => {
-    if (user) {
-      loadMessagingData();
-    }
+    if (!user) return;
+    loadConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
-    if (!isChatMenuOpen) return;
+    const to = searchParams.get('to');
+    if (to && to !== user?.id) openConversation(to);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, user]);
 
+  useEffect(() => {
+    if (!isChatMenuOpen) return;
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as Node;
       if (!chatMenuContainerRef.current?.contains(target)) {
         setIsChatMenuOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleOutsideClick);
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-    };
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [isChatMenuOpen]);
 
-  const loadMessagingData = async () => {
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [messages.length]);
+
+  const loadConversations = async () => {
     try {
-      setConversations([]);
-      setMessages([]);
+      setConversations(await directMessageService.getConversations());
     } catch (err) {
-      console.error('Failed to load messaging data:', err);
+      console.error('Failed to load conversations:', err);
     }
   };
 
-  const unreadCount = conversations.filter(conv => conv.unread).length;
-  const selectedConversation = conversations.find(conv => conv.id === selectedConversationId);
-  const isSelectedConversationMuted = selectedConversation ? mutedConversationIds.has(selectedConversation.id) : false;
+  const openConversation = async (userId: string) => {
+    setSelectedUserId(userId);
+    setDraftCounterpart(null);
+    setIsLoadingThread(true);
+    try {
+      const existing = conversations.find((c) => c.counterpart.id === userId);
+      if (!existing) {
+        const basic = await directMessageService.getUser(userId);
+        if (basic) setDraftCounterpart(basic);
+      }
+      setMessages(await directMessageService.getThread(userId));
+      loadConversations();
+    } finally {
+      setIsLoadingThread(false);
+    }
+  };
+
+  const selectedCounterpart = conversations.find((c) => c.counterpart.id === selectedUserId)?.counterpart || draftCounterpart;
 
   const handleViewProfile = () => {
     setIsChatMenuOpen(false);
-    navigate('/profile');
-  };
-
-  const handleToggleMuteConversation = () => {
-    if (!selectedConversation) return;
-
-    setMutedConversationIds((prev) => {
-      const updated = new Set(prev);
-      if (updated.has(selectedConversation.id)) {
-        updated.delete(selectedConversation.id);
-      } else {
-        updated.add(selectedConversation.id);
-      }
-      return updated;
-    });
-
-    setIsChatMenuOpen(false);
-  };
-
-  const handleClearConversation = () => {
-    setMessages([]);
-    setIsChatMenuOpen(false);
-  };
-
-  const handleDeleteConversation = () => {
-    if (!selectedConversation) return;
-
-    setConversations((prev) => {
-      const updated = prev.filter((conv) => conv.id !== selectedConversation.id);
-      const fallbackConversation = updated[0];
-      setSelectedConversationId(fallbackConversation ? fallbackConversation.id : '');
-      return updated;
-    });
-
-    setMutedConversationIds((prev) => {
-      const updated = new Set(prev);
-      updated.delete(selectedConversation.id);
-      return updated;
-    });
-
-    setMessages([]);
-    setIsChatMenuOpen(false);
-  };
-
-  const handleSendMessage = () => {
-    if (messageText.trim()) {
-      const newMessage: Message = {
-        id: `msg-${Date.now()}`,
-        senderId: 'self',
-        senderName: 'You',
-        senderInitials: 'YU',
-        content: messageText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isOwn: true
-      };
-      setMessages([...messages, newMessage]);
-      setMessageText('');
+    if (selectedCounterpart) {
+      navigate(`/profile?view=${selectedCounterpart.firstName.toLowerCase()}-${selectedCounterpart.lastName.toLowerCase()}`);
     }
   };
 
-  const filteredConversations = conversations.filter(conv => {
-    if (activeTab === 'unread' && !conv.unread) return false;
-    if (activeTab === 'starred') return false;
-    return conv.participantName.toLowerCase().includes(searchQuery.toLowerCase());
+  const handleSendMessage = async () => {
+    const content = messageText.trim();
+    if (!content || !selectedUserId || isSending) return;
+    setIsSending(true);
+    try {
+      const sent = await directMessageService.sendMessage(selectedUserId, content);
+      setMessages((prev) => [...prev, sent]);
+      setMessageText('');
+      loadConversations();
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const unreadCount = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
+
+  const filteredConversations = conversations.filter((c) => {
+    if (activeTab === 'unread' && c.unreadCount === 0) return false;
+    const name = `${c.counterpart.firstName} ${c.counterpart.lastName}`.toLowerCase();
+    return name.includes(searchQuery.toLowerCase());
   });
 
   return (
@@ -212,25 +175,37 @@ export const MessagingPage: React.FC = () => {
             </div>
 
             <div className="conversations-list">
-              {filteredConversations.map(conv => (
+              {filteredConversations.length === 0 && !draftCounterpart && (
+                <p style={{ padding: '20px', color: 'var(--tech-text-dim)', fontSize: '0.85rem' }}>
+                  No conversations yet — message someone from their profile to start one.
+                </p>
+              )}
+              {draftCounterpart && (
+                <div className="conversation-item conversation-item--active">
+                  <div className="conversation-avatar">{getInitials(draftCounterpart.firstName, draftCounterpart.lastName)}</div>
+                  <div className="conversation-content">
+                    <h3 className="conversation-name">{draftCounterpart.firstName} {draftCounterpart.lastName}</h3>
+                    <p className="conversation-message">Start the conversation…</p>
+                  </div>
+                </div>
+              )}
+              {filteredConversations.map((conv) => (
                 <div
-                  key={conv.id}
-                  className={`conversation-item ${selectedConversationId === conv.id ? 'conversation-item--active' : ''} ${conv.unread ? 'conversation-item--unread' : ''}`}
+                  key={conv.counterpart.id}
+                  className={`conversation-item ${selectedUserId === conv.counterpart.id ? 'conversation-item--active' : ''} ${conv.unreadCount > 0 ? 'conversation-item--unread' : ''}`}
                   onClick={() => {
-                    setSelectedConversationId(conv.id);
+                    openConversation(conv.counterpart.id);
                     setIsChatMenuOpen(false);
                   }}
                 >
-                  <div className="conversation-avatar">
-                    {conv.participantInitials}
-                  </div>
+                  <div className="conversation-avatar">{getInitials(conv.counterpart.firstName, conv.counterpart.lastName)}</div>
                   <div className="conversation-content">
-                    <h3 className="conversation-name">{conv.participantName}</h3>
-                    <p className="conversation-message">{conv.lastMessage}</p>
+                    <h3 className="conversation-name">{conv.counterpart.firstName} {conv.counterpart.lastName}</h3>
+                    <p className="conversation-message">{conv.lastMessage.content}</p>
                   </div>
                   <div className="conversation-meta">
-                    <span className="conversation-time">{conv.lastMessageTime}</span>
-                    {conv.unread && <div className="conversation-unread-badge">!</div>}
+                    <span className="conversation-time">{formatTime(conv.lastMessage.createdAt)}</span>
+                    {conv.unreadCount > 0 && <div className="conversation-unread-badge">{conv.unreadCount}</div>}
                   </div>
                 </div>
               ))}
@@ -239,22 +214,16 @@ export const MessagingPage: React.FC = () => {
 
           {/* Main Content - Messages */}
           <main className="messaging-main">
-            {selectedConversation && (
+            {selectedCounterpart && (
               <>
                 {/* Conversation Header */}
                 <div className="message-header">
                   <div className="message-header__info">
                     <div className="message-header__avatar">
-                      {selectedConversation.participantInitials}
+                      {getInitials(selectedCounterpart.firstName, selectedCounterpart.lastName)}
                     </div>
                     <div className="message-header__details">
-                      <h2 className="message-header__name">{selectedConversation.participantName}</h2>
-                      <p className="message-header__title">
-                        {selectedConversation.participantTitle}
-                      </p>
-                      {isSelectedConversationMuted && (
-                        <p className="message-header__muted">Muted</p>
-                      )}
+                      <h2 className="message-header__name">{selectedCounterpart.firstName} {selectedCounterpart.lastName}</h2>
                     </div>
                   </div>
                   <div className="message-header__actions" ref={chatMenuContainerRef}>
@@ -273,15 +242,6 @@ export const MessagingPage: React.FC = () => {
                         <button className="message-header__menu-item" onClick={handleViewProfile} role="menuitem">
                           View profile
                         </button>
-                        <button className="message-header__menu-item" onClick={handleToggleMuteConversation} role="menuitem">
-                          {isSelectedConversationMuted ? 'Unmute conversation' : 'Mute conversation'}
-                        </button>
-                        <button className="message-header__menu-item" onClick={handleClearConversation} role="menuitem">
-                          Clear conversation
-                        </button>
-                        <button className="message-header__menu-item message-header__menu-item--danger" onClick={handleDeleteConversation} role="menuitem">
-                          Delete conversation
-                        </button>
                       </div>
                     )}
                   </div>
@@ -289,24 +249,29 @@ export const MessagingPage: React.FC = () => {
 
                 {/* Messages Thread */}
                 <div className="messages-container">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`message-bubble ${msg.isOwn ? 'message-bubble--own' : ''}`}
-                    >
-                      {!msg.isOwn && (
-                        <div className="message-avatar">
-                          {msg.senderInitials}
-                        </div>
-                      )}
-                      <div className="message-content">
-                        <p className="message-text">
-                          {msg.content}
-                        </p>
-                        <span className="message-time">{msg.timestamp}</span>
-                      </div>
-                    </div>
-                  ))}
+                  {isLoadingThread ? (
+                    <p style={{ padding: '20px', color: 'var(--tech-text-dim)' }}>Loading…</p>
+                  ) : (
+                    <>
+                      {messages.map((msg) => {
+                        const isOwn = msg.fromUserId === user?.id;
+                        return (
+                          <div key={msg.id} className={`message-bubble ${isOwn ? 'message-bubble--own' : ''}`}>
+                            {!isOwn && (
+                              <div className="message-avatar">
+                                {getInitials(selectedCounterpart.firstName, selectedCounterpart.lastName)}
+                              </div>
+                            )}
+                            <div className="message-content">
+                              <p className="message-text">{msg.content}</p>
+                              <span className="message-time">{formatTime(msg.createdAt)}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={messagesEndRef} />
+                    </>
+                  )}
                 </div>
 
                 {/* Message Input */}
@@ -324,38 +289,13 @@ export const MessagingPage: React.FC = () => {
                         }
                       }}
                     />
-                    <div className="message-actions">
-                      <button className="message-action" title="Attach image">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#a79e8c">
-                          <path d="M16 1H4C2.9 1 2 1.9 2 3V17C2 18.1 2.9 19 4 19H16C17.1 19 18 18.1 18 17V3C18 1.9 17.1 1 16 1ZM16 17H4V3H16V17ZM13.5 11.5L9.5 7L5.5 12V13H7.5L9.5 10.5L13.5 14Z"/>
-                        </svg>
-                      </button>
-                      <button className="message-action" title="Attach link">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#a79e8c">
-                          <path d="M9 3C5.13 3 2 6.13 2 10C2 13.87 5.13 17 9 17C12.87 17 16 13.87 16 10M15 9H9V11H15V9Z"/>
-                        </svg>
-                      </button>
-                      <button className="message-action" title="Attach GIF">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#a79e8c">
-                          <text x="4" y="14" fontSize="12" fontWeight="bold">GIF</text>
-                        </svg>
-                      </button>
-                      <button className="message-action" title="Add emoji">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="#a79e8c">
-                          <circle cx="10" cy="10" r="8"/>
-                          <circle cx="7" cy="8" r="1.5" fill="#a79e8c"/>
-                          <circle cx="13" cy="8" r="1.5" fill="#a79e8c"/>
-                          <path d="M7 12C7 13 8 14 10 14C12 14 13 13 13 12" stroke="#a79e8c" fill="none"/>
-                        </svg>
-                      </button>
-                    </div>
                   </div>
-                  <button 
+                  <button
                     className="message-send"
                     onClick={handleSendMessage}
-                    disabled={!messageText.trim()}
+                    disabled={!messageText.trim() || isSending}
                   >
-                    TRANSMIT
+                    {isSending ? 'SENDING…' : 'TRANSMIT'}
                   </button>
                 </div>
               </>

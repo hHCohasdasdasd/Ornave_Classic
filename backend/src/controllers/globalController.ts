@@ -111,7 +111,7 @@ export class GlobalController {
     }
 
     const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
-    const files = await FileService.listByConnection(req.user.userId, connection.id);
+    const files = await FileService.listByConnectionAnySide(connection.id);
     return ApiResponseHandler.success(res, files, 'Files retrieved', 200);
   });
 
@@ -150,7 +150,8 @@ export class GlobalController {
       return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
     }
 
-    const file = await FileService.getById(req.user.userId, req.params.fileId);
+    const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
+    const file = await FileService.getByIdInConnection(connection.id, req.params.fileId);
     const supabase = requireSupabaseAdmin();
     const { data, error } = await supabase.storage
       .from(FILES_BUCKET)
@@ -166,7 +167,12 @@ export class GlobalController {
       return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
     }
 
-    const file = await FileService.remove(req.user.userId, req.params.fileId);
+    const connection = await UserCompanyConnectionService.getOwned(req.user.userId, req.params.connectionId);
+    const file = await FileService.getByIdInConnection(connection.id, req.params.fileId);
+    if (file.uploadedByCompany) {
+      return ApiResponseHandler.error(res, 'You can only remove files you uploaded', undefined, 403);
+    }
+    await FileService.removeInConnection(connection.id, file.id);
     const supabase = requireSupabaseAdmin();
     await supabase.storage.from(FILES_BUCKET).remove([file.storageKey]);
     return ApiResponseHandler.success(res, {}, 'File deleted successfully', 200);

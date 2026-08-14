@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { StoreService, OrderDocumentService, OrderMessageService } from '../services/storeService';
+import { NotificationService } from '../services/notificationService';
 import { ApiResponseHandler } from '../utils/apiResponse';
 import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
 
@@ -288,6 +289,14 @@ storeRoutes.post(
     const content = (req.body.content || '').trim();
     if (!content) return ApiResponseHandler.error(res, 'Message content is required', undefined, 400);
     const message = await OrderMessageService.create(order.id, isCompanySide, content);
+    if (isCompanySide) {
+      await NotificationService.create(order.userId, {
+        type: 'order_message',
+        title: `New message from ${order.company?.name || 'the seller'} about your order`,
+        body: content.slice(0, 140),
+        actionRoute: '/purchased-services',
+      });
+    }
     return ApiResponseHandler.success(res, message, 'Message sent successfully', 201);
   })
 );

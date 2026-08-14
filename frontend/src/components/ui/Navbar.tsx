@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { networkService } from '@/services/networkService';
 import { apiClient } from '@/services/api';
 import { workSuiteService } from '@/services/workSuiteService';
+import { notificationService } from '@/services/notificationService';
 import { scopedKey } from '@/utils/storage';
 import {
   IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel,
@@ -64,8 +65,11 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
     const loadStats = async () => {
       if (user && user.id !== 'guest') {
         try {
-          const stats = await networkService.getNetworkStats();
-          setNotificationsCount(stats.notifications);
+          const [stats, realUnread] = await Promise.all([
+            networkService.getNetworkStats(),
+            notificationService.getUnreadCount().catch(() => 0),
+          ]);
+          setNotificationsCount(stats.notifications + realUnread);
         } catch (error) {
           console.error('Failed to load network stats:', error);
         }
@@ -209,11 +213,21 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
       // Planning board's insights — gated by the board's own App-channel
       // preference so turning that off here also silences it there.
       const taskPrefs = getTaskNotifyPrefs();
-      const [activityResponse, connectionRequests, insights] = await Promise.all([
+      const [activityResponse, connectionRequests, insights, realNotifications] = await Promise.all([
         apiClient.getGlobalActivity().catch(() => ({ data: [] })),
         networkService.getConnectionRequests().catch(() => []),
         taskPrefs.notifyChannelApp ? workSuiteService.getInsights().catch(() => []) : Promise.resolve([]),
+        notificationService.list().catch(() => []),
       ]);
+
+      const realItems = realNotifications.map((n) => ({
+        requestId: `notif-${n.id}`,
+        title: n.title,
+        description: n.body || '',
+        lastUpdate: n.createdAt,
+        type: 'app' as const,
+        actionRoute: n.actionRoute || undefined,
+      }));
 
       const activityItems = (activityResponse?.data || []).map((item: any) => ({
         requestId: item.requestId,
@@ -246,13 +260,14 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
           actionRoute: i.actionRoute,
         }));
 
-      const merged = [...taskItems, ...connectionItems, ...activityItems].sort(
+      const merged = [...taskItems, ...connectionItems, ...realItems, ...activityItems].sort(
         (a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime()
       );
 
       setNotifications(merged);
       // Reset count when opening
       setNotificationsCount(0);
+      notificationService.markAllRead().catch(() => {});
     } catch (error) {
       console.error('Failed to load notifications:', error);
     } finally {
@@ -332,6 +347,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
                           onClick={() => {
                             setIsNotificationsOpen(false);
                             if (item.type === 'task') navigate(item.actionRoute || '/work-suite/personal?tab=board');
+                            else if (item.type === 'app') navigate(item.actionRoute || '/home');
                             else navigate(item.type === 'connection' ? '/network' : '/global/activity');
                           }}
                         >

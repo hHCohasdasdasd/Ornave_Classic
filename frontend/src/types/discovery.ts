@@ -49,6 +49,7 @@ export interface FirmConnectionFile {
   name: string;
   size: number;
   mimeType: string;
+  uploadedByCompany: boolean;
   createdAt: string;
 }
 
@@ -72,6 +73,37 @@ export interface TicketMessage {
 
 export interface TicketWithMessages extends Ticket {
   messages: TicketMessage[];
+}
+
+export interface DirectMessage {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface DirectMessageUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface DirectConversation {
+  counterpart: DirectMessageUser;
+  lastMessage: DirectMessage;
+  unreadCount: number;
+}
+
+export interface AppNotification {
+  id: string;
+  type: string;
+  title: string;
+  body?: string | null;
+  actionRoute?: string | null;
+  isRead: boolean;
+  createdAt: string;
 }
 
 export interface DiscoveryFilters {

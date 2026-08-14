@@ -34,7 +34,7 @@ export class TicketService {
   static async getById(ticketId: string) {
     return prisma.ticket.findUnique({
       where: { id: ticketId },
-      include: { connection: true },
+      include: { connection: { include: { company: { select: { name: true } } } } },
     });
   }
 

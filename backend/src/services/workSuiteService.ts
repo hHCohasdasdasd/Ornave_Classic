@@ -351,13 +351,27 @@ export class FileService {
     return prisma.userFile.findMany({ where: { userId, connectionId }, orderBy: { createdAt: 'desc' } });
   }
 
+  /** Same file list, but for the company side of a connection — companies
+   * have no personal Files/folders system of their own, so there's no
+   * userId to scope by; the caller must have already checked connection
+   * ownership before reaching here. */
+  static async listByConnectionAnySide(connectionId: string) {
+    return prisma.userFile.findMany({ where: { connectionId }, orderBy: { createdAt: 'desc' } });
+  }
+
   static async getById(userId: string, id: string) {
     const file = await prisma.userFile.findFirst({ where: { id, userId } });
     if (!file) throw new Error('File not found');
     return file;
   }
 
-  static async create(data: { userId: string; folderId?: string | null; connectionId?: string | null; name: string; size: number; mimeType: string; storageKey: string }) {
+  static async getByIdInConnection(connectionId: string, id: string) {
+    const file = await prisma.userFile.findFirst({ where: { id, connectionId } });
+    if (!file) throw new Error('File not found');
+    return file;
+  }
+
+  static async create(data: { userId: string; folderId?: string | null; connectionId?: string | null; uploadedByCompany?: boolean; name: string; size: number; mimeType: string; storageKey: string }) {
     if (data.folderId) {
       await FolderService.getById(data.userId, data.folderId);
     }
@@ -366,6 +380,12 @@ export class FileService {
 
   static async remove(userId: string, id: string) {
     const file = await this.getById(userId, id);
+    await prisma.userFile.delete({ where: { id } });
+    return file;
+  }
+
+  static async removeInConnection(connectionId: string, id: string) {
+    const file = await this.getByIdInConnection(connectionId, id);
     await prisma.userFile.delete({ where: { id } });
     return file;
   }

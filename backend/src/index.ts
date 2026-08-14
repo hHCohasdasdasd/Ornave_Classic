@@ -33,6 +33,8 @@ import companyBillingRoutes from './routes/companyBillingRoutes';
 import jobsFeedRoutes from './routes/jobsFeedRoutes';
 import adminRoutes from './routes/adminRoutes';
 import companyClientRoutes from './routes/companyClientRoutes';
+import directMessageRoutes from './routes/directMessageRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -160,6 +162,8 @@ app.use(`${API_BASE}/companies/:companyId/invoices`, companyBillingRoutes);
 app.use(`${API_BASE}/jobs`, jobsFeedRoutes);
 app.use(`${API_BASE}/admin`, adminRoutes);
 app.use(`${API_BASE}/company-clients`, companyClientRoutes);
+app.use(`${API_BASE}/messages`, directMessageRoutes);
+app.use(`${API_BASE}/notifications`, notificationRoutes);
 
 // ============================================
 // 404 HANDLER

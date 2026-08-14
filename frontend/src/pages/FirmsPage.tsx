@@ -7,14 +7,6 @@ import { firmService } from '@/services/firmService';
 import { FirmConnection } from '@/types/discovery';
 import './FirmsPage.css';
 
-interface FirmRequest {
-  id: string;
-  name: string;
-  industry: string;
-  description: string;
-  employees: number;
-}
-
 interface FirmSuggestion {
   id: string;
   name: string;
@@ -32,7 +24,6 @@ export const FirmsPage: React.FC = () => {
   const [companiesFollowing, setCompaniesFollowing] = useState(0);
   const [followedFirms, setFollowedFirms] = useState<FirmConnection[]>([]);
   const [companiesPartnered, setCompaniesPartnered] = useState(0);
-  const [followRequests, setFollowRequests] = useState<FirmRequest[]>([]);
   const [suggestions, setSuggestions] = useState<FirmSuggestion[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
@@ -78,21 +69,9 @@ export const FirmsPage: React.FC = () => {
       } else {
         setSuggestions([]);
       }
-
-      setFollowRequests([]);
     } catch (err) {
       console.error('Failed to load firms data:', err);
     }
-  };
-
-  const handleAcceptFollow = async (request: FirmRequest) => {
-    await networkService.followFirm(request.id);
-    setFollowRequests(prev => prev.filter(req => req.id !== request.id));
-    loadFirmsData();
-  };
-
-  const handleIgnoreFollow = (id: string) => {
-    setFollowRequests(prev => prev.filter(req => req.id !== id));
   };
 
   const handleFollow = async (firm: FirmSuggestion) => {
@@ -323,48 +302,6 @@ export const FirmsPage: React.FC = () => {
                     ))}
                   </div>
                 )}
-              </section>
-            )}
-
-            {/* Follow Invites */}
-            {activeTab === 'discover' && followRequests.length > 0 && (
-              <section className="firms-section">
-                <div className="firms-section__header">
-                  <h2>Follow requests ({followRequests.length})</h2>
-                  <button className="firms-section__link">Show all</button>
-                </div>
-
-                <div className="follow-cards">
-                  {followRequests.map(request => (
-                    <div key={request.id} className="follow-card">
-                      <div className="follow-card__avatar">
-                        {getInitials(request.name)}
-                      </div>
-                      <div className="follow-card__content">
-                        <h3 className="follow-card__name">
-                          {request.name}
-                          <span className="badge-icon">✓</span>
-                        </h3>
-                        <p className="follow-card__industry">{request.industry}</p>
-                        <p className="follow-card__description">{request.description}</p>
-                        <p className="follow-card__employees">
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="rgba(246,243,237,0.6)">
-                            <path d="M8 8C9.66 8 11 6.66 11 5C11 3.34 9.66 2 8 2C6.34 2 5 3.34 5 5C5 6.66 6.34 8 8 8ZM8 9.5C5.66 9.5 1 10.67 1 13V14H15V13C15 10.67 10.34 9.5 8 9.5Z"/>
-                          </svg>
-                          {request.employees.toLocaleString()} employees
-                        </p>
-                        <div className="follow-card__actions">
-                          <button className="btn-ignore" onClick={() => handleIgnoreFollow(request.id)}>
-                            Ignore
-                          </button>
-                          <button className="btn-follow" onClick={() => handleAcceptFollow(request)}>
-                            Follow
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </section>
             )}
 

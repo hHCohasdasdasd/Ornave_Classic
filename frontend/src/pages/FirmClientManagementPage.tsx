@@ -6,9 +6,18 @@ import { erpNavigation } from '@/constants/navigation';
 import { storeService, Order } from '@/services/storeService';
 import { companyClientService, CompanyClientConnection, ConnectionMessage } from '@/services/companyClientService';
 import { TicketThreadModal } from '@/components/TicketThreadModal';
-import { Ticket, TicketStatus, TicketWithMessages } from '@/types/discovery';
+import { Ticket, TicketStatus, TicketWithMessages, FirmConnectionFile } from '@/types/discovery';
 import '@/pages/NetworkPage.css';
 import '@/components/OrderDetailModal.css';
+import '@/pages/WorkSuite.css';
+
+const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / Math.pow(1024, i);
+  return `${i === 0 ? value : value.toFixed(1)} ${units[i]}`;
+};
 
 export const FirmClientManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,6 +38,12 @@ export const FirmClientManagementPage: React.FC = () => {
   const [clientTickets, setClientTickets] = useState<Ticket[]>([]);
   const [isLoadingTickets, setIsLoadingTickets] = useState(false);
   const [viewingTicket, setViewingTicket] = useState<TicketWithMessages | null>(null);
+
+  const [filesClient, setFilesClient] = useState<CompanyClientConnection | null>(null);
+  const [clientFiles, setClientFiles] = useState<FirmConnectionFile[]>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState<{ key: string; name: string; percent: number }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user || !company) {
@@ -119,6 +134,52 @@ export const FirmClientManagementPage: React.FC = () => {
     const updated = await companyClientService.updateTicketStatus(viewingTicket.id, status);
     setViewingTicket((prev) => (prev ? { ...prev, status: updated.status as TicketStatus } : prev));
     setClientTickets((prev) => prev.map((t) => (t.id === updated.id ? { ...t, status: updated.status as TicketStatus } : t)));
+  };
+
+  const openFiles = async (client: CompanyClientConnection) => {
+    setFilesClient(client);
+    setIsLoadingFiles(true);
+    try {
+      setClientFiles(await companyClientService.getFiles(client.id));
+    } finally {
+      setIsLoadingFiles(false);
+    }
+  };
+
+  const closeFiles = () => {
+    setFilesClient(null);
+    setClientFiles([]);
+  };
+
+  const handleFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.files ? Array.from(e.target.files) : [];
+    e.target.value = '';
+    if (!filesClient || !picked.length) return;
+    for (const file of picked) {
+      const key = `${file.name}-${Date.now()}`;
+      setUploadingFiles((prev) => [...prev, { key, name: file.name, percent: 0 }]);
+      try {
+        await companyClientService.uploadFile(filesClient.id, file, (percent) => {
+          setUploadingFiles((prev) => prev.map((u) => (u.key === key ? { ...u, percent } : u)));
+        });
+        setUploadingFiles((prev) => prev.filter((u) => u.key !== key));
+        setClientFiles(await companyClientService.getFiles(filesClient.id));
+      } catch {
+        setUploadingFiles((prev) => prev.filter((u) => u.key !== key));
+      }
+    }
+  };
+
+  const handleDownloadFile = async (file: FirmConnectionFile) => {
+    if (!filesClient) return;
+    const url = await companyClientService.getFileDownloadUrl(filesClient.id, file.id);
+    window.open(url, '_blank');
+  };
+
+  const handleDeleteFile = async (file: FirmConnectionFile) => {
+    if (!filesClient) return;
+    setClientFiles((prev) => prev.filter((f) => f.id !== file.id));
+    await companyClientService.deleteFile(filesClient.id, file.id);
   };
 
   const handleEditBanner = async () => {
@@ -246,6 +307,11 @@ export const FirmClientManagementPage: React.FC = () => {
                           style={{ fontSize: '0.65rem', padding: '4px 12px' }}
                           onClick={() => openTickets(follower)}
                         >TICKETS</button>
+                        <button
+                          className="btn-sm-primary"
+                          style={{ fontSize: '0.65rem', padding: '4px 12px' }}
+                          onClick={() => openFiles(follower)}
+                        >FILES</button>
                       </div>
                     </div>
                   </div>
@@ -413,6 +479,70 @@ export const FirmClientManagementPage: React.FC = () => {
           onSendMessage={handleTicketMessage}
           onUpdateStatus={handleUpdateTicketStatus}
         />
+      )}
+
+      {filesClient && (
+        <div className="order-modal-overlay" onClick={closeFiles}>
+          <div className="order-modal" style={{ maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
+            <button className="order-modal__close" onClick={closeFiles}>×</button>
+            <div className="order-modal__header">
+              <div>
+                <span className="order-modal__order-id">Files</span>
+                <h2 className="order-modal__company">{filesClient.user.firstName} {filesClient.user.lastName}</h2>
+                <span className="order-modal__date">{filesClient.user.email}</span>
+              </div>
+            </div>
+
+            <div className="order-modal__section-header-row">
+              <button className="worksuite-create-btn" onClick={() => fileInputRef.current?.click()}>+ Upload</button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFilePick}
+                style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' }}
+              />
+            </div>
+
+            {uploadingFiles.length > 0 && (
+              <div className="files-uploading">
+                {uploadingFiles.map((u) => (
+                  <div key={u.key} className="files-uploading__row">
+                    <span className="files-uploading__name">{u.name}</span>
+                    <div className="files-uploading__bar">
+                      <div className="files-uploading__bar-fill" style={{ width: `${u.percent}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {isLoadingFiles ? (
+              <p className="order-modal__block-text">Loading…</p>
+            ) : clientFiles.length === 0 ? (
+              <p className="order-modal__block-text">No files uploaded for this client yet.</p>
+            ) : (
+              <div className="firm-detail-modal__list">
+                {clientFiles.map((file) => (
+                  <div key={file.id} className="firm-detail-modal__row">
+                    <div>
+                      <div className="firm-detail-modal__row-title">{file.name}</div>
+                      <div className="worksuite-card__meta">
+                        {formatBytes(file.size)} · {file.uploadedByCompany ? 'You' : `${filesClient.user.firstName}`}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button className="worksuite-btn" onClick={() => handleDownloadFile(file)}>Download</button>
+                      {file.uploadedByCompany && (
+                        <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteFile(file)}>Delete</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </PageContainer>
   );

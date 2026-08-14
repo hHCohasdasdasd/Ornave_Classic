@@ -329,11 +329,15 @@ export const FirmConnectionDetailPage: React.FC = () => {
                         <div key={file.id} className="firm-detail-modal__row">
                           <div>
                             <div className="firm-detail-modal__row-title">{file.name}</div>
-                            <div className="worksuite-card__meta">{formatBytes(file.size)}</div>
+                            <div className="worksuite-card__meta">
+                              {formatBytes(file.size)} · {file.uploadedByCompany ? detail.company.name : 'You'}
+                            </div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <button className="worksuite-btn" onClick={() => handleDownloadFile(file)}>Download</button>
-                            <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteFile(file)}>Delete</button>
+                            {!file.uploadedByCompany && (
+                              <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteFile(file)}>Delete</button>
+                            )}
                           </div>
                         </div>
                       ))}
