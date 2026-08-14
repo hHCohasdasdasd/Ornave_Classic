@@ -1138,6 +1138,33 @@ p {
   padding: 0;
 }
 
+.navbar__dropdown--search {
+  min-width: 320px;
+  max-width: 400px;
+  background: var(--color-card);
+  border: 1px solid rgba(246, 243, 237, 0.1);
+  box-shadow: 0 10px 30px rgba(40, 30, 20, 0.15);
+  padding: 10px;
+}
+
+.navbar__search-input {
+  width: 100%;
+  background: var(--color-input-bg, rgba(246, 243, 237, 0.04));
+  border: 1px solid rgba(246, 243, 237, 0.14);
+  color: var(--color-text);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+  margin-bottom: 6px;
+}
+
+.navbar__search-input:focus {
+  outline: none;
+  border-color: var(--tech-accent-gold, #c6a15b);
+}
+
 .navbar__dropdown-content--scrollable {
   max-height: 400px;
   overflow-y: auto;

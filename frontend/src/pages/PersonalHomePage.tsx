@@ -419,7 +419,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                 placeholder={`Search ${discoveryTab}...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 style={{ display: discoveryTab === 'trending' || discoveryTab === 'themes' ? 'none' : 'block' }}
               />
             </div>
@@ -627,7 +627,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
               placeholder="Search people, firms, posts, or #tag…"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setShowAutocomplete(true); }}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               onFocus={() => setShowAutocomplete(true)}
               onBlur={() => setTimeout(() => setShowAutocomplete(false), 150)}
             />

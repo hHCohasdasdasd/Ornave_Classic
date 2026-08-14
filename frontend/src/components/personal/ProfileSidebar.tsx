@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   IconCompass, IconLayers, IconArticle, IconCalendar,
-  IconBag, IconGroups, IconBookmark, IconHeadset,
+  IconBag, IconGroups, IconHeadset,
   IconEdit, IconSpark,
 } from '@/components/ui/Icons';
 import './ProfileSidebar.css';
@@ -21,11 +21,10 @@ const NAV_ITEMS: { label: string; icon: React.FC<{ size?: number }>; route?: str
   { label: 'Create Story', icon: IconSpark, action: 'onCreateStory' },
   { label: 'Create Publication', icon: IconArticle, action: 'onCreatePublication' },
   { label: 'Discover', icon: IconCompass, route: '/network' },
-  { label: 'Projects', icon: IconLayers },
+  { label: 'Projects', icon: IconLayers, route: '/work-suite/files' },
   { label: 'Events', icon: IconCalendar, route: '/events' },
   { label: 'Marketplace', icon: IconBag, route: '/store' },
   { label: 'Groups', icon: IconGroups, route: '/groups' },
-  { label: 'Saved', icon: IconBookmark },
 ];
 
 export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
@@ -70,7 +69,7 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         </div>
       )}
 
-      <button className="profile-left-nav__support">
+      <button className="profile-left-nav__support profile-left-nav__support--disabled" disabled title="Coming soon">
         <IconHeadset size={15} />
         <span>Help &amp; Support</span>
       </button>

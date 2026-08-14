@@ -486,7 +486,7 @@ export const EventsPage: React.FC = () => {
                 {events.length === 0
                   ? viewMode === 'mine'
                     ? (when === 'upcoming' ? "You're not hosting or attending any upcoming events." : 'No past events to show.')
-                    : (when === 'upcoming' ? 'No upcoming events yet — be the first to host one.' : 'No past events to show.')
+                    : (when === 'upcoming' ? (canPromote ? 'No upcoming events yet — be the first to host one.' : 'No upcoming events yet — check back once a firm you follow posts one.') : 'No past events to show.')
                   : 'Try a different search term or category.'}
               </p>
             </div>

@@ -38,7 +38,7 @@ export const CreatePublicationModal: React.FC<CreatePublicationModalProps> = ({ 
     .map((t) => t.trim())
     .filter(Boolean);
 
-  const canSubmit = title.trim().length > 0 && content.trim().length > 0 && tags.length > 0;
+  const canSubmit = title.trim().length > 0 && content.trim().length > 0;
 
   const reset = () => {
     setTitle('');
@@ -120,7 +120,7 @@ export const CreatePublicationModal: React.FC<CreatePublicationModalProps> = ({ 
             <input
               type="text"
               className="create-publication-modal__field"
-              placeholder="Sector tags, comma-separated (e.g. Science, Technology)"
+              placeholder="Sector tags, comma-separated (optional, e.g. Science, Technology)"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
             />

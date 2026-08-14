@@ -5,6 +5,8 @@ import { networkService } from '@/services/networkService';
 import { apiClient } from '@/services/api';
 import { workSuiteService } from '@/services/workSuiteService';
 import { notificationService } from '@/services/notificationService';
+import { mentionService } from '@/services/mentionService';
+import { MentionCandidate } from '@/types/feed';
 import { scopedKey } from '@/utils/storage';
 import {
   IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel,
@@ -46,9 +48,14 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = React.useState(false);
   const [avatarUrl, setAvatarUrl] = React.useState<string | undefined>(undefined);
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchResults, setSearchResults] = React.useState<MentionCandidate[]>([]);
+  const [isSearching, setIsSearching] = React.useState(false);
   const profileMenuRef = React.useRef<HTMLDivElement>(null);
   const forBusinessMenuRef = React.useRef<HTMLDivElement>(null);
   const notificationsMenuRef = React.useRef<HTMLDivElement>(null);
+  const searchMenuRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (!user || user.id === 'guest') {
@@ -92,6 +99,9 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
       }
       if (notificationsMenuRef.current && !notificationsMenuRef.current.contains(event.target as Node)) {
         setIsNotificationsOpen(false);
+      }
+      if (searchMenuRef.current && !searchMenuRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
       }
     };
 
@@ -188,6 +198,24 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
   const handleOpenProfile = () => {
     setIsProfileMenuOpen(false);
     navigate('/profile');
+  };
+
+  React.useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    const timeout = setTimeout(() => {
+      mentionService.search(searchQuery).then(setSearchResults).finally(() => setIsSearching(false));
+    }, 250);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
+  const goToSearchResult = (result: MentionCandidate) => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    navigate(`/profile?view=${result.slug}`);
   };
 
   // Board notification-channel prefs are client-side only (set on the
@@ -456,9 +484,50 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
         </div>
 
         <div className="navbar__right">
-          <button className="navbar__search-btn" onClick={() => navigate('/network')} title="Search" aria-label="Search">
-            <IconSearch size={17} />
-          </button>
+          <div className="navbar__dropdown-container" ref={searchMenuRef}>
+            <button
+              className="navbar__search-btn"
+              onClick={() => setIsSearchOpen((prev) => !prev)}
+              title="Search"
+              aria-label="Search"
+              aria-haspopup="menu"
+              aria-expanded={isSearchOpen}
+            >
+              <IconSearch size={17} />
+            </button>
+            {isSearchOpen && (
+              <div className="navbar__dropdown navbar__dropdown--search" role="menu">
+                <input
+                  type="text"
+                  className="navbar__search-input"
+                  placeholder="Search people or firms…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+                <div className="navbar__dropdown-content navbar__dropdown-content--scrollable">
+                  {isSearching ? (
+                    <div className="navbar__dropdown-loading">Searching...</div>
+                  ) : searchQuery.trim() && searchResults.length === 0 ? (
+                    <div className="navbar__dropdown-empty">No matches found.</div>
+                  ) : (
+                    searchResults.map((result) => (
+                      <div
+                        key={`${result.type}-${result.id}`}
+                        className="navbar__notification-item"
+                        role="menuitem"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => goToSearchResult(result)}
+                      >
+                        <div className="navbar__notification-title">{result.name}</div>
+                        <div className="navbar__notification-desc">{result.headline || (result.type === 'company' ? 'Firm' : 'Member')}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           {!user || user.id === 'guest' ? (
             <div className="navbar__auth">
               <button className="navbar__auth-btn" onClick={() => navigate('/login')}>

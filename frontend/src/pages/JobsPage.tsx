@@ -30,6 +30,7 @@ export const JobsPage: React.FC = () => {
   const [datePosted, setDatePosted] = useState<string>('any');
   const [experienceLevel, setExperienceLevel] = useState<string>('any');
   const [company, setCompany] = useState<string>('');
+  const [locationQuery, setLocationQuery] = useState<string>('');
   const [remote, setRemote] = useState<string>('any');
   const [easyApplyOnly, setEasyApplyOnly] = useState(false);
 
@@ -72,7 +73,11 @@ export const JobsPage: React.FC = () => {
 
   const selectedJob = jobs.find(job => job.id === selectedJobId);
   const filteredJobs = jobs.filter(job => {
-    if (company && !job.company.toLowerCase().includes(company.toLowerCase())) return false;
+    if (company) {
+      const q = company.toLowerCase();
+      if (!job.title.toLowerCase().includes(q) && !job.company.toLowerCase().includes(q)) return false;
+    }
+    if (locationQuery && !job.location.toLowerCase().includes(locationQuery.toLowerCase())) return false;
     if (remote !== 'any' && job.workType !== remote) return false;
     return true;
   });
@@ -106,6 +111,8 @@ export const JobsPage: React.FC = () => {
                   type="text"
                   placeholder="Title, skill or company"
                   className="jobs-search__input"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
                 />
               </div>
               <div className="jobs-search__field">
@@ -114,8 +121,10 @@ export const JobsPage: React.FC = () => {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Germany"
+                  placeholder="Location"
                   className="jobs-search__input"
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
                 />
               </div>
               <button className="jobs-search__btn">Search</button>
@@ -273,11 +282,16 @@ export const JobsPage: React.FC = () => {
           {/* Jobs List */}
           <div className="jobs-list">
             <div className="jobs-list__header">
-              <h2>Jobs in Germany</h2>
-              <p className="jobs-list__count">554,000+ results</p>
+              <h2>Job Openings</h2>
+              <p className="jobs-list__count">{filteredJobs.length} result{filteredJobs.length === 1 ? '' : 's'}</p>
             </div>
 
             <div className="jobs-items">
+              {filteredJobs.length === 0 && (
+                <p className="jobs-list__empty">
+                  {jobs.length === 0 ? 'No job openings posted yet.' : 'No jobs match your filters.'}
+                </p>
+              )}
               {filteredJobs.map(job => (
                 <div
                   key={job.id}
