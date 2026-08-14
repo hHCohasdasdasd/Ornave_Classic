@@ -23,6 +23,10 @@ const UpdateSettingsSchema = z.object({
   theme: z.enum(['light', 'dark']).optional(),
 });
 
+const UpdateBannerSchema = z.object({
+  bannerUrl: z.string().url().max(2000).nullable(),
+});
+
 export class CompanyController {
   /**
    * Create new company
@@ -100,6 +104,27 @@ export class CompanyController {
         'Settings updated successfully',
         200
       );
+    } catch (error: any) {
+      return ApiResponseHandler.error(res, error.message, undefined, 400);
+    }
+  });
+
+  /**
+   * Update the company's banner (cover) image — a plain image URL, same as
+   * how logo already works, rather than a file-upload pipeline.
+   */
+  static updateBanner = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { companyId } = req.params;
+      const { bannerUrl } = UpdateBannerSchema.parse(req.body);
+
+      if (req.user?.companyId !== companyId) {
+        return ApiResponseHandler.error(res, ERROR_MESSAGES.FORBIDDEN, undefined, 403);
+      }
+
+      const company = await CompanyService.updateBanner(companyId, bannerUrl);
+
+      return ApiResponseHandler.success(res, company, 'Banner updated successfully', 200);
     } catch (error: any) {
       return ApiResponseHandler.error(res, error.message, undefined, 400);
     }

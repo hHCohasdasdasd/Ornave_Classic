@@ -22,7 +22,7 @@ export interface CreateUserCompanyConnectionData {
   permissions?: Record<string, any>;
 }
 
-const COMPANY_CARD_SELECT = { id: true, name: true, slug: true, description: true, logo: true, industry: true } as const;
+const COMPANY_CARD_SELECT = { id: true, name: true, slug: true, description: true, logo: true, bannerUrl: true, industry: true } as const;
 
 export class UserCompanyConnectionService {
   /**

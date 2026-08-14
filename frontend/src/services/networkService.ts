@@ -87,7 +87,7 @@ class NetworkService {
   // isn't a real registered company (e.g. one of the demo firms auto-seeded
   // into the local follow list). ──
 
-  async ensureFirmConnection(companyId: string): Promise<{ id: string; company: { id: string; name: string; logo?: string; industry?: string; description?: string } } | null> {
+  async ensureFirmConnection(companyId: string): Promise<{ id: string; createdAt?: string; company: { id: string; name: string; logo?: string; bannerUrl?: string; industry?: string; description?: string } } | null> {
     try {
       const response = await apiClient.post('/global/connections', { companyId });
       return response.data.data;

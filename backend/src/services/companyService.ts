@@ -167,6 +167,14 @@ export class CompanyService {
     return updatedSettings;
   }
 
+  static async updateBanner(companyId: string, bannerUrl: string | null): Promise<any> {
+    return prisma.company.update({
+      where: { id: companyId },
+      data: { bannerUrl },
+      select: { id: true, bannerUrl: true },
+    });
+  }
+
   /**
    * Get all users in company
    */

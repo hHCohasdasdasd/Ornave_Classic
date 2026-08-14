@@ -20,6 +20,8 @@ export interface Company {
   token: string;
   description: string;
   website: string;
+  logo?: string;
+  bannerUrl?: string;
   deactivated?: boolean;
   isActive?: boolean;
   createdAt: string;

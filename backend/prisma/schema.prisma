@@ -92,6 +92,7 @@ model Company {
   companyToken          String                  @unique @default(cuid())
   description           String?
   logo                  String?
+  bannerUrl             String?
   isActive              Boolean                 @default(true)
   isPremium             Boolean                 @default(false)
   registrationNumber    String?

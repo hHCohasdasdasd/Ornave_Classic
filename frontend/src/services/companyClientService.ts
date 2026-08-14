@@ -31,6 +31,11 @@ class CompanyClientService {
     const response = await apiClient.post(`/company-clients/${connectionId}/messages`, { content });
     return response.data.data;
   }
+
+  async updateBanner(companyId: string, bannerUrl: string | null): Promise<{ id: string; bannerUrl: string | null }> {
+    const response = await apiClient.put(`/companies/${companyId}/banner`, { bannerUrl });
+    return response.data.data;
+  }
 }
 
 export const companyClientService = new CompanyClientService();

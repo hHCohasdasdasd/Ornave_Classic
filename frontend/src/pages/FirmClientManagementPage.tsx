@@ -14,6 +14,7 @@ export const FirmClientManagementPage: React.FC = () => {
   const [followers, setFollowers] = useState<CompanyClientConnection[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(company?.bannerUrl || null);
 
   const [activeClient, setActiveClient] = useState<CompanyClientConnection | null>(null);
   const [messages, setMessages] = useState<ConnectionMessage[]>([]);
@@ -80,6 +81,15 @@ export const FirmClientManagementPage: React.FC = () => {
     }
   };
 
+  const handleEditBanner = async () => {
+    if (!company) return;
+    const input = window.prompt('Paste a banner image URL (shown to buyers on your firm page):', bannerUrl || '');
+    if (input === null) return;
+    const trimmed = input.trim();
+    const updated = await companyClientService.updateBanner(company.id, trimmed || null);
+    setBannerUrl(updated.bannerUrl);
+  };
+
   if (isLoading) {
     return (
       <div style={{ background: 'var(--color-bg, #111111)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-muted, #a79e8c)' }}>
@@ -96,18 +106,29 @@ export const FirmClientManagementPage: React.FC = () => {
     >
       <div className="network-main fade-in">
         {/* Firm Status Header */}
-        <section className="network-section" style={{ 
+        <section className="network-section" style={{
           border: '1px solid rgba(231, 223, 201, 0.3)',
-          background: 'linear-gradient(180deg, rgba(231, 223, 201, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%)',
+          background: bannerUrl
+            ? `linear-gradient(180deg, rgba(10, 10, 8, 0.35) 0%, rgba(0, 0, 0, 0.88) 100%), url(${bannerUrl})`
+            : 'linear-gradient(180deg, rgba(231, 223, 201, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           padding: '24px',
           borderRadius: '4px',
-          position: 'relative', 
+          position: 'relative',
           overflow: 'hidden',
           marginBottom: '30px',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
         }}>
           <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, var(--tech-blue), transparent)' }}></div>
-          
+          <button
+            className="btn-sm-primary"
+            style={{ position: 'absolute', top: '14px', right: '14px', fontSize: '0.65rem', padding: '5px 12px' }}
+            onClick={handleEditBanner}
+          >
+            {bannerUrl ? 'Change Banner' : 'Set Banner'}
+          </button>
+
           <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
             <div style={{ 
               width: '80px', 

@@ -26,7 +26,7 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, 
 interface OpenConnection {
   id: string;
   createdAt?: string;
-  company: { id: string; name: string; logo?: string; industry?: string; description?: string };
+  company: { id: string; name: string; logo?: string; bannerUrl?: string; industry?: string; description?: string };
 }
 
 export const FirmConnectionDetailPage: React.FC = () => {
@@ -150,6 +150,13 @@ export const FirmConnectionDetailPage: React.FC = () => {
         </div>
       </div>
 
+      {detail && (
+        <div
+          className="firm-detail-page__cover"
+          style={detail.company.bannerUrl ? { backgroundImage: `url(${detail.company.bannerUrl})` } : undefined}
+        />
+      )}
+
       <div className="worksuite-page__container worksuite-page__container--wide">
         {error && <p className="worksuite-modal__error">{error}</p>}
 
@@ -157,7 +164,7 @@ export const FirmConnectionDetailPage: React.FC = () => {
           <div className="worksuite-empty">Loading…</div>
         ) : !detail ? null : (
           <>
-            <div className="firm-detail-page__profile">
+            <div className="firm-detail-page__profile firm-detail-page__profile--overlap">
               <div
                 className="firm-detail-page__logo"
                 style={detail.company.logo ? { backgroundImage: `url(${detail.company.logo})` } : undefined}
