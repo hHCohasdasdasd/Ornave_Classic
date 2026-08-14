@@ -2410,7 +2410,9 @@
    modal (it holds two whole sections) but well short of the --large one. */
 .firm-detail-modal {
   position: relative;
-  max-width: 600px;
+  max-width: 1040px;
+  width: 92vw;
+  max-height: 88vh;
 }
 
 .firm-detail-modal__close {
@@ -2435,6 +2437,30 @@
   gap: 14px;
   margin-bottom: 20px;
   padding-right: 24px;
+}
+
+.firm-detail-modal__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.firm-detail-modal__col--messages {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.firm-detail-modal__thread--tall {
+  max-height: 46vh;
+}
+
+@media (max-width: 760px) {
+  .firm-detail-modal__grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 }
 
 .firm-detail-modal__section {

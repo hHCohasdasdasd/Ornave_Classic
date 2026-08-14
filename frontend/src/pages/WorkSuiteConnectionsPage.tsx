@@ -317,7 +317,8 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
             {isLoadingDetail ? (
               <div className="worksuite-empty">Loading…</div>
             ) : (
-              <>
+              <div className="firm-detail-modal__grid">
+              <div className="firm-detail-modal__col">
                 <div className="firm-detail-modal__section">
                   <div className="firm-detail-modal__section-header">
                     <h3>Orders</h3>
@@ -388,12 +389,14 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
                     </div>
                   )}
                 </div>
+              </div>
 
+              <div className="firm-detail-modal__col firm-detail-modal__col--messages">
                 <div className="firm-detail-modal__section">
                   <div className="firm-detail-modal__section-header">
                     <h3>Messages</h3>
                   </div>
-                  <div className="order-modal__thread">
+                  <div className="order-modal__thread firm-detail-modal__thread--tall">
                     {messages.length === 0 ? (
                       <p className="worksuite-card__meta">No messages yet — write to {detail.company.name} below.</p>
                     ) : (
@@ -423,7 +426,8 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              </>
+              </div>
+              </div>
             )}
           </div>
         </div>
