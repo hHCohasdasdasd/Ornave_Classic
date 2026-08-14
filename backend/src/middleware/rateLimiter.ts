@@ -28,3 +28,16 @@ export const registerRateLimiter = rateLimit({
     message: 'Too many registration attempts from this IP. Please try again later.',
   },
 });
+
+// Resend-verification (unauthenticated, by email): tight limit — the same
+// endpoint an enumeration attempt or an email-bombing script would hit.
+export const resendVerificationRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many verification requests. Please try again later.',
+  },
+});

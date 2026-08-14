@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/authController';
 import { authMiddleware, roleMiddleware } from '../middleware/auth';
-import { loginRateLimiter, registerRateLimiter } from '../middleware/rateLimiter';
+import { loginRateLimiter, registerRateLimiter, resendVerificationRateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
@@ -16,6 +16,7 @@ router.post('/register', registerRateLimiter, AuthController.register);
 router.post('/login', loginRateLimiter, AuthController.login);
 router.post('/logout', AuthController.logout);
 router.get('/verify-email', AuthController.verifyEmail);
+router.post('/resend-verification-by-email', resendVerificationRateLimiter, AuthController.resendVerificationByEmail);
 
 // Protected routes
 router.get('/profile', authMiddleware, AuthController.getProfile);

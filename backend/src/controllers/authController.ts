@@ -220,6 +220,18 @@ export class AuthController {
   });
 
   /**
+   * Resend a verification link by email — for someone blocked at login with
+   * no session to call the authenticated version. Always reports success.
+   */
+  static resendVerificationByEmail = asyncHandler(async (req: Request, res: Response) => {
+    const email = typeof req.body.email === 'string' ? req.body.email.trim() : '';
+    if (email) {
+      await AuthService.resendVerificationByEmail(email);
+    }
+    return ApiResponseHandler.success(res, null, 'If that email is registered and unverified, a new link has been sent.', 200);
+  });
+
+  /**
    * Verify token
    */
   static verifyToken = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

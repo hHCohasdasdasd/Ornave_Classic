@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { PasswordManager } from '../utils/passwordManager';
 import { TokenManager } from '../utils/tokenManager';
 import { ERROR_MESSAGES } from '../constants';
+import { sendEmail } from '../utils/email';
 
 const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -12,9 +13,8 @@ function hashToken(token: string): string {
 
 /**
  * Issues a fresh email-verification token for a user, stores its hash, and
- * "delivers" it. No email provider is wired up yet, so delivery is a console
- * log for now — swap this one function out once one is configured, nothing
- * else about the flow needs to change.
+ * emails the link. Falls back to a console log if RESEND_API_KEY isn't
+ * configured (see utils/email.ts) so local dev keeps working either way.
  */
 async function issueEmailVerificationToken(userId: string, email: string): Promise<void> {
   const rawToken = crypto.randomBytes(32).toString('hex');
@@ -29,6 +29,17 @@ async function issueEmailVerificationToken(userId: string, email: string): Promi
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5175';
   const verificationLink = `${frontendUrl}/verify-email?token=${rawToken}`;
   console.log(`[EmailVerification] Verification link for ${email}: ${verificationLink}`);
+
+  await sendEmail(
+    email,
+    'Verify your email for Ornave',
+    `<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color: #14140f;">Confirm your email</h2>
+      <p>Click the link below to verify your Ornave account. This link expires in 24 hours.</p>
+      <p><a href="${verificationLink}" style="display: inline-block; background: #c6a15b; color: #14140f; padding: 10px 20px; border-radius: 999px; text-decoration: none; font-weight: 700;">Verify email</a></p>
+      <p style="color: #888; font-size: 0.85rem;">If the button doesn't work, paste this link into your browser:<br>${verificationLink}</p>
+    </div>`
+  );
 }
 
 const prisma = new PrismaClient();
@@ -336,6 +347,11 @@ export class AuthService {
       throw new Error('User account is inactive');
     }
 
+    if (!user.emailVerified) {
+      await logAuthEvent('LOGIN_FAILED', user.email, user.id, meta);
+      throw new Error('Please verify your email before logging in. Check your inbox for the verification link, or request a new one.');
+    }
+
     // Successful login — reset the failed-attempt/lock state (but not the
     // lifetime lockoutCount — escalation deliberately remembers) and update
     // last login.
@@ -601,6 +617,19 @@ export class AuthService {
     if (user.emailVerified) {
       throw new Error('Email is already verified');
     }
+    await issueEmailVerificationToken(user.id, user.email);
+  }
+
+  /**
+   * Same as resendVerification, but reachable without a session — for
+   * someone blocked at login by an unverified email, who therefore has no
+   * token to call the authenticated version with. Always resolves silently
+   * (no error on unknown email / already-verified) so it can't be used to
+   * enumerate registered addresses.
+   */
+  static async resendVerificationByEmail(email: string): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || user.emailVerified) return;
     await issueEmailVerificationToken(user.id, user.email);
   }
 

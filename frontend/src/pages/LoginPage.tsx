@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ValidationUtils, ErrorMessages } from '@/utils/storage';
 import { Button } from '@/components/ui/Button';
+import { apiClient } from '@/services/api';
 
 const AUTH_BYPASS_ENABLED = true;
 
@@ -12,6 +13,17 @@ export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const needsVerification = !!authError && authError.toLowerCase().includes('verify your email');
+
+  const handleResendVerification = async () => {
+    setResendState('sending');
+    try {
+      await apiClient.post('/auth/resend-verification-by-email', { email });
+    } finally {
+      setResendState('sent');
+    }
+  };
 
   if (AUTH_BYPASS_ENABLED && token) {
     navigate('/home');
@@ -60,7 +72,29 @@ export const LoginPage: React.FC = () => {
           Access your ERP platform.
         </p>
 
-        {authError && <div style={{ color: 'var(--color-danger)', marginBottom: '16px', fontSize: '14px' }}>{authError}</div>}
+        {authError && (
+          <div style={{ color: 'var(--color-danger)', marginBottom: '16px', fontSize: '14px' }}>
+            {authError}
+            {needsVerification && (
+              resendState === 'sent' ? (
+                <div style={{ marginTop: '8px', color: 'var(--color-text)' }}>
+                  If that address is registered, a new link is on its way.
+                </div>
+              ) : (
+                <div style={{ marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={resendState === 'sending' || !email}
+                    style={{ background: 'none', border: 'none', color: 'var(--tech-blue)', fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: '14px' }}
+                  >
+                    {resendState === 'sending' ? 'Sending…' : 'Resend verification email'}
+                  </button>
+                </div>
+              )
+            )}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="form">
           <div className="form-group">
