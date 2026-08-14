@@ -44,12 +44,22 @@ export function errorHandler(
     return;
   }
 
-  // Default error response
+  // Default error response. Anything reaching here is an error type we
+  // haven't specifically categorized above (unlike the branches for
+  // validation/JWT/Prisma errors, which already return safe, generic
+  // messages) — so in production, don't hand the client the raw
+  // error.message, which can be a Prisma internals string, a JSON parser
+  // message revealing request-body structure, or similar. Full detail is
+  // still in the server log from the console.error above.
+  const statusCode = error.statusCode || 500;
+  const isProd = process.env.NODE_ENV === 'production';
+  const safeMessage = isProd && statusCode >= 500 ? ERROR_MESSAGES.INTERNAL_ERROR : (error.message || ERROR_MESSAGES.INTERNAL_ERROR);
+
   ApiResponseHandler.error(
     res,
-    error.message || ERROR_MESSAGES.INTERNAL_ERROR,
-    error.message,
-    error.statusCode || 500
+    safeMessage,
+    isProd ? undefined : error.message,
+    statusCode
   );
 }
 
