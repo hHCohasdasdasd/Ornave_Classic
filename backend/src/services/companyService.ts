@@ -175,6 +175,14 @@ export class CompanyService {
     });
   }
 
+  static async updateLogo(companyId: string, logo: string | null): Promise<any> {
+    return prisma.company.update({
+      where: { id: companyId },
+      data: { logo },
+      select: { id: true, logo: true },
+    });
+  }
+
   /**
    * Get all users in company
    */

@@ -27,6 +27,10 @@ const UpdateBannerSchema = z.object({
   bannerUrl: z.string().url().max(2000).nullable(),
 });
 
+const UpdateLogoSchema = z.object({
+  logo: z.string().url().max(2000).nullable(),
+});
+
 export class CompanyController {
   /**
    * Create new company
@@ -110,8 +114,8 @@ export class CompanyController {
   });
 
   /**
-   * Update the company's banner (cover) image — a plain image URL, same as
-   * how logo already works, rather than a file-upload pipeline.
+   * Update the company's banner (cover) image — a plain image URL rather
+   * than a file-upload pipeline.
    */
   static updateBanner = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -125,6 +129,28 @@ export class CompanyController {
       const company = await CompanyService.updateBanner(companyId, bannerUrl);
 
       return ApiResponseHandler.success(res, company, 'Banner updated successfully', 200);
+    } catch (error: any) {
+      return ApiResponseHandler.error(res, error.message, undefined, 400);
+    }
+  });
+
+  /**
+   * Update the company's logo — despite the field existing (and being
+   * displayed everywhere: firm cards, directory results, connection
+   * headers), no endpoint ever let a company actually set it.
+   */
+  static updateLogo = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { companyId } = req.params;
+      const { logo } = UpdateLogoSchema.parse(req.body);
+
+      if (req.user?.companyId !== companyId) {
+        return ApiResponseHandler.error(res, ERROR_MESSAGES.FORBIDDEN, undefined, 403);
+      }
+
+      const company = await CompanyService.updateLogo(companyId, logo);
+
+      return ApiResponseHandler.success(res, company, 'Logo updated successfully', 200);
     } catch (error: any) {
       return ApiResponseHandler.error(res, error.message, undefined, 400);
     }

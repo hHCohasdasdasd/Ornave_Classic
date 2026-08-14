@@ -38,6 +38,11 @@ class CompanyClientService {
     return response.data.data;
   }
 
+  async updateLogo(companyId: string, logo: string | null): Promise<{ id: string; logo: string | null }> {
+    const response = await apiClient.put(`/companies/${companyId}/logo`, { logo });
+    return response.data.data;
+  }
+
   async getTickets(connectionId: string): Promise<Ticket[]> {
     const response = await apiClient.get(`/company-clients/${connectionId}/tickets`);
     return response.data.data || [];

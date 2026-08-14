@@ -26,6 +26,7 @@ export const FirmClientManagementPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [bannerUrl, setBannerUrl] = useState<string | null>(company?.bannerUrl || null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(company?.logo || null);
 
   const [activeClient, setActiveClient] = useState<CompanyClientConnection | null>(null);
   const [messages, setMessages] = useState<ConnectionMessage[]>([]);
@@ -191,6 +192,15 @@ export const FirmClientManagementPage: React.FC = () => {
     setBannerUrl(updated.bannerUrl);
   };
 
+  const handleEditLogo = async () => {
+    if (!company) return;
+    const input = window.prompt('Paste a logo image URL (shown on your firm card, directory listing, and connection pages):', logoUrl || '');
+    if (input === null) return;
+    const trimmed = input.trim();
+    const updated = await companyClientService.updateLogo(company.id, trimmed || null);
+    setLogoUrl(updated.logo);
+  };
+
   if (isLoading) {
     return (
       <div style={{ background: 'var(--color-bg, #111111)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-muted, #a79e8c)' }}>
@@ -231,18 +241,25 @@ export const FirmClientManagementPage: React.FC = () => {
           </button>
 
           <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-            <div style={{ 
-              width: '80px', 
-              height: '80px', 
-              background: 'var(--color-bg)',
-              border: '1px solid var(--tech-blue)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '2rem',
-              position: 'relative'
-            }}>
-              🏢
+            <div
+              onClick={handleEditLogo}
+              title={logoUrl ? 'Change logo' : 'Set logo'}
+              style={{
+                width: '80px',
+                height: '80px',
+                background: logoUrl ? `url(${logoUrl})` : 'var(--color-bg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                border: '1px solid var(--tech-blue)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '2rem',
+                position: 'relative',
+                cursor: 'pointer',
+                flexShrink: 0
+              }}>
+              {!logoUrl && '🏢'}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '8px' }}>
