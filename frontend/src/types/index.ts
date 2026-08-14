@@ -11,6 +11,8 @@ export interface User {
   userType: UserType;
   companyId?: string | null;
   createdAt: string;
+  isPlatformAdmin?: boolean;
+  twoFactorEnabled?: boolean;
 }
 
 export interface Company {

@@ -15,5 +15,6 @@ router.use(authMiddleware, platformAdminMiddleware);
 
 router.get('/locked-accounts', AuthController.listLockedAccounts);
 router.post('/locked-accounts/:userId/unlock', AuthController.adminUnlockAccount);
+router.get('/audit-log', AuthController.listAuditLog);
 
 export default router;

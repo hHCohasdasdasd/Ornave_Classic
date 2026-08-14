@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
+import { authenticator } from 'otplib';
+import QRCode from 'qrcode';
 import { PasswordManager } from '../utils/passwordManager';
 import { TokenManager } from '../utils/tokenManager';
 import { ERROR_MESSAGES } from '../constants';
@@ -80,7 +82,10 @@ async function logAuthEvent(
     | 'PASSWORD_CHANGED'
     | 'EMAIL_VERIFIED'
     | 'PASSWORD_RESET_REQUESTED'
-    | 'PASSWORD_RESET_COMPLETED',
+    | 'PASSWORD_RESET_COMPLETED'
+    | 'TWO_FACTOR_ENABLED'
+    | 'TWO_FACTOR_DISABLED'
+    | 'ACCOUNT_DELETED',
   email: string,
   userId?: string | null,
   meta?: RequestMeta
@@ -133,6 +138,11 @@ export interface AuthResponse {
     description: string | null;
     createdAt: Date;
   } | null;
+}
+
+export interface Pending2FAResponse {
+  pending2FA: true;
+  pendingToken: string;
 }
 
 export class AuthService {
@@ -278,7 +288,7 @@ export class AuthService {
     72 * 60 * 60 * 1000,
   ];
 
-  static async login(credentials: LoginCredentials, meta?: RequestMeta): Promise<AuthResponse> {
+  static async login(credentials: LoginCredentials, meta?: RequestMeta): Promise<AuthResponse | Pending2FAResponse> {
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email: credentials.email },
@@ -375,6 +385,20 @@ export class AuthService {
       data: { lastLogin: new Date(), failedLoginAttempts: 0, lockedUntil: null },
     });
 
+    if (user.twoFactorEnabled) {
+      // Password was correct, but a second factor is still required — issue
+      // only a short-lived pending token, not a real session. LOGIN_SUCCESS
+      // is logged once the 2FA step also passes, in verifyLogin2FA below.
+      const pendingToken = TokenManager.generatePending2FAToken({
+        userId: user.id,
+        email: user.email,
+        companyId: user.companyId,
+        role: user.role,
+        userType: user.userType,
+      });
+      return { pending2FA: true, pendingToken };
+    }
+
     await logAuthEvent('LOGIN_SUCCESS', user.email, user.id, meta);
 
     // Generate token
@@ -425,6 +449,8 @@ export class AuthService {
         userType: true,
         isActive: true,
         createdAt: true,
+        isPlatformAdmin: true,
+        twoFactorEnabled: true,
         profile: {
           select: {
             phone: true,
@@ -757,5 +783,224 @@ export class AuthService {
       },
     });
     await logAuthEvent('ACCOUNT_UNLOCKED', user.email, user.id);
+  }
+
+  // ---------------------------------------------------------------------
+  // Two-factor authentication (TOTP, Google Authenticator-compatible)
+  // ---------------------------------------------------------------------
+
+  /**
+   * Generates a fresh TOTP secret and stores it unactivated — 2FA only
+   * takes effect once `enable2FA` confirms the user actually scanned it and
+   * can produce a valid code. Calling this again before enabling just
+   * replaces the pending secret (e.g. the user re-scans after a QR mishap).
+   */
+  static async setup2FA(userId: string): Promise<{ secret: string; otpauthUrl: string; qrCodeDataUrl: string }> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+    if (user.twoFactorEnabled) throw new Error('Two-factor authentication is already enabled');
+
+    const secret = authenticator.generateSecret();
+    await prisma.user.update({ where: { id: userId }, data: { twoFactorSecret: secret } });
+
+    const otpauthUrl = authenticator.keyuri(user.email, 'Ornave', secret);
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+
+    return { secret, otpauthUrl, qrCodeDataUrl };
+  }
+
+  /**
+   * Confirms setup with a real code from the authenticator app, then turns
+   * 2FA on and issues a one-time set of backup codes (shown to the user
+   * exactly once — only their hashes are ever stored).
+   */
+  static async enable2FA(userId: string, code: string): Promise<{ backupCodes: string[] }> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+    if (user.twoFactorEnabled) throw new Error('Two-factor authentication is already enabled');
+    if (!user.twoFactorSecret) throw new Error('Start setup first to get a QR code');
+
+    const isValid = authenticator.verify({ token: code, secret: user.twoFactorSecret });
+    if (!isValid) throw new Error('Invalid code — check your authenticator app and try again');
+
+    const backupCodes = Array.from({ length: 10 }, () => crypto.randomBytes(5).toString('hex'));
+    const backupCodesHash = JSON.stringify(backupCodes.map(hashToken));
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorEnabled: true, twoFactorBackupCodesHash: backupCodesHash },
+    });
+
+    await logAuthEvent('TWO_FACTOR_ENABLED', user.email, user.id);
+    return { backupCodes };
+  }
+
+  /**
+   * Turns 2FA off. Password-gated, same as any other security-downgrading
+   * action — a stolen session cookie alone shouldn't be enough to disable it.
+   */
+  static async disable2FA(userId: string, password: string): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+
+    const isPasswordValid = await PasswordManager.verifyPassword(password, user.password);
+    if (!isPasswordValid) throw new Error('Incorrect password');
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorEnabled: false, twoFactorSecret: null, twoFactorBackupCodesHash: null },
+    });
+
+    await logAuthEvent('TWO_FACTOR_DISABLED', user.email, user.id);
+  }
+
+  /**
+   * Completes login for a 2FA-enabled account: takes the short-lived
+   * pending token from step one plus either a live TOTP code or an unused
+   * backup code (which is consumed on success), and only then issues a
+   * real session.
+   */
+  static async verifyLogin2FA(pendingToken: string, code: string, meta?: RequestMeta): Promise<AuthResponse> {
+    let decoded;
+    try {
+      decoded = TokenManager.verifyToken(pendingToken);
+    } catch {
+      throw new Error('This login session has expired — please log in again');
+    }
+    if (!decoded.pending2FA) {
+      throw new Error('This login session has expired — please log in again');
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId }, include: { company: true } });
+    if (!user || !user.twoFactorEnabled) {
+      throw new Error('This login session has expired — please log in again');
+    }
+
+    const normalizedCode = code.trim();
+    let usedBackupCode = false;
+    let isValid = authenticator.verify({ token: normalizedCode, secret: user.twoFactorSecret || '' });
+
+    if (!isValid && user.twoFactorBackupCodesHash) {
+      const codeHash = hashToken(normalizedCode.toLowerCase());
+      const backupHashes: string[] = JSON.parse(user.twoFactorBackupCodesHash);
+      if (backupHashes.includes(codeHash)) {
+        isValid = true;
+        usedBackupCode = true;
+        const remaining = backupHashes.filter((h) => h !== codeHash);
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { twoFactorBackupCodesHash: JSON.stringify(remaining) },
+        });
+      }
+    }
+
+    if (!isValid) {
+      await logAuthEvent('LOGIN_FAILED', user.email, user.id, meta);
+      throw new Error('Invalid or expired code');
+    }
+
+    void usedBackupCode;
+    await logAuthEvent('LOGIN_SUCCESS', user.email, user.id, meta);
+
+    const token = TokenManager.generateToken({
+      userId: user.id,
+      email: user.email,
+      companyId: user.companyId,
+      role: user.role,
+      userType: user.userType,
+    });
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        memberNumber: user.memberNumber,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        companyId: user.companyId,
+        userType: user.userType,
+      },
+      company: user.company ? {
+        id: user.company.id,
+        name: user.company.name,
+        slug: user.company.slug,
+        description: user.company.description,
+        createdAt: user.company.createdAt,
+      } : null,
+    };
+  }
+
+  // ---------------------------------------------------------------------
+  // Account deletion
+  // ---------------------------------------------------------------------
+
+  /**
+   * Self-service account deletion. Anonymizes rather than hard-deletes: the
+   * row (and its id) stays in place so foreign-key relations — orders,
+   * posts, messages, a company's employment history — remain structurally
+   * valid instead of risking a cascade that destroys other parties'
+   * legitimate records. PII is scrubbed and the account is deactivated.
+   *
+   * Blocked when the caller is the sole OWNER of a company that still has
+   * other active employees — they need to transfer ownership or the company
+   * would be left in a broken state.
+   */
+  static async deleteAccount(userId: string, password: string): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+
+    const isPasswordValid = await PasswordManager.verifyPassword(password, user.password);
+    if (!isPasswordValid) throw new Error('Incorrect password');
+
+    if (user.role === UserRole.OWNER && user.companyId) {
+      const otherActiveEmployees = await prisma.user.count({
+        where: { companyId: user.companyId, id: { not: user.id }, isActive: true, deletedAt: null },
+      });
+      if (otherActiveEmployees > 0) {
+        throw new Error(
+          'You are the owner of a company with other active members. Transfer ownership before deleting your account.'
+        );
+      }
+    }
+
+    const originalEmail = user.email;
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        email: `deleted-${user.id}@deleted.ornave.local`,
+        firstName: 'Deleted',
+        lastName: 'User',
+        password: crypto.randomBytes(32).toString('hex'),
+        isActive: false,
+        deletedAt: new Date(),
+        emailVerificationTokenHash: null,
+        emailVerificationExpiry: null,
+        passwordResetTokenHash: null,
+        passwordResetExpiry: null,
+        twoFactorEnabled: false,
+        twoFactorSecret: null,
+        twoFactorBackupCodesHash: null,
+      },
+    });
+
+    await logAuthEvent('ACCOUNT_DELETED', originalEmail, user.id);
+  }
+
+  // ---------------------------------------------------------------------
+  // Admin: audit trail visibility
+  // ---------------------------------------------------------------------
+
+  static async listAuditLog(filters: { eventType?: string; email?: string; limit?: number }) {
+    const limit = Math.min(filters.limit || 100, 500);
+    return prisma.authAuditLog.findMany({
+      where: {
+        eventType: filters.eventType || undefined,
+        email: filters.email ? { contains: filters.email, mode: 'insensitive' } : undefined,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
   }
 }

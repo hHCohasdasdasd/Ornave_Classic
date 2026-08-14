@@ -50,6 +50,23 @@ const ResetPasswordSchema = z.object({
   newPassword: z.string().min(8, 'New password must be at least 8 characters'),
 });
 
+const VerifyLogin2FASchema = z.object({
+  pendingToken: z.string().min(1, 'Pending token required'),
+  code: z.string().min(1, 'Code required'),
+});
+
+const Enable2FASchema = z.object({
+  code: z.string().min(1, 'Code required'),
+});
+
+const Disable2FASchema = z.object({
+  password: z.string().min(1, 'Password required'),
+});
+
+const DeleteAccountSchema = z.object({
+  password: z.string().min(1, 'Password required'),
+});
+
 const UpdateProfileSchema = z.object({
   firstName: z.string().min(1, 'First name required').optional(),
   lastName: z.string().min(1, 'Last name required').optional(),
@@ -112,15 +129,35 @@ export class AuthController {
   static login = asyncHandler(async (req: Request, res: Response) => {
     try {
       const validated = LoginSchema.parse(req.body);
-      const authResponse = await AuthService.login(validated as any, requestMeta(req));
-      setAuthCookies(res, authResponse.token);
+      const result = await AuthService.login(validated as any, requestMeta(req));
 
+      if ('pending2FA' in result) {
+        return ApiResponseHandler.success(res, result, 'Two-factor code required', 200);
+      }
+
+      setAuthCookies(res, result.token);
       return ApiResponseHandler.success(
         res,
-        authResponse,
+        result,
         SUCCESS_MESSAGES.AUTH_SUCCESS,
         200
       );
+    } catch (error: any) {
+      return ApiResponseHandler.error(res, error.message, undefined, 401);
+    }
+  });
+
+  /**
+   * Completes login for a 2FA-enabled account using the pending token from
+   * the first login step plus a TOTP or backup code.
+   */
+  static verifyLogin2FA = asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const validated = VerifyLogin2FASchema.parse(req.body);
+      const authResponse = await AuthService.verifyLogin2FA(validated.pendingToken, validated.code, requestMeta(req));
+      setAuthCookies(res, authResponse.token);
+
+      return ApiResponseHandler.success(res, authResponse, SUCCESS_MESSAGES.AUTH_SUCCESS, 200);
     } catch (error: any) {
       return ApiResponseHandler.error(res, error.message, undefined, 401);
     }
@@ -306,5 +343,68 @@ export class AuthController {
     } catch (error: any) {
       return ApiResponseHandler.error(res, error.message, undefined, 400);
     }
+  });
+
+  /**
+   * Begin 2FA setup: returns a fresh TOTP secret + QR code. Not yet active
+   * until confirmed via enable2FA.
+   */
+  static setup2FA = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user) return ApiResponseHandler.error(res, ERROR_MESSAGES.UNAUTHORIZED, undefined, 401);
+      const result = await AuthService.setup2FA(req.user.userId);
+      return ApiResponseHandler.success(res, result, '2FA setup started', 200);
+    } catch (error: any) {
+      return ApiResponseHandler.error(res, error.message, undefined, 400);
+    }
+  });
+
+  static enable2FA = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user) return ApiResponseHandler.error(res, ERROR_MESSAGES.UNAUTHORIZED, undefined, 401);
+      const validated = Enable2FASchema.parse(req.body);
+      const result = await AuthService.enable2FA(req.user.userId, validated.code);
+      return ApiResponseHandler.success(res, result, 'Two-factor authentication enabled', 200);
+    } catch (error: any) {
+      return ApiResponseHandler.error(res, error.message, undefined, 400);
+    }
+  });
+
+  static disable2FA = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user) return ApiResponseHandler.error(res, ERROR_MESSAGES.UNAUTHORIZED, undefined, 401);
+      const validated = Disable2FASchema.parse(req.body);
+      await AuthService.disable2FA(req.user.userId, validated.password);
+      return ApiResponseHandler.success(res, null, 'Two-factor authentication disabled', 200);
+    } catch (error: any) {
+      return ApiResponseHandler.error(res, error.message, undefined, 400);
+    }
+  });
+
+  /**
+   * Self-service account deletion (anonymization-based). Clears session
+   * cookies on success since the account is no longer usable.
+   */
+  static deleteAccount = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user) return ApiResponseHandler.error(res, ERROR_MESSAGES.UNAUTHORIZED, undefined, 401);
+      const validated = DeleteAccountSchema.parse(req.body);
+      await AuthService.deleteAccount(req.user.userId, validated.password);
+      clearAuthCookies(res);
+      return ApiResponseHandler.success(res, null, 'Account deleted', 200);
+    } catch (error: any) {
+      return ApiResponseHandler.error(res, error.message, undefined, 400);
+    }
+  });
+
+  /**
+   * [Platform admin only] List/filter auth audit log entries.
+   */
+  static listAuditLog = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const eventType = typeof req.query.eventType === 'string' ? req.query.eventType : undefined;
+    const email = typeof req.query.email === 'string' ? req.query.email : undefined;
+    const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : undefined;
+    const entries = await AuthService.listAuditLog({ eventType, email, limit });
+    return ApiResponseHandler.success(res, entries, 'Audit log retrieved', 200);
   });
 }

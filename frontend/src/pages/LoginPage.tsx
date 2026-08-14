@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth, TwoFactorRequiredError } from '@/context/AuthContext';
 import { ValidationUtils, ErrorMessages } from '@/utils/storage';
 import { Button } from '@/components/ui/Button';
 import { apiClient } from '@/services/api';
@@ -9,12 +9,25 @@ const AUTH_BYPASS_ENABLED = true;
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, token, isLoading, error: authError, setError } = useAuth();
+  const { login, completeTwoFactorLogin, token, isLoading, error: authError, setError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle');
   const needsVerification = !!authError && authError.toLowerCase().includes('verify your email');
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+
+  const handleTwoFactorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingToken) return;
+    try {
+      await completeTwoFactorLogin(pendingToken, twoFactorCode.trim());
+      navigate('/home');
+    } catch {
+      // Error is handled in context
+    }
+  };
 
   const handleResendVerification = async () => {
     setResendState('sending');
@@ -59,9 +72,61 @@ export const LoginPage: React.FC = () => {
       await login(email, password);
       navigate('/home');
     } catch (err) {
+      if (err instanceof TwoFactorRequiredError) {
+        setPendingToken(err.pendingToken);
+        return;
+      }
       // Error is handled in context
     }
   };
+
+  if (pendingToken) {
+    return (
+      <div className="auth-page fade-in">
+        <div className="auth-card">
+          <h1 className="auth-card__title">Two-factor authentication</h1>
+          <p className="muted-text" style={{ marginBottom: '32px' }}>
+            Enter the 6-digit code from your authenticator app, or one of your backup codes.
+          </p>
+
+          {authError && (
+            <div style={{ color: 'var(--color-danger)', marginBottom: '16px', fontSize: '14px' }}>
+              {authError}
+            </div>
+          )}
+
+          <form onSubmit={handleTwoFactorSubmit} className="form">
+            <div className="form-group">
+              <label>Authentication code</label>
+              <input
+                type="text"
+                className="input"
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value)}
+                placeholder="6-digit code or backup code"
+                disabled={isLoading}
+                autoFocus
+                style={{ background: 'var(--color-input-bg)', color: 'white', border: '1px solid var(--tech-border-dim)' }}
+              />
+            </div>
+            <Button type="submit" disabled={isLoading || !twoFactorCode.trim()} className="btn--primary">
+              {isLoading ? 'Verifying…' : 'Verify'}
+            </Button>
+          </form>
+
+          <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '14px' }}>
+            <button
+              type="button"
+              onClick={() => { setPendingToken(null); setTwoFactorCode(''); setError(null); }}
+              style={{ background: 'none', border: 'none', color: 'var(--tech-blue)', fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: '14px' }}
+            >
+              Back to login
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

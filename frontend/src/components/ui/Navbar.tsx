@@ -594,6 +594,18 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
                     Orders &amp; Invoices
                   </button>
 
+                  <button className="navbar__menu-item" onClick={() => { setIsProfileMenuOpen(false); navigate('/account/security'); }} role="menuitem">
+                    <IconUser size={15} />
+                    Account &amp; Security
+                  </button>
+
+                  {user.isPlatformAdmin && (
+                    <button className="navbar__menu-item" onClick={() => { setIsProfileMenuOpen(false); navigate('/admin'); }} role="menuitem">
+                      <IconLayers size={15} />
+                      Admin
+                    </button>
+                  )}
+
                   <div className="navbar__menu-divider" />
 
                   <button className="navbar__menu-item navbar__menu-item--danger" onClick={handleLogout} role="menuitem">

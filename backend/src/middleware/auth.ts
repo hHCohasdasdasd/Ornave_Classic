@@ -40,6 +40,10 @@ export function authMiddleware(
     }
 
     const decoded = TokenManager.verifyToken(token);
+    if (decoded.pending2FA) {
+      ApiResponseHandler.error(res, ERROR_MESSAGES.UNAUTHORIZED, undefined, 401);
+      return;
+    }
     req.user = decoded;
     req.companyId = decoded.companyId || undefined;
 

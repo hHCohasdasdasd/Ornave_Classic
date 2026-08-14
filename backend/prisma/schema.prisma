@@ -32,6 +32,10 @@ model User {
   emailVerificationExpiry    DateTime?
   passwordResetTokenHash     String?                 @unique
   passwordResetExpiry        DateTime?
+  deletedAt                  DateTime?
+  twoFactorEnabled           Boolean                 @default(false)
+  twoFactorSecret            String?
+  twoFactorBackupCodesHash   String?
   payments                   GlobalPayment[]
   globalRequests             GlobalRequest[]
   orders                     Order[]

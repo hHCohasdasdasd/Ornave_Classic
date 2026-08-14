@@ -11,6 +11,9 @@ export interface JwtPayload {
   companyId?: string | null;
   role: string;
   userType: string;
+  /** Set only on the short-lived token issued between a correct password and
+   * a confirmed TOTP/backup code — never a valid session token by itself. */
+  pending2FA?: boolean;
   iat?: number;
   exp?: number;
 }
@@ -35,6 +38,17 @@ export class TokenManager {
   static generateToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
     return jwt.sign(payload, this.SECRET, {
       expiresIn: this.EXPIRY as any,
+    });
+  }
+
+  /**
+   * Short-lived token for the gap between a correct password and a
+   * confirmed 2FA code — carries `pending2FA: true` so it's rejected by
+   * every normal authMiddleware-gated route.
+   */
+  static generatePending2FAToken(payload: Omit<JwtPayload, 'iat' | 'exp' | 'pending2FA'>): string {
+    return jwt.sign({ ...payload, pending2FA: true }, this.SECRET, {
+      expiresIn: '10m',
     });
   }
 

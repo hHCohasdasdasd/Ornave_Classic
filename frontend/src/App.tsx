@@ -46,6 +46,8 @@ const WorkSuiteLegacyRedirect: React.FC<{ tab?: 'board' | 'goals' }> = ({ tab })
 import { ProfileEditPage } from '@/pages/ProfileEditPage';
 import { ProfileResourcesPage } from '@/pages/ProfileResourcesPage';
 import { OpenToWorkSettingsPage } from '@/pages/OpenToWorkSettingsPage';
+import { AccountSecurityPage } from '@/pages/AccountSecurityPage';
+import { AdminPage } from '@/pages/AdminPage';
 import { NetworkPage } from '@/pages/NetworkPage';
 import { InvitesSentPage } from '@/pages/InvitesSentPage';
 import { TotalConnectionsPage } from '@/pages/TotalConnectionsPage';
@@ -274,6 +276,8 @@ function App() {
             <Route path="/profile/edit" element={<ProfileEditPage />} />
             <Route path="/profile/resources" element={<ProfileResourcesPage />} />
             <Route path="/profile/settings/open-to" element={<OpenToWorkSettingsPage />} />
+            <Route path="/account/security" element={<AccountSecurityPage />} />
+            <Route path="/admin" element={<AdminPage />} />
 
             {/* Ornave Global Routes */}
             <Route path="/global/dashboard" element={<GlobalDashboardPage />} />

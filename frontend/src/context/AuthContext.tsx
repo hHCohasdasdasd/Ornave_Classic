@@ -32,6 +32,17 @@ const BYPASS_COMPANY: Company = {
 
 const BYPASS_TOKEN = 'ornave-demo-token';
 
+/** Thrown by `login()` when the password was correct but a TOTP/backup code
+ * is still required — carries the short-lived pending token the caller
+ * needs to complete the second step via `completeTwoFactorLogin`. */
+export class TwoFactorRequiredError extends Error {
+  pendingToken: string;
+  constructor(pendingToken: string) {
+    super('Two-factor code required');
+    this.pendingToken = pendingToken;
+  }
+}
+
 // The real JWT lives only in an httpOnly cookie the browser manages
 // automatically — this is just a non-secret "is there an active session"
 // marker for local UI state, never the actual token value.
@@ -75,6 +86,7 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string, businessType?: string) => Promise<void>;
+  completeTwoFactorLogin: (pendingToken: string, code: string) => Promise<void>;
   register: (
     email: string,
     password: string,
@@ -169,6 +181,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               role: fresh.role,
               companyId: fresh.companyId,
               userType: fresh.userType,
+              isPlatformAdmin: fresh.isPlatformAdmin,
+              twoFactorEnabled: fresh.twoFactorEnabled,
             };
             setUser(updatedUser);
             TokenStorage.setUser(updatedUser);
@@ -198,37 +212,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const response = await apiClient.login(email, password);
+
+      if (response.data?.pending2FA) {
+        throw new TwoFactorRequiredError(response.data.pendingToken);
+      }
+
       // The server also sets an httpOnly session cookie on this response —
       // that's what actually authenticates future requests. We deliberately
       // don't persist `response.data.token` (the raw JWT) anywhere on the
       // client; only a non-secret "logged in" marker plus display data.
       const { user: newUser, company: newCompany } = response.data;
-
-      TokenStorage.setAuthenticated();
-      TokenStorage.setUser(newUser);
-      TokenStorage.setCompany(newCompany);
-
-      // Register company for discovery if it's a company user
-      if (newUser.userType === 'COMPANY_USER' && newCompany) {
-        firmService.registerFirmGlobally({
-          id: newCompany.id,
-          slug: newCompany.slug,
-          name: newCompany.name,
-          description: newCompany.description || `Welcome to ${newCompany.name}.`,
-          industry: businessType || 'Professional Services',
-          location: 'Global',
-          connectionCount: 0
-        });
-      }
-
-      // Update state
-      setToken(SESSION_MARKER);
-      setUser(newUser);
-      setCompany(newCompany);
+      applyAuthenticatedSession(newUser, newCompany, businessType);
     } catch (err: any) {
+      if (err instanceof TwoFactorRequiredError) {
+        throw err;
+      }
       const errorMessage = err.message || 'Login failed. Please try again.';
       setError(errorMessage);
       throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const applyAuthenticatedSession = (newUser: User, newCompany: Company | null, businessType?: string) => {
+    TokenStorage.setAuthenticated();
+    TokenStorage.setUser(newUser);
+    TokenStorage.setCompany(newCompany);
+
+    // Register company for discovery if it's a company user
+    if (newUser.userType === 'COMPANY_USER' && newCompany) {
+      firmService.registerFirmGlobally({
+        id: newCompany.id,
+        slug: newCompany.slug,
+        name: newCompany.name,
+        description: newCompany.description || `Welcome to ${newCompany.name}.`,
+        industry: businessType || 'Professional Services',
+        location: 'Global',
+        connectionCount: 0
+      });
+    }
+
+    setToken(SESSION_MARKER);
+    setUser(newUser);
+    setCompany(newCompany);
+  };
+
+  const completeTwoFactorLogin = async (pendingToken: string, code: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.post('/auth/verify-login-2fa', { pendingToken, code });
+      const { user: newUser, company: newCompany } = response.data.data;
+      applyAuthenticatedSession(newUser, newCompany);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Invalid or expired code';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -303,6 +343,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     error,
     login,
+    completeTwoFactorLogin,
     register,
     logout,
     setError,

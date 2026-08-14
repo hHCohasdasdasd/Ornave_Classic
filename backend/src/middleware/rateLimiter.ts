@@ -41,3 +41,16 @@ export const resendVerificationRateLimiter = rateLimit({
     message: 'Too many verification requests. Please try again later.',
   },
 });
+
+// 2FA login-verify step: a 6-digit TOTP code has a small keyspace, so this
+// must be tightly bounded to make brute-forcing it impractical.
+export const twoFactorVerifyRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many verification attempts. Please try again later.',
+  },
+});
