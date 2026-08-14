@@ -164,172 +164,175 @@ export const FirmConnectionDetailPage: React.FC = () => {
           <div className="worksuite-empty">Loading…</div>
         ) : !detail ? null : (
           <>
-            <div className="firm-detail-page__profile firm-detail-page__profile--overlap">
-              <div
-                className="firm-detail-page__logo"
-                style={detail.company.logo ? { backgroundImage: `url(${detail.company.logo})` } : undefined}
-              >
-                {!detail.company.logo && getInitials(detail.company.name)}
-              </div>
-              <div className="firm-detail-page__profile-info">
-                <h1 className="firm-detail-page__name">{detail.company.name}</h1>
-                {(firmProfile?.industry || detail.company.industry) && (
-                  <span className="firm-detail-page__industry-tag">{firmProfile?.industry || detail.company.industry}</span>
-                )}
-                <p className="firm-detail-page__bio">
-                  {firmProfile?.bio || detail.company.description || 'No description available.'}
-                </p>
-              </div>
-            </div>
-
-            <div className="firm-detail-page__section-header">
-              <h3>History</h3>
-            </div>
-            <div className="firm-detail-page__stats">
-              <div className="firm-detail-page__stat">
-                <span className="firm-detail-page__stat-value">{detail.createdAt ? formatDate(detail.createdAt) : '—'}</span>
-                <span className="firm-detail-page__stat-label">Connected since</span>
-              </div>
-              <div className="firm-detail-page__stat">
-                <span className="firm-detail-page__stat-value">{orders.length}</span>
-                <span className="firm-detail-page__stat-label">Total orders</span>
-              </div>
-              <div className="firm-detail-page__stat">
-                <span className="firm-detail-page__stat-value">{orders[0]?.currency || 'USD'} {orders.reduce((sum, o) => sum + o.totalAmount, 0).toFixed(2)}</span>
-                <span className="firm-detail-page__stat-label">Total spent</span>
-              </div>
-              <div className="firm-detail-page__stat">
-                <span className="firm-detail-page__stat-value">{orders[0] ? formatDate(orders[0].createdAt) : '—'}</span>
-                <span className="firm-detail-page__stat-label">Last order</span>
-              </div>
-            </div>
-
-            {firmProfile && firmProfile.services.length > 0 && (
-              <>
-                <div className="firm-detail-page__section-header">
-                  <h3>Services</h3>
+            <div className="firm-detail-page__hero">
+              <div className="firm-detail-page__profile firm-detail-page__profile--overlap">
+                <div
+                  className="firm-detail-page__logo"
+                  style={detail.company.logo ? { backgroundImage: `url(${detail.company.logo})` } : undefined}
+                >
+                  {!detail.company.logo && getInitials(detail.company.name)}
                 </div>
-                <div className="firm-detail-page__services">
-                  {firmProfile.services.map((service, i) => (
-                    <div key={i} className="firm-detail-page__service-card">
-                      <div className="firm-detail-page__service-title">{service.title}</div>
-                      <p className="firm-detail-page__service-desc">{service.description}</p>
-                    </div>
-                  ))}
+                <div className="firm-detail-page__profile-info">
+                  <h1 className="firm-detail-page__name">{detail.company.name}</h1>
+                  {(firmProfile?.industry || detail.company.industry) && (
+                    <span className="firm-detail-page__industry-tag">{firmProfile?.industry || detail.company.industry}</span>
+                  )}
+                  <p className="firm-detail-page__bio">
+                    {firmProfile?.bio || detail.company.description || 'No description available.'}
+                  </p>
                 </div>
-              </>
-            )}
+              </div>
+
+              <div className="firm-detail-page__stats">
+                <div className="firm-detail-page__stat">
+                  <span className="firm-detail-page__stat-value">{detail.createdAt ? formatDate(detail.createdAt) : '—'}</span>
+                  <span className="firm-detail-page__stat-label">Connected since</span>
+                </div>
+                <div className="firm-detail-page__stat">
+                  <span className="firm-detail-page__stat-value">{orders.length}</span>
+                  <span className="firm-detail-page__stat-label">Total orders</span>
+                </div>
+                <div className="firm-detail-page__stat">
+                  <span className="firm-detail-page__stat-value">{orders[0]?.currency || 'USD'} {orders.reduce((sum, o) => sum + o.totalAmount, 0).toFixed(2)}</span>
+                  <span className="firm-detail-page__stat-label">Total spent</span>
+                </div>
+                <div className="firm-detail-page__stat">
+                  <span className="firm-detail-page__stat-value">{orders[0] ? formatDate(orders[0].createdAt) : '—'}</span>
+                  <span className="firm-detail-page__stat-label">Last order</span>
+                </div>
+              </div>
+            </div>
 
             <div className="firm-detail-page__grid">
-            <div className="firm-detail-page__col">
-              <div className="firm-detail-modal__section">
-                <div className="firm-detail-modal__section-header">
-                  <h3>Orders</h3>
-                </div>
-
-                {orders.length === 0 ? (
-                  <p className="worksuite-card__meta">No orders placed with this firm yet.</p>
-                ) : (
-                  <div className="firm-detail-modal__list">
-                    {orders.map((order) => (
-                      <div key={order.id} className="firm-detail-modal__row" style={{ cursor: 'pointer' }} onClick={() => setViewingOrder(order)}>
-                        <div>
-                          <div className="firm-detail-modal__row-title">Order #{order.id.slice(-8).toUpperCase()}</div>
-                          <div className="worksuite-card__meta">{new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span className={`order-modal__status order-modal__status--${order.status.toLowerCase()}`} style={{ position: 'static' }}>{order.status}</span>
-                          <span className="firm-detail-modal__amount">{order.currency} {order.totalAmount.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="firm-detail-modal__section">
-                <div className="firm-detail-modal__section-header">
-                  <h3>Files</h3>
-                  <button className="worksuite-create-btn" onClick={() => fileInputRef.current?.click()}>+ Upload</button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    onChange={handleFilePick}
-                    style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' }}
-                  />
-                </div>
-
-                {uploadingFiles.length > 0 && (
-                  <div className="files-uploading">
-                    {uploadingFiles.map((u) => (
-                      <div key={u.key} className="files-uploading__row">
-                        <span className="files-uploading__name">{u.name}</span>
-                        <div className="files-uploading__bar">
-                          <div className="files-uploading__bar-fill" style={{ width: `${u.percent}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {files.length === 0 ? (
-                  <p className="worksuite-card__meta">No files uploaded for this firm yet.</p>
-                ) : (
-                  <div className="firm-detail-modal__list">
-                    {files.map((file) => (
-                      <div key={file.id} className="firm-detail-modal__row">
-                        <div>
-                          <div className="firm-detail-modal__row-title">{file.name}</div>
-                          <div className="worksuite-card__meta">{formatBytes(file.size)}</div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <button className="worksuite-btn" onClick={() => handleDownloadFile(file)}>Download</button>
-                          <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteFile(file)}>Delete</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="firm-detail-page__col firm-detail-page__col--messages">
-              <div className="firm-detail-modal__section">
-                <div className="firm-detail-modal__section-header">
-                  <h3>Messages</h3>
-                </div>
-                <div className="order-modal__thread firm-detail-page__thread">
-                  {messages.length === 0 ? (
-                    <p className="worksuite-card__meta">No messages yet — write to {detail.company.name} below.</p>
-                  ) : (
-                    <div className="order-modal__thread-list">
-                      {messages.map((msg) => (
-                        <div key={msg.id} className={`order-modal__bubble${!msg.senderIsCompany ? ' order-modal__bubble--own' : ''}`}>
-                          <p className="order-modal__bubble-text">{msg.content}</p>
-                          <span className="order-modal__bubble-time">
-                            {new Date(msg.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                          </span>
+              <div className="firm-detail-page__col">
+                {firmProfile && firmProfile.services.length > 0 && (
+                  <div className="firm-detail-page__card">
+                    <div className="firm-detail-page__card-header">
+                      <span className="firm-detail-page__card-icon">✦</span>
+                      <h3>Services</h3>
+                    </div>
+                    <div className="firm-detail-page__services">
+                      {firmProfile.services.map((service, i) => (
+                        <div key={i} className="firm-detail-page__service-card">
+                          <div className="firm-detail-page__service-title">{service.title}</div>
+                          <p className="firm-detail-page__service-desc">{service.description}</p>
                         </div>
                       ))}
-                      <div ref={messagesEndRef} />
+                    </div>
+                  </div>
+                )}
+
+                <div className="firm-detail-page__card">
+                  <div className="firm-detail-page__card-header">
+                    <span className="firm-detail-page__card-icon">▤</span>
+                    <h3>Orders</h3>
+                  </div>
+
+                  {orders.length === 0 ? (
+                    <p className="worksuite-card__meta">No orders placed with this firm yet.</p>
+                  ) : (
+                    <div className="firm-detail-modal__list">
+                      {orders.map((order) => (
+                        <div key={order.id} className="firm-detail-modal__row" style={{ cursor: 'pointer' }} onClick={() => setViewingOrder(order)}>
+                          <div>
+                            <div className="firm-detail-modal__row-title">Order #{order.id.slice(-8).toUpperCase()}</div>
+                            <div className="worksuite-card__meta">{new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span className={`order-modal__status order-modal__status--${order.status.toLowerCase()}`} style={{ position: 'static' }}>{order.status}</span>
+                            <span className="firm-detail-modal__amount">{order.currency} {order.totalAmount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
-                <div className="order-modal__composer">
-                  <input
-                    placeholder={`Message ${detail.company.name}…`}
-                    value={messageDraft}
-                    onChange={(e) => setMessageDraft(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
-                    maxLength={2000}
-                  />
-                  <button onClick={handleSendMessage} disabled={!messageDraft.trim() || isSendingMessage}>
-                    {isSendingMessage ? 'Sending…' : 'Send'}
-                  </button>
+
+                <div className="firm-detail-page__card">
+                  <div className="firm-detail-page__card-header">
+                    <span className="firm-detail-page__card-icon">⌘</span>
+                    <h3>Files</h3>
+                    <button className="worksuite-create-btn firm-detail-page__card-action" onClick={() => fileInputRef.current?.click()}>+ Upload</button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      onChange={handleFilePick}
+                      style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' }}
+                    />
+                  </div>
+
+                  {uploadingFiles.length > 0 && (
+                    <div className="files-uploading">
+                      {uploadingFiles.map((u) => (
+                        <div key={u.key} className="files-uploading__row">
+                          <span className="files-uploading__name">{u.name}</span>
+                          <div className="files-uploading__bar">
+                            <div className="files-uploading__bar-fill" style={{ width: `${u.percent}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {files.length === 0 ? (
+                    <p className="worksuite-card__meta">No files uploaded for this firm yet.</p>
+                  ) : (
+                    <div className="firm-detail-modal__list">
+                      {files.map((file) => (
+                        <div key={file.id} className="firm-detail-modal__row">
+                          <div>
+                            <div className="firm-detail-modal__row-title">{file.name}</div>
+                            <div className="worksuite-card__meta">{formatBytes(file.size)}</div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <button className="worksuite-btn" onClick={() => handleDownloadFile(file)}>Download</button>
+                            <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteFile(file)}>Delete</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+
+              <div className="firm-detail-page__col firm-detail-page__col--messages">
+                <div className="firm-detail-page__card firm-detail-page__card--chat">
+                  <div className="firm-detail-page__card-header">
+                    <span className="firm-detail-page__card-icon">✉</span>
+                    <h3>Messages</h3>
+                  </div>
+                  <div className="order-modal__thread firm-detail-page__thread">
+                    {messages.length === 0 ? (
+                      <p className="worksuite-card__meta">No messages yet — write to {detail.company.name} below.</p>
+                    ) : (
+                      <div className="order-modal__thread-list">
+                        {messages.map((msg) => (
+                          <div key={msg.id} className={`order-modal__bubble${!msg.senderIsCompany ? ' order-modal__bubble--own' : ''}`}>
+                            <p className="order-modal__bubble-text">{msg.content}</p>
+                            <span className="order-modal__bubble-time">
+                              {new Date(msg.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        ))}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="order-modal__composer">
+                    <input
+                      placeholder={`Message ${detail.company.name}…`}
+                      value={messageDraft}
+                      onChange={(e) => setMessageDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
+                      maxLength={2000}
+                    />
+                    <button onClick={handleSendMessage} disabled={!messageDraft.trim() || isSendingMessage}>
+                      {isSendingMessage ? 'Sending…' : 'Send'}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </>
         )}

@@ -2466,82 +2466,73 @@
 /* Full-page firm connection view (FirmConnectionDetailPage) — same content
    as the modal above, but with the whole viewport to work with instead of a
    capped overlay card. */
-.firm-detail-page__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
-  align-items: start;
-}
-
-.firm-detail-page__col--messages {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.firm-detail-page__thread {
-  max-height: 62vh;
-}
-
-@media (max-width: 900px) {
-  .firm-detail-page__grid {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-}
+/* ── Cover + profile hero ── */
 
 .firm-detail-page__cover {
   width: 100%;
-  height: 220px;
+  height: 240px;
   background: linear-gradient(135deg, rgba(198, 161, 91, 0.18), rgba(20, 20, 15, 0.9));
   background-size: cover;
   background-position: center;
+  position: relative;
+}
+
+.firm-detail-page__cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 10, 8, 0) 55%, var(--color-bg, #0a0a0a) 100%);
+}
+
+.firm-detail-page__hero {
+  padding-bottom: 32px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--tech-border-dim);
 }
 
 .firm-detail-page__profile {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 24px;
-  padding-bottom: 28px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--tech-border-dim);
 }
 
 .firm-detail-page__profile--overlap {
-  padding-top: 20px;
+  padding-top: 0;
 }
 
 .firm-detail-page__profile--overlap .firm-detail-page__logo {
-  margin-top: -68px;
+  margin-top: -56px;
 }
 
 .firm-detail-page__logo {
   flex-shrink: 0;
-  width: 84px;
-  height: 84px;
-  border-radius: 18px;
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
   background: rgba(198, 161, 91, 0.12);
-  border: 3px solid var(--color-bg, #111111);
+  border: 4px solid var(--color-bg, #111111);
   outline: 1px solid rgba(198, 161, 91, 0.3);
   background-size: cover;
   background-position: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--tech-accent-gold, #c6a15b);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .firm-detail-page__profile-info {
   flex: 1;
   min-width: 0;
+  padding-bottom: 4px;
 }
 
 .firm-detail-page__name {
   font-family: var(--font-display);
-  font-size: 1.9rem;
-  margin: 0 0 8px;
+  font-size: 2rem;
+  margin: 0 0 10px;
   color: var(--color-text);
 }
 
@@ -2566,23 +2557,11 @@
   max-width: 760px;
 }
 
-.firm-detail-page__section-header {
-  margin: 28px 0 14px;
-}
-
-.firm-detail-page__section-header h3 {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--tech-text-dim);
-}
-
 .firm-detail-page__stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+  margin-top: 28px;
 }
 
 .firm-detail-page__stat {
@@ -2593,6 +2572,11 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  transition: border-color 0.2s ease;
+}
+
+.firm-detail-page__stat:hover {
+  border-color: rgba(198, 161, 91, 0.35);
 }
 
 .firm-detail-page__stat-value {
@@ -2608,22 +2592,102 @@
   color: var(--tech-text-dim);
 }
 
+/* ── Two-column body: content cards left, sticky chat right ── */
+
+.firm-detail-page__grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.firm-detail-page__col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.firm-detail-page__col--messages {
+  position: sticky;
+  top: 24px;
+  min-height: 0;
+}
+
+.firm-detail-page__thread {
+  max-height: 48vh;
+}
+
+@media (max-width: 900px) {
+  .firm-detail-page__grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .firm-detail-page__col--messages {
+    position: static;
+  }
+}
+
+.firm-detail-page__card {
+  background: rgba(246, 243, 237, 0.02);
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.firm-detail-page__card--chat {
+  display: flex;
+  flex-direction: column;
+}
+
+.firm-detail-page__card-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.firm-detail-page__card-header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--color-text);
+}
+
+.firm-detail-page__card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(198, 161, 91, 0.12);
+  color: var(--tech-accent-gold, #c6a15b);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.firm-detail-page__card-action {
+  margin-left: auto;
+}
+
 .firm-detail-page__services {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
 }
 
 .firm-detail-page__service-card {
-  background: rgba(246, 243, 237, 0.02);
+  background: rgba(246, 243, 237, 0.03);
   border: 1px solid var(--tech-border-dim);
   border-radius: 12px;
-  padding: 18px;
+  padding: 16px;
 }
 
 .firm-detail-page__service-title {
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   color: var(--color-text);
   margin-bottom: 6px;
 }
@@ -2641,6 +2705,7 @@
   }
   .firm-detail-page__profile {
     flex-direction: column;
+    align-items: flex-start;
   }
 }
 
