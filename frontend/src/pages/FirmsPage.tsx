@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { networkService } from '@/services/networkService';
 import { firmService } from '@/services/firmService';
+import { FirmConnection } from '@/types/discovery';
 import './FirmsPage.css';
 
 interface FirmRequest {
@@ -29,6 +30,7 @@ export const FirmsPage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'discover' | 'following'>('discover');
   const [companiesFollowing, setCompaniesFollowing] = useState(0);
+  const [followedFirms, setFollowedFirms] = useState<FirmConnection[]>([]);
   const [companiesPartnered, setCompaniesPartnered] = useState(0);
   const [followRequests, setFollowRequests] = useState<FirmRequest[]>([]);
   const [suggestions, setSuggestions] = useState<FirmSuggestion[]>([]);
@@ -54,17 +56,18 @@ export const FirmsPage: React.FC = () => {
 
   const loadFirmsData = async () => {
     try {
-      const followed = await firmService.getFollowedFirms();
+      const followed = await networkService.getFirmConnections();
+      setFollowedFirms(followed);
       setCompaniesFollowing(followed.length);
 
       const partnered = await firmService.getPartneredFirms();
       setCompaniesPartnered(partnered.length);
-      
+
       // Fetch real directory data
       const directoryData = await networkService.searchDirectory({});
       if (directoryData && directoryData.length > 0) {
         setSuggestions(directoryData.map((profile: any) => ({
-          id: profile.company?.slug || profile.companyId,
+          id: profile.companyId || profile.company?.id,
           name: profile.company.name,
           industry: profile.industry || 'Various',
           description: profile.company.description || profile.about || 'No description available.',
@@ -83,13 +86,9 @@ export const FirmsPage: React.FC = () => {
   };
 
   const handleAcceptFollow = async (request: FirmRequest) => {
-    await firmService.followFirm({
-      id: request.id,
-      name: request.name,
-      headline: request.industry,
-      location: 'Multiple Locations'
-    });
+    await networkService.followFirm(request.id);
     setFollowRequests(prev => prev.filter(req => req.id !== request.id));
+    loadFirmsData();
   };
 
   const handleIgnoreFollow = (id: string) => {
@@ -97,13 +96,15 @@ export const FirmsPage: React.FC = () => {
   };
 
   const handleFollow = async (firm: FirmSuggestion) => {
-    await firmService.followFirm({
-      id: firm.id,
-      name: firm.name,
-      headline: firm.industry,
-      location: 'Remote/Global'
-    });
+    await networkService.followFirm(firm.id);
     setSuggestions(prev => prev.filter(sug => sug.id !== firm.id));
+    loadFirmsData();
+  };
+
+  const handleUnfollow = async (firm: FirmConnection) => {
+    setFollowedFirms(prev => prev.filter(f => f.id !== firm.id));
+    setCompaniesFollowing(prev => prev - 1);
+    await networkService.unfollowFirmConnection(firm.id);
   };
 
   const handleDismiss = (id: string) => {
@@ -128,7 +129,7 @@ export const FirmsPage: React.FC = () => {
       
       if (results && results.length > 0) {
         setSearchResults(results.map((profile: any) => ({
-          id: profile.company?.slug || profile.companyId || profile.id,
+          id: profile.companyId || profile.company?.id || profile.id,
           name: profile.company?.name || profile.name || 'Unknown Firm',
           industry: profile.industry || 'Various',
           description: profile.company?.description || profile.description || 'No description available.',
@@ -259,8 +260,38 @@ export const FirmsPage: React.FC = () => {
               </button>
             </div>
 
+            {activeTab === 'following' && (
+              <section className="firms-section">
+                <div className="firms-section__header">
+                  <h2>Firms you follow ({followedFirms.length})</h2>
+                </div>
+                {followedFirms.length === 0 ? (
+                  <p className="firms-empty-state">You aren't following any firms yet.</p>
+                ) : (
+                  <div className="firm-grid">
+                    {followedFirms.map(firm => (
+                      <div key={firm.id} className="firm-card">
+                        <div
+                          className="firm-card__avatar"
+                          onClick={() => navigate(`/profile?view=${firm.id}`)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {getInitials(firm.name)}
+                        </div>
+                        <h3 className="firm-card__name" onClick={() => navigate(`/profile?view=${firm.id}`)} style={{ cursor: 'pointer' }}>{firm.name}</h3>
+                        {firm.headline && <p className="firm-card__industry">{firm.headline}</p>}
+                        <button className="firm-card__follow" onClick={() => handleUnfollow(firm)}>
+                          Unfollow
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
             {/* Search Results */}
-            {isSearching && (
+            {activeTab === 'discover' && isSearching && (
               <section className="firms-section">
                 <div className="firms-section__header">
                   <h2>Search results for "{searchQuery}"</h2>
@@ -296,7 +327,7 @@ export const FirmsPage: React.FC = () => {
             )}
 
             {/* Follow Invites */}
-            {followRequests.length > 0 && (
+            {activeTab === 'discover' && followRequests.length > 0 && (
               <section className="firms-section">
                 <div className="firms-section__header">
                   <h2>Follow requests ({followRequests.length})</h2>
@@ -338,6 +369,7 @@ export const FirmsPage: React.FC = () => {
             )}
 
             {/* Firms You May Know */}
+            {activeTab === 'discover' && (
             <section className="firms-section">
               <div className="firms-section__header">
                 <h2>Firms you may be interested in</h2>
@@ -380,8 +412,10 @@ export const FirmsPage: React.FC = () => {
                 ))}
               </div>
             </section>
+            )}
 
             {/* Popular Companies */}
+            {activeTab === 'discover' && (
             <section className="firms-section">
               <div className="firms-section__header">
                 <h2>Popular companies on Ornave</h2>
@@ -394,6 +428,7 @@ export const FirmsPage: React.FC = () => {
                 )}
               </div>
             </section>
+            )}
           </main>
         </div>
       </div>

@@ -71,7 +71,7 @@ class DiscoveryService {
     let firms = Array.from(firmsMap.values());
     
     // Check real follow status from the single source of truth
-    const followed = await firmService.getFollowedFirms();
+    const followed = await networkService.getFirmConnections();
     firms = firms.map(f => ({
       ...f,
       isConnected: followed.some(followedFirm => followedFirm.id === f.id)
@@ -115,12 +115,7 @@ class DiscoveryService {
     const firm = firms.find(f => f.id === firmId);
     
     if (firm) {
-      await firmService.followFirm({
-        id: firm.id,
-        name: firm.name,
-        headline: firm.industry || firm.headline,
-        location: firm.location
-      });
+      await networkService.followFirm(firm.id);
     }
   }
 }

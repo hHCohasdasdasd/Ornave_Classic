@@ -270,7 +270,7 @@ export const ProfilePage: React.FC = () => {
       // If we are viewing someone, update relationship status
       if (isViewingOther && viewedUser) {
         if (viewedUser.type === 'firm') {
-          firmService.isFollowing(viewedUser.id).then(val => setIsFollowing(val));
+          networkService.isFollowingFirm(viewedUser.id).then(val => setIsFollowing(val));
           firmService.isPartneredWithFirm(viewedUser.id).then(val => setPartnerStatus(val ? 'PARTNERED' : 'NOT_CONNECTED'));
         } else {
           applyConnectionStatus(viewedUser.id);
@@ -316,7 +316,7 @@ export const ProfilePage: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 600));
 
       const storedConnections = await networkService.getRecentConnections();
-      const storedFollows = await firmService.getFollowedFirms();
+      const storedFollows = await networkService.getFirmConnections();
       
       const combined = [
         ...storedConnections.map(c => ({
@@ -328,7 +328,7 @@ export const ProfilePage: React.FC = () => {
           avatarUrl: `https://ui-avatars.com/api/?name=${(c.firstName || c.name || 'U')}+${(c.lastName || '')}&background=0D0D0D&color=fff`
         })),
         ...storedFollows.map(f => {
-          const firmName = f.name || `${f.firstName || ''} ${f.lastName || ''}`.trim() || 'Unknown Firm';
+          const firmName = f.name || 'Unknown Firm';
           return {
             id: f.id,
             name: firmName,
@@ -418,7 +418,7 @@ export const ProfilePage: React.FC = () => {
     // Check relationship status
     if (profile.type === 'firm') {
       setIsRealUserResolved(true); // firms don't go through the slug->user resolution below
-      firmService.isFollowing(profile.id).then(val => setIsFollowing(val));
+      networkService.isFollowingFirm(profile.id).then(val => setIsFollowing(val));
       firmService.isPartneredWithFirm(profile.id).then(val => setPartnerStatus(val ? 'PARTNERED' : 'NOT_CONNECTED'));
     } else {
       setIsRealUserResolved(false);
@@ -480,7 +480,7 @@ export const ProfilePage: React.FC = () => {
             if (company.industry) setHeadline(company.industry);
             if (company.logo) setAvatarUrl(company.logo);
             if (company.website) setWebsite(company.website);
-            firmService.isFollowing(company.id).then((val) => setIsFollowing(val));
+            networkService.isFollowingFirm(company.id).then((val) => setIsFollowing(val));
             firmService.isPartneredWithFirm(company.id).then((val) => setPartnerStatus(val ? 'PARTNERED' : 'NOT_CONNECTED'));
             firmService.getFirmProfile(company.id).then((data) => {
               setFirmData(data);
@@ -573,12 +573,12 @@ export const ProfilePage: React.FC = () => {
 
     try {
       if (isFirm) {
-        const success = isFollowing
-          ? await firmService.unfollowFirm(viewedUser.id)
-          : await firmService.followFirm(viewedUser);
-
-        if (success) {
-          setIsFollowing(!isFollowing);
+        if (isFollowing) {
+          await networkService.unfollowFirmConnection(viewedUser.id);
+          setIsFollowing(false);
+        } else {
+          const success = await networkService.followFirm(viewedUser.id);
+          if (success) setIsFollowing(true);
         }
       } else {
         // Logic for personal connection

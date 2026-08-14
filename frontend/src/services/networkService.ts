@@ -66,18 +66,38 @@ class NetworkService {
     return (response?.data || []).map((u: any) => ({ ...u, isConnected: true }));
   }
 
-  /** Firms this user follows — the same list FirmsPage's Follow button writes
-   * to (browser-local, not yet backed by a real server-side connection). */
+  /** Firms this user follows — a real, server-side UserCompanyConnection,
+   * synced across devices/browsers rather than cached in localStorage. */
   async getFirmConnections(): Promise<FirmConnection[]> {
     try {
-      return await firmService.getFollowedFirms();
+      const response = await apiClient.get('/global/connections');
+      const connections = response.data.data || [];
+      return connections.map((c: any) => ({
+        id: c.company.id,
+        name: c.company.name,
+        headline: c.company.industry || undefined,
+        location: undefined,
+      }));
     } catch {
       return [];
     }
   }
 
-  async unfollowFirmConnection(firmId: string): Promise<void> {
-    await firmService.unfollowFirm(firmId);
+  /** Follow a firm — idempotent, creates or reactivates the real connection.
+   * Only works for real registered companies (not locally-cached demo
+   * entries), so callers should check the result. */
+  async followFirm(companyId: string): Promise<boolean> {
+    const connection = await this.ensureFirmConnection(companyId);
+    return !!connection;
+  }
+
+  async isFollowingFirm(companyId: string): Promise<boolean> {
+    const firms = await this.getFirmConnections();
+    return firms.some((f) => f.id === companyId);
+  }
+
+  async unfollowFirmConnection(companyId: string): Promise<void> {
+    await apiClient.delete(`/global/connections/${companyId}`);
   }
 
   // ── Firm connection detail (real backend-tracked connection — files need

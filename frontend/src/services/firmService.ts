@@ -268,12 +268,6 @@ class FirmService {
     return follows.some(f => f.id === firmId);
   }
 
-  async getFirmFollowers(firmId: string): Promise<any[]> {
-    const registry = JSON.parse(localStorage.getItem(FIRM_FOLLOWERS_KEY) || '{}');
-    const followedBy = registry[firmId] || [];
-    return followedBy;
-  }
-
   // ── Partnered: a deeper tier that requires already Following the firm ──
 
   private getStoredPartners(): any[] {

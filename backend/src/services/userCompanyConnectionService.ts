@@ -114,11 +114,13 @@ export class UserCompanyConnectionService {
   }
 
   /**
-   * Get all company connections for a personal user.
+   * Get all active/pending company connections for a personal user — a
+   * revoked (unfollowed) connection stays in the table for its file/message
+   * history but shouldn't reappear as "followed".
    */
   static async getUserConnections(userId: string) {
     return prisma.userCompanyConnection.findMany({
-      where: { userId },
+      where: { userId, status: { not: UserConnectionStatus.REVOKED } },
       include: {
         company: { select: COMPANY_CARD_SELECT },
       },

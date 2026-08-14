@@ -72,7 +72,7 @@ export const NetworkPage: React.FC = () => {
     try {
       const stats = await networkService.getNetworkStats();
       const storedConnections = await networkService.getRecentConnections();
-      const storedFollows = await firmService.getFollowedFirms();
+      const storedFollows = await networkService.getFirmConnections();
       const [myPartners, myPartnerRequests] = await Promise.all([
         networkService.getPartners(),
         networkService.getPartnerRequests(),
