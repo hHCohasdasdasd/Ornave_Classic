@@ -2490,6 +2490,143 @@
   }
 }
 
+.firm-detail-page__profile {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding-bottom: 28px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--tech-border-dim);
+}
+
+.firm-detail-page__logo {
+  flex-shrink: 0;
+  width: 84px;
+  height: 84px;
+  border-radius: 18px;
+  background: rgba(198, 161, 91, 0.12);
+  border: 1px solid rgba(198, 161, 91, 0.3);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--tech-accent-gold, #c6a15b);
+}
+
+.firm-detail-page__profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.firm-detail-page__name {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  margin: 0 0 8px;
+  color: var(--color-text);
+}
+
+.firm-detail-page__industry-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(198, 161, 91, 0.12);
+  color: var(--tech-accent-gold, #c6a15b);
+  margin-bottom: 12px;
+}
+
+.firm-detail-page__bio {
+  margin: 10px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--tech-text-dim);
+  max-width: 760px;
+}
+
+.firm-detail-page__section-header {
+  margin: 28px 0 14px;
+}
+
+.firm-detail-page__section-header h3 {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tech-text-dim);
+}
+
+.firm-detail-page__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.firm-detail-page__stat {
+  background: rgba(246, 243, 237, 0.02);
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.firm-detail-page__stat-value {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--color-text);
+}
+
+.firm-detail-page__stat-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tech-text-dim);
+}
+
+.firm-detail-page__services {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.firm-detail-page__service-card {
+  background: rgba(246, 243, 237, 0.02);
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.firm-detail-page__service-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.firm-detail-page__service-desc {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--tech-text-dim);
+}
+
+@media (max-width: 640px) {
+  .firm-detail-page__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .firm-detail-page__profile {
+    flex-direction: column;
+  }
+}
+
 .firm-detail-modal__section {
   border-top: 1px solid var(--tech-border-dim);
   padding-top: 18px;

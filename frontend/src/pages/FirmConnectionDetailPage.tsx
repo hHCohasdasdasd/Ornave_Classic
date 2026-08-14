@@ -5,8 +5,10 @@ import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { networkService } from '@/services/networkService';
 import { storeService, Order } from '@/services/storeService';
+import { firmService } from '@/services/firmService';
 import { OrderDetailModal } from '@/components/OrderDetailModal';
 import { FirmConnectionFile } from '@/types/discovery';
+import { FirmProfileData } from '@/types/firm';
 import './WorkSuite.css';
 
 const formatBytes = (bytes: number): string => {
@@ -17,8 +19,13 @@ const formatBytes = (bytes: number): string => {
   return `${i === 0 ? value : value.toFixed(1)} ${units[i]}`;
 };
 
+const getInitials = (name: string) => name.trim().slice(0, 2).toUpperCase();
+
+const formatDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
 interface OpenConnection {
   id: string;
+  createdAt?: string;
   company: { id: string; name: string; logo?: string; industry?: string; description?: string };
 }
 
@@ -31,6 +38,7 @@ export const FirmConnectionDetailPage: React.FC = () => {
   const [detail, setDetail] = useState<OpenConnection | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [firmProfile, setFirmProfile] = useState<FirmProfileData | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [files, setFiles] = useState<FirmConnectionFile[]>([]);
@@ -61,14 +69,16 @@ export const FirmConnectionDetailPage: React.FC = () => {
         return;
       }
       setDetail(connection);
-      const [ords, fls, msgs] = await Promise.all([
+      const [ords, fls, msgs, profile] = await Promise.all([
         storeService.getOrdersWithCompany(connection.company.id),
         networkService.listFirmFiles(connection.id),
         networkService.getFirmMessages(connection.id),
+        firmService.getFirmProfile(connection.company.id),
       ]);
       setOrders(ords);
       setFiles(fls);
       setMessages(msgs);
+      setFirmProfile(profile);
     } finally {
       setIsLoadingDetail(false);
     }
@@ -137,8 +147,6 @@ export const FirmConnectionDetailPage: React.FC = () => {
       <div className="worksuite-page__banner">
         <div className="worksuite-page__banner-inner">
           <button className="worksuite-breadcrumb" onClick={() => navigate('/work-suite/connections')}>← Connections</button>
-          <h1 className="worksuite-page__title">{detail?.company.name || 'Firm'}</h1>
-          {detail?.company.industry && <p className="worksuite-page__subtitle">{detail.company.industry}</p>}
         </div>
       </div>
 
@@ -148,7 +156,64 @@ export const FirmConnectionDetailPage: React.FC = () => {
         {isLoadingDetail ? (
           <div className="worksuite-empty">Loading…</div>
         ) : !detail ? null : (
-          <div className="firm-detail-page__grid">
+          <>
+            <div className="firm-detail-page__profile">
+              <div
+                className="firm-detail-page__logo"
+                style={detail.company.logo ? { backgroundImage: `url(${detail.company.logo})` } : undefined}
+              >
+                {!detail.company.logo && getInitials(detail.company.name)}
+              </div>
+              <div className="firm-detail-page__profile-info">
+                <h1 className="firm-detail-page__name">{detail.company.name}</h1>
+                {(firmProfile?.industry || detail.company.industry) && (
+                  <span className="firm-detail-page__industry-tag">{firmProfile?.industry || detail.company.industry}</span>
+                )}
+                <p className="firm-detail-page__bio">
+                  {firmProfile?.bio || detail.company.description || 'No description available.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="firm-detail-page__section-header">
+              <h3>History</h3>
+            </div>
+            <div className="firm-detail-page__stats">
+              <div className="firm-detail-page__stat">
+                <span className="firm-detail-page__stat-value">{detail.createdAt ? formatDate(detail.createdAt) : '—'}</span>
+                <span className="firm-detail-page__stat-label">Connected since</span>
+              </div>
+              <div className="firm-detail-page__stat">
+                <span className="firm-detail-page__stat-value">{orders.length}</span>
+                <span className="firm-detail-page__stat-label">Total orders</span>
+              </div>
+              <div className="firm-detail-page__stat">
+                <span className="firm-detail-page__stat-value">{orders[0]?.currency || 'USD'} {orders.reduce((sum, o) => sum + o.totalAmount, 0).toFixed(2)}</span>
+                <span className="firm-detail-page__stat-label">Total spent</span>
+              </div>
+              <div className="firm-detail-page__stat">
+                <span className="firm-detail-page__stat-value">{orders[0] ? formatDate(orders[0].createdAt) : '—'}</span>
+                <span className="firm-detail-page__stat-label">Last order</span>
+              </div>
+            </div>
+
+            {firmProfile && firmProfile.services.length > 0 && (
+              <>
+                <div className="firm-detail-page__section-header">
+                  <h3>Services</h3>
+                </div>
+                <div className="firm-detail-page__services">
+                  {firmProfile.services.map((service, i) => (
+                    <div key={i} className="firm-detail-page__service-card">
+                      <div className="firm-detail-page__service-title">{service.title}</div>
+                      <p className="firm-detail-page__service-desc">{service.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div className="firm-detail-page__grid">
             <div className="firm-detail-page__col">
               <div className="firm-detail-modal__section">
                 <div className="firm-detail-modal__section-header">
@@ -258,7 +323,8 @@ export const FirmConnectionDetailPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+            </div>
+          </>
         )}
       </div>
 
