@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
-import { ProjectService, TaskService, ClientService, InvoiceService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService } from '../services/workSuiteService';
+import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService } from '../services/workSuiteService';
 import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
 
 const upload = multer({
@@ -24,6 +24,46 @@ workSuiteRoutes.get(
   asyncHandler(async (req: any, res: Response) => {
     const summary = await WorkSuiteService.getSummary(req.user.userId);
     return ApiResponseHandler.success(res, summary, 'Summary retrieved successfully', 200);
+  })
+);
+
+/**
+ * Focus timer — prefs (work/break minutes) and completed-session log.
+ */
+workSuiteRoutes.get(
+  '/focus/prefs',
+  asyncHandler(async (req: any, res: Response) => {
+    const prefs = await FocusService.getPrefs(req.user.userId);
+    return ApiResponseHandler.success(res, prefs, 'Focus prefs retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.put(
+  '/focus/prefs',
+  asyncHandler(async (req: any, res: Response) => {
+    const { workMinutes, breakMinutes } = req.body;
+    const prefs = await FocusService.updatePrefs(req.user.userId, { workMinutes, breakMinutes });
+    return ApiResponseHandler.success(res, prefs, 'Focus prefs updated successfully', 200);
+  })
+);
+
+workSuiteRoutes.get(
+  '/focus/sessions/today-count',
+  asyncHandler(async (req: any, res: Response) => {
+    const count = await FocusService.getTodaySessionCount(req.user.userId);
+    return ApiResponseHandler.success(res, { count }, 'Today\'s session count retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.post(
+  '/focus/sessions',
+  asyncHandler(async (req: any, res: Response) => {
+    const { workMinutes, breakMinutes } = req.body;
+    if (workMinutes === undefined || breakMinutes === undefined) {
+      return ApiResponseHandler.error(res, 'workMinutes and breakMinutes are required', undefined, 400);
+    }
+    const session = await FocusService.logSession(req.user.userId, Number(workMinutes), Number(breakMinutes));
+    return ApiResponseHandler.success(res, session, 'Focus session logged successfully', 201);
   })
 );
 
@@ -129,100 +169,6 @@ workSuiteRoutes.delete(
   asyncHandler(async (req: any, res: Response) => {
     await TaskService.remove(req.user.userId, req.params.id);
     return ApiResponseHandler.success(res, {}, 'Task deleted successfully', 200);
-  })
-);
-
-/**
- * Clients
- */
-workSuiteRoutes.get(
-  '/clients',
-  asyncHandler(async (req: any, res: Response) => {
-    const clients = await ClientService.list(req.user.userId);
-    return ApiResponseHandler.success(res, clients, 'Clients retrieved successfully', 200);
-  })
-);
-
-workSuiteRoutes.post(
-  '/clients',
-  asyncHandler(async (req: any, res: Response) => {
-    const { name, email, phone, company, notes } = req.body;
-    if (!name) return ApiResponseHandler.error(res, 'Client name is required', undefined, 400);
-    const client = await ClientService.create(req.user.userId, { name, email, phone, company, notes });
-    return ApiResponseHandler.success(res, client, 'Client created successfully', 201);
-  })
-);
-
-workSuiteRoutes.put(
-  '/clients/:id',
-  asyncHandler(async (req: any, res: Response) => {
-    const { name, email, phone, company, notes } = req.body;
-    const client = await ClientService.update(req.user.userId, req.params.id, { name, email, phone, company, notes });
-    return ApiResponseHandler.success(res, client, 'Client updated successfully', 200);
-  })
-);
-
-workSuiteRoutes.delete(
-  '/clients/:id',
-  asyncHandler(async (req: any, res: Response) => {
-    await ClientService.remove(req.user.userId, req.params.id);
-    return ApiResponseHandler.success(res, {}, 'Client deleted successfully', 200);
-  })
-);
-
-/**
- * Invoices
- */
-workSuiteRoutes.get(
-  '/invoices',
-  asyncHandler(async (req: any, res: Response) => {
-    const invoices = await InvoiceService.list(req.user.userId);
-    return ApiResponseHandler.success(res, invoices, 'Invoices retrieved successfully', 200);
-  })
-);
-
-workSuiteRoutes.post(
-  '/invoices',
-  asyncHandler(async (req: any, res: Response) => {
-    const { title, amount, currency, clientId, dueDate } = req.body;
-    if (!title || amount === undefined) {
-      return ApiResponseHandler.error(res, 'Title and amount are required', undefined, 400);
-    }
-    const invoice = await InvoiceService.create(req.user.userId, { title, amount: Number(amount), currency, clientId, dueDate });
-    return ApiResponseHandler.success(res, invoice, 'Invoice created successfully', 201);
-  })
-);
-
-workSuiteRoutes.put(
-  '/invoices/:id',
-  asyncHandler(async (req: any, res: Response) => {
-    const { title, amount, currency, clientId, dueDate } = req.body;
-    const invoice = await InvoiceService.update(req.user.userId, req.params.id, {
-      title,
-      amount: amount === undefined ? undefined : Number(amount),
-      currency,
-      clientId,
-      dueDate,
-    });
-    return ApiResponseHandler.success(res, invoice, 'Invoice updated successfully', 200);
-  })
-);
-
-workSuiteRoutes.patch(
-  '/invoices/:id/status',
-  asyncHandler(async (req: any, res: Response) => {
-    const { status } = req.body;
-    if (!status) return ApiResponseHandler.error(res, 'Status is required', undefined, 400);
-    const invoice = await InvoiceService.updateStatus(req.user.userId, req.params.id, status);
-    return ApiResponseHandler.success(res, invoice, 'Invoice status updated successfully', 200);
-  })
-);
-
-workSuiteRoutes.delete(
-  '/invoices/:id',
-  asyncHandler(async (req: any, res: Response) => {
-    await InvoiceService.remove(req.user.userId, req.params.id);
-    return ApiResponseHandler.success(res, {}, 'Invoice deleted successfully', 200);
   })
 );
 

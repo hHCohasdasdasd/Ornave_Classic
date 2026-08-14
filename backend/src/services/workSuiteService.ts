@@ -118,107 +118,6 @@ export class TaskService {
   }
 }
 
-export class ClientService {
-  static async list(userId: string) {
-    return prisma.client.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
-  }
-
-  static async getById(userId: string, id: string) {
-    const client = await prisma.client.findFirst({ where: { id, userId } });
-    if (!client) throw new Error('Client not found');
-    return client;
-  }
-
-  static async create(
-    userId: string,
-    data: { name: string; email?: string; phone?: string; company?: string; notes?: string }
-  ) {
-    return prisma.client.create({ data: { userId, ...data } });
-  }
-
-  static async update(
-    userId: string,
-    id: string,
-    data: { name?: string; email?: string; phone?: string; company?: string; notes?: string }
-  ) {
-    await this.getById(userId, id);
-    return prisma.client.update({ where: { id }, data });
-  }
-
-  static async remove(userId: string, id: string) {
-    await this.getById(userId, id);
-    await prisma.client.delete({ where: { id } });
-  }
-}
-
-export class InvoiceService {
-  static async list(userId: string) {
-    return prisma.invoice.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      include: { client: { select: { id: true, name: true } } },
-    });
-  }
-
-  static async getById(userId: string, id: string) {
-    const invoice = await prisma.invoice.findFirst({ where: { id, userId } });
-    if (!invoice) throw new Error('Invoice not found');
-    return invoice;
-  }
-
-  static async generateInvoiceNumber(userId: string): Promise<string> {
-    const count = await prisma.invoice.count({ where: { userId } });
-    return `INV-${String(count + 1).padStart(4, '0')}`;
-  }
-
-  static async create(
-    userId: string,
-    data: { title: string; amount: number; currency?: string; clientId?: string; dueDate?: string }
-  ) {
-    if (data.clientId) {
-      const client = await prisma.client.findFirst({ where: { id: data.clientId, userId } });
-      if (!client) throw new Error('Client not found');
-    }
-    const invoiceNumber = await this.generateInvoiceNumber(userId);
-    return prisma.invoice.create({
-      data: {
-        userId,
-        invoiceNumber,
-        title: data.title,
-        amount: data.amount,
-        currency: data.currency || 'USD',
-        clientId: data.clientId,
-        dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
-      },
-    });
-  }
-
-  static async update(
-    userId: string,
-    id: string,
-    data: { title?: string; amount?: number; currency?: string; clientId?: string | null; dueDate?: string | null }
-  ) {
-    await this.getById(userId, id);
-    return prisma.invoice.update({
-      where: { id },
-      data: {
-        ...data,
-        dueDate: data.dueDate === undefined ? undefined : data.dueDate ? new Date(data.dueDate) : null,
-      },
-    });
-  }
-
-  static async updateStatus(userId: string, id: string, status: string) {
-    await this.getById(userId, id);
-    return prisma.invoice.update({ where: { id }, data: { status } });
-  }
-
-  static async remove(userId: string, id: string) {
-    await this.getById(userId, id);
-    await prisma.invoice.delete({ where: { id } });
-  }
-}
-
 export class GoalService {
   static async list(userId: string) {
     return prisma.goal.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
@@ -474,24 +373,17 @@ export class FileService {
 
 export class WorkSuiteService {
   static async getSummary(userId: string) {
-    const [activeProjects, openTasks, clients, openInvoices, activeGoals, achievements, recentAchievements] = await Promise.all([
+    const [activeProjects, openTasks, activeGoals, achievements, recentAchievements] = await Promise.all([
       prisma.project.count({ where: { userId, status: 'ACTIVE' } }),
       prisma.task.count({ where: { userId, status: { not: 'DONE' } } }),
-      prisma.client.count({ where: { userId } }),
-      prisma.invoice.findMany({ where: { userId, status: { in: ['DRAFT', 'SENT', 'OVERDUE'] } } }),
       prisma.goal.count({ where: { userId, status: 'ACTIVE' } }),
       prisma.achievement.count({ where: { userId } }),
       prisma.achievement.findMany({ where: { userId }, orderBy: { achievedAt: 'desc' }, take: 3 }),
     ]);
 
-    const outstandingAmount = openInvoices.reduce((sum, inv) => sum + inv.amount, 0);
-
     return {
       activeProjects,
       openTasks,
-      clients,
-      outstandingInvoices: openInvoices.length,
-      outstandingAmount,
       activeGoals,
       achievements,
       recentAchievements,
@@ -566,5 +458,40 @@ export class WorkSuiteService {
     }
 
     return insights;
+  }
+}
+
+export class FocusService {
+  static async getPrefs(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { focusWorkMinutes: true, focusBreakMinutes: true },
+    });
+    if (!user) throw new Error('User not found');
+    return { workMinutes: user.focusWorkMinutes, breakMinutes: user.focusBreakMinutes };
+  }
+
+  static async updatePrefs(userId: string, data: { workMinutes?: number; breakMinutes?: number }) {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.workMinutes !== undefined ? { focusWorkMinutes: data.workMinutes } : {}),
+        ...(data.breakMinutes !== undefined ? { focusBreakMinutes: data.breakMinutes } : {}),
+      },
+      select: { focusWorkMinutes: true, focusBreakMinutes: true },
+    });
+    return { workMinutes: user.focusWorkMinutes, breakMinutes: user.focusBreakMinutes };
+  }
+
+  static async logSession(userId: string, workMinutes: number, breakMinutes: number) {
+    return prisma.focusSession.create({ data: { userId, workMinutes, breakMinutes } });
+  }
+
+  /** Today's completed session count, in the server's local sense of "today"
+   * — good enough for a single-user stat, no timezone bookkeeping needed. */
+  static async getTodaySessionCount(userId: string) {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    return prisma.focusSession.count({ where: { userId, completedAt: { gte: startOfDay } } });
   }
 }

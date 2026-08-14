@@ -6,7 +6,7 @@ import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
 import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
-import { workSuiteService, Task, Project, Goal, Note, NoteType, NoteShape, NoteFontSize } from '@/services/workSuiteService';
+import { workSuiteService, Task, Project, Goal, Note, NoteType, NoteShape, NoteFontSize, FocusPrefs } from '@/services/workSuiteService';
 import { scopedKey } from '@/utils/storage';
 import './WorkSuite.css';
 
@@ -774,47 +774,35 @@ export const WorkSuitePersonalPage: React.FC = () => {
     new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
   // ---------------------------------------------------------------------
-  // Focus (Pomodoro timer) — entirely client-side. Session durations are a
-  // saved preference; the running countdown itself and today's completed
-  // session count are session/day state, not synced across devices.
+  // Focus (Pomodoro timer) — prefs and completed-session count are real,
+  // synced across devices; only the live countdown itself is local state.
   // ---------------------------------------------------------------------
   type FocusMode = 'work' | 'break';
 
-  interface FocusPrefs {
-    workMinutes: number;
-    breakMinutes: number;
-  }
-
   const DEFAULT_FOCUS_PREFS: FocusPrefs = { workMinutes: 25, breakMinutes: 5 };
-  const focusPrefsKey = scopedKey('worksuite_focus_prefs', user?.id);
-  const [focusPrefs, setFocusPrefs] = useState<FocusPrefs>(() => {
-    try {
-      const raw = localStorage.getItem(focusPrefsKey);
-      return raw ? { ...DEFAULT_FOCUS_PREFS, ...JSON.parse(raw) } : DEFAULT_FOCUS_PREFS;
-    } catch {
-      return DEFAULT_FOCUS_PREFS;
-    }
-  });
+  const [focusPrefs, setFocusPrefs] = useState<FocusPrefs>(DEFAULT_FOCUS_PREFS);
+  const [sessionsToday, setSessionsToday] = useState(0);
+  const [focusMode, setFocusMode] = useState<FocusMode>('work');
+  const [focusSecondsLeft, setFocusSecondsLeft] = useState(DEFAULT_FOCUS_PREFS.workMinutes * 60);
+  const [focusRunning, setFocusRunning] = useState(false);
+  const [focusLinkedTaskId, setFocusLinkedTaskId] = useState('');
+
+  useEffect(() => {
+    workSuiteService.getFocusPrefs().then((prefs) => {
+      setFocusPrefs(prefs);
+      if (!focusRunning) setFocusSecondsLeft((focusMode === 'work' ? prefs.workMinutes : prefs.breakMinutes) * 60);
+    }).catch(() => {});
+    workSuiteService.getTodayFocusSessionCount().then(setSessionsToday).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateFocusPrefs = (next: Partial<FocusPrefs>) => {
     setFocusPrefs((prev) => {
       const merged = { ...prev, ...next };
-      localStorage.setItem(focusPrefsKey, JSON.stringify(merged));
+      workSuiteService.updateFocusPrefs(next).catch(() => {});
       return merged;
     });
   };
-
-  const todayKey = new Date().toISOString().slice(0, 10);
-  const focusSessionsKey = scopedKey(`worksuite_focus_sessions_${todayKey}`, user?.id);
-  const [sessionsToday, setSessionsToday] = useState<number>(() => {
-    const raw = localStorage.getItem(focusSessionsKey);
-    return raw ? parseInt(raw, 10) || 0 : 0;
-  });
-
-  const [focusMode, setFocusMode] = useState<FocusMode>('work');
-  const [focusSecondsLeft, setFocusSecondsLeft] = useState(focusPrefs.workMinutes * 60);
-  const [focusRunning, setFocusRunning] = useState(false);
-  const [focusLinkedTaskId, setFocusLinkedTaskId] = useState('');
 
   const focusModeDurationSec = (focusMode === 'work' ? focusPrefs.workMinutes : focusPrefs.breakMinutes) * 60;
 
@@ -826,9 +814,8 @@ export const WorkSuitePersonalPage: React.FC = () => {
 
         // Countdown hit zero — switch modes and pause for the user to start the next phase.
         if (focusMode === 'work') {
-          const next = sessionsToday + 1;
-          setSessionsToday(next);
-          localStorage.setItem(focusSessionsKey, String(next));
+          setSessionsToday((n) => n + 1);
+          workSuiteService.logFocusSession(focusPrefs.workMinutes, focusPrefs.breakMinutes).catch(() => {});
           setFocusMode('break');
           setFocusSecondsLeft(focusPrefs.breakMinutes * 60);
         } else {
@@ -841,7 +828,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
     }, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusRunning, focusMode, focusPrefs, sessionsToday]);
+  }, [focusRunning, focusMode, focusPrefs]);
 
   const resetFocusTimer = () => {
     setFocusRunning(false);
@@ -1685,9 +1672,6 @@ export const WorkSuitePersonalPage: React.FC = () => {
                   onChange={setFocusLinkedTaskId}
                 />
                 <p className="worksuite-tasks-settings__hint">Just a label for this session — doesn't change the task itself.</p>
-                <p className="worksuite-tasks-settings__hint">
-                  Sessions and durations live on this device only — they don't sync across devices yet.
-                </p>
               </div>
             </aside>
           </div>

@@ -53,13 +53,14 @@ model User {
   savedAddresses             SavedAddress[]
   projects                   Project[]
   tasks                      Task[]
-  clients                    Client[]
-  invoices                   Invoice[]
   goals                      Goal[]
   achievements               Achievement[]
   notes                      Note[]
   files                      UserFile[]
   folders                    UserFolder[]
+  focusSessions              FocusSession[]
+  focusWorkMinutes           Int                     @default(25)
+  focusBreakMinutes          Int                     @default(5)
 
   @@index([companyId])
   @@index([email])
@@ -832,41 +833,19 @@ model Task {
   @@index([status])
 }
 
-model Client {
-  id        String    @id @default(cuid())
-  userId    String
-  name      String
-  email     String?
-  phone     String?
-  company   String?
-  notes     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  invoices  Invoice[]
+// A completed focus/pomodoro session — the real log behind the Work Suite
+// Focus timer's session-count stat, replacing what used to be a
+// localStorage-only per-day counter.
+model FocusSession {
+  id           String   @id @default(cuid())
+  userId       String
+  workMinutes  Int
+  breakMinutes Int
+  completedAt  DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-}
-
-model Invoice {
-  id            String    @id @default(cuid())
-  userId        String
-  clientId      String?
-  invoiceNumber String
-  title         String
-  amount        Float
-  currency      String    @default("USD")
-  status        String    @default("DRAFT")
-  issueDate     DateTime  @default(now())
-  dueDate       DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  client        Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([clientId])
-  @@index([status])
+  @@index([completedAt])
 }
 
 // Personal growth tracking — goals with progress, and a log of achievements.

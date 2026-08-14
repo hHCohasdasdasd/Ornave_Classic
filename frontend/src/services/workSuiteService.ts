@@ -3,12 +3,14 @@ import { apiClient } from './api';
 export interface WorkSuiteSummary {
   activeProjects: number;
   openTasks: number;
-  clients: number;
-  outstandingInvoices: number;
-  outstandingAmount: number;
   activeGoals: number;
   achievements: number;
   recentAchievements: Achievement[];
+}
+
+export interface FocusPrefs {
+  workMinutes: number;
+  breakMinutes: number;
 }
 
 export interface WorkSuiteInsight {
@@ -99,32 +101,6 @@ export interface Task {
   updatedAt: string;
 }
 
-export interface Client {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  company?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Invoice {
-  id: string;
-  invoiceNumber: string;
-  title: string;
-  amount: number;
-  currency: string;
-  status: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE';
-  clientId?: string;
-  client?: { id: string; name: string } | null;
-  issueDate: string;
-  dueDate?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 class WorkSuiteService {
   async getSummary(): Promise<WorkSuiteSummary> {
     const response = await apiClient.get('/work-suite/summary');
@@ -181,49 +157,24 @@ class WorkSuiteService {
     await apiClient.delete(`/work-suite/tasks/${id}`);
   }
 
-  // Clients
-  async listClients(): Promise<Client[]> {
-    const response = await apiClient.get('/work-suite/clients');
-    return response.data.data || [];
-  }
-
-  async createClient(data: { name: string; email?: string; phone?: string; company?: string; notes?: string }): Promise<Client> {
-    const response = await apiClient.post('/work-suite/clients', data);
+  // Focus timer
+  async getFocusPrefs(): Promise<FocusPrefs> {
+    const response = await apiClient.get('/work-suite/focus/prefs');
     return response.data.data;
   }
 
-  async updateClient(id: string, data: Partial<Pick<Client, 'name' | 'email' | 'phone' | 'company' | 'notes'>>): Promise<Client> {
-    const response = await apiClient.put(`/work-suite/clients/${id}`, data);
+  async updateFocusPrefs(data: Partial<FocusPrefs>): Promise<FocusPrefs> {
+    const response = await apiClient.put('/work-suite/focus/prefs', data);
     return response.data.data;
   }
 
-  async deleteClient(id: string): Promise<void> {
-    await apiClient.delete(`/work-suite/clients/${id}`);
+  async getTodayFocusSessionCount(): Promise<number> {
+    const response = await apiClient.get('/work-suite/focus/sessions/today-count');
+    return response.data.data.count;
   }
 
-  // Invoices
-  async listInvoices(): Promise<Invoice[]> {
-    const response = await apiClient.get('/work-suite/invoices');
-    return response.data.data || [];
-  }
-
-  async createInvoice(data: { title: string; amount: number; currency?: string; clientId?: string; dueDate?: string }): Promise<Invoice> {
-    const response = await apiClient.post('/work-suite/invoices', data);
-    return response.data.data;
-  }
-
-  async updateInvoice(id: string, data: Partial<Pick<Invoice, 'title' | 'amount' | 'currency' | 'clientId' | 'dueDate'>>): Promise<Invoice> {
-    const response = await apiClient.put(`/work-suite/invoices/${id}`, data);
-    return response.data.data;
-  }
-
-  async updateInvoiceStatus(id: string, status: Invoice['status']): Promise<Invoice> {
-    const response = await apiClient.patch(`/work-suite/invoices/${id}/status`, { status });
-    return response.data.data;
-  }
-
-  async deleteInvoice(id: string): Promise<void> {
-    await apiClient.delete(`/work-suite/invoices/${id}`);
+  async logFocusSession(workMinutes: number, breakMinutes: number): Promise<void> {
+    await apiClient.post('/work-suite/focus/sessions', { workMinutes, breakMinutes });
   }
 
   // Goals
