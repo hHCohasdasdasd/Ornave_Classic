@@ -86,9 +86,18 @@ function accentColorFromId(id: string): string {
  * the title-fallback logic, which have no business rendering markup. Sticky
  * and mind-map notes stay plain text at the source, so this is a no-op there. */
 function stripHtml(html: string): string {
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  return (div.textContent || '').replace(/\s+/g, ' ').trim();
+  // A regex tag-strip rather than parsing into a live DOM node — setting
+  // .innerHTML still parses <img>/<video> tags and can trigger their network
+  // requests even on a detached, unattached element, for no benefit here
+  // since only the text is ever used.
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // Muted metal-plaque finishes — near-neutral dark tones (gunmetal, bronze,

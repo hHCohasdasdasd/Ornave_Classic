@@ -1,12 +1,9 @@
 import { Router } from 'express';
-import multer from 'multer';
 import { GlobalController } from '../controllers/globalController';
 import { authMiddleware, userTypeMiddleware } from '../middleware/auth';
+import { createFileUpload } from '../utils/uploadConfig';
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB per file
-});
+const upload = createFileUpload();
 
 const router = Router();
 

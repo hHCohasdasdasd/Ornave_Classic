@@ -1,5 +1,4 @@
 import { Router, Request, Response } from 'express';
-import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -7,11 +6,9 @@ import { StoreService, OrderDocumentService, OrderMessageService } from '../serv
 import { NotificationService } from '../services/notificationService';
 import { ApiResponseHandler } from '../utils/apiResponse';
 import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
+import { createFileUpload } from '../utils/uploadConfig';
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB per file
-});
+const upload = createFileUpload();
 
 export const storeRoutes = Router();
 

@@ -2,6 +2,16 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Every ownership-guard "not found" in this file used to throw a plain
+// Error, which the global error handler defaults to a 500 — masking a
+// routine "that's not yours" rejection as a server fault. Tag it 404 so it
+// surfaces correctly without every route needing its own try/catch.
+function notFound(message: string): Error {
+  const error: any = new Error(message);
+  error.statusCode = 404;
+  return error;
+}
+
 /**
  * Work Suite Service
  * A mini-ERP owned directly by the logged-in user — projects, tasks, a CRM
@@ -17,7 +27,7 @@ export class ProjectService {
 
   static async getById(userId: string, id: string) {
     const project = await prisma.project.findFirst({ where: { id, userId } });
-    if (!project) throw new Error('Project not found');
+    if (!project) throw notFound('Project not found');
     return project;
   }
 
@@ -53,7 +63,7 @@ export class TaskService {
 
   static async getById(userId: string, id: string) {
     const task = await prisma.task.findFirst({ where: { id, userId } });
-    if (!task) throw new Error('Task not found');
+    if (!task) throw notFound('Task not found');
     return task;
   }
 
@@ -63,7 +73,7 @@ export class TaskService {
   ) {
     if (data.projectId) {
       const project = await prisma.project.findFirst({ where: { id: data.projectId, userId } });
-      if (!project) throw new Error('Project not found');
+      if (!project) throw notFound('Project not found');
     }
     return prisma.task.create({
       data: {
@@ -125,7 +135,7 @@ export class GoalService {
 
   static async getById(userId: string, id: string) {
     const goal = await prisma.goal.findFirst({ where: { id, userId } });
-    if (!goal) throw new Error('Goal not found');
+    if (!goal) throw notFound('Goal not found');
     return goal;
   }
 
@@ -202,7 +212,7 @@ export class AchievementService {
 
   static async remove(userId: string, id: string) {
     const achievement = await prisma.achievement.findFirst({ where: { id, userId } });
-    if (!achievement) throw new Error('Achievement not found');
+    if (!achievement) throw notFound('Achievement not found');
     await prisma.achievement.delete({ where: { id } });
   }
 
@@ -231,7 +241,7 @@ export class NoteService {
 
   static async getById(userId: string, id: string) {
     const note = await prisma.note.findFirst({ where: { id, userId } });
-    if (!note) throw new Error('Note not found');
+    if (!note) throw notFound('Note not found');
     return note;
   }
 
@@ -302,7 +312,7 @@ export class FolderService {
 
   static async getById(userId: string, id: string) {
     const folder = await prisma.userFolder.findFirst({ where: { id, userId } });
-    if (!folder) throw new Error('Folder not found');
+    if (!folder) throw notFound('Folder not found');
     return folder;
   }
 
@@ -361,13 +371,13 @@ export class FileService {
 
   static async getById(userId: string, id: string) {
     const file = await prisma.userFile.findFirst({ where: { id, userId } });
-    if (!file) throw new Error('File not found');
+    if (!file) throw notFound('File not found');
     return file;
   }
 
   static async getByIdInConnection(connectionId: string, id: string) {
     const file = await prisma.userFile.findFirst({ where: { id, connectionId } });
-    if (!file) throw new Error('File not found');
+    if (!file) throw notFound('File not found');
     return file;
   }
 
