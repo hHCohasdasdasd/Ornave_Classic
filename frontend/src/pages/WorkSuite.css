@@ -2463,6 +2463,33 @@
   }
 }
 
+/* Full-page firm connection view (FirmConnectionDetailPage) — same content
+   as the modal above, but with the whole viewport to work with instead of a
+   capped overlay card. */
+.firm-detail-page__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.firm-detail-page__col--messages {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.firm-detail-page__thread {
+  max-height: 62vh;
+}
+
+@media (max-width: 900px) {
+  .firm-detail-page__grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
 .firm-detail-modal__section {
   border-top: 1px solid var(--tech-border-dim);
   padding-top: 18px;

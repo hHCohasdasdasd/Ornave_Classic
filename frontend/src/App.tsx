@@ -73,6 +73,7 @@ import { WorkSuiteHomePage } from '@/pages/WorkSuiteHomePage';
 import { WorkSuiteFilesPage } from '@/pages/WorkSuiteFilesPage';
 import { WorkSuitePersonalPage } from '@/pages/WorkSuitePersonalPage';
 import { WorkSuiteConnectionsPage } from '@/pages/WorkSuiteConnectionsPage';
+import { FirmConnectionDetailPage } from '@/pages/FirmConnectionDetailPage';
 import { WorkSuiteAchievementsPage } from '@/pages/WorkSuiteAchievementsPage';
 import { AuthModal } from '@/components/ui/AuthModal';
 import { CreatePostModal } from '@/components/personal/CreatePostModal';
@@ -283,6 +284,7 @@ function App() {
             <Route path="/work-suite/files" element={<WorkSuiteFilesPage />} />
             <Route path="/work-suite/personal" element={<WorkSuitePersonalPage />} />
             <Route path="/work-suite/connections" element={<WorkSuiteConnectionsPage />} />
+            <Route path="/work-suite/connections/firms/:firmId" element={<FirmConnectionDetailPage />} />
             <Route path="/work-suite/achievements" element={<WorkSuiteAchievementsPage />} />
             {/* Tasks/Goals were merged into one Planning page, Projects became Files, and
                 Clients became Connections; Invoices was removed outright. Keep old links working. */}
