@@ -1,6 +1,16 @@
 import { PrismaClient } from '@prisma/client';
+import { supabaseAdmin, FILES_BUCKET } from '../utils/supabaseStorage';
 
 const prisma = new PrismaClient();
+
+/** Best-effort — a failed storage removal shouldn't block the DB delete the
+ * user is actually waiting on; it's logged so an orphaned object can still
+ * be tracked down manually. */
+async function removeStorageObjects(storageKeys: string[]): Promise<void> {
+  if (!storageKeys.length || !supabaseAdmin) return;
+  const { error } = await supabaseAdmin.storage.from(FILES_BUCKET).remove(storageKeys);
+  if (error) console.error('[FileService] Failed to remove storage object(s):', storageKeys, error);
+}
 
 // Every ownership-guard "not found" in this file used to throw a plain
 // Error, which the global error handler defaults to a 500 — masking a
@@ -455,8 +465,17 @@ export class FolderService {
     return ids;
   }
 
+  /** Deleting a folder cascades every file inside it (and any nested
+   * subfolders) at the DB level — this removes their Supabase Storage
+   * objects first so nothing gets orphaned there. */
   static async remove(userId: string, id: string) {
     await this.getById(userId, id);
+    const subtreeIds = await this.getSubtreeIds(userId, id);
+    const files = await prisma.userFile.findMany({
+      where: { userId, folderId: { in: subtreeIds } },
+      select: { storageKey: true },
+    });
+    await removeStorageObjects(files.map((f) => f.storageKey));
     await prisma.userFolder.delete({ where: { id } });
   }
 }
@@ -507,12 +526,14 @@ export class FileService {
 
   static async remove(userId: string, id: string) {
     const file = await this.getById(userId, id);
+    await removeStorageObjects([file.storageKey]);
     await prisma.userFile.delete({ where: { id } });
     return file;
   }
 
   static async removeInConnection(connectionId: string, id: string) {
     const file = await this.getByIdInConnection(connectionId, id);
+    await removeStorageObjects([file.storageKey]);
     await prisma.userFile.delete({ where: { id } });
     return file;
   }
