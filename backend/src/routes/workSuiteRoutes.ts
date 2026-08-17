@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
-import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService, JobApplicationService, WorkProfileService, CalendarEventService } from '../services/workSuiteService';
+import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService, JobApplicationService, WorkProfileService, CalendarEventService, FinanceEntryService } from '../services/workSuiteService';
 import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
 import { createFileUpload } from '../utils/uploadConfig';
 
@@ -300,6 +300,55 @@ workSuiteRoutes.delete(
   asyncHandler(async (req: any, res: Response) => {
     await CalendarEventService.remove(req.user.userId, req.params.id);
     return ApiResponseHandler.success(res, {}, 'Calendar event deleted successfully', 200);
+  })
+);
+
+/**
+ * Finance — a personal income/expense tracker (Finance page). Distinct from
+ * a company's real Billing/Transactions, which stay untouched here.
+ */
+workSuiteRoutes.get(
+  '/finance-entries',
+  asyncHandler(async (req: any, res: Response) => {
+    const entries = await FinanceEntryService.list(req.user.userId);
+    return ApiResponseHandler.success(res, entries, 'Finance entries retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.post(
+  '/finance-entries',
+  asyncHandler(async (req: any, res: Response) => {
+    const { type, amount, description, category, status, date, notes } = req.body;
+    if (!type || amount === undefined || !description || !date) {
+      return ApiResponseHandler.error(res, 'Type, amount, description, and date are required', undefined, 400);
+    }
+    const entry = await FinanceEntryService.create(req.user.userId, { type, amount: Number(amount), description, category, status, date, notes });
+    return ApiResponseHandler.success(res, entry, 'Finance entry created successfully', 201);
+  })
+);
+
+workSuiteRoutes.put(
+  '/finance-entries/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    const { type, amount, description, category, status, date, notes } = req.body;
+    const entry = await FinanceEntryService.update(req.user.userId, req.params.id, {
+      type,
+      amount: amount === undefined ? undefined : Number(amount),
+      description,
+      category,
+      status,
+      date,
+      notes,
+    });
+    return ApiResponseHandler.success(res, entry, 'Finance entry updated successfully', 200);
+  })
+);
+
+workSuiteRoutes.delete(
+  '/finance-entries/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    await FinanceEntryService.remove(req.user.userId, req.params.id);
+    return ApiResponseHandler.success(res, {}, 'Finance entry deleted successfully', 200);
   })
 );
 

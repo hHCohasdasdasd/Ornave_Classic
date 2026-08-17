@@ -153,6 +153,22 @@ export interface CalendarEvent {
   updatedAt: string;
 }
 
+export type FinanceEntryType = 'INCOME' | 'EXPENSE';
+export type FinanceEntryStatus = 'PAID' | 'PENDING';
+
+export interface FinanceEntry {
+  id: string;
+  type: FinanceEntryType;
+  amount: number;
+  description: string;
+  category?: string;
+  status: FinanceEntryStatus;
+  date: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 class WorkSuiteService {
   async getSummary(): Promise<WorkSuiteSummary> {
     const response = await apiClient.get('/work-suite/summary');
@@ -297,6 +313,26 @@ class WorkSuiteService {
 
   async deleteCalendarEvent(id: string): Promise<void> {
     await apiClient.delete(`/work-suite/calendar-events/${id}`);
+  }
+
+  // Finance (personal income/expense tracker)
+  async listFinanceEntries(): Promise<FinanceEntry[]> {
+    const response = await apiClient.get('/work-suite/finance-entries');
+    return response.data.data || [];
+  }
+
+  async createFinanceEntry(data: { type: FinanceEntryType; amount: number; description: string; category?: string; status?: FinanceEntryStatus; date: string; notes?: string }): Promise<FinanceEntry> {
+    const response = await apiClient.post('/work-suite/finance-entries', data);
+    return response.data.data;
+  }
+
+  async updateFinanceEntry(id: string, data: Partial<Pick<FinanceEntry, 'type' | 'amount' | 'description' | 'category' | 'status' | 'date' | 'notes'>>): Promise<FinanceEntry> {
+    const response = await apiClient.put(`/work-suite/finance-entries/${id}`, data);
+    return response.data.data;
+  }
+
+  async deleteFinanceEntry(id: string): Promise<void> {
+    await apiClient.delete(`/work-suite/finance-entries/${id}`);
   }
 
   // Work Profile (private CV, used for job applications)

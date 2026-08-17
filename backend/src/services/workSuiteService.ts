@@ -308,6 +308,56 @@ export class CalendarEventService {
   }
 }
 
+export class FinanceEntryService {
+  static async list(userId: string) {
+    return prisma.financeEntry.findMany({ where: { userId }, orderBy: { date: 'desc' } });
+  }
+
+  static async getById(userId: string, id: string) {
+    const entry = await prisma.financeEntry.findFirst({ where: { id, userId } });
+    if (!entry) throw notFound('Finance entry not found');
+    return entry;
+  }
+
+  static async create(
+    userId: string,
+    data: { type: string; amount: number; description: string; category?: string; status?: string; date: string; notes?: string }
+  ) {
+    return prisma.financeEntry.create({
+      data: {
+        userId,
+        type: data.type,
+        amount: data.amount,
+        description: data.description,
+        category: data.category,
+        status: data.status || 'PAID',
+        date: new Date(data.date),
+        notes: data.notes,
+      },
+    });
+  }
+
+  static async update(
+    userId: string,
+    id: string,
+    data: { type?: string; amount?: number; description?: string; category?: string; status?: string; date?: string; notes?: string }
+  ) {
+    await this.getById(userId, id);
+    return prisma.financeEntry.update({
+      where: { id },
+      data: {
+        ...data,
+        date: data.date ? new Date(data.date) : undefined,
+      },
+    });
+  }
+
+  static async remove(userId: string, id: string) {
+    await this.getById(userId, id);
+    await prisma.financeEntry.delete({ where: { id } });
+  }
+}
+
 export interface WorkExperienceEntry {
   title: string;
   company: string;

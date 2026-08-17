@@ -4,13 +4,14 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { workSuiteService, WorkSuiteSummary, WorkSuiteInsight } from '@/services/workSuiteService';
-import { IconCompass, IconBriefcase, IconTrophy, IconCloud, IconHandshake, IconCheck, IconLayers, IconArticle, IconBag, IconUsers, IconSettings, IconSpark, IconCalendar } from '@/components/ui/Icons';
+import { IconCompass, IconBriefcase, IconTrophy, IconCloud, IconHandshake, IconCheck, IconLayers, IconArticle, IconBag, IconUsers, IconSettings, IconSpark, IconCalendar, IconCard } from '@/components/ui/Icons';
 import './WorkSuite.css';
 
 const GROWTH_MODULES = [
   { icon: <IconCompass size={22} />, title: 'Planning', description: 'Your board, goals, notes, and focus timer — all in one place.', route: '/work-suite/personal' },
   { icon: <IconCalendar size={22} />, title: 'Calendar', description: 'Every task, goal, and application deadline in one place.', route: '/work-suite/calendar' },
   { icon: <IconBriefcase size={22} />, title: 'Jobs', description: 'Track the roles you\'re pursuing, from application to offer.', route: '/work-suite/jobs' },
+  { icon: <IconCard size={22} />, title: 'Finance', description: 'Track what you\'re earning and spending.', route: '/work-suite/finance' },
   { icon: <IconTrophy size={22} />, title: 'Achievements', description: 'Every win worth remembering, logged in one place.', route: '/work-suite/achievements' },
 ];
 
@@ -23,6 +24,7 @@ const COMPANY_MODULES = [
   { icon: <IconCloud size={22} />, title: 'Files', description: 'Your own cloud — upload, store, and get back anything, anytime.', route: '/work-suite/files' },
   { icon: <IconCheck size={22} />, title: 'Tasks', description: 'Everything on your plate, organized by status and priority.', route: '/work-suite/personal?tab=board' },
   { icon: <IconCalendar size={22} />, title: 'Calendar', description: 'Every task and goal deadline in one place.', route: '/work-suite/calendar' },
+  { icon: <IconCard size={22} />, title: 'Finance', description: 'Your invoices, billing, and payment history.', route: '/billing' },
   { icon: <IconHandshake size={22} />, title: 'Connections', description: "Your network — the people you're connected with on Ornave.", route: '/work-suite/connections' },
 ];
 

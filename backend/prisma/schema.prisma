@@ -73,6 +73,7 @@ model User {
   jobApplications            JobApplication[]
   workProfile                WorkProfile?
   calendarEvents              CalendarEvent[]
+  financeEntries              FinanceEntry[]
   notes                      Note[]
   files                      UserFile[]
   folders                    UserFolder[]
@@ -994,6 +995,29 @@ model CalendarEvent {
 
   @@index([userId])
   @@index([startDate])
+}
+
+// A personal income/expense tracker on the Work Suite Finance page — for a
+// freelancer or job-seeker tracking money owed and spent, distinct from a
+// company's real Billing/Transactions (GlobalPayment/CompanyInvoice), which
+// already exist and stay untouched here.
+model FinanceEntry {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String // 'INCOME' | 'EXPENSE'
+  amount      Float
+  description String
+  category    String?
+  status      String   @default("PAID") // 'PAID' | 'PENDING' — mainly meaningful for INCOME (invoices owed)
+  date        DateTime
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([date])
 }
 
 model Achievement {
