@@ -60,8 +60,6 @@ import { GroupsPage } from '@/pages/GroupsPage';
 import { GroupDetailPage } from '@/pages/GroupDetailPage';
 import { BillingPage } from '@/pages/BillingPage';
 import { TalentPage } from '@/pages/TalentPage';
-import { TalentInsightsPage } from '@/pages/TalentInsightsPage';
-import { HireWithAIPage } from '@/pages/HireWithAIPage';
 import { SalesPage } from '@/pages/SalesPage';
 import { MarketingPage } from '@/pages/MarketingPage';
 import { LearningPage } from '@/pages/LearningPage';
@@ -310,8 +308,6 @@ function App() {
             <Route path="/groups/:slug" element={<GroupDetailPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/talent" element={<TalentPage />} />
-            <Route path="/talent-insights" element={<TalentInsightsPage />} />
-            <Route path="/hire-ai" element={<HireWithAIPage />} />
             <Route path="/sales" element={<SalesPage />} />
             <Route path="/marketing" element={<MarketingPage />} />
             <Route path="/learning" element={<LearningPage />} />

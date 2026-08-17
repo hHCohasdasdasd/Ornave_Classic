@@ -10,9 +10,8 @@ import { MentionCandidate } from '@/types/feed';
 import { scopedKey } from '@/utils/storage';
 import {
   IconHome, IconCircles, IconInbox, IconBell, IconSuite, IconLaurel,
-  IconBuilding, IconBriefcase, IconSearch, IconUsers, IconCard, IconUser, IconChart, IconSpark,
-  IconLogout, IconBag, IconLayers, IconHandshake, IconCompass,
-  IconPaperclip,
+  IconBuilding, IconBriefcase, IconSearch, IconUsers, IconCard, IconUser,
+  IconLogout, IconBag, IconLayers,
 } from './Icons';
 interface NavbarProps {
   /** True when the global left nav rail (ProfileSidebar, rendered once in
@@ -42,7 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
-  const [isForBusinessMenuOpen, setIsForBusinessMenuOpen] = React.useState(false);
+  const [isSolutionsMenuOpen, setIsSolutionsMenuOpen] = React.useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false);
   const [notificationsCount, setNotificationsCount] = React.useState(0);
   const [notifications, setNotifications] = React.useState<any[]>([]);
@@ -53,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
   const [searchResults, setSearchResults] = React.useState<MentionCandidate[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
   const profileMenuRef = React.useRef<HTMLDivElement>(null);
-  const forBusinessMenuRef = React.useRef<HTMLDivElement>(null);
+  const solutionsMenuRef = React.useRef<HTMLDivElement>(null);
   const notificationsMenuRef = React.useRef<HTMLDivElement>(null);
   const searchMenuRef = React.useRef<HTMLDivElement>(null);
 
@@ -94,8 +93,8 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
       }
-      if (forBusinessMenuRef.current && !forBusinessMenuRef.current.contains(event.target as Node)) {
-        setIsForBusinessMenuOpen(false);
+      if (solutionsMenuRef.current && !solutionsMenuRef.current.contains(event.target as Node)) {
+        setIsSolutionsMenuOpen(false);
       }
       if (notificationsMenuRef.current && !notificationsMenuRef.current.contains(event.target as Node)) {
         setIsNotificationsOpen(false);
@@ -111,33 +110,6 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
       window.removeEventListener('ornave_state_update', handleStateUpdate);
     };
   }, [user]);
-
-  const workSuiteApps = [
-    {
-      icon: <IconLayers />,
-      label: 'Work Suite Home',
-      description: 'Your mini-ERP hub — files, tasks, connections.',
-      route: '/work-suite',
-    },
-    {
-      icon: <IconPaperclip />,
-      label: 'Files',
-      description: 'Your own cloud — upload, store, and get back anything, anytime.',
-      route: '/work-suite/files',
-    },
-    {
-      icon: <IconHandshake />,
-      label: 'Connections',
-      description: "Your network — the people you're connected with on Ornave.",
-      route: '/work-suite/connections',
-    },
-    {
-      icon: <IconCompass />,
-      label: 'Planning',
-      description: 'Your board, goals, and achievements — all in one place.',
-      route: '/work-suite/personal',
-    },
-  ];
 
   const forBusinessApps = [
     {
@@ -175,18 +147,6 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
       label: 'Talent',
       description: 'Source people by skill, location, and intent.',
       route: '/talent',
-    },
-    {
-      icon: <IconChart />,
-      label: 'Hiring Metrics',
-      description: 'Track hiring signals and funnel health.',
-      route: '/talent-insights',
-    },
-    {
-      icon: <IconSpark />,
-      label: 'Smart Hiring',
-      description: 'Draft roles and interview plans with AI help.',
-      route: '/hire-ai',
     },
   ];
 
@@ -399,53 +359,31 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
               )}
             </div>
             <span className="navbar__divider" aria-hidden="true"></span>
-            <div className="navbar__dropdown-container" ref={forBusinessMenuRef}>
-              <button 
-                className="navbar__icon-btn" 
-                onClick={() => setIsForBusinessMenuOpen((prev) => !prev)}
+            <button className="navbar__icon-btn" onClick={() => navigate('/work-suite')}>
+              <span className="navbar__icon"><IconSuite /></span>
+              <span className="navbar__icon-label">Work Suite</span>
+            </button>
+            <div className="navbar__dropdown-container" ref={solutionsMenuRef}>
+              <button
+                className="navbar__icon-btn navbar__icon-btn--accent"
+                onClick={() => setIsSolutionsMenuOpen((prev) => !prev)}
                 aria-haspopup="menu"
-                aria-expanded={isForBusinessMenuOpen}
+                aria-expanded={isSolutionsMenuOpen}
               >
-                <span className="navbar__icon"><IconSuite /></span>
-                <span className="navbar__icon-label">Work Suite</span>
+                <span className="navbar__icon"><IconLaurel /></span>
+                <span className="navbar__icon-label">Ornave Solutions</span>
               </button>
-              {isForBusinessMenuOpen && (
-                <div className={`navbar__dropdown navbar__dropdown--work-suite ${(!user || user.id === 'guest') ? 'navbar__dropdown--restricted' : ''}`} role="menu">
+              {isSolutionsMenuOpen && (
+                <div className={`navbar__dropdown navbar__dropdown--solutions ${(!user || user.id === 'guest') ? 'navbar__dropdown--restricted' : ''}`} role="menu">
                   {(!user || user.id === 'guest') && (
                     <div className="navbar__dropdown-overlay">
                       <div className="navbar__dropdown-message">
-                        <span>Sign in to open Work Suite</span>
+                        <span>Sign in to open Ornave Solutions</span>
                         <button className="navbar__auth-btn navbar__auth-btn--primary" onClick={() => navigate('/login')}>Login</button>
                       </div>
                     </div>
                   )}
                   <div className="navbar__dropdown-content">
-                    <div className="navbar__dropdown-section">
-                      <div className="navbar__dropdown-header">Mini ERP</div>
-                      <div className="navbar__forbiz-grid">
-                        {workSuiteApps.map((app) => (
-                          <button
-                            key={app.route}
-                            className="navbar__dropdown-item navbar__dropdown-item--app"
-                            onClick={() => {
-                              if (user && user.id !== 'guest') {
-                                navigate(app.route);
-                                setIsForBusinessMenuOpen(false);
-                              }
-                            }}
-                            role="menuitem"
-                            disabled={!user || user.id === 'guest'}
-                          >
-                            <span className="navbar__forbiz-app-icon">{app.icon}</span>
-                            <span className="navbar__forbiz-app-copy">
-                              <span className="navbar__forbiz-app-title">{app.label}</span>
-                              <span className="navbar__forbiz-app-desc">{app.description}</span>
-                            </span>
-                            <span className="navbar__forbiz-app-arrow" aria-hidden="true">↗</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
                     <div className="navbar__dropdown-section">
                       <div className="navbar__dropdown-header">Growth &amp; Hiring</div>
                       <div className="navbar__forbiz-grid">
@@ -456,7 +394,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
                             onClick={() => {
                               if (user && user.id !== 'guest') {
                                 navigate(app.route);
-                                setIsForBusinessMenuOpen(false);
+                                setIsSolutionsMenuOpen(false);
                               }
                             }}
                             role="menuitem"
@@ -476,10 +414,6 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOffset = true }) => {
                 </div>
               )}
             </div>
-            <button className="navbar__icon-btn navbar__icon-btn--accent" onClick={() => navigate('/work-suite')}>
-              <span className="navbar__icon"><IconLaurel /></span>
-              <span className="navbar__icon-label">Ornave Solutions</span>
-            </button>
           </div>
         </div>
 
