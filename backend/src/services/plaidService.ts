@@ -20,16 +20,32 @@ const CONNECTION_SELECT = {
   accounts: true,
 } as const;
 
+// European coverage — most institutions here require PSD2 Open Banking,
+// which means an OAuth redirect leg (see PLAID_REDIRECT_URI and
+// PlaidOAuthRedirectPage on the frontend) rather than the plain
+// username/password flow US sandbox banks use.
+const EU_COUNTRY_CODES = [
+  CountryCode.Gb,
+  CountryCode.De,
+  CountryCode.Fr,
+  CountryCode.Es,
+  CountryCode.Nl,
+  CountryCode.Ie,
+  CountryCode.It,
+];
+
 export class PlaidService {
   /** Starts a Plaid Link session — the token the frontend hands to Plaid's
    * own bank-picker widget. Short-lived (expires in ~30 min), single-use. */
   static async createLinkToken(userId: string): Promise<string> {
+    const redirectUri = process.env.PLAID_REDIRECT_URI || undefined;
     const response = await plaidClient.linkTokenCreate({
       user: { client_user_id: userId },
       client_name: 'Ornave',
       products: [Products.Transactions],
-      country_codes: [CountryCode.Us],
+      country_codes: EU_COUNTRY_CODES,
       language: 'en',
+      ...(redirectUri ? { redirect_uri: redirectUri } : {}),
     });
     return response.data.link_token;
   }
@@ -49,7 +65,7 @@ export class PlaidService {
       if (institutionId) {
         const inst = await plaidClient.institutionsGetById({
           institution_id: institutionId,
-          country_codes: [CountryCode.Us],
+          country_codes: EU_COUNTRY_CODES,
         });
         institutionName = inst.data.institution.name;
       }

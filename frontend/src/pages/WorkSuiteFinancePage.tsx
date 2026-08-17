@@ -24,8 +24,24 @@ const SECTIONS: { key: SectionFilter; label: string }[] = [
 type SortOrder = 'newest' | 'oldest' | 'amount';
 
 function formatMoney(amount: number): string {
-  return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+function formatCurrency(amount: number, currency?: string): string {
+  try {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(amount);
+  } catch {
+    return `${currency || 'USD'} ${formatMoney(amount)}`;
+  }
+}
+
+const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+  depository: 'Cash',
+  credit: 'Credit',
+  loan: 'Loan',
+  investment: 'Investment',
+  other: 'Other',
+};
 
 export const WorkSuiteFinancePage: React.FC = () => {
   const navigate = useNavigate();
@@ -119,6 +135,7 @@ export const WorkSuiteFinancePage: React.FC = () => {
     setBankError(null);
     try {
       await workSuiteService.exchangePlaidPublicToken(publicToken);
+      localStorage.removeItem('plaid_oauth_link_token');
       setLinkToken(null);
       await loadBank();
     } catch {
@@ -131,6 +148,10 @@ export const WorkSuiteFinancePage: React.FC = () => {
   const { open: openPlaidLink, ready: plaidLinkReady } = usePlaidLink({
     token: linkToken || '',
     onSuccess: onPlaidSuccess,
+    onExit: () => {
+      localStorage.removeItem('plaid_oauth_link_token');
+      setLinkToken(null);
+    },
   });
 
   useEffect(() => {
@@ -144,6 +165,10 @@ export const WorkSuiteFinancePage: React.FC = () => {
     setIsConnectingBank(true);
     try {
       const token = await workSuiteService.createPlaidLinkToken();
+      // Stashed so PlaidOAuthRedirectPage can resume the flow after a
+      // full-page redirect out to the bank's own login (required for
+      // most European PSD2/Open Banking institutions).
+      localStorage.setItem('plaid_oauth_link_token', token);
       setLinkToken(token);
     } catch {
       setBankError('Could not start bank connection — try again later.');
@@ -518,20 +543,29 @@ export const WorkSuiteFinancePage: React.FC = () => {
               )
             ) : (
               bankConnections.map((connection) => (
-                <div key={connection.id} className="worksuite-job-post" style={{ borderLeft: '4px solid #c6a15b' }}>
-                  <div className="worksuite-job-post__top">
+                <div key={connection.id} className="worksuite-bank-card">
+                  <div className="worksuite-bank-card__header">
                     <div>
-                      <h3 className="worksuite-job-post__role">{connection.institutionName || 'Connected bank'}</h3>
-                      <p className="worksuite-job-post__company">{connection.accounts.length} account{connection.accounts.length === 1 ? '' : 's'}</p>
+                      <h3 className="worksuite-bank-card__title">{connection.institutionName || 'Connected bank'}</h3>
+                      <span className="worksuite-bank-card__count">{connection.accounts.length} account{connection.accounts.length === 1 ? '' : 's'}</span>
                     </div>
-                    <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDisconnectBank(connection)} title="Disconnect"><IconClose size={13} /></button>
+                    <button className="worksuite-bank-card__disconnect" onClick={() => handleDisconnectBank(connection)}>
+                      <IconClose size={12} /> Disconnect
+                    </button>
                   </div>
 
-                  <div style={{ marginTop: '10px' }}>
+                  <div className="worksuite-bank-account-list">
                     {connection.accounts.map((account) => (
-                      <div key={account.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--tech-text-dim)', marginBottom: '6px' }}>
-                        <span><IconCard size={13} /> {account.name}{account.mask ? ` ••••${account.mask}` : ''}</span>
-                        <span>{account.currency || 'USD'} {formatMoney(account.currentBalance ?? 0)}</span>
+                      <div key={account.id} className="worksuite-bank-account-row">
+                        <div className="worksuite-bank-account-row__icon"><IconCard size={15} /></div>
+                        <div className="worksuite-bank-account-row__info">
+                          <div className="worksuite-bank-account-row__name">
+                            {account.name}
+                            {account.mask && <span className="worksuite-bank-account-row__mask">••••{account.mask}</span>}
+                          </div>
+                          <div className="worksuite-bank-account-row__type">{ACCOUNT_TYPE_LABELS[account.type] || account.type}{account.subtype ? ` · ${account.subtype}` : ''}</div>
+                        </div>
+                        <div className="worksuite-bank-account-row__balance">{formatCurrency(account.currentBalance ?? 0, account.currency)}</div>
                       </div>
                     ))}
                   </div>
@@ -541,7 +575,7 @@ export const WorkSuiteFinancePage: React.FC = () => {
 
             {bankConnections.length > 0 && (
               <>
-                <h4 style={{ margin: '18px 0 8px', fontSize: '0.85rem', color: 'var(--tech-text-dim)' }}>Recent transactions</h4>
+                <h4 className="worksuite-bank-txn-heading">Recent transactions</h4>
                 {isLoadingTransactions ? (
                   <div className="worksuite-empty">Loading transactions…</div>
                 ) : bankTransactions.length === 0 ? (
@@ -549,22 +583,28 @@ export const WorkSuiteFinancePage: React.FC = () => {
                     <p>No transactions in the last 30 days.</p>
                   </div>
                 ) : (
-                  <div className="worksuite-jobs-doc-list">
-                    {bankTransactions.map((tx) => (
-                      <div key={tx.id} className="worksuite-jobs-doc-row">
-                        <div className="worksuite-jobs-doc-row__info">
-                          <div className="worksuite-jobs-doc-row__name">{tx.merchantName || tx.name}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--tech-text-dim)' }}>
-                            {new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                            {tx.category ? ` · ${tx.category}` : ''}
-                            {tx.pending ? ' · Pending' : ''}
+                  <div className="worksuite-bank-txn-list">
+                    {bankTransactions.map((tx) => {
+                      // Plaid's convention: positive amount = money out, negative = money in.
+                      // Flip it so spending reads as negative/red and inflows as positive/green.
+                      const displayAmount = -tx.amount;
+                      const isCredit = displayAmount > 0;
+                      return (
+                        <div key={tx.id} className="worksuite-bank-txn-row">
+                          <div className="worksuite-bank-txn-row__info">
+                            <div className="worksuite-bank-txn-row__name">{tx.merchantName || tx.name}</div>
+                            <div className="worksuite-bank-txn-row__meta">
+                              {new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              {tx.category ? ` · ${tx.category}` : ''}
+                              {tx.pending ? ' · Pending' : ''}
+                            </div>
+                          </div>
+                          <div className={`worksuite-bank-txn-row__amount${isCredit ? ' worksuite-bank-txn-row__amount--credit' : ''}`}>
+                            {isCredit ? '+' : ''}{formatCurrency(displayAmount, tx.currency)}
                           </div>
                         </div>
-                        <div className="worksuite-jobs-doc-row__actions">
-                          <span>{tx.currency || 'USD'} {formatMoney(tx.amount)}</span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </>
