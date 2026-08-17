@@ -75,6 +75,7 @@ import { WorkSuiteHomePage } from '@/pages/WorkSuiteHomePage';
 import { WorkSuiteFilesPage } from '@/pages/WorkSuiteFilesPage';
 import { WorkSuitePersonalPage } from '@/pages/WorkSuitePersonalPage';
 import { WorkSuiteJobsPage } from '@/pages/WorkSuiteJobsPage';
+import { WorkSuiteCalendarPage } from '@/pages/WorkSuiteCalendarPage';
 import { WorkSuiteConnectionsPage } from '@/pages/WorkSuiteConnectionsPage';
 import { FirmConnectionDetailPage } from '@/pages/FirmConnectionDetailPage';
 import { WorkSuiteAchievementsPage } from '@/pages/WorkSuiteAchievementsPage';
@@ -291,6 +292,7 @@ function App() {
             <Route path="/work-suite/files" element={<WorkSuiteFilesPage />} />
             <Route path="/work-suite/personal" element={<WorkSuitePersonalPage />} />
             <Route path="/work-suite/jobs" element={<WorkSuiteJobsPage />} />
+            <Route path="/work-suite/calendar" element={<WorkSuiteCalendarPage />} />
             <Route path="/work-suite/connections" element={<WorkSuiteConnectionsPage />} />
             <Route path="/work-suite/connections/firms/:firmId" element={<FirmConnectionDetailPage />} />
             <Route path="/work-suite/achievements" element={<WorkSuiteAchievementsPage />} />
