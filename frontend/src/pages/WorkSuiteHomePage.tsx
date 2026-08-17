@@ -148,16 +148,10 @@ export const WorkSuiteHomePage: React.FC = () => {
 
         <div className="worksuite-stats">
           {isCompany ? (
-            <>
-              <div className="worksuite-stat-card">
-                <div className="worksuite-stat-card__label">Active Projects</div>
-                <div className="worksuite-stat-card__value">{summary?.activeProjects ?? '—'}</div>
-              </div>
-              <div className="worksuite-stat-card">
-                <div className="worksuite-stat-card__label">Open Tasks</div>
-                <div className="worksuite-stat-card__value">{summary?.openTasks ?? '—'}</div>
-              </div>
-            </>
+            <div className="worksuite-stat-card">
+              <div className="worksuite-stat-card__label">Open Tasks</div>
+              <div className="worksuite-stat-card__value">{summary?.openTasks ?? '—'}</div>
+            </div>
           ) : (
             <>
               <div className="worksuite-stat-card">
@@ -171,10 +165,6 @@ export const WorkSuiteHomePage: React.FC = () => {
               <div className="worksuite-stat-card">
                 <div className="worksuite-stat-card__label">Achievements</div>
                 <div className="worksuite-stat-card__value">{summary?.achievements ?? '—'}</div>
-              </div>
-              <div className="worksuite-stat-card">
-                <div className="worksuite-stat-card__label">Active Projects</div>
-                <div className="worksuite-stat-card__value">{summary?.activeProjects ?? '—'}</div>
               </div>
             </>
           )}
