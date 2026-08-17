@@ -298,7 +298,9 @@ export class PostService {
   }
 
   /**
-   * Delete a post (soft delete)
+   * Delete a post — a real hard delete. Comments and likes cascade with it
+   * (see schema), so "delete my post" actually removes it rather than just
+   * hiding a row that lingers in the database forever.
    */
   static async deletePost(postId: string, userId: string): Promise<boolean> {
     const post = await prisma.post.findUnique({
@@ -309,10 +311,7 @@ export class PostService {
       throw new Error('Unauthorized or post not found');
     }
 
-    await prisma.post.update({
-      where: { id: postId },
-      data: { isDeleted: true },
-    });
+    await prisma.post.delete({ where: { id: postId } });
 
     return true;
   }
