@@ -71,6 +71,7 @@ model User {
   goals                      Goal[]
   achievements               Achievement[]
   jobApplications            JobApplication[]
+  workProfile                WorkProfile?
   notes                      Note[]
   files                      UserFile[]
   folders                    UserFolder[]
@@ -807,6 +808,9 @@ model UserFile {
   // userId still points at the connection's buyer either way, since the
   // company side has no personal Files/folders system of its own to own it.
   uploadedByCompany Boolean                @default(false)
+  // Null for a regular personal file; 'CV_DOCUMENT' scopes it to the Jobs
+  // page's private Documents section instead of the general Files list.
+  category          String?
   name              String
   size              Int
   mimeType          String
@@ -948,6 +952,24 @@ model JobApplication {
 
   @@index([userId])
   @@index([status])
+}
+
+// A private CV — separate from the public UserProfile, used only for job
+// applications from the Jobs page. Experience/education/skills are stored
+// as JSON arrays (same convention as Post.tags/mentions elsewhere in this
+// schema) rather than child tables, since nothing else needs to query into
+// them relationally.
+model WorkProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  headline   String?
+  summary    String?
+  experience String   @default("[]")
+  education  String   @default("[]")
+  skills     String   @default("[]")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Achievement {

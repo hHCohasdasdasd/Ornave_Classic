@@ -2820,14 +2820,26 @@
    post-style cards in the main column. */
 .worksuite-jobs-layout {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 220px minmax(0, 1fr) 300px;
   gap: 18px;
   align-items: start;
+}
+
+@media (max-width: 1300px) {
+  .worksuite-jobs-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+  .worksuite-jobs-profile-panel {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 900px) {
   .worksuite-jobs-layout {
     grid-template-columns: 1fr;
+  }
+  .worksuite-jobs-profile-panel {
+    grid-column: auto;
   }
 }
 
@@ -2989,4 +3001,214 @@
 .worksuite-job-post__actions {
   display: flex;
   gap: 6px;
+}
+
+/* Right-hand Work Profile / CV & Documents panel on the Jobs page */
+.worksuite-jobs-profile-panel {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.worksuite-jobs-profile-card {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.worksuite-jobs-profile-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.worksuite-jobs-profile-card__header h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--tech-text-main);
+}
+
+.worksuite-jobs-profile-card__edit-btn {
+  background: none;
+  border: 1px solid var(--tech-border);
+  border-radius: 999px;
+  color: var(--tech-text-dim);
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+.worksuite-jobs-profile-card__edit-btn:hover {
+  color: var(--tech-text-main);
+  border-color: var(--tech-accent-gold);
+}
+
+.worksuite-jobs-profile-headline {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--tech-text-main);
+  margin: 0 0 4px;
+}
+
+.worksuite-jobs-profile-summary {
+  font-size: 0.78rem;
+  color: var(--tech-text-dim);
+  line-height: 1.5;
+  margin: 0 0 10px;
+  white-space: pre-wrap;
+}
+
+.worksuite-jobs-profile-empty {
+  font-size: 0.78rem;
+  color: var(--tech-text-dim);
+  margin: 0 0 10px;
+}
+
+.worksuite-jobs-profile-subsection {
+  margin-top: 10px;
+}
+
+.worksuite-jobs-profile-subsection h5 {
+  margin: 0 0 6px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--tech-text-dim);
+}
+
+.worksuite-jobs-profile-entry {
+  font-size: 0.78rem;
+  color: var(--tech-text-dim);
+  margin-bottom: 8px;
+}
+
+.worksuite-jobs-profile-entry strong {
+  color: var(--tech-text-main);
+  font-weight: 600;
+}
+
+.worksuite-jobs-profile-entry span {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.worksuite-jobs-skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.worksuite-jobs-skill-tag {
+  background: rgba(198, 161, 91, 0.14);
+  color: var(--tech-accent-gold);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.7rem;
+}
+
+.worksuite-jobs-doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.worksuite-jobs-doc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(246, 243, 237, 0.03);
+  border-radius: 9px;
+}
+
+.worksuite-jobs-doc-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.worksuite-jobs-doc-row__name {
+  font-size: 0.78rem;
+  color: var(--tech-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.worksuite-jobs-doc-row__meta {
+  font-size: 0.66rem;
+  color: var(--tech-text-dim);
+}
+
+.worksuite-jobs-doc-row__actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.worksuite-jobs-upload-btn {
+  width: 100%;
+  background: none;
+  border: 1px dashed var(--tech-border);
+  border-radius: 9px;
+  padding: 10px;
+  color: var(--tech-text-dim);
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+.worksuite-jobs-upload-btn:hover {
+  border-color: var(--tech-accent-gold);
+  color: var(--tech-text-main);
+}
+
+.worksuite-jobs-cv-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.worksuite-jobs-cv-entry-block {
+  border: 1px solid var(--tech-border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.worksuite-jobs-cv-entry-block__remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--tech-text-dim);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.worksuite-jobs-cv-add-btn {
+  background: none;
+  border: 1px dashed var(--tech-border);
+  border-radius: 9px;
+  padding: 8px;
+  width: 100%;
+  color: var(--tech-text-dim);
+  font-size: 0.78rem;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.worksuite-jobs-cv-add-btn:hover {
+  border-color: var(--tech-accent-gold);
+  color: var(--tech-text-main);
 }

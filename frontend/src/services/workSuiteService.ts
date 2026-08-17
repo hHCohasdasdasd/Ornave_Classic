@@ -89,10 +89,35 @@ export interface Project {
 export interface UserFile {
   id: string;
   folderId?: string | null;
+  category?: string | null;
   name: string;
   size: number;
   mimeType: string;
   createdAt: string;
+}
+
+export interface WorkExperienceEntry {
+  title: string;
+  company: string;
+  startDate?: string;
+  endDate?: string;
+  current?: boolean;
+  description?: string;
+}
+
+export interface WorkEducationEntry {
+  school: string;
+  degree?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface WorkProfile {
+  headline: string | null;
+  summary: string | null;
+  experience: WorkExperienceEntry[];
+  education: WorkEducationEntry[];
+  skills: string[];
 }
 
 export interface UserFolder {
@@ -239,6 +264,38 @@ class WorkSuiteService {
 
   async deleteJobApplication(id: string): Promise<void> {
     await apiClient.delete(`/work-suite/job-applications/${id}`);
+  }
+
+  // Work Profile (private CV, used for job applications)
+  async getWorkProfile(): Promise<WorkProfile> {
+    const response = await apiClient.get('/work-suite/work-profile');
+    return response.data.data;
+  }
+
+  async updateWorkProfile(data: Partial<WorkProfile>): Promise<WorkProfile> {
+    const response = await apiClient.put('/work-suite/work-profile', data);
+    return response.data.data;
+  }
+
+  // CV Documents — same UserFile model as personal Files, scoped to the
+  // CV_DOCUMENT category so they stay out of the general Files list.
+  async listCvDocuments(): Promise<UserFile[]> {
+    const response = await apiClient.get('/work-suite/cv-documents');
+    return response.data.data || [];
+  }
+
+  async uploadCvDocument(file: File, onProgress?: (percent: number) => void): Promise<UserFile> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/work-suite/cv-documents', formData, {
+      headers: { 'Content-Type': undefined },
+      onUploadProgress: onProgress
+        ? (e: { loaded: number; total?: number }) => {
+            if (e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        : undefined,
+    });
+    return response.data.data;
   }
 
   // Achievements

@@ -1,12 +1,37 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
 import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
-import { workSuiteService, JobApplication, JobApplicationStatus } from '@/services/workSuiteService';
+import {
+  workSuiteService,
+  JobApplication,
+  JobApplicationStatus,
+  WorkProfile,
+  WorkExperienceEntry,
+  WorkEducationEntry,
+  UserFile,
+} from '@/services/workSuiteService';
 import './WorkSuite.css';
+
+const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / Math.pow(1024, i);
+  return `${i === 0 ? value : value.toFixed(1)} ${units[i]}`;
+};
+
+const iconForMime = (mimeType: string): string => {
+  if (mimeType === 'application/pdf') return '📕';
+  if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+  if (mimeType.startsWith('image/')) return '🖼️';
+  return '📄';
+};
+
+const EMPTY_PROFILE: WorkProfile = { headline: null, summary: null, experience: [], education: [], skills: [] };
 
 type SectionFilter = 'ALL' | JobApplicationStatus;
 
@@ -58,6 +83,122 @@ export const WorkSuiteJobsPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ---------------------------------------------------------------------
+  // Work Profile (private CV) + CV Documents — right-hand panel
+  // ---------------------------------------------------------------------
+  const [workProfile, setWorkProfile] = useState<WorkProfile>(EMPTY_PROFILE);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileHeadline, setProfileHeadline] = useState('');
+  const [profileSummary, setProfileSummary] = useState('');
+  const [profileSkills, setProfileSkills] = useState('');
+  const [profileExperience, setProfileExperience] = useState<WorkExperienceEntry[]>([]);
+  const [profileEducation, setProfileEducation] = useState<WorkEducationEntry[]>([]);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
+  const [cvDocuments, setCvDocuments] = useState<UserFile[]>([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(true);
+  const [uploadingDocs, setUploadingDocs] = useState<{ key: string; name: string; error?: boolean }[]>([]);
+  const docInputRef = useRef<HTMLInputElement>(null);
+
+  const loadWorkProfile = async () => {
+    setIsLoadingProfile(true);
+    try {
+      setWorkProfile(await workSuiteService.getWorkProfile());
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  const loadCvDocuments = async () => {
+    setIsLoadingDocs(true);
+    try {
+      setCvDocuments(await workSuiteService.listCvDocuments());
+    } finally {
+      setIsLoadingDocs(false);
+    }
+  };
+
+  const openEditProfile = () => {
+    setProfileHeadline(workProfile.headline || '');
+    setProfileSummary(workProfile.summary || '');
+    setProfileSkills(workProfile.skills.join(', '));
+    setProfileExperience(workProfile.experience.length ? workProfile.experience : []);
+    setProfileEducation(workProfile.education.length ? workProfile.education : []);
+    setProfileError(null);
+    setShowProfileModal(true);
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSavingProfile(true);
+    setProfileError(null);
+    try {
+      const saved = await workSuiteService.updateWorkProfile({
+        headline: profileHeadline.trim() || undefined,
+        summary: profileSummary.trim() || undefined,
+        skills: profileSkills.split(',').map((s) => s.trim()).filter(Boolean),
+        experience: profileExperience.filter((e) => e.title.trim() || e.company.trim()),
+        education: profileEducation.filter((e) => e.school.trim()),
+      });
+      setWorkProfile(saved);
+      setShowProfileModal(false);
+    } catch {
+      setProfileError('Something went wrong saving your work profile — try again.');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const addExperienceRow = () => setProfileExperience((prev) => [...prev, { title: '', company: '', startDate: '', endDate: '', description: '' }]);
+  const removeExperienceRow = (index: number) => setProfileExperience((prev) => prev.filter((_, i) => i !== index));
+  const updateExperienceRow = (index: number, patch: Partial<WorkExperienceEntry>) =>
+    setProfileExperience((prev) => prev.map((e, i) => (i === index ? { ...e, ...patch } : e)));
+
+  const addEducationRow = () => setProfileEducation((prev) => [...prev, { school: '', degree: '', startDate: '', endDate: '' }]);
+  const removeEducationRow = (index: number) => setProfileEducation((prev) => prev.filter((_, i) => i !== index));
+  const updateEducationRow = (index: number, patch: Partial<WorkEducationEntry>) =>
+    setProfileEducation((prev) => prev.map((e, i) => (i === index ? { ...e, ...patch } : e)));
+
+  const uploadDocs = async (fileList: FileList | File[]) => {
+    const list = Array.from(fileList);
+    for (const file of list) {
+      const key = `${file.name}-${Date.now()}-${Math.random()}`;
+      setUploadingDocs((prev) => [...prev, { key, name: file.name }]);
+      try {
+        await workSuiteService.uploadCvDocument(file);
+        setUploadingDocs((prev) => prev.filter((u) => u.key !== key));
+        await loadCvDocuments();
+      } catch {
+        setUploadingDocs((prev) => prev.map((u) => (u.key === key ? { ...u, error: true } : u)));
+        setTimeout(() => setUploadingDocs((prev) => prev.filter((u) => u.key !== key)), 4000);
+      }
+    }
+  };
+
+  const handleDocPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.length) uploadDocs(e.target.files);
+    e.target.value = '';
+  };
+
+  const handleDocDownload = async (file: UserFile) => {
+    try {
+      const url = await workSuiteService.getFileDownloadUrl(file.id);
+      window.open(url, '_blank');
+    } catch {
+      // Best-effort — a failed download link isn't worth a page-level error banner here.
+    }
+  };
+
+  const handleDocDelete = async (file: UserFile) => {
+    setCvDocuments((prev) => prev.filter((f) => f.id !== file.id));
+    try {
+      await workSuiteService.deleteFile(file.id);
+    } catch {
+      await loadCvDocuments();
+    }
+  };
+
   const load = async () => {
     setIsLoading(true);
     try {
@@ -68,7 +209,11 @@ export const WorkSuiteJobsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!isGuest) load();
+    if (!isGuest) {
+      load();
+      loadWorkProfile();
+      loadCvDocuments();
+    }
   }, [isGuest]);
 
   const openCreate = () => {
@@ -275,6 +420,108 @@ export const WorkSuiteJobsPage: React.FC = () => {
               })
             )}
           </div>
+
+          <aside className="worksuite-jobs-profile-panel">
+            <div className="worksuite-jobs-profile-card">
+              <div className="worksuite-jobs-profile-card__header">
+                <h4>Work Profile</h4>
+                <button className="worksuite-jobs-profile-card__edit-btn" onClick={openEditProfile}>
+                  {isLoadingProfile ? '…' : workProfile.headline || workProfile.experience.length || workProfile.education.length || workProfile.skills.length ? 'Edit' : '+ Build CV'}
+                </button>
+              </div>
+
+              {isLoadingProfile ? (
+                <p className="worksuite-jobs-profile-empty">Loading…</p>
+              ) : !workProfile.headline && !workProfile.summary && workProfile.experience.length === 0 && workProfile.education.length === 0 && workProfile.skills.length === 0 ? (
+                <p className="worksuite-jobs-profile-empty">
+                  Build a private CV — headline, experience, education, and skills — to have ready when you apply.
+                </p>
+              ) : (
+                <>
+                  {workProfile.headline && <p className="worksuite-jobs-profile-headline">{workProfile.headline}</p>}
+                  {workProfile.summary && <p className="worksuite-jobs-profile-summary">{workProfile.summary}</p>}
+
+                  {workProfile.experience.length > 0 && (
+                    <div className="worksuite-jobs-profile-subsection">
+                      <h5>Experience</h5>
+                      {workProfile.experience.map((e, i) => (
+                        <div key={i} className="worksuite-jobs-profile-entry">
+                          <strong>{e.title}</strong>{e.company && ` · ${e.company}`}
+                          {(e.startDate || e.endDate) && <span>{e.startDate || '?'} – {e.current ? 'Present' : (e.endDate || '?')}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {workProfile.education.length > 0 && (
+                    <div className="worksuite-jobs-profile-subsection">
+                      <h5>Education</h5>
+                      {workProfile.education.map((e, i) => (
+                        <div key={i} className="worksuite-jobs-profile-entry">
+                          <strong>{e.school}</strong>{e.degree && ` · ${e.degree}`}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {workProfile.skills.length > 0 && (
+                    <div className="worksuite-jobs-profile-subsection">
+                      <h5>Skills</h5>
+                      <div className="worksuite-jobs-skill-tags">
+                        {workProfile.skills.map((s) => <span key={s} className="worksuite-jobs-skill-tag">{s}</span>)}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="worksuite-jobs-profile-card">
+              <div className="worksuite-jobs-profile-card__header">
+                <h4>CV & Documents</h4>
+              </div>
+
+              {isLoadingDocs ? (
+                <p className="worksuite-jobs-profile-empty">Loading…</p>
+              ) : (
+                <div className="worksuite-jobs-doc-list">
+                  {cvDocuments.map((doc) => (
+                    <div key={doc.id} className="worksuite-jobs-doc-row">
+                      <span>{iconForMime(doc.mimeType)}</span>
+                      <div className="worksuite-jobs-doc-row__info">
+                        <div className="worksuite-jobs-doc-row__name">{doc.name}</div>
+                        <div className="worksuite-jobs-doc-row__meta">{formatBytes(doc.size)}</div>
+                      </div>
+                      <div className="worksuite-jobs-doc-row__actions">
+                        <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDocDownload(doc)} title="Download">⬇</button>
+                        <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDocDelete(doc)} title="Delete">✕</button>
+                      </div>
+                    </div>
+                  ))}
+                  {uploadingDocs.map((u) => (
+                    <div key={u.key} className="worksuite-jobs-doc-row">
+                      <span>📤</span>
+                      <div className="worksuite-jobs-doc-row__info">
+                        <div className="worksuite-jobs-doc-row__name">{u.name}</div>
+                        <div className="worksuite-jobs-doc-row__meta">{u.error ? 'Upload failed' : 'Uploading…'}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button className="worksuite-jobs-upload-btn" onClick={() => docInputRef.current?.click()}>
+                + Upload resume, cover letter…
+              </button>
+              <input
+                ref={docInputRef}
+                type="file"
+                multiple
+                onChange={handleDocPick}
+                style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}
+              />
+            </div>
+          </aside>
         </div>
       </div>
 
@@ -297,6 +544,72 @@ export const WorkSuiteJobsPage: React.FC = () => {
               <button className="worksuite-modal__cancel" onClick={() => setShowModal(false)}>Cancel</button>
               <button className="worksuite-modal__submit" onClick={handleSave} disabled={!company.trim() || !role.trim() || isSaving}>
                 {isSaving ? 'Saving…' : editingJob ? 'Save Changes' : 'Create Application'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showProfileModal && (
+        <div className="worksuite-modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="worksuite-modal worksuite-modal--large" onClick={(e) => e.stopPropagation()}>
+            <h2>Work Profile</h2>
+            <label>Headline</label>
+            <input value={profileHeadline} onChange={(e) => setProfileHeadline(e.target.value)} placeholder="Senior Product Designer" maxLength={160} />
+            <label>Summary</label>
+            <textarea value={profileSummary} onChange={(e) => setProfileSummary(e.target.value)} rows={3} placeholder="A short summary of who you are and what you're looking for…" maxLength={1000} />
+            <label>Skills (comma-separated)</label>
+            <input value={profileSkills} onChange={(e) => setProfileSkills(e.target.value)} placeholder="Figma, TypeScript, Leadership…" maxLength={500} />
+
+            <label>Experience</label>
+            {profileExperience.map((exp, i) => (
+              <div key={i} className="worksuite-jobs-cv-entry-block">
+                <button type="button" className="worksuite-jobs-cv-entry-block__remove" onClick={() => removeExperienceRow(i)} title="Remove">✕</button>
+                <div className="worksuite-jobs-cv-form-row">
+                  <input value={exp.title} onChange={(e) => updateExperienceRow(i, { title: e.target.value })} placeholder="Title" maxLength={160} />
+                  <input value={exp.company} onChange={(e) => updateExperienceRow(i, { company: e.target.value })} placeholder="Company" maxLength={160} />
+                </div>
+                <div className="worksuite-jobs-cv-form-row" style={{ marginTop: '8px' }}>
+                  <input value={exp.startDate || ''} onChange={(e) => updateExperienceRow(i, { startDate: e.target.value })} placeholder="Start (e.g. 2022)" maxLength={40} />
+                  <input value={exp.endDate || ''} onChange={(e) => updateExperienceRow(i, { endDate: e.target.value })} placeholder="End (e.g. 2024, or blank)" maxLength={40} disabled={exp.current} />
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '0.78rem' }}>
+                  <input type="checkbox" checked={!!exp.current} onChange={(e) => updateExperienceRow(i, { current: e.target.checked, endDate: e.target.checked ? '' : exp.endDate })} style={{ width: 'auto' }} />
+                  Current role
+                </label>
+                <textarea
+                  value={exp.description || ''}
+                  onChange={(e) => updateExperienceRow(i, { description: e.target.value })}
+                  rows={2}
+                  placeholder="What you did…"
+                  maxLength={500}
+                  style={{ marginTop: '8px' }}
+                />
+              </div>
+            ))}
+            <button type="button" className="worksuite-jobs-cv-add-btn" onClick={addExperienceRow}>+ Add experience</button>
+
+            <label style={{ marginTop: '16px' }}>Education</label>
+            {profileEducation.map((edu, i) => (
+              <div key={i} className="worksuite-jobs-cv-entry-block">
+                <button type="button" className="worksuite-jobs-cv-entry-block__remove" onClick={() => removeEducationRow(i)} title="Remove">✕</button>
+                <div className="worksuite-jobs-cv-form-row">
+                  <input value={edu.school} onChange={(e) => updateEducationRow(i, { school: e.target.value })} placeholder="School" maxLength={160} />
+                  <input value={edu.degree || ''} onChange={(e) => updateEducationRow(i, { degree: e.target.value })} placeholder="Degree" maxLength={160} />
+                </div>
+                <div className="worksuite-jobs-cv-form-row" style={{ marginTop: '8px' }}>
+                  <input value={edu.startDate || ''} onChange={(e) => updateEducationRow(i, { startDate: e.target.value })} placeholder="Start (e.g. 2018)" maxLength={40} />
+                  <input value={edu.endDate || ''} onChange={(e) => updateEducationRow(i, { endDate: e.target.value })} placeholder="End (e.g. 2022)" maxLength={40} />
+                </div>
+              </div>
+            ))}
+            <button type="button" className="worksuite-jobs-cv-add-btn" onClick={addEducationRow}>+ Add education</button>
+
+            {profileError && <p className="worksuite-modal__error">{profileError}</p>}
+            <div className="worksuite-modal__actions">
+              <button className="worksuite-modal__cancel" onClick={() => setShowProfileModal(false)}>Cancel</button>
+              <button className="worksuite-modal__submit" onClick={handleSaveProfile} disabled={isSavingProfile}>
+                {isSavingProfile ? 'Saving…' : 'Save Work Profile'}
               </button>
             </div>
           </div>

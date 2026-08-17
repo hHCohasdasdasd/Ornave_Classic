@@ -74,6 +74,7 @@ export class AccountPurgeService {
       prisma.achievement.deleteMany({ where: { userId } }),
       prisma.note.deleteMany({ where: { userId } }),
       prisma.jobApplication.deleteMany({ where: { userId } }),
+      prisma.workProfile.deleteMany({ where: { userId } }),
       prisma.focusSession.deleteMany({ where: { userId } }),
       prisma.userFile.deleteMany({ where: { userId, connectionId: null } }),
       prisma.userFolder.deleteMany({ where: { userId } }),

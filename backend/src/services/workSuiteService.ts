@@ -243,6 +243,66 @@ export class JobApplicationService {
   }
 }
 
+export interface WorkExperienceEntry {
+  title: string;
+  company: string;
+  startDate?: string;
+  endDate?: string;
+  current?: boolean;
+  description?: string;
+}
+
+export interface WorkEducationEntry {
+  school: string;
+  degree?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export class WorkProfileService {
+  /** Lazily returns an empty shape rather than 404ing — a work profile is
+   * expected to not exist yet for most users, and the Jobs page always
+   * wants something to render rather than special-casing "not found". */
+  static async get(userId: string) {
+    const profile = await prisma.workProfile.findUnique({ where: { userId } });
+    if (!profile) {
+      return { headline: null, summary: null, experience: [], education: [], skills: [] };
+    }
+    return {
+      headline: profile.headline,
+      summary: profile.summary,
+      experience: JSON.parse(profile.experience || '[]'),
+      education: JSON.parse(profile.education || '[]'),
+      skills: JSON.parse(profile.skills || '[]'),
+    };
+  }
+
+  static async upsert(
+    userId: string,
+    data: { headline?: string; summary?: string; experience?: WorkExperienceEntry[]; education?: WorkEducationEntry[]; skills?: string[] }
+  ) {
+    const stored = {
+      headline: data.headline,
+      summary: data.summary,
+      experience: JSON.stringify(data.experience || []),
+      education: JSON.stringify(data.education || []),
+      skills: JSON.stringify(data.skills || []),
+    };
+    const profile = await prisma.workProfile.upsert({
+      where: { userId },
+      create: { userId, ...stored },
+      update: stored,
+    });
+    return {
+      headline: profile.headline,
+      summary: profile.summary,
+      experience: JSON.parse(profile.experience),
+      education: JSON.parse(profile.education),
+      skills: JSON.parse(profile.skills),
+    };
+  }
+}
+
 export class AchievementService {
   static async list(userId: string) {
     return prisma.achievement.findMany({ where: { userId }, orderBy: { achievedAt: 'desc' } });
@@ -403,7 +463,11 @@ export class FolderService {
 
 export class FileService {
   static async list(userId: string, folderId: string | null) {
-    return prisma.userFile.findMany({ where: { userId, folderId }, orderBy: { createdAt: 'desc' } });
+    return prisma.userFile.findMany({ where: { userId, folderId, category: null }, orderBy: { createdAt: 'desc' } });
+  }
+
+  static async listByCategory(userId: string, category: string) {
+    return prisma.userFile.findMany({ where: { userId, category }, orderBy: { createdAt: 'desc' } });
   }
 
   static async listByFolderIds(userId: string, folderIds: string[]) {
@@ -434,11 +498,11 @@ export class FileService {
     return file;
   }
 
-  static async create(data: { userId: string; folderId?: string | null; connectionId?: string | null; uploadedByCompany?: boolean; name: string; size: number; mimeType: string; storageKey: string }) {
+  static async create(data: { userId: string; folderId?: string | null; connectionId?: string | null; uploadedByCompany?: boolean; category?: string | null; name: string; size: number; mimeType: string; storageKey: string }) {
     if (data.folderId) {
       await FolderService.getById(data.userId, data.folderId);
     }
-    return prisma.userFile.create({ data: { ...data, folderId: data.folderId || null, connectionId: data.connectionId || null } });
+    return prisma.userFile.create({ data: { ...data, folderId: data.folderId || null, connectionId: data.connectionId || null, category: data.category || null } });
   }
 
   static async remove(userId: string, id: string) {

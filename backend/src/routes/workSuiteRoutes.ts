@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
-import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService, JobApplicationService } from '../services/workSuiteService';
+import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService, JobApplicationService, WorkProfileService } from '../services/workSuiteService';
 import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
 import { createFileUpload } from '../utils/uploadConfig';
 
@@ -262,6 +262,68 @@ workSuiteRoutes.delete(
   asyncHandler(async (req: any, res: Response) => {
     await JobApplicationService.remove(req.user.userId, req.params.id);
     return ApiResponseHandler.success(res, {}, 'Job application deleted successfully', 200);
+  })
+);
+
+/**
+ * Work Profile — a private CV used only for job applications (Jobs page).
+ */
+workSuiteRoutes.get(
+  '/work-profile',
+  asyncHandler(async (req: any, res: Response) => {
+    const profile = await WorkProfileService.get(req.user.userId);
+    return ApiResponseHandler.success(res, profile, 'Work profile retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.put(
+  '/work-profile',
+  asyncHandler(async (req: any, res: Response) => {
+    const { headline, summary, experience, education, skills } = req.body;
+    const profile = await WorkProfileService.upsert(req.user.userId, { headline, summary, experience, education, skills });
+    return ApiResponseHandler.success(res, profile, 'Work profile updated successfully', 200);
+  })
+);
+
+/**
+ * CV & Documents — files scoped to category CV_DOCUMENT, kept out of the
+ * general Files list. Download/delete reuse the generic /files/:id routes
+ * below, since those already scope by id + userId regardless of category.
+ */
+workSuiteRoutes.get(
+  '/cv-documents',
+  asyncHandler(async (req: any, res: Response) => {
+    const files = await FileService.listByCategory(req.user.userId, 'CV_DOCUMENT');
+    return ApiResponseHandler.success(res, files, 'CV documents retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.post(
+  '/cv-documents',
+  upload.single('file'),
+  asyncHandler(async (req: any, res: Response) => {
+    if (!req.file) return ApiResponseHandler.error(res, 'No file provided', undefined, 400);
+
+    const supabase = requireSupabaseAdmin();
+    const safeName = req.file.originalname.replace(/[^\w.\-() ]/g, '_');
+    const storageKey = `${req.user.userId}/${uuidv4()}-${safeName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(FILES_BUCKET)
+      .upload(storageKey, req.file.buffer, { contentType: req.file.mimetype });
+    if (uploadError) {
+      return ApiResponseHandler.error(res, 'Failed to upload file', uploadError.message, 502);
+    }
+
+    const file = await FileService.create({
+      userId: req.user.userId,
+      category: 'CV_DOCUMENT',
+      name: req.file.originalname,
+      size: req.file.size,
+      mimeType: req.file.mimetype,
+      storageKey,
+    });
+    return ApiResponseHandler.success(res, file, 'Document uploaded successfully', 201);
   })
 );
 
