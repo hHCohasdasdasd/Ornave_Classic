@@ -358,6 +358,58 @@ export class FinanceEntryService {
   }
 }
 
+export class ManualOrderService {
+  static async list(userId: string) {
+    return prisma.manualOrder.findMany({ where: { userId }, orderBy: { date: 'desc' } });
+  }
+
+  static async getById(userId: string, id: string) {
+    const order = await prisma.manualOrder.findFirst({ where: { id, userId } });
+    if (!order) throw notFound('Manual order not found');
+    return order;
+  }
+
+  static async create(
+    userId: string,
+    data: { type: string; vendor: string; description?: string; amount: number; currency?: string; status?: string; date: string; trackingNumber?: string; notes?: string }
+  ) {
+    return prisma.manualOrder.create({
+      data: {
+        userId,
+        type: data.type,
+        vendor: data.vendor,
+        description: data.description,
+        amount: data.amount,
+        currency: data.currency || 'USD',
+        status: data.status || 'PENDING',
+        date: new Date(data.date),
+        trackingNumber: data.trackingNumber,
+        notes: data.notes,
+      },
+    });
+  }
+
+  static async update(
+    userId: string,
+    id: string,
+    data: { type?: string; vendor?: string; description?: string; amount?: number; currency?: string; status?: string; date?: string; trackingNumber?: string; notes?: string }
+  ) {
+    await this.getById(userId, id);
+    return prisma.manualOrder.update({
+      where: { id },
+      data: {
+        ...data,
+        date: data.date ? new Date(data.date) : undefined,
+      },
+    });
+  }
+
+  static async remove(userId: string, id: string) {
+    await this.getById(userId, id);
+    await prisma.manualOrder.delete({ where: { id } });
+  }
+}
+
 export interface WorkExperienceEntry {
   title: string;
   company: string;

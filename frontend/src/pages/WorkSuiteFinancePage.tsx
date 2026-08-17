@@ -5,9 +5,10 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
-import { workSuiteService, BankConnection, BankTransaction } from '@/services/workSuiteService';
+import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
+import { workSuiteService, BankConnection, BankTransaction, ManualOrder, ManualOrderType, ManualOrderStatus } from '@/services/workSuiteService';
 import { storeService, Order } from '@/services/storeService';
-import { IconClose, IconDownload, IconCard } from '@/components/ui/Icons';
+import { IconClose, IconDownload, IconCard, IconEdit } from '@/components/ui/Icons';
 import './WorkSuite.css';
 
 type PageView = 'tracker' | 'orders' | 'bank';
@@ -45,6 +46,22 @@ export const WorkSuiteFinancePage: React.FC = () => {
   const [orderDocuments, setOrderDocuments] = useState<Record<string, { id: string; name: string }[]>>({});
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
 
+  const [manualOrders, setManualOrders] = useState<ManualOrder[]>([]);
+  const [isLoadingManualOrders, setIsLoadingManualOrders] = useState(true);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<ManualOrder | null>(null);
+  const [orderType, setOrderType] = useState<ManualOrderType>('ORDER');
+  const [orderVendor, setOrderVendor] = useState('');
+  const [orderDescription, setOrderDescription] = useState('');
+  const [orderAmount, setOrderAmount] = useState('');
+  const [orderCurrency, setOrderCurrency] = useState('USD');
+  const [orderStatus, setOrderStatus] = useState<ManualOrderStatus>('PENDING');
+  const [orderDate, setOrderDate] = useState('');
+  const [orderTrackingNumber, setOrderTrackingNumber] = useState('');
+  const [orderNotes, setOrderNotes] = useState('');
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
+
   const [bankConnections, setBankConnections] = useState<BankConnection[]>([]);
   const [isLoadingBank, setIsLoadingBank] = useState(true);
   const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
@@ -61,6 +78,15 @@ export const WorkSuiteFinancePage: React.FC = () => {
       setOrders(await storeService.getUserOrders());
     } finally {
       setIsLoadingOrders(false);
+    }
+  };
+
+  const loadManualOrders = async () => {
+    setIsLoadingManualOrders(true);
+    try {
+      setManualOrders(await workSuiteService.listManualOrders());
+    } finally {
+      setIsLoadingManualOrders(false);
     }
   };
 
@@ -87,6 +113,7 @@ export const WorkSuiteFinancePage: React.FC = () => {
   useEffect(() => {
     if (!isGuest) {
       loadOrders();
+      loadManualOrders();
       loadBank();
     }
   }, [isGuest]);
@@ -170,6 +197,76 @@ export const WorkSuiteFinancePage: React.FC = () => {
       window.open(url, '_blank');
     } catch {
       // Best-effort — a failed link isn't worth a page-level error banner here.
+    }
+  };
+
+  const openCreateOrder = () => {
+    setEditingOrder(null);
+    setOrderType('ORDER');
+    setOrderVendor('');
+    setOrderDescription('');
+    setOrderAmount('');
+    setOrderCurrency('USD');
+    setOrderStatus('PENDING');
+    setOrderDate(new Date().toISOString().slice(0, 10));
+    setOrderTrackingNumber('');
+    setOrderNotes('');
+    setOrderError(null);
+    setShowOrderModal(true);
+  };
+
+  const openEditOrder = (order: ManualOrder) => {
+    setEditingOrder(order);
+    setOrderType(order.type);
+    setOrderVendor(order.vendor);
+    setOrderDescription(order.description || '');
+    setOrderAmount(String(order.amount));
+    setOrderCurrency(order.currency);
+    setOrderStatus(order.status);
+    setOrderDate(order.date.slice(0, 10));
+    setOrderTrackingNumber(order.trackingNumber || '');
+    setOrderNotes(order.notes || '');
+    setOrderError(null);
+    setShowOrderModal(true);
+  };
+
+  const handleSaveOrder = async () => {
+    const amountNum = parseFloat(orderAmount);
+    if (!orderVendor.trim() || !orderDate || Number.isNaN(amountNum) || amountNum <= 0) return;
+    setIsSavingOrder(true);
+    setOrderError(null);
+    try {
+      const payload = {
+        type: orderType,
+        vendor: orderVendor.trim(),
+        description: orderDescription.trim() || undefined,
+        amount: amountNum,
+        currency: orderCurrency.trim() || 'USD',
+        status: orderStatus,
+        date: orderDate,
+        trackingNumber: orderTrackingNumber.trim() || undefined,
+        notes: orderNotes.trim() || undefined,
+      };
+      if (editingOrder) {
+        await workSuiteService.updateManualOrder(editingOrder.id, payload);
+      } else {
+        await workSuiteService.createManualOrder(payload);
+      }
+      setShowOrderModal(false);
+      await loadManualOrders();
+    } catch {
+      setOrderError('Something went wrong saving that — try again.');
+    } finally {
+      setIsSavingOrder(false);
+    }
+  };
+
+  const handleDeleteOrder = async (order: ManualOrder) => {
+    setManualOrders((prev) => prev.filter((o) => o.id !== order.id));
+    try {
+      await workSuiteService.deleteManualOrder(order.id);
+    } catch {
+      await loadManualOrders();
     }
   };
 
@@ -340,6 +437,55 @@ export const WorkSuiteFinancePage: React.FC = () => {
 
         {view === 'orders' && (
           <div className="worksuite-jobs-feed">
+            <div className="worksuite-page__header-row">
+              <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1rem', color: 'var(--tech-text-main)' }}>Manually logged</h3>
+              <button className="worksuite-create-btn" onClick={openCreateOrder}>+ New Order/Invoice</button>
+            </div>
+
+            {isLoadingManualOrders ? (
+              <div className="worksuite-empty">Loading…</div>
+            ) : manualOrders.length === 0 ? (
+              <div className="worksuite-empty worksuite-empty--goals">
+                <p>Nothing logged yet — add an order or invoice from outside Ornave.</p>
+                <button className="worksuite-create-btn" onClick={openCreateOrder}>+ New Order/Invoice</button>
+              </div>
+            ) : (
+              manualOrders.map((order) => {
+                const statusColor = order.status === 'PAID' ? '#3f6f47' : order.status === 'CANCELLED' ? '#a2504b' : '#c6a15b';
+                return (
+                  <div key={order.id} className="worksuite-job-post" style={{ borderLeft: `4px solid ${statusColor}` }}>
+                    <div className="worksuite-job-post__top">
+                      <div>
+                        <h3 className="worksuite-job-post__role">{order.vendor}</h3>
+                        <p className="worksuite-job-post__company">{order.type === 'INVOICE' ? 'Invoice' : 'Order'}{order.description ? ` · ${order.description}` : ''}</p>
+                      </div>
+                      <span className="worksuite-job-post__badge" style={{ background: statusColor, color: '#14140f' }}>
+                        {formatCurrency(order.amount, order.currency)}
+                      </span>
+                    </div>
+
+                    <div className="worksuite-job-post__meta">
+                      <span>{new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      <span>{order.status.charAt(0) + order.status.slice(1).toLowerCase()}</span>
+                      {order.trackingNumber && <span>Tracking: {order.trackingNumber}</span>}
+                    </div>
+
+                    {order.notes && <p className="worksuite-job-post__notes">{order.notes}</p>}
+
+                    <div className="worksuite-job-post__footer">
+                      <div />
+                      <div className="worksuite-job-post__actions">
+                        <button className="worksuite-kanban-card__icon-btn" onClick={() => openEditOrder(order)} title="Edit"><IconEdit size={13} /></button>
+                        <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDeleteOrder(order)} title="Delete"><IconClose size={13} /></button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+
+            <h3 style={{ margin: '24px 0 4px', fontFamily: 'var(--font-display)', fontSize: '1rem', color: 'var(--tech-text-main)' }}>Ornave orders</h3>
+
             {isLoadingOrders ? (
               <div className="worksuite-empty">Loading orders…</div>
             ) : orders.length === 0 ? (
@@ -532,6 +678,82 @@ export const WorkSuiteFinancePage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showOrderModal && (
+        <div className="worksuite-modal-overlay" onClick={() => setShowOrderModal(false)}>
+          <div className="worksuite-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>{editingOrder ? 'Edit Order/Invoice' : 'New Order/Invoice'}</h2>
+
+            <label>Type</label>
+            <ThemedSelect
+              value={orderType}
+              options={[
+                { value: 'ORDER', label: 'Order' },
+                { value: 'INVOICE', label: 'Invoice' },
+              ]}
+              onChange={(v) => setOrderType(v as ManualOrderType)}
+            />
+
+            <label>Vendor</label>
+            <input value={orderVendor} onChange={(e) => setOrderVendor(e.target.value)} placeholder="Acme Supplies" maxLength={200} />
+
+            <label>Description</label>
+            <input value={orderDescription} onChange={(e) => setOrderDescription(e.target.value)} placeholder="Optional details" maxLength={200} />
+
+            <div className="worksuite-jobs-cv-form-row">
+              <div>
+                <label>Amount</label>
+                <input type="number" min="0" step="0.01" value={orderAmount} onChange={(e) => setOrderAmount(e.target.value)} placeholder="0.00" />
+              </div>
+              <div>
+                <label>Currency</label>
+                <input value={orderCurrency} onChange={(e) => setOrderCurrency(e.target.value.toUpperCase())} placeholder="USD" maxLength={3} />
+              </div>
+            </div>
+
+            <label>Date</label>
+            <ThemedDatePicker value={orderDate} onChange={setOrderDate} />
+
+            <label>Status</label>
+            <ThemedSelect
+              value={orderStatus}
+              options={[
+                { value: 'PENDING', label: 'Pending' },
+                { value: 'PAID', label: 'Paid' },
+                { value: 'CANCELLED', label: 'Cancelled' },
+              ]}
+              onChange={(v) => setOrderStatus(v as ManualOrderStatus)}
+            />
+
+            <label>Tracking Number</label>
+            <input value={orderTrackingNumber} onChange={(e) => setOrderTrackingNumber(e.target.value)} placeholder="Optional" maxLength={100} />
+
+            <label>Notes</label>
+            <textarea value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} rows={2} placeholder="Optional details" maxLength={500} />
+
+            {orderError && <p className="worksuite-modal__error">{orderError}</p>}
+            <div className="worksuite-modal__actions">
+              {editingOrder && (
+                <button
+                  className="worksuite-modal__cancel"
+                  style={{ color: 'var(--color-danger)', marginRight: 'auto' }}
+                  onClick={async () => { await handleDeleteOrder(editingOrder); setShowOrderModal(false); }}
+                >
+                  Delete
+                </button>
+              )}
+              <button className="worksuite-modal__cancel" onClick={() => setShowOrderModal(false)}>Cancel</button>
+              <button
+                className="worksuite-modal__submit"
+                onClick={handleSaveOrder}
+                disabled={!orderVendor.trim() || !orderDate || !orderAmount || Number(orderAmount) <= 0 || isSavingOrder}
+              >
+                {isSavingOrder ? 'Saving…' : editingOrder ? 'Save Changes' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

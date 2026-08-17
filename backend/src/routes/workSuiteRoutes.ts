@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
-import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService, JobApplicationService, WorkProfileService, CalendarEventService, FinanceEntryService } from '../services/workSuiteService';
+import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService, JobApplicationService, WorkProfileService, CalendarEventService, FinanceEntryService, ManualOrderService } from '../services/workSuiteService';
 import { PlaidService } from '../services/plaidService';
 import { isPlaidConfigured } from '../utils/plaidClient';
 import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
@@ -351,6 +351,59 @@ workSuiteRoutes.delete(
   asyncHandler(async (req: any, res: Response) => {
     await FinanceEntryService.remove(req.user.userId, req.params.id);
     return ApiResponseHandler.success(res, {}, 'Finance entry deleted successfully', 200);
+  })
+);
+
+/**
+ * Manual orders/invoices — purchases or bills from outside Ornave's own
+ * marketplace (Orders & Invoices tab, Finance page).
+ */
+workSuiteRoutes.get(
+  '/manual-orders',
+  asyncHandler(async (req: any, res: Response) => {
+    const orders = await ManualOrderService.list(req.user.userId);
+    return ApiResponseHandler.success(res, orders, 'Manual orders retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.post(
+  '/manual-orders',
+  asyncHandler(async (req: any, res: Response) => {
+    const { type, vendor, description, amount, currency, status, date, trackingNumber, notes } = req.body;
+    if (!type || !vendor || amount === undefined || !date) {
+      return ApiResponseHandler.error(res, 'Type, vendor, amount, and date are required', undefined, 400);
+    }
+    const order = await ManualOrderService.create(req.user.userId, {
+      type, vendor, description, amount: Number(amount), currency, status, date, trackingNumber, notes,
+    });
+    return ApiResponseHandler.success(res, order, 'Manual order created successfully', 201);
+  })
+);
+
+workSuiteRoutes.put(
+  '/manual-orders/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    const { type, vendor, description, amount, currency, status, date, trackingNumber, notes } = req.body;
+    const order = await ManualOrderService.update(req.user.userId, req.params.id, {
+      type,
+      vendor,
+      description,
+      amount: amount === undefined ? undefined : Number(amount),
+      currency,
+      status,
+      date,
+      trackingNumber,
+      notes,
+    });
+    return ApiResponseHandler.success(res, order, 'Manual order updated successfully', 200);
+  })
+);
+
+workSuiteRoutes.delete(
+  '/manual-orders/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    await ManualOrderService.remove(req.user.userId, req.params.id);
+    return ApiResponseHandler.success(res, {}, 'Manual order deleted successfully', 200);
   })
 );
 

@@ -169,6 +169,24 @@ export interface FinanceEntry {
   updatedAt: string;
 }
 
+export type ManualOrderType = 'ORDER' | 'INVOICE';
+export type ManualOrderStatus = 'PENDING' | 'PAID' | 'CANCELLED';
+
+export interface ManualOrder {
+  id: string;
+  type: ManualOrderType;
+  vendor: string;
+  description?: string;
+  amount: number;
+  currency: string;
+  status: ManualOrderStatus;
+  date: string;
+  trackingNumber?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface BankAccount {
   id: string;
   plaidAccountId: string;
@@ -366,6 +384,26 @@ class WorkSuiteService {
 
   async deleteFinanceEntry(id: string): Promise<void> {
     await apiClient.delete(`/work-suite/finance-entries/${id}`);
+  }
+
+  // Manual orders/invoices (Orders & Invoices tab)
+  async listManualOrders(): Promise<ManualOrder[]> {
+    const response = await apiClient.get('/work-suite/manual-orders');
+    return response.data.data || [];
+  }
+
+  async createManualOrder(data: { type: ManualOrderType; vendor: string; description?: string; amount: number; currency?: string; status?: ManualOrderStatus; date: string; trackingNumber?: string; notes?: string }): Promise<ManualOrder> {
+    const response = await apiClient.post('/work-suite/manual-orders', data);
+    return response.data.data;
+  }
+
+  async updateManualOrder(id: string, data: Partial<Pick<ManualOrder, 'type' | 'vendor' | 'description' | 'amount' | 'currency' | 'status' | 'date' | 'trackingNumber' | 'notes'>>): Promise<ManualOrder> {
+    const response = await apiClient.put(`/work-suite/manual-orders/${id}`, data);
+    return response.data.data;
+  }
+
+  async deleteManualOrder(id: string): Promise<void> {
+    await apiClient.delete(`/work-suite/manual-orders/${id}`);
   }
 
   // Bank connections (Plaid)
