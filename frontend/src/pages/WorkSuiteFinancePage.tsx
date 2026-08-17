@@ -6,8 +6,11 @@ import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
 import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
 import { workSuiteService, FinanceEntry, FinanceEntryType } from '@/services/workSuiteService';
-import { IconEdit, IconClose } from '@/components/ui/Icons';
+import { storeService, Order } from '@/services/storeService';
+import { IconEdit, IconClose, IconDownload } from '@/components/ui/Icons';
 import './WorkSuite.css';
+
+type PageView = 'tracker' | 'orders';
 
 type SectionFilter = 'ALL' | FinanceEntryType;
 
@@ -28,11 +31,19 @@ export const WorkSuiteFinancePage: React.FC = () => {
   const { user } = useAuth();
   const isGuest = !user || user.id === 'guest';
 
+  const [view, setView] = useState<PageView>('tracker');
+
   const [entries, setEntries] = useState<FinanceEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [section, setSection] = useState<SectionFilter>('ALL');
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [orderDocuments, setOrderDocuments] = useState<Record<string, { id: string; name: string }[]>>({});
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<FinanceEntry | null>(null);
@@ -55,9 +66,47 @@ export const WorkSuiteFinancePage: React.FC = () => {
     }
   };
 
+  const loadOrders = async () => {
+    setIsLoadingOrders(true);
+    try {
+      setOrders(await storeService.getUserOrders());
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
   useEffect(() => {
-    if (!isGuest) load();
+    if (!isGuest) {
+      load();
+      loadOrders();
+    }
   }, [isGuest]);
+
+  const toggleOrderExpanded = async (order: Order) => {
+    if (expandedOrderId === order.id) {
+      setExpandedOrderId(null);
+      return;
+    }
+    setExpandedOrderId(order.id);
+    if (!orderDocuments[order.id]) {
+      setIsLoadingDocs(true);
+      try {
+        const docs = await storeService.getOrderDocuments(order.id);
+        setOrderDocuments((prev) => ({ ...prev, [order.id]: docs }));
+      } finally {
+        setIsLoadingDocs(false);
+      }
+    }
+  };
+
+  const handleDownloadDocument = async (order: Order, docId: string) => {
+    try {
+      const url = await storeService.getOrderDocumentDownloadUrl(order.id, docId);
+      window.open(url, '_blank');
+    } catch {
+      // Best-effort — a failed link isn't worth a page-level error banner here.
+    }
+  };
 
   const openCreate = () => {
     setEditingEntry(null);
@@ -167,6 +216,13 @@ export const WorkSuiteFinancePage: React.FC = () => {
       </div>
 
       <div className="worksuite-page__container worksuite-page__container--wide">
+        <div className="worksuite-tabs">
+          <button className={`worksuite-tab${view === 'tracker' ? ' worksuite-tab--active' : ''}`} onClick={() => setView('tracker')}>Tracker</button>
+          <button className={`worksuite-tab${view === 'orders' ? ' worksuite-tab--active' : ''}`} onClick={() => setView('orders')}>Orders &amp; Invoices</button>
+        </div>
+
+        {view === 'tracker' && (
+        <>
         {!isLoading && (
           <div className="goal-stats-strip">
             <div className="goal-stats-strip__item">
@@ -268,6 +324,87 @@ export const WorkSuiteFinancePage: React.FC = () => {
             )}
           </div>
         </div>
+        </>
+        )}
+
+        {view === 'orders' && (
+          <div className="worksuite-jobs-feed">
+            {isLoadingOrders ? (
+              <div className="worksuite-empty">Loading orders…</div>
+            ) : orders.length === 0 ? (
+              <div className="worksuite-empty worksuite-empty--goals">
+                <p>No orders yet — anything you buy through Ornave shows up here.</p>
+              </div>
+            ) : (
+              orders.map((order) => {
+                const statusColor = order.status === 'DELIVERED' || order.status === 'COMPLETED'
+                  ? '#3f6f47'
+                  : order.status === 'CANCELLED'
+                    ? '#a2504b'
+                    : '#c6a15b';
+                const isExpanded = expandedOrderId === order.id;
+                const docs = orderDocuments[order.id] || [];
+                return (
+                  <div key={order.id} className="worksuite-job-post" style={{ borderLeft: `4px solid ${statusColor}` }}>
+                    <div className="worksuite-job-post__top">
+                      <div>
+                        <h3 className="worksuite-job-post__role">{order.company?.name || 'Unknown company'}</h3>
+                        <p className="worksuite-job-post__company">{order.items.length} item{order.items.length === 1 ? '' : 's'}</p>
+                      </div>
+                      <span className="worksuite-job-post__badge" style={{ background: statusColor, color: '#14140f' }}>
+                        {order.currency} {formatMoney(order.totalAmount)}
+                      </span>
+                    </div>
+
+                    <div className="worksuite-job-post__meta">
+                      <span>{new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      <span>{order.status.charAt(0) + order.status.slice(1).toLowerCase()}</span>
+                      {order.trackingNumber && <span>Tracking: {order.trackingNumber}</span>}
+                    </div>
+
+                    <div className="worksuite-job-post__footer">
+                      <button className="worksuite-btn" onClick={() => toggleOrderExpanded(order)}>
+                        {isExpanded ? 'Hide details' : 'View items & documents'}
+                      </button>
+                    </div>
+
+                    {isExpanded && (
+                      <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--tech-border)' }}>
+                        <p style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--tech-text-dim)', margin: '0 0 8px' }}>Items</p>
+                        {order.items.map((item) => (
+                          <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--tech-text-dim)', marginBottom: '4px' }}>
+                            <span>{item.product?.name || 'Item'} × {item.quantity}</span>
+                            <span>{order.currency} {formatMoney(item.price * item.quantity)}</span>
+                          </div>
+                        ))}
+
+                        <p style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--tech-text-dim)', margin: '14px 0 8px' }}>Documents</p>
+                        {isLoadingDocs && !orderDocuments[order.id] ? (
+                          <p className="worksuite-jobs-profile-empty">Loading…</p>
+                        ) : docs.length === 0 ? (
+                          <p className="worksuite-jobs-profile-empty">No invoices or receipts attached to this order.</p>
+                        ) : (
+                          <div className="worksuite-jobs-doc-list">
+                            {docs.map((doc) => (
+                              <div key={doc.id} className="worksuite-jobs-doc-row">
+                                <div className="worksuite-jobs-doc-row__info">
+                                  <div className="worksuite-jobs-doc-row__name">{doc.name}</div>
+                                </div>
+                                <div className="worksuite-jobs-doc-row__actions">
+                                  <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDownloadDocument(order, doc.id)} title="Download"><IconDownload size={13} /></button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
 
       {showModal && (
