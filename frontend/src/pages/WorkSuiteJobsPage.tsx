@@ -30,6 +30,7 @@ import {
   IconDownload,
   IconBriefcase,
 } from '@/components/ui/Icons';
+import { downloadResumePdf } from '@/utils/resumePdf';
 import './WorkSuite.css';
 
 const formatBytes = (bytes: number): string => {
@@ -117,6 +118,13 @@ export const WorkSuiteJobsPage: React.FC = () => {
   const [isLoadingDocs, setIsLoadingDocs] = useState(true);
   const [uploadingDocs, setUploadingDocs] = useState<{ key: string; name: string; error?: boolean }[]>([]);
   const docInputRef = useRef<HTMLInputElement>(null);
+
+  const hasProfileContent = !!(workProfile.headline || workProfile.summary || workProfile.experience.length || workProfile.education.length || workProfile.skills.length);
+
+  const handleDownloadResume = () => {
+    const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Resume';
+    downloadResumePdf(workProfile, fullName, user?.email || '');
+  };
 
   const loadWorkProfile = async () => {
     setIsLoadingProfile(true);
@@ -441,14 +449,21 @@ export const WorkSuiteJobsPage: React.FC = () => {
             <div className="worksuite-jobs-profile-card">
               <div className="worksuite-jobs-profile-card__header">
                 <h4>Work Profile</h4>
-                <button className="worksuite-jobs-profile-card__edit-btn" onClick={openEditProfile}>
-                  {isLoadingProfile ? '…' : workProfile.headline || workProfile.experience.length || workProfile.education.length || workProfile.skills.length ? 'Edit' : '+ Build CV'}
-                </button>
+                <div className="worksuite-jobs-profile-card__header-actions">
+                  {hasProfileContent && (
+                    <button className="worksuite-jobs-profile-card__edit-btn" onClick={handleDownloadResume} title="Download as PDF">
+                      <IconDownload size={12} /> PDF
+                    </button>
+                  )}
+                  <button className="worksuite-jobs-profile-card__edit-btn" onClick={openEditProfile}>
+                    {isLoadingProfile ? '…' : hasProfileContent ? 'Edit' : '+ Build CV'}
+                  </button>
+                </div>
               </div>
 
               {isLoadingProfile ? (
                 <p className="worksuite-jobs-profile-empty">Loading…</p>
-              ) : !workProfile.headline && !workProfile.summary && workProfile.experience.length === 0 && workProfile.education.length === 0 && workProfile.skills.length === 0 ? (
+              ) : !hasProfileContent ? (
                 <p className="worksuite-jobs-profile-empty">
                   Build a private CV — headline, experience, education, and skills — to have ready when you apply.
                 </p>

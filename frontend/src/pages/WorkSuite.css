@@ -3072,6 +3072,13 @@
   color: var(--tech-text-main);
 }
 
+.worksuite-jobs-profile-card__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .worksuite-jobs-profile-card__edit-btn {
   background: none;
   border: 1px solid var(--tech-border);
@@ -3080,6 +3087,10 @@
   font-size: 0.7rem;
   padding: 3px 10px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 .worksuite-jobs-profile-card__edit-btn:hover {
