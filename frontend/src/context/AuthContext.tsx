@@ -297,9 +297,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
 
     try {
-      await apiClient.register(email, password, firstName, lastName, companyName, userType);
-      // After registration, auto-login
-      await login(email, password, businessType);
+      // The register endpoint already sets the session cookie and returns a
+      // full auth response — registration doesn't require email
+      // verification, only login does, so calling login() again here would
+      // wrongly block brand-new accounts before they've verified.
+      const response = await apiClient.register(email, password, firstName, lastName, companyName, userType);
+      const { user: newUser, company: newCompany } = response.data;
+      applyAuthenticatedSession(newUser, newCompany, businessType);
     } catch (err: any) {
       const errorMessage = err.message || 'Registration failed. Please try again.';
       setError(errorMessage);
