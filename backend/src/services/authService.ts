@@ -85,7 +85,8 @@ async function logAuthEvent(
     | 'PASSWORD_RESET_COMPLETED'
     | 'TWO_FACTOR_ENABLED'
     | 'TWO_FACTOR_DISABLED'
-    | 'ACCOUNT_DELETED',
+    | 'ACCOUNT_DELETED'
+    | 'ACCOUNT_PURGED',
   email: string,
   userId?: string | null,
   meta?: RequestMeta

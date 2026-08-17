@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 
 import { errorHandler } from './middleware/errorHandler';
+import { AccountPurgeService } from './services/accountPurgeService';
 import { csrfProtection } from './middleware/csrf';
 import authRoutes from './routes/authRoutes';
 import companyRoutes from './routes/companyRoutes';
@@ -225,10 +226,17 @@ const isMain =
 
 console.log(`[STARTUP] Entry point: ${entryPath}, isMain: ${isMain}, Env: ${process.env.NODE_ENV}`);
 
+const PURGE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // once a day is plenty for a 30-day window
+
 if (isMain) {
   console.log(`[STARTUP] Starting server on port ${PORT}...`);
   startServer().catch((error) => {
     console.error('[STARTUP] Failed to start server:', error);
     process.exit(1);
   });
+
+  // Run once shortly after startup (so a redeploy doesn't wait a full day to
+  // catch up on anything overdue), then on a daily interval after that.
+  setTimeout(() => AccountPurgeService.purgeExpiredDeletedAccounts().catch((err) => console.error('[AccountPurge] Run failed:', err)), 60_000);
+  setInterval(() => AccountPurgeService.purgeExpiredDeletedAccounts().catch((err) => console.error('[AccountPurge] Run failed:', err)), PURGE_CHECK_INTERVAL_MS);
 }
