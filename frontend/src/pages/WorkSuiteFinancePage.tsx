@@ -316,6 +316,47 @@ export const WorkSuiteFinancePage: React.FC = () => {
     [bankTransactions, txnAccountFilter]
   );
 
+  const netWorth = useMemo(() => {
+    let assets = 0;
+    let debt = 0;
+    for (const a of allBankAccounts) {
+      const balance = a.currentBalance ?? 0;
+      if (a.type === 'credit' || a.type === 'loan') debt += balance;
+      else assets += balance;
+    }
+    return { assets, debt, net: assets - debt };
+  }, [allBankAccounts]);
+
+  const bankSpendThisMonth = useMemo(() => {
+    const now = new Date();
+    return bankTransactions
+      .filter((t) => {
+        const d = new Date(t.date);
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && t.amount > 0;
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [bankTransactions]);
+
+  const recentActivity = useMemo(() => {
+    const fromEntries = entries.map((e) => ({
+      id: `entry-${e.id}`,
+      date: e.date,
+      label: e.description,
+      source: 'Manual',
+      amount: e.type === 'INCOME' ? e.amount : -e.amount,
+      currency: undefined as string | undefined,
+    }));
+    const fromBank = bankTransactions.map((t) => ({
+      id: `txn-${t.id}`,
+      date: t.date,
+      label: t.merchantName || t.name,
+      source: t.institutionName || 'Bank',
+      amount: -t.amount,
+      currency: t.currency,
+    }));
+    return [...fromEntries, ...fromBank].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8);
+  }, [entries, bankTransactions]);
+
   return (
     <div className="worksuite-page">
       <ProtectedPageOverlay isVisible={isGuest} />
@@ -331,32 +372,79 @@ export const WorkSuiteFinancePage: React.FC = () => {
 
       <div className="worksuite-page__container worksuite-page__container--wide">
         <div className="worksuite-tabs">
-          <button className={`worksuite-tab${view === 'tracker' ? ' worksuite-tab--active' : ''}`} onClick={() => setView('tracker')}>Tracker</button>
+          <button className={`worksuite-tab${view === 'tracker' ? ' worksuite-tab--active' : ''}`} onClick={() => setView('tracker')}>Overview</button>
           <button className={`worksuite-tab${view === 'orders' ? ' worksuite-tab--active' : ''}`} onClick={() => setView('orders')}>Orders &amp; Invoices</button>
           <button className={`worksuite-tab${view === 'bank' ? ' worksuite-tab--active' : ''}`} onClick={() => setView('bank')}>Bank Accounts</button>
         </div>
 
         {view === 'tracker' && (
         <>
+        {!isLoadingBank && allBankAccounts.length > 0 && (
+          <div className="goal-stats-strip">
+            <div className="goal-stats-strip__item">
+              <span className="goal-stats-strip__value">{formatCurrency(netWorth.net)}</span>
+              <span className="goal-stats-strip__label">Net worth</span>
+            </div>
+            <div className="goal-stats-strip__item">
+              <span className="goal-stats-strip__value" style={{ color: '#3f6f47' }}>{formatCurrency(netWorth.assets)}</span>
+              <span className="goal-stats-strip__label">Total assets</span>
+            </div>
+            <div className="goal-stats-strip__item">
+              <span className="goal-stats-strip__value" style={{ color: '#a2504b' }}>{formatCurrency(netWorth.debt)}</span>
+              <span className="goal-stats-strip__label">Total debt</span>
+            </div>
+            <div className="goal-stats-strip__item">
+              <span className="goal-stats-strip__value" style={{ color: '#a2504b' }}>{formatCurrency(bankSpendThisMonth)}</span>
+              <span className="goal-stats-strip__label">Bank spend this month</span>
+            </div>
+          </div>
+        )}
+
         {!isLoading && (
           <div className="goal-stats-strip">
             <div className="goal-stats-strip__item">
               <span className="goal-stats-strip__value" style={{ color: '#3f6f47' }}>${formatMoney(totals.income)}</span>
-              <span className="goal-stats-strip__label">Income this month</span>
+              <span className="goal-stats-strip__label">Manual income this month</span>
             </div>
             <div className="goal-stats-strip__item">
               <span className="goal-stats-strip__value" style={{ color: '#a2504b' }}>${formatMoney(totals.expense)}</span>
-              <span className="goal-stats-strip__label">Expenses this month</span>
+              <span className="goal-stats-strip__label">Manual expenses this month</span>
             </div>
             <div className="goal-stats-strip__item">
               <span className="goal-stats-strip__value">${formatMoney(totals.net)}</span>
-              <span className="goal-stats-strip__label">Net this month</span>
+              <span className="goal-stats-strip__label">Manual net this month</span>
+            </div>
+          </div>
+        )}
+
+        {recentActivity.length > 0 && (
+          <div className="worksuite-bank-card" style={{ marginBottom: '20px' }}>
+            <div className="worksuite-bank-card__header" style={{ border: 'none', paddingBottom: 0 }}>
+              <h3 className="worksuite-bank-card__title">Recent activity</h3>
+            </div>
+            <div className="worksuite-bank-txn-list" style={{ marginTop: '12px' }}>
+              {recentActivity.map((item) => {
+                const isCredit = item.amount > 0;
+                return (
+                  <div key={item.id} className="worksuite-bank-txn-row">
+                    <div className="worksuite-bank-txn-row__info">
+                      <div className="worksuite-bank-txn-row__name">{item.label}</div>
+                      <div className="worksuite-bank-txn-row__meta">
+                        {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {item.source}
+                      </div>
+                    </div>
+                    <div className={`worksuite-bank-txn-row__amount${isCredit ? ' worksuite-bank-txn-row__amount--credit' : ''}`}>
+                      {isCredit ? '+' : ''}{formatCurrency(item.amount, item.currency)}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
         <div className="worksuite-page__header-row">
-          <div />
+          <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1rem', color: 'var(--tech-text-main)' }}>Manual entries</h3>
           <button className="worksuite-create-btn" onClick={openCreate}>+ New Entry</button>
         </div>
 
