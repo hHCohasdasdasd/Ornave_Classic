@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { supabaseAdmin, FILES_BUCKET } from '../utils/supabaseStorage';
+import { PlaidService } from './plaidService';
 
 const prisma = new PrismaClient();
 
@@ -60,6 +61,16 @@ export class AccountPurgeService {
         .from(FILES_BUCKET)
         .remove(personalFiles.map((f) => f.storageKey))
         .catch((err) => console.error(`[AccountPurge] Failed to remove storage objects for user ${userId}:`, err));
+    }
+
+    // Revoke each bank connection at Plaid before wiping the local rows —
+    // this is normally already a no-op by purge time, since deleteAccount
+    // revokes immediately rather than waiting for the 30-day window.
+    const bankConnections = await prisma.bankConnection.findMany({ where: { userId }, select: { id: true } });
+    for (const conn of bankConnections) {
+      await PlaidService.removeConnection(userId, conn.id).catch((err) =>
+        console.error(`[AccountPurge] Failed to revoke bank connection ${conn.id}:`, err)
+      );
     }
 
     await prisma.$transaction([

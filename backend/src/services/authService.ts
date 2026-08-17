@@ -6,6 +6,7 @@ import { PasswordManager } from '../utils/passwordManager';
 import { TokenManager } from '../utils/tokenManager';
 import { ERROR_MESSAGES } from '../constants';
 import { sendEmail } from '../utils/email';
+import { PlaidService } from './plaidService';
 
 const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 const PASSWORD_RESET_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
@@ -964,6 +965,16 @@ export class AuthService {
           'You are the owner of a company with other active members. Transfer ownership before deleting your account.'
         );
       }
+    }
+
+    // Revoke bank access immediately — unlike everything else, which waits
+    // for the 30-day purge, a live credential to someone's real bank data
+    // has no business staying active a moment past account deletion.
+    const bankConnections = await prisma.bankConnection.findMany({ where: { userId }, select: { id: true } });
+    for (const conn of bankConnections) {
+      await PlaidService.removeConnection(userId, conn.id).catch((err) =>
+        console.error(`[AuthService] Failed to revoke bank connection ${conn.id} on account deletion:`, err)
+      );
     }
 
     const originalEmail = user.email;

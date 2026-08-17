@@ -1,16 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePlaidLink } from 'react-plaid-link';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
 import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
-import { workSuiteService, FinanceEntry, FinanceEntryType } from '@/services/workSuiteService';
+import { workSuiteService, FinanceEntry, FinanceEntryType, BankConnection, BankTransaction } from '@/services/workSuiteService';
 import { storeService, Order } from '@/services/storeService';
-import { IconEdit, IconClose, IconDownload } from '@/components/ui/Icons';
+import { IconEdit, IconClose, IconDownload, IconCard } from '@/components/ui/Icons';
 import './WorkSuite.css';
 
-type PageView = 'tracker' | 'orders';
+type PageView = 'tracker' | 'orders' | 'bank';
 
 type SectionFilter = 'ALL' | FinanceEntryType;
 
@@ -45,6 +46,15 @@ export const WorkSuiteFinancePage: React.FC = () => {
   const [orderDocuments, setOrderDocuments] = useState<Record<string, { id: string; name: string }[]>>({});
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
 
+  const [bankConnections, setBankConnections] = useState<BankConnection[]>([]);
+  const [isLoadingBank, setIsLoadingBank] = useState(true);
+  const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
+  const [plaidConfigured, setPlaidConfigured] = useState(false);
+  const [linkToken, setLinkToken] = useState<string | null>(null);
+  const [isConnectingBank, setIsConnectingBank] = useState(false);
+  const [bankError, setBankError] = useState<string | null>(null);
+
   const [showModal, setShowModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<FinanceEntry | null>(null);
   const [entryType, setEntryType] = useState<FinanceEntryType>('INCOME');
@@ -75,12 +85,80 @@ export const WorkSuiteFinancePage: React.FC = () => {
     }
   };
 
+  const loadBank = async () => {
+    setIsLoadingBank(true);
+    setIsLoadingTransactions(true);
+    try {
+      const [connections, status] = await Promise.all([
+        workSuiteService.listBankConnections(),
+        workSuiteService.getPlaidStatus(),
+      ]);
+      setBankConnections(connections);
+      setPlaidConfigured(status.configured);
+    } finally {
+      setIsLoadingBank(false);
+    }
+    try {
+      setBankTransactions(await workSuiteService.listBankTransactions(30));
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  };
+
   useEffect(() => {
     if (!isGuest) {
       load();
       loadOrders();
+      loadBank();
     }
   }, [isGuest]);
+
+  const onPlaidSuccess = useCallback(async (publicToken: string | null) => {
+    if (!publicToken) return;
+    setIsConnectingBank(true);
+    setBankError(null);
+    try {
+      await workSuiteService.exchangePlaidPublicToken(publicToken);
+      setLinkToken(null);
+      await loadBank();
+    } catch {
+      setBankError('Could not link that account — try again.');
+    } finally {
+      setIsConnectingBank(false);
+    }
+  }, []);
+
+  const { open: openPlaidLink, ready: plaidLinkReady } = usePlaidLink({
+    token: linkToken || '',
+    onSuccess: onPlaidSuccess,
+  });
+
+  useEffect(() => {
+    if (linkToken && plaidLinkReady) {
+      openPlaidLink();
+    }
+  }, [linkToken, plaidLinkReady, openPlaidLink]);
+
+  const handleConnectBank = async () => {
+    setBankError(null);
+    setIsConnectingBank(true);
+    try {
+      const token = await workSuiteService.createPlaidLinkToken();
+      setLinkToken(token);
+    } catch {
+      setBankError('Could not start bank connection — try again later.');
+      setIsConnectingBank(false);
+    }
+  };
+
+  const handleDisconnectBank = async (connection: BankConnection) => {
+    setBankConnections((prev) => prev.filter((c) => c.id !== connection.id));
+    try {
+      await workSuiteService.removeBankConnection(connection.id);
+    } catch {
+      await loadBank();
+    }
+  };
 
   const toggleOrderExpanded = async (order: Order) => {
     if (expandedOrderId === order.id) {
@@ -219,6 +297,7 @@ export const WorkSuiteFinancePage: React.FC = () => {
         <div className="worksuite-tabs">
           <button className={`worksuite-tab${view === 'tracker' ? ' worksuite-tab--active' : ''}`} onClick={() => setView('tracker')}>Tracker</button>
           <button className={`worksuite-tab${view === 'orders' ? ' worksuite-tab--active' : ''}`} onClick={() => setView('orders')}>Orders &amp; Invoices</button>
+          <button className={`worksuite-tab${view === 'bank' ? ' worksuite-tab--active' : ''}`} onClick={() => setView('bank')}>Bank Accounts</button>
         </div>
 
         {view === 'tracker' && (
@@ -402,6 +481,93 @@ export const WorkSuiteFinancePage: React.FC = () => {
                   </div>
                 );
               })
+            )}
+          </div>
+        )}
+
+        {view === 'bank' && (
+          <div className="worksuite-jobs-feed">
+            <div className="worksuite-page__header-row">
+              <div />
+              <button
+                className="worksuite-create-btn"
+                onClick={handleConnectBank}
+                disabled={!plaidConfigured || isConnectingBank}
+              >
+                {isConnectingBank ? 'Connecting…' : '+ Connect Bank'}
+              </button>
+            </div>
+
+            {bankError && <p className="worksuite-modal__error">{bankError}</p>}
+            {!plaidConfigured && !isLoadingBank && (
+              <div className="worksuite-empty worksuite-empty--goals">
+                <p>Bank connections aren't available right now — try again later.</p>
+              </div>
+            )}
+
+            {isLoadingBank ? (
+              <div className="worksuite-empty">Loading bank accounts…</div>
+            ) : bankConnections.length === 0 ? (
+              plaidConfigured && (
+                <div className="worksuite-empty worksuite-empty--goals">
+                  <p>No bank accounts connected yet — link one to see balances and transactions here.</p>
+                  <button className="worksuite-create-btn" onClick={handleConnectBank} disabled={isConnectingBank}>
+                    {isConnectingBank ? 'Connecting…' : '+ Connect Bank'}
+                  </button>
+                </div>
+              )
+            ) : (
+              bankConnections.map((connection) => (
+                <div key={connection.id} className="worksuite-job-post" style={{ borderLeft: '4px solid #c6a15b' }}>
+                  <div className="worksuite-job-post__top">
+                    <div>
+                      <h3 className="worksuite-job-post__role">{connection.institutionName || 'Connected bank'}</h3>
+                      <p className="worksuite-job-post__company">{connection.accounts.length} account{connection.accounts.length === 1 ? '' : 's'}</p>
+                    </div>
+                    <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDisconnectBank(connection)} title="Disconnect"><IconClose size={13} /></button>
+                  </div>
+
+                  <div style={{ marginTop: '10px' }}>
+                    {connection.accounts.map((account) => (
+                      <div key={account.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--tech-text-dim)', marginBottom: '6px' }}>
+                        <span><IconCard size={13} /> {account.name}{account.mask ? ` ••••${account.mask}` : ''}</span>
+                        <span>{account.currency || 'USD'} {formatMoney(account.currentBalance ?? 0)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+
+            {bankConnections.length > 0 && (
+              <>
+                <h4 style={{ margin: '18px 0 8px', fontSize: '0.85rem', color: 'var(--tech-text-dim)' }}>Recent transactions</h4>
+                {isLoadingTransactions ? (
+                  <div className="worksuite-empty">Loading transactions…</div>
+                ) : bankTransactions.length === 0 ? (
+                  <div className="worksuite-empty worksuite-empty--goals">
+                    <p>No transactions in the last 30 days.</p>
+                  </div>
+                ) : (
+                  <div className="worksuite-jobs-doc-list">
+                    {bankTransactions.map((tx) => (
+                      <div key={tx.id} className="worksuite-jobs-doc-row">
+                        <div className="worksuite-jobs-doc-row__info">
+                          <div className="worksuite-jobs-doc-row__name">{tx.merchantName || tx.name}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--tech-text-dim)' }}>
+                            {new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                            {tx.category ? ` · ${tx.category}` : ''}
+                            {tx.pending ? ' · Pending' : ''}
+                          </div>
+                        </div>
+                        <div className="worksuite-jobs-doc-row__actions">
+                          <span>{tx.currency || 'USD'} {formatMoney(tx.amount)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

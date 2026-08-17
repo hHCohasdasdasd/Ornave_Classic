@@ -169,6 +169,39 @@ export interface FinanceEntry {
   updatedAt: string;
 }
 
+export interface BankAccount {
+  id: string;
+  plaidAccountId: string;
+  name: string;
+  officialName?: string;
+  mask?: string;
+  type: string;
+  subtype?: string;
+  currentBalance?: number;
+  availableBalance?: number;
+  currency?: string;
+}
+
+export interface BankConnection {
+  id: string;
+  institutionName?: string;
+  accounts: BankAccount[];
+  createdAt: string;
+}
+
+export interface BankTransaction {
+  id: string;
+  accountId: string;
+  institutionName?: string;
+  name: string;
+  merchantName?: string;
+  amount: number;
+  currency?: string;
+  date: string;
+  category?: string;
+  pending: boolean;
+}
+
 class WorkSuiteService {
   async getSummary(): Promise<WorkSuiteSummary> {
     const response = await apiClient.get('/work-suite/summary');
@@ -333,6 +366,36 @@ class WorkSuiteService {
 
   async deleteFinanceEntry(id: string): Promise<void> {
     await apiClient.delete(`/work-suite/finance-entries/${id}`);
+  }
+
+  // Bank connections (Plaid)
+  async getPlaidStatus(): Promise<{ configured: boolean }> {
+    const response = await apiClient.get('/work-suite/plaid/status');
+    return response.data.data;
+  }
+
+  async createPlaidLinkToken(): Promise<string> {
+    const response = await apiClient.post('/work-suite/plaid/link-token');
+    return response.data.data.linkToken;
+  }
+
+  async exchangePlaidPublicToken(publicToken: string): Promise<BankConnection> {
+    const response = await apiClient.post('/work-suite/plaid/exchange-token', { publicToken });
+    return response.data.data;
+  }
+
+  async listBankConnections(): Promise<BankConnection[]> {
+    const response = await apiClient.get('/work-suite/plaid/connections');
+    return response.data.data || [];
+  }
+
+  async listBankTransactions(days = 30): Promise<BankTransaction[]> {
+    const response = await apiClient.get('/work-suite/plaid/transactions', { params: { days } });
+    return response.data.data || [];
+  }
+
+  async removeBankConnection(id: string): Promise<void> {
+    await apiClient.delete(`/work-suite/plaid/connections/${id}`);
   }
 
   // Work Profile (private CV, used for job applications)

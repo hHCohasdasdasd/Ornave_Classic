@@ -4,6 +4,8 @@ import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
 import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService, JobApplicationService, WorkProfileService, CalendarEventService, FinanceEntryService } from '../services/workSuiteService';
+import { PlaidService } from '../services/plaidService';
+import { isPlaidConfigured } from '../utils/plaidClient';
 import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
 import { createFileUpload } from '../utils/uploadConfig';
 
@@ -349,6 +351,60 @@ workSuiteRoutes.delete(
   asyncHandler(async (req: any, res: Response) => {
     await FinanceEntryService.remove(req.user.userId, req.params.id);
     return ApiResponseHandler.success(res, {}, 'Finance entry deleted successfully', 200);
+  })
+);
+
+/**
+ * Plaid — connecting a real bank account from the Finance page.
+ */
+workSuiteRoutes.get(
+  '/plaid/status',
+  asyncHandler(async (_req: any, res: Response) => {
+    return ApiResponseHandler.success(res, { configured: isPlaidConfigured() }, 'Plaid status retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.post(
+  '/plaid/link-token',
+  asyncHandler(async (req: any, res: Response) => {
+    if (!isPlaidConfigured()) return ApiResponseHandler.error(res, 'Bank connections are not configured', undefined, 503);
+    const linkToken = await PlaidService.createLinkToken(req.user.userId);
+    return ApiResponseHandler.success(res, { linkToken }, 'Link token created successfully', 200);
+  })
+);
+
+workSuiteRoutes.post(
+  '/plaid/exchange-token',
+  asyncHandler(async (req: any, res: Response) => {
+    const { publicToken } = req.body;
+    if (!publicToken) return ApiResponseHandler.error(res, 'publicToken is required', undefined, 400);
+    const connection = await PlaidService.exchangePublicToken(req.user.userId, publicToken);
+    return ApiResponseHandler.success(res, connection, 'Bank connected successfully', 201);
+  })
+);
+
+workSuiteRoutes.get(
+  '/plaid/connections',
+  asyncHandler(async (req: any, res: Response) => {
+    const connections = await PlaidService.listConnections(req.user.userId);
+    return ApiResponseHandler.success(res, connections, 'Bank connections retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.get(
+  '/plaid/transactions',
+  asyncHandler(async (req: any, res: Response) => {
+    const days = req.query.days ? Number(req.query.days) : 30;
+    const transactions = await PlaidService.listTransactions(req.user.userId, days);
+    return ApiResponseHandler.success(res, transactions, 'Transactions retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.delete(
+  '/plaid/connections/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    await PlaidService.removeConnection(req.user.userId, req.params.id);
+    return ApiResponseHandler.success(res, {}, 'Bank connection removed successfully', 200);
   })
 );
 
