@@ -8,6 +8,19 @@ import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { workSuiteService, Task, Project, Goal, Note, NoteType, NoteShape, NoteFontSize, FocusPrefs } from '@/services/workSuiteService';
 import { scopedKey } from '@/utils/storage';
+import {
+  IconAlertTriangle,
+  IconClock,
+  IconFolder,
+  IconEdit,
+  IconClose,
+  IconTarget,
+  IconArticle,
+  IconStar,
+  IconTrophy,
+  IconMindmap,
+  IconUndo,
+} from '@/components/ui/Icons';
 import './WorkSuite.css';
 
 type SectionTab = 'board' | 'goals' | 'notes' | 'focus';
@@ -918,12 +931,12 @@ export const WorkSuitePersonalPage: React.FC = () => {
               <div className="worksuite-tasks-banner">
                 {prefs.notifyOverdue && overdueTasks.length > 0 && (
                   <span className="worksuite-tasks-banner__item worksuite-tasks-banner__item--overdue">
-                    ⚠ {overdueTasks.length} overdue
+                    <IconAlertTriangle size={13} /> {overdueTasks.length} overdue
                   </span>
                 )}
                 {prefs.notifyDueSoon && dueSoonTasks.length > 0 && (
                   <span className="worksuite-tasks-banner__item">
-                    ⏳ {dueSoonTasks.length} due within 3 days
+                    <IconClock size={13} /> {dueSoonTasks.length} due within 3 days
                   </span>
                 )}
               </div>
@@ -1027,7 +1040,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
 
                                   {(task.project || task.dueDate || overdue || dueSoon) && (
                                     <div className="worksuite-kanban-card__meta">
-                                      {task.project && <span>📁 {task.project.name}</span>}
+                                      {task.project && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><IconFolder size={12} /> {task.project.name}</span>}
                                       {task.dueDate && <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>}
                                       {overdue && <span className="worksuite-kanban-card__flag worksuite-kanban-card__flag--overdue">Overdue</span>}
                                       {!overdue && dueSoon && <span className="worksuite-kanban-card__flag">Due soon</span>}
@@ -1043,8 +1056,8 @@ export const WorkSuitePersonalPage: React.FC = () => {
                                       title="Move to another column"
                                     />
                                     <div className="worksuite-kanban-card__actions">
-                                      <button className="worksuite-kanban-card__icon-btn" onClick={() => openEditTask(task)} title="Edit">✎</button>
-                                      <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDeleteTask(task)} title="Delete">✕</button>
+                                      <button className="worksuite-kanban-card__icon-btn" onClick={() => openEditTask(task)} title="Edit"><IconEdit size={13} /></button>
+                                      <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDeleteTask(task)} title="Delete"><IconClose size={13} /></button>
                                     </div>
                                   </div>
                                 </div>
@@ -1177,7 +1190,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                 <div className="worksuite-empty">Loading goals…</div>
               ) : filteredGoals.length === 0 ? (
                 <div className="worksuite-empty worksuite-empty--goals">
-                  <div className="worksuite-empty__icon">🎯</div>
+                  <div className="worksuite-empty__icon"><IconTarget size={32} /></div>
                   <p>No goals here yet — set one to start tracking progress.</p>
                   {goalFilter !== 'ALL' && (
                     <button className="worksuite-create-btn" onClick={openCreateGoal}>+ New Goal</button>
@@ -1205,7 +1218,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                           )}
                           {deadline && (
                             <span className={`goal-card__deadline${deadline.overdue ? ' goal-card__deadline--overdue' : deadline.soon ? ' goal-card__deadline--soon' : ''}`}>
-                              {deadline.overdue ? '⚠' : '🎯'} {new Date(goal.targetDate!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {deadline.label}
+                              {deadline.overdue ? <IconAlertTriangle size={12} /> : <IconTarget size={12} />} {new Date(goal.targetDate!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {deadline.label}
                             </span>
                           )}
                         </div>
@@ -1240,14 +1253,14 @@ export const WorkSuitePersonalPage: React.FC = () => {
                       )}
 
                       <div className="worksuite-card__actions">
-                        <button className="worksuite-btn" onClick={() => openEditGoal(goal)}>✎ Edit</button>
+                        <button className="worksuite-btn" onClick={() => openEditGoal(goal)}><IconEdit size={12} /> Edit</button>
                         {goal.status === 'ACTIVE' && (
                           <button className="worksuite-btn" onClick={() => setGoalStatus(goal, 'ABANDONED')}>Abandon</button>
                         )}
                         {goal.status !== 'ACTIVE' && (
-                          <button className="worksuite-btn" onClick={() => setGoalStatus(goal, 'ACTIVE')}>↺ Reactivate</button>
+                          <button className="worksuite-btn" onClick={() => setGoalStatus(goal, 'ACTIVE')}><IconUndo size={12} /> Reactivate</button>
                         )}
-                        <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteGoal(goal)}>✕ Delete</button>
+                        <button className="worksuite-btn worksuite-btn--danger" onClick={() => handleDeleteGoal(goal)}><IconClose size={12} /> Delete</button>
                       </div>
                     </div>
                   );
@@ -1308,7 +1321,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                     <div className="worksuite-empty">Loading notes…</div>
                   ) : plainNotes.length === 0 ? (
                     <div className="worksuite-empty worksuite-empty--goals">
-                      <div className="worksuite-empty__icon">📝</div>
+                      <div className="worksuite-empty__icon"><IconArticle size={32} /></div>
                       <p>No notes yet — jot something down.</p>
                       <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'NOTE' })}>+ New Note</button>
                     </div>
@@ -1331,7 +1344,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                               onClick={(e) => { e.stopPropagation(); toggleNotePinned(note); }}
                               title={note.pinned ? 'Unpin' : 'Pin to top'}
                             >
-                              {note.pinned ? '★' : '☆'}
+                              <IconStar size={13} filled={note.pinned} />
                             </button>
                           </div>
                           <p className="worksuite-card__description note-card__content">{notePreviewText(note)}</p>
@@ -1339,8 +1352,8 @@ export const WorkSuitePersonalPage: React.FC = () => {
                             Edited {formatRelativeShort(note.updatedAt)}
                           </div>
                           <div className="worksuite-card__actions">
-                            <button className="worksuite-btn" onClick={(e) => { e.stopPropagation(); openEditNote(note); }}>✎ Edit</button>
-                            <button className="worksuite-btn worksuite-btn--danger" onClick={(e) => { e.stopPropagation(); handleDeleteNote(note); }}>✕ Delete</button>
+                            <button className="worksuite-btn" onClick={(e) => { e.stopPropagation(); openEditNote(note); }}><IconEdit size={12} /> Edit</button>
+                            <button className="worksuite-btn worksuite-btn--danger" onClick={(e) => { e.stopPropagation(); handleDeleteNote(note); }}><IconClose size={12} /> Delete</button>
                           </div>
                         </div>
                       );
@@ -1355,7 +1368,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                 <div className="worksuite-empty">Loading notes…</div>
               ) : stickyNotes.length === 0 ? (
                 <div className="worksuite-empty worksuite-empty--goals">
-                  <div className="worksuite-empty__icon">🏅</div>
+                  <div className="worksuite-empty__icon"><IconTrophy size={32} /></div>
                   <p>No plaques yet — mount your first one.</p>
                   <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'STICKY' })}>+ New Plaque</button>
                 </div>
@@ -1377,7 +1390,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                         onClick={(e) => { e.stopPropagation(); handleDeleteNote(note); }}
                         title="Remove"
                       >
-                        ✕
+                        <IconClose size={12} />
                       </button>
                       {note.title && <div className="sticky-note__title">{note.title}</div>}
                       <div className="sticky-note__content">{note.content}</div>
@@ -1393,7 +1406,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                 <div className="worksuite-empty">Loading notes…</div>
               ) : mindMapRoots.length === 0 ? (
                 <div className="worksuite-empty worksuite-empty--goals">
-                  <div className="worksuite-empty__icon">🧠</div>
+                  <div className="worksuite-empty__icon"><IconMindmap size={32} /></div>
                   <p>No mind maps yet — start one and branch out your ideas.</p>
                   <button className="worksuite-create-btn" onClick={() => openCreateNote({ type: 'MINDMAP' })}>+ New Mind Map</button>
                 </div>
@@ -1471,7 +1484,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                                   onClick={(e) => { e.stopPropagation(); openEditNote(root); }}
                                   title="Edit"
                                 >
-                                  ✎
+                                  <IconEdit size={11} />
                                 </button>
                               </div>
 
@@ -1496,7 +1509,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                                       onClick={(e) => { e.stopPropagation(); openEditNote(b); }}
                                       title="Edit"
                                     >
-                                      ✎
+                                      <IconEdit size={11} />
                                     </button>
                                     <button
                                       className="mindmap-node__delete"
@@ -1504,7 +1517,7 @@ export const WorkSuitePersonalPage: React.FC = () => {
                                       onClick={(e) => { e.stopPropagation(); handleDeleteNote(b); }}
                                       title="Remove branch"
                                     >
-                                      ✕
+                                      <IconClose size={11} />
                                     </button>
                                   </div>
                                 );

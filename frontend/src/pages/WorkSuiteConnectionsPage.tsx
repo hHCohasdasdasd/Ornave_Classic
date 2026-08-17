@@ -5,6 +5,7 @@ import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { networkService } from '@/services/networkService';
 import { FirmConnection, UserProfile } from '@/types/discovery';
+import { IconHandshake, IconBuilding } from '@/components/ui/Icons';
 import './WorkSuite.css';
 
 const getInitials = (firstName: string, lastName: string) => `${firstName[0] || ''}${lastName[0] || ''}`;
@@ -107,7 +108,7 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
           ) : kind === 'people' ? (
             filteredPeople.length === 0 ? (
               <div className="worksuite-empty worksuite-empty--goals">
-                <div className="worksuite-empty__icon">🤝</div>
+                <div className="worksuite-empty__icon"><IconHandshake size={32} /></div>
                 <p>{search ? 'No connections match your search.' : "You haven't connected with anyone yet."}</p>
                 {!search && <button className="worksuite-create-btn" onClick={() => navigate('/network')}>Find People</button>}
               </div>
@@ -140,7 +141,7 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
             )
           ) : filteredFirms.length === 0 ? (
             <div className="worksuite-empty worksuite-empty--goals">
-              <div className="worksuite-empty__icon">🏢</div>
+              <div className="worksuite-empty__icon"><IconBuilding size={32} /></div>
               <p>{search ? 'No firms match your search.' : "You aren't connected with any firms yet."}</p>
               {!search && <button className="worksuite-create-btn" onClick={() => navigate('/firms')}>Find Firms</button>}
             </div>
@@ -153,7 +154,7 @@ export const WorkSuiteConnectionsPage: React.FC = () => {
                     onClick={() => openFirmDetail(firm)}
                   >
                     <div className="worksuite-connection-avatar worksuite-connection-avatar--square">
-                      🏢
+                      <IconBuilding size={20} />
                     </div>
                     <div>
                       <div className="worksuite-card__title">{firm.name}</div>

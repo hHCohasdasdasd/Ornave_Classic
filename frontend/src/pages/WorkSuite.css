@@ -276,6 +276,7 @@
   border: 1px solid rgba(198, 161, 91, 0.25);
   font-size: 1.2rem;
   margin-bottom: 16px;
+  color: var(--tech-accent-gold);
 }
 
 .worksuite-module-tile__title {
@@ -550,6 +551,9 @@
 .goal-card__deadline {
   font-size: 0.72rem;
   color: var(--tech-text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .goal-card__deadline--soon {
@@ -615,6 +619,8 @@
 .worksuite-empty__icon {
   font-size: 2rem;
   opacity: 0.6;
+  color: var(--tech-text-dim);
+  display: flex;
 }
 
 /* Notes */
@@ -667,6 +673,7 @@
   cursor: pointer;
   padding: 0;
   transition: color 0.2s ease, transform 0.15s ease;
+  display: inline-flex;
 }
 
 .note-card__pin:hover {
@@ -825,6 +832,7 @@
   color: var(--tech-text-dim);
   font-size: 0.8rem;
   cursor: pointer;
+  display: inline-flex;
   /* Always at least partly visible — hover-only (opacity: 0) meant there
      was no way to discover or use this at all on touch devices, and it was
      easy to miss even with a mouse. */
@@ -1077,6 +1085,7 @@
   cursor: pointer;
   padding: 0;
   transition: opacity 0.15s ease, color 0.15s ease;
+  display: inline-flex;
 }
 
 .mindmap-node__edit:hover {
@@ -1441,6 +1450,7 @@
   background: rgba(198, 161, 91, 0.08);
   border: 1px solid rgba(198, 161, 91, 0.25);
   font-size: 1.1rem;
+  color: var(--tech-accent-gold);
 }
 
 .worksuite-achievement__main {
@@ -1516,6 +1526,9 @@
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .worksuite-btn:hover {
@@ -1767,6 +1780,9 @@
   background: rgba(198, 161, 91, 0.1);
   color: var(--tech-accent-gold-text);
   border: 1px solid rgba(198, 161, 91, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .worksuite-tasks-banner__item--overdue {
@@ -2189,6 +2205,9 @@
 .files-dropzone__icon {
   font-size: 2rem;
   margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  color: var(--tech-text-dim);
 }
 
 .files-dropzone__text {
@@ -2279,6 +2298,8 @@
 .files-row__icon {
   font-size: 1.4rem;
   flex-shrink: 0;
+  display: flex;
+  color: var(--tech-text-dim);
 }
 
 .files-row__main {
@@ -2368,6 +2389,8 @@
 .files-folder__icon {
   font-size: 1.3rem;
   flex-shrink: 0;
+  display: flex;
+  color: var(--tech-accent-gold);
 }
 
 .files-folder__name {
@@ -2390,6 +2413,8 @@
   cursor: pointer;
   opacity: 0.55;
   padding: 2px 5px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .files-folder__delete:hover {
@@ -2953,6 +2978,9 @@
   font-size: 0.85rem;
   color: var(--tech-text-dim);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .worksuite-job-post__badge {
@@ -2978,6 +3006,15 @@
 .worksuite-job-post__meta a {
   color: var(--tech-blue);
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.worksuite-job-post__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .worksuite-job-post__notes {

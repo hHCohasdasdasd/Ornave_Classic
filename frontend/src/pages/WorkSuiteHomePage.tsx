@@ -4,32 +4,33 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { workSuiteService, WorkSuiteSummary, WorkSuiteInsight } from '@/services/workSuiteService';
+import { IconCompass, IconBriefcase, IconTrophy, IconCloud, IconHandshake, IconCheck, IconLayers, IconArticle, IconBag, IconUsers, IconSettings, IconSpark } from '@/components/ui/Icons';
 import './WorkSuite.css';
 
 const GROWTH_MODULES = [
-  { icon: '🧭', title: 'Planning', description: 'Your board, goals, notes, and focus timer — all in one place.', route: '/work-suite/personal' },
-  { icon: '💼', title: 'Jobs', description: 'Track the roles you\'re pursuing, from application to offer.', route: '/work-suite/jobs' },
-  { icon: '🏆', title: 'Achievements', description: 'Every win worth remembering, logged in one place.', route: '/work-suite/achievements' },
+  { icon: <IconCompass size={22} />, title: 'Planning', description: 'Your board, goals, notes, and focus timer — all in one place.', route: '/work-suite/personal' },
+  { icon: <IconBriefcase size={22} />, title: 'Jobs', description: 'Track the roles you\'re pursuing, from application to offer.', route: '/work-suite/jobs' },
+  { icon: <IconTrophy size={22} />, title: 'Achievements', description: 'Every win worth remembering, logged in one place.', route: '/work-suite/achievements' },
 ];
 
 const FREELANCE_MODULES = [
-  { icon: '☁️', title: 'Files', description: 'Your own cloud — upload, store, and get back anything, anytime.', route: '/work-suite/files' },
-  { icon: '🤝', title: 'Connections', description: "Your network — the people you're connected with on Ornave.", route: '/work-suite/connections' },
+  { icon: <IconCloud size={22} />, title: 'Files', description: 'Your own cloud — upload, store, and get back anything, anytime.', route: '/work-suite/files' },
+  { icon: <IconHandshake size={22} />, title: 'Connections', description: "Your network — the people you're connected with on Ornave.", route: '/work-suite/connections' },
 ];
 
 const COMPANY_MODULES = [
-  { icon: '☁️', title: 'Files', description: 'Your own cloud — upload, store, and get back anything, anytime.', route: '/work-suite/files' },
-  { icon: '✅', title: 'Tasks', description: 'Everything on your plate, organized by status and priority.', route: '/work-suite/personal?tab=board' },
-  { icon: '🤝', title: 'Connections', description: "Your network — the people you're connected with on Ornave.", route: '/work-suite/connections' },
+  { icon: <IconCloud size={22} />, title: 'Files', description: 'Your own cloud — upload, store, and get back anything, anytime.', route: '/work-suite/files' },
+  { icon: <IconCheck size={22} />, title: 'Tasks', description: 'Everything on your plate, organized by status and priority.', route: '/work-suite/personal?tab=board' },
+  { icon: <IconHandshake size={22} />, title: 'Connections', description: "Your network — the people you're connected with on Ornave.", route: '/work-suite/connections' },
 ];
 
 const COMPANY_TOOLS = [
-  { icon: '🧩', title: 'ERP Modules', description: 'Configure internal workflow modules.', route: '/modules' },
-  { icon: '📄', title: 'Page Builder', description: 'Build structured internal pages.', route: '/pages' },
-  { icon: '💼', title: 'Transactions', description: 'Track B2B orders and payments.', route: '/transactions' },
-  { icon: '🏬', title: 'Manage Store', description: 'Manage your storefront products and orders.', route: '/manage-store' },
-  { icon: '👥', title: 'Client Management', description: 'Followers, service usage, and engagement.', route: '/firm/clients' },
-  { icon: '⚙️', title: 'Company Settings', description: 'Update company information and settings.', route: '/company-settings' },
+  { icon: <IconLayers size={22} />, title: 'ERP Modules', description: 'Configure internal workflow modules.', route: '/modules' },
+  { icon: <IconArticle size={22} />, title: 'Page Builder', description: 'Build structured internal pages.', route: '/pages' },
+  { icon: <IconBriefcase size={22} />, title: 'Transactions', description: 'Track B2B orders and payments.', route: '/transactions' },
+  { icon: <IconBag size={22} />, title: 'Manage Store', description: 'Manage your storefront products and orders.', route: '/manage-store' },
+  { icon: <IconUsers size={22} />, title: 'Client Management', description: 'Followers, service usage, and engagement.', route: '/firm/clients' },
+  { icon: <IconSettings size={22} />, title: 'Company Settings', description: 'Update company information and settings.', route: '/company-settings' },
 ];
 
 const ModuleGrid: React.FC<{ items: typeof GROWTH_MODULES; onNavigate: (route: string) => void }> = ({ items, onNavigate }) => (
@@ -108,7 +109,7 @@ export const WorkSuiteHomePage: React.FC = () => {
       <div className="worksuite-page__container">
         <div className="worksuite-assistant">
           <div className="worksuite-assistant__header">
-            <div className="worksuite-assistant__avatar">✦</div>
+            <div className="worksuite-assistant__avatar"><IconSpark size={16} /></div>
             <div className="worksuite-assistant__lead">
               {insights === null
                 ? 'Taking a look at things…'

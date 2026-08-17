@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
+import { IconTrophy } from '@/components/ui/Icons';
 import { workSuiteService, Achievement } from '@/services/workSuiteService';
 import './WorkSuite.css';
 
@@ -95,14 +96,14 @@ export const WorkSuiteAchievementsPage: React.FC = () => {
           <div className="worksuite-empty">Loading achievements…</div>
         ) : achievements.length === 0 ? (
           <div className="worksuite-empty worksuite-empty--goals">
-            <div className="worksuite-empty__icon">🏆</div>
+            <div className="worksuite-empty__icon"><IconTrophy size={32} /></div>
             <p>Nothing logged yet — record your first win.</p>
             <button className="worksuite-create-btn" onClick={openCreate}>+ Log Achievement</button>
           </div>
         ) : (
           achievements.map((a) => (
             <div key={a.id} className="worksuite-achievement">
-              <div className="worksuite-achievement__icon">{a.category === 'Milestone' ? '🥇' : '🏆'}</div>
+              <div className="worksuite-achievement__icon"><IconTrophy size={18} /></div>
               <div className="worksuite-achievement__main">
                 <div className="worksuite-achievement__title">{a.title}</div>
                 <div className="worksuite-achievement__meta">

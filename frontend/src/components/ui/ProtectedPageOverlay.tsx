@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { IconLock } from '@/components/ui/Icons';
 import './ProtectedPageOverlay.css';
 
 interface ProtectedPageOverlayProps {
@@ -16,7 +17,7 @@ export const ProtectedPageOverlay: React.FC<ProtectedPageOverlayProps> = ({ isVi
       <div className="protected-page-overlay__blur" />
       <div className="protected-page-overlay__content">
         <div className="protected-page-overlay__card">
-          <div className="protected-page-overlay__icon">🔒</div>
+          <div className="protected-page-overlay__icon"><IconLock size={28} /></div>
           <h2 className="protected-page-overlay__title">Sign In Required</h2>
           <p className="protected-page-overlay__description">
             Please log in or create an account to access this page.

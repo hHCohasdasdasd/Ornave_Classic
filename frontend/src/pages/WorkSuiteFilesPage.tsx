@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { workSuiteService, UserFile, UserFolder } from '@/services/workSuiteService';
+import { IconCloud, IconFolder, IconImage, IconVideo, IconMusic, IconArticle, IconArchive, IconChart, IconFile, IconClose } from '@/components/ui/Icons';
 import './WorkSuite.css';
 
 const formatBytes = (bytes: number): string => {
@@ -14,16 +15,16 @@ const formatBytes = (bytes: number): string => {
   return `${i === 0 ? value : value.toFixed(1)} ${units[i]}`;
 };
 
-const iconForMime = (mimeType: string): string => {
-  if (mimeType.startsWith('image/')) return '🖼️';
-  if (mimeType.startsWith('video/')) return '🎬';
-  if (mimeType.startsWith('audio/')) return '🎵';
-  if (mimeType === 'application/pdf') return '📕';
-  if (mimeType.includes('zip') || mimeType.includes('compressed') || mimeType.includes('tar')) return '🗜️';
-  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return '📊';
-  if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
-  if (mimeType.startsWith('text/')) return '📄';
-  return '📦';
+const iconForMime = (mimeType: string) => {
+  if (mimeType.startsWith('image/')) return <IconImage size={18} />;
+  if (mimeType.startsWith('video/')) return <IconVideo size={18} />;
+  if (mimeType.startsWith('audio/')) return <IconMusic size={18} />;
+  if (mimeType === 'application/pdf') return <IconArticle size={18} />;
+  if (mimeType.includes('zip') || mimeType.includes('compressed') || mimeType.includes('tar')) return <IconArchive size={18} />;
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return <IconChart size={18} />;
+  if (mimeType.includes('word') || mimeType.includes('document')) return <IconArticle size={18} />;
+  if (mimeType.startsWith('text/')) return <IconFile size={18} />;
+  return <IconFile size={18} />;
 };
 
 interface UploadingFile {
@@ -209,7 +210,7 @@ export const WorkSuiteFilesPage: React.FC = () => {
             onChange={handleFilePick}
             style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}
           />
-          <div className="files-dropzone__icon">☁️</div>
+          <div className="files-dropzone__icon"><IconCloud size={28} /></div>
           <p className="files-dropzone__text">
             <strong>Drop files here</strong> or click to browse
           </p>
@@ -275,7 +276,7 @@ export const WorkSuiteFilesPage: React.FC = () => {
           <div className="worksuite-empty">Loading…</div>
         ) : filteredFolders.length === 0 && filteredFiles.length === 0 ? (
           <div className="worksuite-empty worksuite-empty--goals">
-            <div className="worksuite-empty__icon">☁️</div>
+            <div className="worksuite-empty__icon"><IconCloud size={32} /></div>
             <p>{search ? 'Nothing here matches your search.' : 'Nothing here yet — drop a file or make a folder to get started.'}</p>
           </div>
         ) : (
@@ -284,14 +285,14 @@ export const WorkSuiteFilesPage: React.FC = () => {
               <div className="files-folder-grid">
                 {filteredFolders.map((folder) => (
                   <div key={folder.id} className="files-folder" onClick={() => openFolder(folder)}>
-                    <span className="files-folder__icon">📁</span>
+                    <span className="files-folder__icon"><IconFolder size={18} /></span>
                     <span className="files-folder__name">{folder.name}</span>
                     <button
                       className="files-folder__delete"
                       onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder); }}
                       title="Delete folder"
                     >
-                      ✕
+                      <IconClose size={13} />
                     </button>
                   </div>
                 ))}

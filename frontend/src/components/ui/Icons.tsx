@@ -364,3 +364,119 @@ export const IconChevronDown: React.FC<IconProps> = ({ size = 16, className }) =
     <path d="M3.5 5.5 8 10l4.5-4.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
+
+export const IconCloud: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M6 15.5a3.5 3.5 0 0 1-.6-6.95A4.5 4.5 0 0 1 14 7.1 3.5 3.5 0 0 1 13.5 15.5H6Z" strokeLinejoin="round" />
+  </svg>
+);
+
+export const IconFolder: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M2.5 5.5a1 1 0 0 1 1-1H8l1.6 2h7a1 1 0 0 1 1 1v7.5a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1Z" strokeLinejoin="round" />
+  </svg>
+);
+
+export const IconVideo: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <rect x="2.5" y="5" width="10.5" height="10" rx="1.2" />
+    <path d="M13 8.3 17.5 5.5v9L13 11.7" strokeLinejoin="round" />
+  </svg>
+);
+
+export const IconMusic: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M8 14V4.5l8-1.5V12" strokeLinejoin="round" />
+    <circle cx="6" cy="14.5" r="2.2" />
+    <circle cx="14" cy="12.5" r="2.2" />
+  </svg>
+);
+
+export const IconArchive: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <rect x="2.5" y="3" width="15" height="4" rx="0.8" />
+    <path d="M3.5 7v8.5a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V7" />
+    <path d="M8.3 10.2h3.4" />
+  </svg>
+);
+
+export const IconFile: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M5 2.5h6.5L15.5 6.5V17a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5v-14a.5.5 0 0 1 .5-.5Z" strokeLinejoin="round" />
+    <path d="M11.5 2.5V6.5h4" />
+  </svg>
+);
+
+export const IconSettings: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <circle cx="10" cy="10" r="2.6" />
+    <path d="M10 3.3v1.9M10 14.8v1.9M16.7 10h-1.9M5.2 10H3.3M14.7 5.3l-1.3 1.3M6.6 13.4l-1.3 1.3M14.7 14.7l-1.3-1.3M6.6 6.6 5.3 5.3" />
+  </svg>
+);
+
+export const IconSend: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M17.5 2.5 2.5 8.8l6 2.7 2.7 6Z" strokeLinejoin="round" />
+    <path d="M17.5 2.5 8.5 11.5" />
+  </svg>
+);
+
+export const IconMessageCircle: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M2.5 10a7.5 7.5 0 1 1 3 6L2.5 17l1-3.4A7.4 7.4 0 0 1 2.5 10Z" strokeLinejoin="round" />
+  </svg>
+);
+
+export const IconStar: React.FC<IconProps & { filled?: boolean }> = ({ size = 16, className, filled }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base} fill={filled ? 'currentColor' : 'none'}>
+    <path d="M10 2.5 12.4 7.7 18 8.4l-4.1 3.8 1.1 5.6L10 14.9l-5 2.9 1.1-5.6L2 8.4l5.6-.7Z" strokeLinejoin="round" />
+  </svg>
+);
+
+export const IconClose: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M5 5l10 10M15 5 5 15" />
+  </svg>
+);
+
+export const IconAlertTriangle: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M10 3 18 16.5H2Z" strokeLinejoin="round" />
+    <path d="M10 8v3.5" />
+    <circle cx="10" cy="14" r="0.15" fill="currentColor" />
+  </svg>
+);
+
+export const IconTarget: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <circle cx="10" cy="10" r="7.5" />
+    <circle cx="10" cy="10" r="4.2" />
+    <circle cx="10" cy="10" r="1" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const IconMindmap: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <circle cx="10" cy="10" r="2.2" />
+    <circle cx="3.5" cy="4.5" r="1.8" />
+    <circle cx="16.5" cy="4.5" r="1.8" />
+    <circle cx="3.5" cy="15.5" r="1.8" />
+    <circle cx="16.5" cy="15.5" r="1.8" />
+    <path d="M8.4 8.6 4.9 5.7M11.6 8.6l3.5-2.9M8.4 11.4l-3.5 2.9M11.6 11.4l3.5 2.9" />
+  </svg>
+);
+
+export const IconUndo: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <path d="M4 8.5H12a4 4 0 0 1 0 8H8" />
+    <path d="M6.7 5 4 8.5l3 2.8" strokeLinejoin="round" />
+  </svg>
+);
+
+export const IconClipboard: React.FC<IconProps> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" className={className} {...base}>
+    <rect x="4" y="3.5" width="12" height="14" rx="1.2" />
+    <path d="M7.5 3.5V2.8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.7" />
+    <path d="M7 8.5h6M7 11.5h6M7 14.5h4" />
+  </svg>
+);

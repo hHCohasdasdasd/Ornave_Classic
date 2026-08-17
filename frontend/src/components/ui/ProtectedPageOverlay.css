@@ -77,7 +77,9 @@
 .protected-page-overlay__icon {
   font-size: 48px;
   margin-bottom: 16px;
-  display: block;
+  display: flex;
+  justify-content: center;
+  color: var(--tech-accent-gold, #c6a15b);
 }
 
 .protected-page-overlay__title {

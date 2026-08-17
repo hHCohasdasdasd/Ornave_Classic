@@ -14,6 +14,22 @@ import {
   WorkEducationEntry,
   UserFile,
 } from '@/services/workSuiteService';
+import {
+  IconArticle,
+  IconImage,
+  IconFile,
+  IconClipboard,
+  IconBookmark,
+  IconSend,
+  IconMessageCircle,
+  IconStar,
+  IconClose,
+  IconBuilding,
+  IconLink,
+  IconEdit,
+  IconDownload,
+  IconBriefcase,
+} from '@/components/ui/Icons';
 import './WorkSuite.css';
 
 const formatBytes = (bytes: number): string => {
@@ -24,24 +40,24 @@ const formatBytes = (bytes: number): string => {
   return `${i === 0 ? value : value.toFixed(1)} ${units[i]}`;
 };
 
-const iconForMime = (mimeType: string): string => {
-  if (mimeType === 'application/pdf') return '📕';
-  if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
-  if (mimeType.startsWith('image/')) return '🖼️';
-  return '📄';
+const iconForMime = (mimeType: string) => {
+  if (mimeType === 'application/pdf') return <IconArticle size={18} />;
+  if (mimeType.includes('word') || mimeType.includes('document')) return <IconArticle size={18} />;
+  if (mimeType.startsWith('image/')) return <IconImage size={18} />;
+  return <IconFile size={18} />;
 };
 
 const EMPTY_PROFILE: WorkProfile = { headline: null, summary: null, experience: [], education: [], skills: [] };
 
 type SectionFilter = 'ALL' | JobApplicationStatus;
 
-const SECTIONS: { key: SectionFilter; label: string; icon: string }[] = [
-  { key: 'ALL', label: 'All', icon: '📋' },
-  { key: 'SAVED', label: 'Saved', icon: '🔖' },
-  { key: 'APPLIED', label: 'Applied', icon: '📤' },
-  { key: 'INTERVIEWING', label: 'Interviewing', icon: '🗣️' },
-  { key: 'OFFER', label: 'Offer', icon: '🎉' },
-  { key: 'REJECTED', label: 'Rejected', icon: '✕' },
+const SECTIONS: { key: SectionFilter; label: string; icon: React.ReactNode }[] = [
+  { key: 'ALL', label: 'All', icon: <IconClipboard size={15} /> },
+  { key: 'SAVED', label: 'Saved', icon: <IconBookmark size={15} /> },
+  { key: 'APPLIED', label: 'Applied', icon: <IconSend size={15} /> },
+  { key: 'INTERVIEWING', label: 'Interviewing', icon: <IconMessageCircle size={15} /> },
+  { key: 'OFFER', label: 'Offer', icon: <IconStar size={15} /> },
+  { key: 'REJECTED', label: 'Rejected', icon: <IconClose size={15} /> },
 ];
 
 const STATUS_LABEL: Record<JobApplicationStatus, string> = {
@@ -374,7 +390,7 @@ export const WorkSuiteJobsPage: React.FC = () => {
               <div className="worksuite-empty">Loading applications…</div>
             ) : visibleJobs.length === 0 ? (
               <div className="worksuite-empty worksuite-empty--goals">
-                <div className="worksuite-empty__icon">💼</div>
+                <div className="worksuite-empty__icon"><IconBriefcase size={32} /></div>
                 <p>{search.trim() ? 'No applications match your search.' : 'Nothing here yet — add a role you\'re pursuing.'}</p>
                 <button className="worksuite-create-btn" onClick={openCreate}>+ New Application</button>
               </div>
@@ -386,7 +402,7 @@ export const WorkSuiteJobsPage: React.FC = () => {
                     <div className="worksuite-job-post__top">
                       <div>
                         <h3 className="worksuite-job-post__role">{job.role}</h3>
-                        <p className="worksuite-job-post__company">🏢 {job.company}</p>
+                        <p className="worksuite-job-post__company"><IconBuilding size={13} /> {job.company}</p>
                       </div>
                       <span className="worksuite-job-post__badge" style={{ background: color, color: '#14140f' }}>
                         {STATUS_LABEL[job.status]}
@@ -397,7 +413,7 @@ export const WorkSuiteJobsPage: React.FC = () => {
                       {job.appliedDate && <span>Applied {new Date(job.appliedDate).toLocaleDateString()}</span>}
                       <span>Added {new Date(job.createdAt).toLocaleDateString()}</span>
                       {job.url && (
-                        <a href={job.url} target="_blank" rel="noopener noreferrer">🔗 View posting</a>
+                        <a href={job.url} target="_blank" rel="noopener noreferrer"><IconLink size={12} /> View posting</a>
                       )}
                     </div>
 
@@ -411,8 +427,8 @@ export const WorkSuiteJobsPage: React.FC = () => {
                         title="Move to another stage"
                       />
                       <div className="worksuite-job-post__actions">
-                        <button className="worksuite-kanban-card__icon-btn" onClick={() => openEdit(job)} title="Edit">✎</button>
-                        <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDelete(job)} title="Delete">✕</button>
+                        <button className="worksuite-kanban-card__icon-btn" onClick={() => openEdit(job)} title="Edit"><IconEdit size={13} /></button>
+                        <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDelete(job)} title="Delete"><IconClose size={13} /></button>
                       </div>
                     </div>
                   </div>
@@ -493,14 +509,14 @@ export const WorkSuiteJobsPage: React.FC = () => {
                         <div className="worksuite-jobs-doc-row__meta">{formatBytes(doc.size)}</div>
                       </div>
                       <div className="worksuite-jobs-doc-row__actions">
-                        <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDocDownload(doc)} title="Download">⬇</button>
-                        <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDocDelete(doc)} title="Delete">✕</button>
+                        <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDocDownload(doc)} title="Download"><IconDownload size={13} /></button>
+                        <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDocDelete(doc)} title="Delete"><IconClose size={13} /></button>
                       </div>
                     </div>
                   ))}
                   {uploadingDocs.map((u) => (
                     <div key={u.key} className="worksuite-jobs-doc-row">
-                      <span>📤</span>
+                      <span><IconSend size={16} /></span>
                       <div className="worksuite-jobs-doc-row__info">
                         <div className="worksuite-jobs-doc-row__name">{u.name}</div>
                         <div className="worksuite-jobs-doc-row__meta">{u.error ? 'Upload failed' : 'Uploading…'}</div>
@@ -564,7 +580,7 @@ export const WorkSuiteJobsPage: React.FC = () => {
             <label>Experience</label>
             {profileExperience.map((exp, i) => (
               <div key={i} className="worksuite-jobs-cv-entry-block">
-                <button type="button" className="worksuite-jobs-cv-entry-block__remove" onClick={() => removeExperienceRow(i)} title="Remove">✕</button>
+                <button type="button" className="worksuite-jobs-cv-entry-block__remove" onClick={() => removeExperienceRow(i)} title="Remove"><IconClose size={12} /></button>
                 <div className="worksuite-jobs-cv-form-row">
                   <input value={exp.title} onChange={(e) => updateExperienceRow(i, { title: e.target.value })} placeholder="Title" maxLength={160} />
                   <input value={exp.company} onChange={(e) => updateExperienceRow(i, { company: e.target.value })} placeholder="Company" maxLength={160} />
@@ -592,7 +608,7 @@ export const WorkSuiteJobsPage: React.FC = () => {
             <label style={{ marginTop: '16px' }}>Education</label>
             {profileEducation.map((edu, i) => (
               <div key={i} className="worksuite-jobs-cv-entry-block">
-                <button type="button" className="worksuite-jobs-cv-entry-block__remove" onClick={() => removeEducationRow(i)} title="Remove">✕</button>
+                <button type="button" className="worksuite-jobs-cv-entry-block__remove" onClick={() => removeEducationRow(i)} title="Remove"><IconClose size={12} /></button>
                 <div className="worksuite-jobs-cv-form-row">
                   <input value={edu.school} onChange={(e) => updateEducationRow(i, { school: e.target.value })} placeholder="School" maxLength={160} />
                   <input value={edu.degree || ''} onChange={(e) => updateEducationRow(i, { degree: e.target.value })} placeholder="Degree" maxLength={160} />
