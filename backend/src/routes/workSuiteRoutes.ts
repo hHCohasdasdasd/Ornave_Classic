@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
-import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService, JobApplicationService, WorkProfileService } from '../services/workSuiteService';
+import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService, JobApplicationService, WorkProfileService, CalendarEventService } from '../services/workSuiteService';
 import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
 import { createFileUpload } from '../utils/uploadConfig';
 
@@ -262,6 +262,44 @@ workSuiteRoutes.delete(
   asyncHandler(async (req: any, res: Response) => {
     await JobApplicationService.remove(req.user.userId, req.params.id);
     return ApiResponseHandler.success(res, {}, 'Job application deleted successfully', 200);
+  })
+);
+
+/**
+ * Calendar Events — personal single/full/multi-day entries on the Calendar page.
+ */
+workSuiteRoutes.get(
+  '/calendar-events',
+  asyncHandler(async (req: any, res: Response) => {
+    const events = await CalendarEventService.list(req.user.userId);
+    return ApiResponseHandler.success(res, events, 'Calendar events retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.post(
+  '/calendar-events',
+  asyncHandler(async (req: any, res: Response) => {
+    const { title, description, startDate, endDate, allDay, startTime, endTime } = req.body;
+    if (!title || !startDate) return ApiResponseHandler.error(res, 'Title and start date are required', undefined, 400);
+    const event = await CalendarEventService.create(req.user.userId, { title, description, startDate, endDate, allDay, startTime, endTime });
+    return ApiResponseHandler.success(res, event, 'Calendar event created successfully', 201);
+  })
+);
+
+workSuiteRoutes.put(
+  '/calendar-events/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    const { title, description, startDate, endDate, allDay, startTime, endTime } = req.body;
+    const event = await CalendarEventService.update(req.user.userId, req.params.id, { title, description, startDate, endDate, allDay, startTime, endTime });
+    return ApiResponseHandler.success(res, event, 'Calendar event updated successfully', 200);
+  })
+);
+
+workSuiteRoutes.delete(
+  '/calendar-events/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    await CalendarEventService.remove(req.user.userId, req.params.id);
+    return ApiResponseHandler.success(res, {}, 'Calendar event deleted successfully', 200);
   })
 );
 

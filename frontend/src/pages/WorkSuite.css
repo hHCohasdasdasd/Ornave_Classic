@@ -3346,6 +3346,23 @@
   flex-shrink: 0;
 }
 
+.worksuite-calendar-dot--btn {
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.worksuite-calendar-dot--btn:hover {
+  transform: scale(1.6);
+}
+
+.worksuite-calendar-hint {
+  font-size: 0.7rem;
+  color: var(--tech-text-dim);
+  margin: 0 0 14px;
+}
+
 .worksuite-calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -3435,6 +3452,18 @@
   padding: 16px;
 }
 
+.worksuite-calendar-sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.worksuite-calendar-sidebar__header h4 {
+  margin: 0;
+}
+
 .worksuite-calendar-sidebar h4 {
   margin: 0 0 12px;
   font-family: var(--font-display);
@@ -3452,17 +3481,34 @@
 .worksuite-calendar-agenda-item {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 6px;
   background: rgba(246, 243, 237, 0.03);
   border: 1px solid var(--tech-border);
   border-radius: 10px;
   padding: 10px;
-  cursor: pointer;
-  text-align: left;
 }
 
 .worksuite-calendar-agenda-item:hover {
   border-color: var(--tech-accent-gold);
+}
+
+.worksuite-calendar-agenda-item__main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.worksuite-calendar-agenda-item__actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .worksuite-calendar-agenda-item__icon {

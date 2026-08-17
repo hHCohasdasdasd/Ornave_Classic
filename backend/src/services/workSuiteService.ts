@@ -253,6 +253,61 @@ export class JobApplicationService {
   }
 }
 
+export class CalendarEventService {
+  static async list(userId: string) {
+    return prisma.calendarEvent.findMany({ where: { userId }, orderBy: { startDate: 'asc' } });
+  }
+
+  static async getById(userId: string, id: string) {
+    const event = await prisma.calendarEvent.findFirst({ where: { id, userId } });
+    if (!event) throw notFound('Calendar event not found');
+    return event;
+  }
+
+  static async create(
+    userId: string,
+    data: { title: string; description?: string; startDate: string; endDate?: string; allDay?: boolean; startTime?: string; endTime?: string }
+  ) {
+    return prisma.calendarEvent.create({
+      data: {
+        userId,
+        title: data.title,
+        description: data.description,
+        startDate: new Date(data.startDate),
+        endDate: data.endDate ? new Date(data.endDate) : undefined,
+        allDay: data.allDay ?? true,
+        startTime: data.allDay === false ? data.startTime : undefined,
+        endTime: data.allDay === false ? data.endTime : undefined,
+      },
+    });
+  }
+
+  static async update(
+    userId: string,
+    id: string,
+    data: { title?: string; description?: string; startDate?: string; endDate?: string | null; allDay?: boolean; startTime?: string | null; endTime?: string | null }
+  ) {
+    await this.getById(userId, id);
+    return prisma.calendarEvent.update({
+      where: { id },
+      data: {
+        title: data.title,
+        description: data.description,
+        startDate: data.startDate ? new Date(data.startDate) : undefined,
+        endDate: data.endDate === undefined ? undefined : data.endDate ? new Date(data.endDate) : null,
+        allDay: data.allDay,
+        startTime: data.allDay === false ? data.startTime : data.allDay === true ? null : undefined,
+        endTime: data.allDay === false ? data.endTime : data.allDay === true ? null : undefined,
+      },
+    });
+  }
+
+  static async remove(userId: string, id: string) {
+    await this.getById(userId, id);
+    await prisma.calendarEvent.delete({ where: { id } });
+  }
+}
+
 export interface WorkExperienceEntry {
   title: string;
   company: string;

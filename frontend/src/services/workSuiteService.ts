@@ -140,6 +140,19 @@ export interface Task {
   updatedAt: string;
 }
 
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  description?: string;
+  startDate: string;
+  endDate?: string;
+  allDay: boolean;
+  startTime?: string;
+  endTime?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 class WorkSuiteService {
   async getSummary(): Promise<WorkSuiteSummary> {
     const response = await apiClient.get('/work-suite/summary');
@@ -264,6 +277,26 @@ class WorkSuiteService {
 
   async deleteJobApplication(id: string): Promise<void> {
     await apiClient.delete(`/work-suite/job-applications/${id}`);
+  }
+
+  // Calendar Events
+  async listCalendarEvents(): Promise<CalendarEvent[]> {
+    const response = await apiClient.get('/work-suite/calendar-events');
+    return response.data.data || [];
+  }
+
+  async createCalendarEvent(data: { title: string; description?: string; startDate: string; endDate?: string; allDay: boolean; startTime?: string; endTime?: string }): Promise<CalendarEvent> {
+    const response = await apiClient.post('/work-suite/calendar-events', data);
+    return response.data.data;
+  }
+
+  async updateCalendarEvent(id: string, data: Partial<Pick<CalendarEvent, 'title' | 'description' | 'startDate' | 'endDate' | 'allDay' | 'startTime' | 'endTime'>>): Promise<CalendarEvent> {
+    const response = await apiClient.put(`/work-suite/calendar-events/${id}`, data);
+    return response.data.data;
+  }
+
+  async deleteCalendarEvent(id: string): Promise<void> {
+    await apiClient.delete(`/work-suite/calendar-events/${id}`);
   }
 
   // Work Profile (private CV, used for job applications)
