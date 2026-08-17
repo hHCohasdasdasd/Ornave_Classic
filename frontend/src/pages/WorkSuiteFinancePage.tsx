@@ -337,25 +337,30 @@ export const WorkSuiteFinancePage: React.FC = () => {
       .reduce((sum, t) => sum + t.amount, 0);
   }, [bankTransactions]);
 
-  const recentActivity = useMemo(() => {
-    const fromEntries = entries.map((e) => ({
-      id: `entry-${e.id}`,
-      date: e.date,
-      label: e.description,
-      source: 'Manual',
-      amount: e.type === 'INCOME' ? e.amount : -e.amount,
-      currency: undefined as string | undefined,
-    }));
-    const fromBank = bankTransactions.map((t) => ({
-      id: `txn-${t.id}`,
-      date: t.date,
-      label: t.merchantName || t.name,
-      source: t.institutionName || 'Bank',
-      amount: -t.amount,
-      currency: t.currency,
-    }));
-    return [...fromEntries, ...fromBank].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8);
-  }, [entries, bankTransactions]);
+  const holdings = useMemo(() => {
+    const totalExposure = allBankAccounts.reduce((sum, a) => sum + Math.abs(a.currentBalance ?? 0), 0);
+    return [...allBankAccounts]
+      .sort((a, b) => Math.abs(b.currentBalance ?? 0) - Math.abs(a.currentBalance ?? 0))
+      .map((a) => ({
+        ...a,
+        weight: totalExposure > 0 ? (Math.abs(a.currentBalance ?? 0) / totalExposure) * 100 : 0,
+        isDebt: a.type === 'credit' || a.type === 'loan',
+      }));
+  }, [allBankAccounts]);
+
+  const spendingByCategory = useMemo(() => {
+    const now = new Date();
+    const byCategory = new Map<string, number>();
+    for (const t of bankTransactions) {
+      const d = new Date(t.date);
+      if (d.getFullYear() !== now.getFullYear() || d.getMonth() !== now.getMonth() || t.amount <= 0) continue;
+      const key = t.category || 'Other';
+      byCategory.set(key, (byCategory.get(key) || 0) + t.amount);
+    }
+    const rows = [...byCategory.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+    const max = rows.length ? rows[0][1] : 0;
+    return rows.map(([category, amount]) => ({ category, amount, pct: max > 0 ? (amount / max) * 100 : 0 }));
+  }, [bankTransactions]);
 
   return (
     <div className="worksuite-page">
@@ -380,65 +385,97 @@ export const WorkSuiteFinancePage: React.FC = () => {
         {view === 'tracker' && (
         <>
         {!isLoadingBank && allBankAccounts.length > 0 && (
-          <div className="goal-stats-strip">
-            <div className="goal-stats-strip__item">
-              <span className="goal-stats-strip__value">{formatCurrency(netWorth.net)}</span>
-              <span className="goal-stats-strip__label">Net worth</span>
-            </div>
-            <div className="goal-stats-strip__item">
-              <span className="goal-stats-strip__value" style={{ color: '#3f6f47' }}>{formatCurrency(netWorth.assets)}</span>
-              <span className="goal-stats-strip__label">Total assets</span>
-            </div>
-            <div className="goal-stats-strip__item">
-              <span className="goal-stats-strip__value" style={{ color: '#a2504b' }}>{formatCurrency(netWorth.debt)}</span>
-              <span className="goal-stats-strip__label">Total debt</span>
-            </div>
-            <div className="goal-stats-strip__item">
-              <span className="goal-stats-strip__value" style={{ color: '#a2504b' }}>{formatCurrency(bankSpendThisMonth)}</span>
-              <span className="goal-stats-strip__label">Bank spend this month</span>
-            </div>
+          <div className="worksuite-ticker-hero">
+            <span className="worksuite-ticker-hero__label">Net worth</span>
+            <span className={`worksuite-ticker-hero__value${netWorth.net < 0 ? ' worksuite-ticker--down' : ' worksuite-ticker--up'}`}>
+              {formatCurrency(netWorth.net)}
+            </span>
           </div>
         )}
 
-        {!isLoading && (
-          <div className="goal-stats-strip">
-            <div className="goal-stats-strip__item">
-              <span className="goal-stats-strip__value" style={{ color: '#3f6f47' }}>${formatMoney(totals.income)}</span>
-              <span className="goal-stats-strip__label">Manual income this month</span>
-            </div>
-            <div className="goal-stats-strip__item">
-              <span className="goal-stats-strip__value" style={{ color: '#a2504b' }}>${formatMoney(totals.expense)}</span>
-              <span className="goal-stats-strip__label">Manual expenses this month</span>
-            </div>
-            <div className="goal-stats-strip__item">
-              <span className="goal-stats-strip__value">${formatMoney(totals.net)}</span>
-              <span className="goal-stats-strip__label">Manual net this month</span>
-            </div>
-          </div>
-        )}
+        <div className="worksuite-ticker-grid">
+          {!isLoadingBank && allBankAccounts.length > 0 && (
+            <>
+              <div className="worksuite-ticker-tile">
+                <span className="worksuite-ticker-tile__label">Total assets</span>
+                <span className="worksuite-ticker-tile__value worksuite-ticker--up">{formatCurrency(netWorth.assets)}</span>
+              </div>
+              <div className="worksuite-ticker-tile">
+                <span className="worksuite-ticker-tile__label">Total debt</span>
+                <span className="worksuite-ticker-tile__value worksuite-ticker--down">{formatCurrency(netWorth.debt)}</span>
+              </div>
+              <div className="worksuite-ticker-tile">
+                <span className="worksuite-ticker-tile__label">Bank spend this month</span>
+                <span className="worksuite-ticker-tile__value worksuite-ticker--down">{formatCurrency(bankSpendThisMonth)}</span>
+              </div>
+            </>
+          )}
+          {!isLoading && (
+            <>
+              <div className="worksuite-ticker-tile">
+                <span className="worksuite-ticker-tile__label">Manual income (mo)</span>
+                <span className="worksuite-ticker-tile__value worksuite-ticker--up">${formatMoney(totals.income)}</span>
+              </div>
+              <div className="worksuite-ticker-tile">
+                <span className="worksuite-ticker-tile__label">Manual expenses (mo)</span>
+                <span className="worksuite-ticker-tile__value worksuite-ticker--down">${formatMoney(totals.expense)}</span>
+              </div>
+              <div className="worksuite-ticker-tile">
+                <span className="worksuite-ticker-tile__label">Manual net (mo)</span>
+                <span className={`worksuite-ticker-tile__value${totals.net < 0 ? ' worksuite-ticker--down' : ' worksuite-ticker--up'}`}>${formatMoney(totals.net)}</span>
+              </div>
+            </>
+          )}
+        </div>
 
-        {recentActivity.length > 0 && (
-          <div className="worksuite-bank-card" style={{ marginBottom: '20px' }}>
-            <div className="worksuite-bank-card__header" style={{ border: 'none', paddingBottom: 0 }}>
-              <h3 className="worksuite-bank-card__title">Recent activity</h3>
-            </div>
-            <div className="worksuite-bank-txn-list" style={{ marginTop: '12px' }}>
-              {recentActivity.map((item) => {
-                const isCredit = item.amount > 0;
-                return (
-                  <div key={item.id} className="worksuite-bank-txn-row">
-                    <div className="worksuite-bank-txn-row__info">
-                      <div className="worksuite-bank-txn-row__name">{item.label}</div>
-                      <div className="worksuite-bank-txn-row__meta">
-                        {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {item.source}
-                      </div>
-                    </div>
-                    <div className={`worksuite-bank-txn-row__amount${isCredit ? ' worksuite-bank-txn-row__amount--credit' : ''}`}>
-                      {isCredit ? '+' : ''}{formatCurrency(item.amount, item.currency)}
-                    </div>
+        {holdings.length > 0 && (
+          <div className="worksuite-trader-row">
+            <div className="worksuite-bank-card worksuite-holdings-card">
+              <div className="worksuite-bank-card__header" style={{ border: 'none', paddingBottom: 0 }}>
+                <h3 className="worksuite-bank-card__title">Holdings</h3>
+              </div>
+              <div className="worksuite-holdings-table">
+                <div className="worksuite-holdings-row worksuite-holdings-row--head">
+                  <span>Account</span>
+                  <span>Type</span>
+                  <span>Weight</span>
+                  <span>Balance</span>
+                </div>
+                {holdings.map((h) => (
+                  <div key={h.id} className="worksuite-holdings-row">
+                    <span className="worksuite-holdings-row__name">{h.name}{h.mask ? ` ••••${h.mask}` : ''}</span>
+                    <span className="worksuite-holdings-row__type">{ACCOUNT_TYPE_LABELS[h.type] || h.type}</span>
+                    <span className="worksuite-holdings-row__weight">
+                      <span className="worksuite-holdings-row__bar"><span style={{ width: `${h.weight}%`, background: h.isDebt ? '#a2504b' : '#3f6f47' }} /></span>
+                      {h.weight.toFixed(1)}%
+                    </span>
+                    <span className={`worksuite-holdings-row__balance${h.isDebt ? ' worksuite-ticker--down' : ' worksuite-ticker--up'}`}>
+                      {formatCurrency(h.currentBalance ?? 0, h.currency)}
+                    </span>
                   </div>
-                );
-              })}
+                ))}
+              </div>
+            </div>
+
+            <div className="worksuite-bank-card worksuite-leaderboard-card">
+              <div className="worksuite-bank-card__header" style={{ border: 'none', paddingBottom: 0 }}>
+                <h3 className="worksuite-bank-card__title">Top spending (mo)</h3>
+              </div>
+              {spendingByCategory.length === 0 ? (
+                <p className="worksuite-jobs-profile-empty">No spending this month yet.</p>
+              ) : (
+                <div className="worksuite-leaderboard-list">
+                  {spendingByCategory.map((row) => (
+                    <div key={row.category} className="worksuite-leaderboard-row">
+                      <div className="worksuite-leaderboard-row__top">
+                        <span className="worksuite-leaderboard-row__label">{row.category}</span>
+                        <span className="worksuite-leaderboard-row__value worksuite-ticker--down">{formatCurrency(row.amount)}</span>
+                      </div>
+                      <span className="worksuite-leaderboard-row__bar"><span style={{ width: `${row.pct}%` }} /></span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

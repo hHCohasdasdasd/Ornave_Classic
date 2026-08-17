@@ -3389,6 +3389,202 @@
   color: #3f6f47;
 }
 
+/* Trader-terminal style Overview dashboard */
+.worksuite-ticker--up { color: #3f6f47; }
+.worksuite-ticker--down { color: #a2504b; }
+
+.worksuite-ticker-hero {
+  background: linear-gradient(160deg, rgba(198, 161, 91, 0.08), rgba(198, 161, 91, 0.02) 60%), var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 14px;
+  padding: 22px 26px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.worksuite-ticker-hero__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tech-text-dim);
+}
+
+.worksuite-ticker-hero__value {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.worksuite-ticker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.worksuite-ticker-tile {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.worksuite-ticker-tile__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tech-text-dim);
+}
+
+.worksuite-ticker-tile__value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--tech-text-main);
+  font-variant-numeric: tabular-nums;
+}
+
+.worksuite-trader-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .worksuite-trader-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.worksuite-holdings-card,
+.worksuite-leaderboard-card {
+  margin-bottom: 0;
+}
+
+.worksuite-holdings-table {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.worksuite-holdings-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.3fr 1.1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 2px;
+  border-bottom: 1px solid rgba(246, 243, 237, 0.06);
+  font-size: 0.82rem;
+}
+
+.worksuite-holdings-row:last-child {
+  border-bottom: none;
+}
+
+.worksuite-holdings-row--head {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tech-text-dim);
+  border-bottom: 1px solid var(--tech-border);
+  padding-bottom: 8px;
+}
+
+.worksuite-holdings-row__name {
+  font-weight: 600;
+  color: var(--tech-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.worksuite-holdings-row__type {
+  color: var(--tech-text-dim);
+  font-size: 0.76rem;
+}
+
+.worksuite-holdings-row__weight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tech-text-dim);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.worksuite-holdings-row__bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(246, 243, 237, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  max-width: 60px;
+}
+
+.worksuite-holdings-row__bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.worksuite-holdings-row__balance {
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.worksuite-leaderboard-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.worksuite-leaderboard-row__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+  font-size: 0.82rem;
+}
+
+.worksuite-leaderboard-row__label {
+  color: var(--tech-text-main);
+  font-weight: 600;
+}
+
+.worksuite-leaderboard-row__value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.worksuite-leaderboard-row__bar {
+  display: block;
+  height: 6px;
+  background: rgba(246, 243, 237, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.worksuite-leaderboard-row__bar span {
+  display: block;
+  height: 100%;
+  background: #a2504b;
+  border-radius: 999px;
+}
+
 .worksuite-jobs-upload-btn {
   width: 100%;
   background: none;
