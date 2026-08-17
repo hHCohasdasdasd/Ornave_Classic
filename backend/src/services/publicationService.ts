@@ -136,12 +136,17 @@ export class PublicationService {
     return this.formatPublication(publication, author);
   }
 
+  /**
+   * A real hard delete — comments cascade with it, and any Post that linked
+   * to it (Post.linkedPublicationId) just has that reference nulled out
+   * rather than being deleted itself.
+   */
   static async deletePublication(id: string, userId: string) {
     const publication = await prisma.publication.findUnique({ where: { id } });
     if (!publication || publication.authorId !== userId) {
       throw new Error('Unauthorized or publication not found');
     }
-    await prisma.publication.update({ where: { id }, data: { isDeleted: true } });
+    await prisma.publication.delete({ where: { id } });
     return true;
   }
 
