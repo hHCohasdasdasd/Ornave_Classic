@@ -190,6 +190,59 @@ export class GoalService {
   }
 }
 
+export class JobApplicationService {
+  static async list(userId: string) {
+    return prisma.jobApplication.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
+  }
+
+  static async getById(userId: string, id: string) {
+    const application = await prisma.jobApplication.findFirst({ where: { id, userId } });
+    if (!application) throw notFound('Job application not found');
+    return application;
+  }
+
+  static async create(
+    userId: string,
+    data: { company: string; role: string; url?: string; notes?: string; appliedDate?: string }
+  ) {
+    return prisma.jobApplication.create({
+      data: {
+        userId,
+        company: data.company,
+        role: data.role,
+        url: data.url,
+        notes: data.notes,
+        appliedDate: data.appliedDate ? new Date(data.appliedDate) : undefined,
+      },
+    });
+  }
+
+  static async update(
+    userId: string,
+    id: string,
+    data: { company?: string; role?: string; status?: string; url?: string; notes?: string; appliedDate?: string | null }
+  ) {
+    await this.getById(userId, id);
+    return prisma.jobApplication.update({
+      where: { id },
+      data: {
+        ...data,
+        appliedDate: data.appliedDate === undefined ? undefined : data.appliedDate ? new Date(data.appliedDate) : null,
+      },
+    });
+  }
+
+  static async updateStatus(userId: string, id: string, status: string) {
+    await this.getById(userId, id);
+    return prisma.jobApplication.update({ where: { id }, data: { status } });
+  }
+
+  static async remove(userId: string, id: string) {
+    await this.getById(userId, id);
+    await prisma.jobApplication.delete({ where: { id } });
+  }
+}
+
 export class AchievementService {
   static async list(userId: string) {
     return prisma.achievement.findMany({ where: { userId }, orderBy: { achievedAt: 'desc' } });

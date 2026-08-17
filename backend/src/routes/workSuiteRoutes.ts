@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ApiResponseHandler } from '../utils/apiResponse';
-import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService } from '../services/workSuiteService';
+import { ProjectService, TaskService, GoalService, AchievementService, NoteService, FileService, FolderService, WorkSuiteService, FocusService, JobApplicationService } from '../services/workSuiteService';
 import { FILES_BUCKET, requireSupabaseAdmin } from '../utils/supabaseStorage';
 import { createFileUpload } from '../utils/uploadConfig';
 
@@ -214,6 +214,54 @@ workSuiteRoutes.delete(
   asyncHandler(async (req: any, res: Response) => {
     await GoalService.remove(req.user.userId, req.params.id);
     return ApiResponseHandler.success(res, {}, 'Goal deleted successfully', 200);
+  })
+);
+
+/**
+ * Job Applications — a personal application tracker (the Jobs tab).
+ */
+workSuiteRoutes.get(
+  '/job-applications',
+  asyncHandler(async (req: any, res: Response) => {
+    const applications = await JobApplicationService.list(req.user.userId);
+    return ApiResponseHandler.success(res, applications, 'Job applications retrieved successfully', 200);
+  })
+);
+
+workSuiteRoutes.post(
+  '/job-applications',
+  asyncHandler(async (req: any, res: Response) => {
+    const { company, role, url, notes, appliedDate } = req.body;
+    if (!company || !role) return ApiResponseHandler.error(res, 'Company and role are required', undefined, 400);
+    const application = await JobApplicationService.create(req.user.userId, { company, role, url, notes, appliedDate });
+    return ApiResponseHandler.success(res, application, 'Job application created successfully', 201);
+  })
+);
+
+workSuiteRoutes.put(
+  '/job-applications/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    const { company, role, status, url, notes, appliedDate } = req.body;
+    const application = await JobApplicationService.update(req.user.userId, req.params.id, { company, role, status, url, notes, appliedDate });
+    return ApiResponseHandler.success(res, application, 'Job application updated successfully', 200);
+  })
+);
+
+workSuiteRoutes.patch(
+  '/job-applications/:id/status',
+  asyncHandler(async (req: any, res: Response) => {
+    const { status } = req.body;
+    if (!status) return ApiResponseHandler.error(res, 'Status is required', undefined, 400);
+    const application = await JobApplicationService.updateStatus(req.user.userId, req.params.id, status);
+    return ApiResponseHandler.success(res, application, 'Job application status updated successfully', 200);
+  })
+);
+
+workSuiteRoutes.delete(
+  '/job-applications/:id',
+  asyncHandler(async (req: any, res: Response) => {
+    await JobApplicationService.remove(req.user.userId, req.params.id);
+    return ApiResponseHandler.success(res, {}, 'Job application deleted successfully', 200);
   })
 );
 

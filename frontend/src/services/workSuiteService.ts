@@ -33,6 +33,20 @@ export interface Goal {
   updatedAt: string;
 }
 
+export type JobApplicationStatus = 'SAVED' | 'APPLIED' | 'INTERVIEWING' | 'OFFER' | 'REJECTED';
+
+export interface JobApplication {
+  id: string;
+  company: string;
+  role: string;
+  status: JobApplicationStatus;
+  url?: string;
+  notes?: string;
+  appliedDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Achievement {
   id: string;
   title: string;
@@ -200,6 +214,31 @@ class WorkSuiteService {
 
   async deleteGoal(id: string): Promise<void> {
     await apiClient.delete(`/work-suite/goals/${id}`);
+  }
+
+  // Job Applications
+  async listJobApplications(): Promise<JobApplication[]> {
+    const response = await apiClient.get('/work-suite/job-applications');
+    return response.data.data || [];
+  }
+
+  async createJobApplication(data: { company: string; role: string; url?: string; notes?: string; appliedDate?: string }): Promise<JobApplication> {
+    const response = await apiClient.post('/work-suite/job-applications', data);
+    return response.data.data;
+  }
+
+  async updateJobApplication(id: string, data: Partial<Pick<JobApplication, 'company' | 'role' | 'status' | 'url' | 'notes' | 'appliedDate'>>): Promise<JobApplication> {
+    const response = await apiClient.put(`/work-suite/job-applications/${id}`, data);
+    return response.data.data;
+  }
+
+  async updateJobApplicationStatus(id: string, status: JobApplicationStatus): Promise<JobApplication> {
+    const response = await apiClient.patch(`/work-suite/job-applications/${id}/status`, { status });
+    return response.data.data;
+  }
+
+  async deleteJobApplication(id: string): Promise<void> {
+    await apiClient.delete(`/work-suite/job-applications/${id}`);
   }
 
   // Achievements

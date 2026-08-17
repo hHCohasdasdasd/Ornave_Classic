@@ -1893,6 +1893,22 @@
   margin-bottom: 10px;
 }
 
+.worksuite-kanban-card__meta a {
+  color: var(--tech-blue);
+  text-decoration: none;
+}
+
+.worksuite-kanban-card__notes {
+  font-size: 0.72rem;
+  color: var(--tech-text-dim);
+  line-height: 1.4;
+  margin: 0 0 10px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
 .worksuite-kanban-card__footer {
   display: flex;
   align-items: center;
@@ -2798,4 +2814,179 @@
   font-weight: 700;
   color: var(--tech-accent-gold-text);
   white-space: nowrap;
+}
+
+/* Jobs tracker — left toolbar (sections + filters) and a feed of
+   post-style cards in the main column. */
+.worksuite-jobs-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .worksuite-jobs-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.worksuite-jobs-sidebar {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.worksuite-jobs-nav {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 14px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.worksuite-jobs-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-radius: 9px;
+  padding: 9px 10px;
+  font-size: 0.82rem;
+  color: var(--tech-text-dim);
+  cursor: pointer;
+  text-align: left;
+}
+
+.worksuite-jobs-nav-item:hover {
+  background: rgba(246, 243, 237, 0.05);
+  color: var(--tech-text-main);
+}
+
+.worksuite-jobs-nav-item--active {
+  background: var(--tech-accent-gold);
+  color: #14140f;
+  font-weight: 700;
+}
+
+.worksuite-jobs-nav-item--active:hover {
+  background: var(--tech-accent-gold);
+  color: #14140f;
+}
+
+.worksuite-jobs-nav-item__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.worksuite-jobs-nav-item__count {
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+.worksuite-jobs-filters {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.worksuite-jobs-filters h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--tech-text-main);
+}
+
+.worksuite-jobs-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.worksuite-job-post {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.worksuite-job-post__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.worksuite-job-post__role {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--tech-text-main);
+  margin: 0 0 2px;
+}
+
+.worksuite-job-post__company {
+  font-size: 0.85rem;
+  color: var(--tech-text-dim);
+  margin: 0;
+}
+
+.worksuite-job-post__badge {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.worksuite-job-post__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: var(--tech-text-dim);
+  margin: 10px 0 0;
+}
+
+.worksuite-job-post__meta a {
+  color: var(--tech-blue);
+  text-decoration: none;
+}
+
+.worksuite-job-post__notes {
+  font-size: 0.82rem;
+  color: var(--tech-text-dim);
+  line-height: 1.5;
+  margin: 10px 0 0;
+  white-space: pre-wrap;
+}
+
+.worksuite-job-post__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--tech-border);
+}
+
+.worksuite-job-post__actions {
+  display: flex;
+  gap: 6px;
 }

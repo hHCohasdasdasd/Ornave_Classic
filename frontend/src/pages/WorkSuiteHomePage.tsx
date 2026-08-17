@@ -8,6 +8,7 @@ import './WorkSuite.css';
 
 const GROWTH_MODULES = [
   { icon: '🧭', title: 'Planning', description: 'Your board, goals, notes, and focus timer — all in one place.', route: '/work-suite/personal' },
+  { icon: '💼', title: 'Jobs', description: 'Track the roles you\'re pursuing, from application to offer.', route: '/work-suite/jobs' },
   { icon: '🏆', title: 'Achievements', description: 'Every win worth remembering, logged in one place.', route: '/work-suite/achievements' },
 ];
 
