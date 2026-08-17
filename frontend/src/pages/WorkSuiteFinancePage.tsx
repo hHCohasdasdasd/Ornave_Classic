@@ -5,23 +5,12 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
-import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
-import { workSuiteService, FinanceEntry, FinanceEntryType, BankConnection, BankTransaction } from '@/services/workSuiteService';
+import { workSuiteService, BankConnection, BankTransaction } from '@/services/workSuiteService';
 import { storeService, Order } from '@/services/storeService';
-import { IconEdit, IconClose, IconDownload, IconCard } from '@/components/ui/Icons';
+import { IconClose, IconDownload, IconCard } from '@/components/ui/Icons';
 import './WorkSuite.css';
 
 type PageView = 'tracker' | 'orders' | 'bank';
-
-type SectionFilter = 'ALL' | FinanceEntryType;
-
-const SECTIONS: { key: SectionFilter; label: string }[] = [
-  { key: 'ALL', label: 'All' },
-  { key: 'INCOME', label: 'Income' },
-  { key: 'EXPENSE', label: 'Expenses' },
-];
-
-type SortOrder = 'newest' | 'oldest' | 'amount';
 
 function formatMoney(amount: number): string {
   return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -50,12 +39,6 @@ export const WorkSuiteFinancePage: React.FC = () => {
 
   const [view, setView] = useState<PageView>('tracker');
 
-  const [entries, setEntries] = useState<FinanceEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [section, setSection] = useState<SectionFilter>('ALL');
-  const [search, setSearch] = useState('');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
-
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
@@ -71,27 +54,6 @@ export const WorkSuiteFinancePage: React.FC = () => {
   const [isConnectingBank, setIsConnectingBank] = useState(false);
   const [bankError, setBankError] = useState<string | null>(null);
   const [txnAccountFilter, setTxnAccountFilter] = useState('ALL');
-
-  const [showModal, setShowModal] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<FinanceEntry | null>(null);
-  const [entryType, setEntryType] = useState<FinanceEntryType>('INCOME');
-  const [entryAmount, setEntryAmount] = useState('');
-  const [entryDescription, setEntryDescription] = useState('');
-  const [entryCategory, setEntryCategory] = useState('');
-  const [entryStatus, setEntryStatus] = useState<'PAID' | 'PENDING'>('PAID');
-  const [entryDate, setEntryDate] = useState('');
-  const [entryNotes, setEntryNotes] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = async () => {
-    setIsLoading(true);
-    try {
-      setEntries(await workSuiteService.listFinanceEntries());
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const loadOrders = async () => {
     setIsLoadingOrders(true);
@@ -124,7 +86,6 @@ export const WorkSuiteFinancePage: React.FC = () => {
 
   useEffect(() => {
     if (!isGuest) {
-      load();
       loadOrders();
       loadBank();
     }
@@ -211,100 +172,6 @@ export const WorkSuiteFinancePage: React.FC = () => {
       // Best-effort — a failed link isn't worth a page-level error banner here.
     }
   };
-
-  const openCreate = () => {
-    setEditingEntry(null);
-    setEntryType(section === 'EXPENSE' ? 'EXPENSE' : 'INCOME');
-    setEntryAmount('');
-    setEntryDescription('');
-    setEntryCategory('');
-    setEntryStatus('PAID');
-    setEntryDate(new Date().toISOString().slice(0, 10));
-    setEntryNotes('');
-    setError(null);
-    setShowModal(true);
-  };
-
-  const openEdit = (entry: FinanceEntry) => {
-    setEditingEntry(entry);
-    setEntryType(entry.type);
-    setEntryAmount(String(entry.amount));
-    setEntryDescription(entry.description);
-    setEntryCategory(entry.category || '');
-    setEntryStatus(entry.status);
-    setEntryDate(entry.date.slice(0, 10));
-    setEntryNotes(entry.notes || '');
-    setError(null);
-    setShowModal(true);
-  };
-
-  const handleSave = async () => {
-    const amountNum = parseFloat(entryAmount);
-    if (!entryDescription.trim() || !entryDate || Number.isNaN(amountNum) || amountNum <= 0) return;
-    setIsSaving(true);
-    setError(null);
-    try {
-      const payload = {
-        type: entryType,
-        amount: amountNum,
-        description: entryDescription.trim(),
-        category: entryCategory.trim() || undefined,
-        status: entryType === 'INCOME' ? entryStatus : 'PAID' as const,
-        date: entryDate,
-        notes: entryNotes.trim() || undefined,
-      };
-      if (editingEntry) {
-        await workSuiteService.updateFinanceEntry(editingEntry.id, payload);
-      } else {
-        await workSuiteService.createFinanceEntry(payload);
-      }
-      setShowModal(false);
-      await load();
-    } catch {
-      setError('Something went wrong saving that entry — try again.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async (entry: FinanceEntry) => {
-    setEntries((prev) => prev.filter((e) => e.id !== entry.id));
-    try {
-      await workSuiteService.deleteFinanceEntry(entry.id);
-    } catch {
-      await load();
-    }
-  };
-
-  const totals = useMemo(() => {
-    const now = new Date();
-    const monthEntries = entries.filter((e) => {
-      const d = new Date(e.date);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    });
-    const income = monthEntries.filter((e) => e.type === 'INCOME').reduce((sum, e) => sum + e.amount, 0);
-    const expense = monthEntries.filter((e) => e.type === 'EXPENSE').reduce((sum, e) => sum + e.amount, 0);
-    return { income, expense, net: income - expense };
-  }, [entries]);
-
-  const counts = useMemo(() => {
-    const c: Record<SectionFilter, number> = { ALL: entries.length, INCOME: 0, EXPENSE: 0 };
-    for (const e of entries) c[e.type] += 1;
-    return c;
-  }, [entries]);
-
-  const visibleEntries = useMemo(() => {
-    let list = section === 'ALL' ? entries : entries.filter((e) => e.type === section);
-    const q = search.trim().toLowerCase();
-    if (q) {
-      list = list.filter((e) => e.description.toLowerCase().includes(q) || (e.category || '').toLowerCase().includes(q));
-    }
-    const sorted = [...list];
-    if (sortOrder === 'newest') sorted.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    else if (sortOrder === 'oldest') sorted.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    else sorted.sort((a, b) => b.amount - a.amount);
-    return sorted;
-  }, [entries, section, search, sortOrder]);
 
   const allBankAccounts = useMemo(
     () => bankConnections.flatMap((c) => c.accounts.map((a) => ({ ...a, institutionName: c.institutionName }))),
@@ -393,42 +260,24 @@ export const WorkSuiteFinancePage: React.FC = () => {
           </div>
         )}
 
-        <div className="worksuite-ticker-grid">
-          {!isLoadingBank && allBankAccounts.length > 0 && (
-            <>
-              <div className="worksuite-ticker-tile">
-                <span className="worksuite-ticker-tile__label">Total assets</span>
-                <span className="worksuite-ticker-tile__value worksuite-ticker--up">{formatCurrency(netWorth.assets)}</span>
-              </div>
-              <div className="worksuite-ticker-tile">
-                <span className="worksuite-ticker-tile__label">Total debt</span>
-                <span className="worksuite-ticker-tile__value worksuite-ticker--down">{formatCurrency(netWorth.debt)}</span>
-              </div>
-              <div className="worksuite-ticker-tile">
-                <span className="worksuite-ticker-tile__label">Bank spend this month</span>
-                <span className="worksuite-ticker-tile__value worksuite-ticker--down">{formatCurrency(bankSpendThisMonth)}</span>
-              </div>
-            </>
-          )}
-          {!isLoading && (
-            <>
-              <div className="worksuite-ticker-tile">
-                <span className="worksuite-ticker-tile__label">Manual income (mo)</span>
-                <span className="worksuite-ticker-tile__value worksuite-ticker--up">${formatMoney(totals.income)}</span>
-              </div>
-              <div className="worksuite-ticker-tile">
-                <span className="worksuite-ticker-tile__label">Manual expenses (mo)</span>
-                <span className="worksuite-ticker-tile__value worksuite-ticker--down">${formatMoney(totals.expense)}</span>
-              </div>
-              <div className="worksuite-ticker-tile">
-                <span className="worksuite-ticker-tile__label">Manual net (mo)</span>
-                <span className={`worksuite-ticker-tile__value${totals.net < 0 ? ' worksuite-ticker--down' : ' worksuite-ticker--up'}`}>${formatMoney(totals.net)}</span>
-              </div>
-            </>
-          )}
-        </div>
+        {!isLoadingBank && allBankAccounts.length > 0 && (
+          <div className="worksuite-ticker-grid">
+            <div className="worksuite-ticker-tile">
+              <span className="worksuite-ticker-tile__label">Total assets</span>
+              <span className="worksuite-ticker-tile__value worksuite-ticker--up">{formatCurrency(netWorth.assets)}</span>
+            </div>
+            <div className="worksuite-ticker-tile">
+              <span className="worksuite-ticker-tile__label">Total debt</span>
+              <span className="worksuite-ticker-tile__value worksuite-ticker--down">{formatCurrency(netWorth.debt)}</span>
+            </div>
+            <div className="worksuite-ticker-tile">
+              <span className="worksuite-ticker-tile__label">Bank spend this month</span>
+              <span className="worksuite-ticker-tile__value worksuite-ticker--down">{formatCurrency(bankSpendThisMonth)}</span>
+            </div>
+          </div>
+        )}
 
-        {holdings.length > 0 && (
+        {holdings.length > 0 ? (
           <div className="worksuite-trader-row">
             <div className="worksuite-bank-card worksuite-holdings-card">
               <div className="worksuite-bank-card__header" style={{ border: 'none', paddingBottom: 0 }}>
@@ -478,92 +327,14 @@ export const WorkSuiteFinancePage: React.FC = () => {
               )}
             </div>
           </div>
-        )}
-
-        <div className="worksuite-page__header-row">
-          <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1rem', color: 'var(--tech-text-main)' }}>Manual entries</h3>
-          <button className="worksuite-create-btn" onClick={openCreate}>+ New Entry</button>
-        </div>
-
-        <div className="worksuite-jobs-layout">
-          <aside className="worksuite-jobs-sidebar">
-            <nav className="worksuite-jobs-nav">
-              {SECTIONS.map((s) => (
-                <button
-                  key={s.key}
-                  className={`worksuite-jobs-nav-item${section === s.key ? ' worksuite-jobs-nav-item--active' : ''}`}
-                  onClick={() => setSection(s.key)}
-                >
-                  <span className="worksuite-jobs-nav-item__left"><span>{s.label}</span></span>
-                  <span className="worksuite-jobs-nav-item__count">{counts[s.key]}</span>
-                </button>
-              ))}
-            </nav>
-
-            <div className="worksuite-jobs-filters">
-              <h4>Filter</h4>
-              <input
-                className="input"
-                placeholder="Search description or category…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <ThemedSelect
-                value={sortOrder}
-                options={[
-                  { value: 'newest', label: 'Newest first' },
-                  { value: 'oldest', label: 'Oldest first' },
-                  { value: 'amount', label: 'Highest amount' },
-                ]}
-                onChange={(v) => setSortOrder(v as SortOrder)}
-              />
+        ) : (
+          !isLoadingBank && (
+            <div className="worksuite-empty worksuite-empty--goals">
+              <p>Connect a bank account to see your overview here.</p>
+              <button className="worksuite-create-btn" onClick={() => setView('bank')}>Go to Bank Accounts</button>
             </div>
-          </aside>
-
-          <div className="worksuite-jobs-feed">
-            {isLoading ? (
-              <div className="worksuite-empty">Loading entries…</div>
-            ) : visibleEntries.length === 0 ? (
-              <div className="worksuite-empty worksuite-empty--goals">
-                <p>{search.trim() ? 'No entries match your search.' : 'Nothing logged yet — add your first entry.'}</p>
-                <button className="worksuite-create-btn" onClick={openCreate}>+ New Entry</button>
-              </div>
-            ) : (
-              visibleEntries.map((entry) => {
-                const isIncome = entry.type === 'INCOME';
-                const color = isIncome ? '#3f6f47' : '#a2504b';
-                return (
-                  <div key={entry.id} className="worksuite-job-post" style={{ borderLeft: `4px solid ${color}` }}>
-                    <div className="worksuite-job-post__top">
-                      <div>
-                        <h3 className="worksuite-job-post__role">{entry.description}</h3>
-                        {entry.category && <p className="worksuite-job-post__company">{entry.category}</p>}
-                      </div>
-                      <span className="worksuite-job-post__badge" style={{ background: color, color: '#14140f' }}>
-                        {isIncome ? '+' : '−'}${formatMoney(entry.amount)}
-                      </span>
-                    </div>
-
-                    <div className="worksuite-job-post__meta">
-                      <span>{new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                      {isIncome && <span>{entry.status === 'PAID' ? 'Paid' : 'Pending'}</span>}
-                    </div>
-
-                    {entry.notes && <p className="worksuite-job-post__notes">{entry.notes}</p>}
-
-                    <div className="worksuite-job-post__footer">
-                      <div />
-                      <div className="worksuite-job-post__actions">
-                        <button className="worksuite-kanban-card__icon-btn" onClick={() => openEdit(entry)} title="Edit"><IconEdit size={13} /></button>
-                        <button className="worksuite-kanban-card__icon-btn" onClick={() => handleDelete(entry)} title="Delete"><IconClose size={13} /></button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
+          )
+        )}
         </>
         )}
 
@@ -761,79 +532,6 @@ export const WorkSuiteFinancePage: React.FC = () => {
           </div>
         )}
       </div>
-
-      {showModal && (
-        <div className="worksuite-modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="worksuite-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{editingEntry ? 'Edit Entry' : 'New Entry'}</h2>
-
-            <label>Type</label>
-            <ThemedSelect
-              value={entryType}
-              options={[
-                { value: 'INCOME', label: 'Income' },
-                { value: 'EXPENSE', label: 'Expense' },
-              ]}
-              onChange={(v) => setEntryType(v as FinanceEntryType)}
-            />
-
-            <label>Description</label>
-            <input value={entryDescription} onChange={(e) => setEntryDescription(e.target.value)} placeholder="Freelance invoice — Acme Corp" maxLength={200} />
-
-            <div className="worksuite-jobs-cv-form-row">
-              <div>
-                <label>Amount ($)</label>
-                <input type="number" min="0" step="0.01" value={entryAmount} onChange={(e) => setEntryAmount(e.target.value)} placeholder="0.00" />
-              </div>
-              <div>
-                <label>Category</label>
-                <input value={entryCategory} onChange={(e) => setEntryCategory(e.target.value)} placeholder="Freelance, Rent…" maxLength={80} />
-              </div>
-            </div>
-
-            <label>Date</label>
-            <ThemedDatePicker value={entryDate} onChange={setEntryDate} />
-
-            {entryType === 'INCOME' && (
-              <>
-                <label>Status</label>
-                <ThemedSelect
-                  value={entryStatus}
-                  options={[
-                    { value: 'PAID', label: 'Paid' },
-                    { value: 'PENDING', label: 'Pending' },
-                  ]}
-                  onChange={(v) => setEntryStatus(v as 'PAID' | 'PENDING')}
-                />
-              </>
-            )}
-
-            <label>Notes</label>
-            <textarea value={entryNotes} onChange={(e) => setEntryNotes(e.target.value)} rows={2} placeholder="Optional details" maxLength={500} />
-
-            {error && <p className="worksuite-modal__error">{error}</p>}
-            <div className="worksuite-modal__actions">
-              {editingEntry && (
-                <button
-                  className="worksuite-modal__cancel"
-                  style={{ color: 'var(--color-danger)', marginRight: 'auto' }}
-                  onClick={async () => { await handleDelete(editingEntry); setShowModal(false); }}
-                >
-                  Delete
-                </button>
-              )}
-              <button className="worksuite-modal__cancel" onClick={() => setShowModal(false)}>Cancel</button>
-              <button
-                className="worksuite-modal__submit"
-                onClick={handleSave}
-                disabled={!entryDescription.trim() || !entryDate || !entryAmount || Number(entryAmount) <= 0 || isSaving}
-              >
-                {isSaving ? 'Saving…' : editingEntry ? 'Save Changes' : 'Create Entry'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
