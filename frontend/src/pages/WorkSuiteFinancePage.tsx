@@ -70,6 +70,7 @@ export const WorkSuiteFinancePage: React.FC = () => {
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [isConnectingBank, setIsConnectingBank] = useState(false);
   const [bankError, setBankError] = useState<string | null>(null);
+  const [txnAccountFilter, setTxnAccountFilter] = useState('ALL');
 
   const [showModal, setShowModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<FinanceEntry | null>(null);
@@ -304,6 +305,16 @@ export const WorkSuiteFinancePage: React.FC = () => {
     else sorted.sort((a, b) => b.amount - a.amount);
     return sorted;
   }, [entries, section, search, sortOrder]);
+
+  const allBankAccounts = useMemo(
+    () => bankConnections.flatMap((c) => c.accounts.map((a) => ({ ...a, institutionName: c.institutionName }))),
+    [bankConnections]
+  );
+
+  const visibleBankTransactions = useMemo(
+    () => (txnAccountFilter === 'ALL' ? bankTransactions : bankTransactions.filter((tx) => tx.accountId === txnAccountFilter)),
+    [bankTransactions, txnAccountFilter]
+  );
 
   return (
     <div className="worksuite-page">
@@ -575,16 +586,29 @@ export const WorkSuiteFinancePage: React.FC = () => {
 
             {bankConnections.length > 0 && (
               <>
-                <h4 className="worksuite-bank-txn-heading">Recent transactions</h4>
+                <div className="worksuite-bank-txn-header">
+                  <h4 className="worksuite-bank-txn-heading">Recent transactions</h4>
+                  <ThemedSelect
+                    value={txnAccountFilter}
+                    options={[
+                      { value: 'ALL', label: 'All accounts' },
+                      ...allBankAccounts.map((a) => ({
+                        value: a.plaidAccountId,
+                        label: `${a.name}${a.mask ? ` ••••${a.mask}` : ''}`,
+                      })),
+                    ]}
+                    onChange={setTxnAccountFilter}
+                  />
+                </div>
                 {isLoadingTransactions ? (
                   <div className="worksuite-empty">Loading transactions…</div>
-                ) : bankTransactions.length === 0 ? (
+                ) : visibleBankTransactions.length === 0 ? (
                   <div className="worksuite-empty worksuite-empty--goals">
-                    <p>No transactions in the last 30 days.</p>
+                    <p>{txnAccountFilter === 'ALL' ? 'No transactions in the last 30 days.' : 'No transactions for this account in the last 30 days.'}</p>
                   </div>
                 ) : (
                   <div className="worksuite-bank-txn-list">
-                    {bankTransactions.map((tx) => {
+                    {visibleBankTransactions.map((tx) => {
                       // Plaid's convention: positive amount = money out, negative = money in.
                       // Flip it so spending reads as negative/red and inflows as positive/green.
                       const displayAmount = -tx.amount;

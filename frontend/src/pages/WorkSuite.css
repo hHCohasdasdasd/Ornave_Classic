@@ -3321,8 +3321,19 @@
   font-variant-numeric: tabular-nums;
 }
 
-.worksuite-bank-txn-heading {
+.worksuite-bank-txn-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin: 22px 2px 10px;
+}
+
+.worksuite-bank-txn-header .worksuite-bank-txn-heading {
+  margin: 0;
+}
+
+.worksuite-bank-txn-heading {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
