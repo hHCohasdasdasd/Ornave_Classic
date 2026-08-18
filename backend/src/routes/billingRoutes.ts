@@ -68,10 +68,10 @@ billingRoutes.post(
   '/membership/checkout',
   asyncHandler(async (req: any, res: Response) => {
     if (!isStripeConfigured()) return ApiResponseHandler.error(res, 'Payments are not configured', undefined, 503);
-    const { tier } = req.body;
+    const { tier, billingPeriod } = req.body;
     if (!tier) return ApiResponseHandler.error(res, 'tier is required', undefined, 400);
     try {
-      const url = await MembershipService.createTierCheckoutSession(req.user.userId, tier);
+      const url = await MembershipService.createTierCheckoutSession(req.user.userId, tier, billingPeriod === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY');
       return ApiResponseHandler.success(res, { url }, 'Checkout session created successfully', 201);
     } catch (err: any) {
       return ApiResponseHandler.error(res, err.message || 'Could not start checkout', undefined, 400);

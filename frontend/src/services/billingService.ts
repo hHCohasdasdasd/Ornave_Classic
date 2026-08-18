@@ -36,12 +36,15 @@ export interface SavedAddress {
 
 export type MemberTier = 'BASIC' | 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND';
 
+export type BillingPeriod = 'MONTHLY' | 'ANNUAL';
+
 export interface MembershipStatus {
   memberTier: MemberTier;
   isVerified: boolean;
   // Set only while a Silver/Gold/Diamond minimum-commitment window is still
   // running — null once it's passed (or for tiers with no commitment).
   canDowngradeAt: string | null;
+  billingPeriod: BillingPeriod | null;
 }
 
 class BillingService {
@@ -64,8 +67,8 @@ class BillingService {
     return response.data.data;
   }
 
-  async createTierCheckout(tier: Exclude<MemberTier, 'BASIC'>): Promise<string> {
-    const response = await apiClient.post('/billing/membership/checkout', { tier });
+  async createTierCheckout(tier: Exclude<MemberTier, 'BASIC'>, billingPeriod: BillingPeriod = 'MONTHLY'): Promise<string> {
+    const response = await apiClient.post('/billing/membership/checkout', { tier, billingPeriod });
     return response.data.data.url;
   }
 

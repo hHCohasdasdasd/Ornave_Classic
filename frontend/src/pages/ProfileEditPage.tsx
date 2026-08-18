@@ -79,6 +79,9 @@ interface StatusTier {
   code?: MemberTier;
   name: string;
   price: string;
+  // Silver and above only — a one-time payment covering 12 months, no
+  // auto-renewal. Undefined for tiers without an annual option.
+  annualPrice?: string;
   tagline: string;
   perks: string[];
   icon: string;
@@ -110,6 +113,7 @@ const STATUS_TIERS: StatusTier[] = [
     code: 'SILVER',
     name: 'Silver Member',
     price: '$9.99/mo',
+    annualPrice: '$99.99/yr',
     tagline: 'Stand out in Discover and search',
     perks: ['Everything in Bronze', 'Silver member badge everywhere you appear', 'Priority placement in Discover', 'Advanced profile analytics'],
     icon: '🥈',
@@ -119,6 +123,7 @@ const STATUS_TIERS: StatusTier[] = [
     code: 'GOLD',
     name: 'Gold Member',
     price: '$19.99/mo',
+    annualPrice: '$199.99/yr',
     tagline: 'For power networkers and dealmakers',
     perks: ['Everything in Silver', 'Gold member badge everywhere you appear', 'Top placement in Discover', 'Unlimited saved searches', 'Direct-message any member'],
     icon: '🥇',
@@ -128,6 +133,7 @@ const STATUS_TIERS: StatusTier[] = [
     code: 'DIAMOND',
     name: 'Diamond Member',
     price: '$49.99/mo',
+    annualPrice: '$499.99/yr',
     tagline: 'The absolute top — gold, with flare',
     perks: ['Everything in Gold', 'Animated shimmering Diamond badge', 'Featured placement across Ornave', 'Dedicated account concierge', 'Exclusive Diamond-only sectors'],
     icon: '💠',
@@ -165,6 +171,7 @@ export const ProfileEditPage: React.FC = () => {
   const [hasVerified, setHasVerified] = useState<boolean>(() => localStorage.getItem(scopedKey(VERIFIED_ADDON_KEY, user?.id)) === 'true');
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
   const [canDowngradeAt, setCanDowngradeAt] = useState<string | null>(null);
+  const [lockedBillingPeriod, setLockedBillingPeriod] = useState<'MONTHLY' | 'ANNUAL' | null>(null);
   // Photo states
   const [profilePhoto, setProfilePhoto] = useState<string>('');
   const [backgroundPhoto, setBackgroundPhoto] = useState<string>('');
@@ -379,13 +386,14 @@ export const ProfileEditPage: React.FC = () => {
   // still need to buy the Verified add-on separately.
   const AUTO_VERIFIED_TIERS = ['Silver Member', 'Gold Member', 'Diamond Member'];
 
-  const applyMembershipStatus = (status: { memberTier: MemberTier; isVerified: boolean; canDowngradeAt?: string | null }) => {
+  const applyMembershipStatus = (status: { memberTier: MemberTier; isVerified: boolean; canDowngradeAt?: string | null; billingPeriod?: 'MONTHLY' | 'ANNUAL' | null }) => {
     const tierId = STATUS_TIERS.find((t) => t.code === status.memberTier)?.id || 'Basic';
     localStorage.setItem(scopedKey(MEMBER_TIER_KEY, user?.id), tierId);
     localStorage.setItem(scopedKey(VERIFIED_ADDON_KEY, user?.id), status.isVerified ? 'true' : 'false');
     setCurrentTier(tierId);
     setHasVerified(status.isVerified);
     setCanDowngradeAt(status.canDowngradeAt ?? null);
+    setLockedBillingPeriod(status.billingPeriod ?? null);
     window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'member_tier', tier: tierId } }));
   };
 
@@ -422,8 +430,8 @@ export const ProfileEditPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  const handlePurchaseTier = async (tier: StatusTier) => {
-    setIsPurchasing(tier.id);
+  const handlePurchaseTier = async (tier: StatusTier, billingPeriod: 'MONTHLY' | 'ANNUAL' = 'MONTHLY') => {
+    setIsPurchasing(billingPeriod === 'ANNUAL' ? `${tier.id}-annual` : tier.id);
     setError('');
     try {
       if (tier.code === 'BASIC') {
@@ -437,7 +445,7 @@ export const ProfileEditPage: React.FC = () => {
         setIsPurchasing(null);
         return;
       }
-      const url = await billingService.createTierCheckout(tier.code as Exclude<MemberTier, 'BASIC'>);
+      const url = await billingService.createTierCheckout(tier.code as Exclude<MemberTier, 'BASIC'>, billingPeriod);
       window.location.href = url;
     } catch (err: any) {
       const serverMessage = err?.response?.data?.message;
@@ -1150,17 +1158,29 @@ export const ProfileEditPage: React.FC = () => {
                           </ul>
                           {isLockedBasic && (
                             <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
-                              Available {new Date(canDowngradeAt!).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })} — Silver and above have a 3-month minimum.
+                              Available {new Date(canDowngradeAt!).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })} — {lockedBillingPeriod === 'ANNUAL' ? 'your annual status runs a full year' : 'Silver and above have a 3-month minimum'}.
                             </p>
                           )}
                           {isCurrent ? (
                             <button className="btn-secondary" disabled>Current Status</button>
                           ) : (
-                            <button className="btn-primary" onClick={() => handlePurchaseTier(tier)} disabled={!!isPurchasing || isLockedBasic}>
-                              {isPurchasing === tier.id
-                                ? (tier.price === 'Free' ? 'Switching…' : 'Redirecting…')
-                                : tier.price === 'Free' ? 'Switch to This' : 'Choose This Status'}
-                            </button>
+                            <>
+                              <button className="btn-primary" onClick={() => handlePurchaseTier(tier)} disabled={!!isPurchasing || isLockedBasic}>
+                                {isPurchasing === tier.id
+                                  ? (tier.price === 'Free' ? 'Switching…' : 'Redirecting…')
+                                  : tier.price === 'Free' ? 'Switch to This' : 'Choose This Status'}
+                              </button>
+                              {tier.annualPrice && (
+                                <button
+                                  className="btn-secondary"
+                                  style={{ marginTop: '8px' }}
+                                  onClick={() => handlePurchaseTier(tier, 'ANNUAL')}
+                                  disabled={!!isPurchasing}
+                                >
+                                  {isPurchasing === `${tier.id}-annual` ? 'Redirecting…' : `or ${tier.annualPrice} (1 year, no auto-renew)`}
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       );

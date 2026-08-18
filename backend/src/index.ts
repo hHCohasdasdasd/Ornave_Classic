@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 
 import { errorHandler } from './middleware/errorHandler';
 import { AccountPurgeService } from './services/accountPurgeService';
+import { MembershipService } from './services/membershipService';
 import { csrfProtection } from './middleware/csrf';
 import authRoutes from './routes/authRoutes';
 import companyRoutes from './routes/companyRoutes';
@@ -245,4 +246,10 @@ if (isMain) {
   // catch up on anything overdue), then on a daily interval after that.
   setTimeout(() => AccountPurgeService.purgeExpiredDeletedAccounts().catch((err) => console.error('[AccountPurge] Run failed:', err)), 60_000);
   setInterval(() => AccountPurgeService.purgeExpiredDeletedAccounts().catch((err) => console.error('[AccountPurge] Run failed:', err)), PURGE_CHECK_INTERVAL_MS);
+
+  // Annual Ornave Status purchases don't auto-renew and have no Stripe
+  // subscription to notify us when the year is up — this is what reverts
+  // them to Basic once it passes.
+  setTimeout(() => MembershipService.expireAnnualMemberships().catch((err) => console.error('[Membership] Expiry run failed:', err)), 90_000);
+  setInterval(() => MembershipService.expireAnnualMemberships().catch((err) => console.error('[Membership] Expiry run failed:', err)), PURGE_CHECK_INTERVAL_MS);
 }
