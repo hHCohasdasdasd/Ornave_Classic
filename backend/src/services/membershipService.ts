@@ -169,4 +169,22 @@ export class MembershipService {
       console.error(`[Membership] Failed to cancel subscription ${user.memberTierSubscriptionId} on account deletion:`, err)
     );
   }
+
+  /** "Switch to Basic" from the status shop — unlike the Stripe portal's
+   * cancel flow (which keeps paid benefits until the period they already
+   * paid for ends), this is an explicit, immediate downgrade: the
+   * subscription is canceled right now and the tier drops right now,
+   * matching how every other tier change in this shop already works. No
+   * proration/refund for the unused remainder — same as a normal Stripe
+   * subscription cancellation. */
+  static async downgradeToBasic(userId: string): Promise<{ memberTier: MemberTier; isVerified: boolean }> {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { memberTierSubscriptionId: true } });
+    if (user?.memberTierSubscriptionId) {
+      await stripeClient.subscriptions.cancel(user.memberTierSubscriptionId).catch((err) => {
+        console.error(`[Membership] Failed to cancel subscription ${user.memberTierSubscriptionId} on downgrade:`, err);
+      });
+    }
+    await prisma.user.update({ where: { id: userId }, data: { memberTier: 'BASIC', memberTierSubscriptionId: null } });
+    return this.getStatus(userId);
+  }
 }

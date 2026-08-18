@@ -57,6 +57,14 @@ billingRoutes.get(
 );
 
 billingRoutes.post(
+  '/membership/downgrade',
+  asyncHandler(async (req: any, res: Response) => {
+    const status = await MembershipService.downgradeToBasic(req.user.userId);
+    return ApiResponseHandler.success(res, status, 'Switched to Basic successfully', 200);
+  })
+);
+
+billingRoutes.post(
   '/membership/checkout',
   asyncHandler(async (req: any, res: Response) => {
     if (!isStripeConfigured()) return ApiResponseHandler.error(res, 'Payments are not configured', undefined, 503);

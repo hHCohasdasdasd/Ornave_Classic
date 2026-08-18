@@ -424,13 +424,22 @@ export const ProfileEditPage: React.FC = () => {
     setIsPurchasing(tier.id);
     setError('');
     try {
-      const url = tier.code === 'BASIC'
-        ? await billingService.createMembershipPortal()
-        : await billingService.createTierCheckout(tier.code as Exclude<MemberTier, 'BASIC'>);
+      if (tier.code === 'BASIC') {
+        // Immediate, in-app downgrade — cancels the paid subscription right
+        // now rather than sending them through the portal's "keep benefits
+        // until period end" cancel flow, matching how every other tier
+        // change here is instant.
+        const status = await billingService.downgradeToBasic();
+        applyMembershipStatus(status);
+        setSuccess("You're now on the Basic tier!");
+        setIsPurchasing(null);
+        return;
+      }
+      const url = await billingService.createTierCheckout(tier.code as Exclude<MemberTier, 'BASIC'>);
       window.location.href = url;
     } catch {
       setError(tier.code === 'BASIC'
-        ? 'Could not open subscription management — try again.'
+        ? 'Could not switch to Basic — try again.'
         : 'Could not start checkout — try again.');
       setIsPurchasing(null);
     }
@@ -1139,7 +1148,9 @@ export const ProfileEditPage: React.FC = () => {
                             <button className="btn-secondary" disabled>Current Status</button>
                           ) : (
                             <button className="btn-primary" onClick={() => handlePurchaseTier(tier)} disabled={!!isPurchasing}>
-                              {isPurchasing === tier.id ? 'Redirecting…' : tier.price === 'Free' ? 'Manage Subscription' : 'Choose This Status'}
+                              {isPurchasing === tier.id
+                                ? (tier.price === 'Free' ? 'Switching…' : 'Redirecting…')
+                                : tier.price === 'Free' ? 'Switch to This' : 'Choose This Status'}
                             </button>
                           )}
                         </div>

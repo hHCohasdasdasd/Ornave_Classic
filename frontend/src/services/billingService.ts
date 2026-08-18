@@ -56,6 +56,11 @@ class BillingService {
     return response.data.data;
   }
 
+  async downgradeToBasic(): Promise<MembershipStatus> {
+    const response = await apiClient.post('/billing/membership/downgrade', {});
+    return response.data.data;
+  }
+
   async createTierCheckout(tier: Exclude<MemberTier, 'BASIC'>): Promise<string> {
     const response = await apiClient.post('/billing/membership/checkout', { tier });
     return response.data.data.url;
