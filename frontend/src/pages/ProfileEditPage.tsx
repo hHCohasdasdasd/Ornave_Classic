@@ -69,6 +69,7 @@ const MODAL_TITLES: Record<string, string> = {
   projects: 'Add Project',
   featured: 'Featured Section',
   shop: 'Ornave Status',
+  cancel: 'Cancel Ornave Status',
 };
 
 const MEMBER_TIER_KEY = 'ornave_member_tier';
@@ -172,6 +173,8 @@ export const ProfileEditPage: React.FC = () => {
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
   const [canDowngradeAt, setCanDowngradeAt] = useState<string | null>(null);
   const [lockedBillingPeriod, setLockedBillingPeriod] = useState<'MONTHLY' | 'ANNUAL' | null>(null);
+  const [cancelAt, setCancelAt] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
   // Photo states
   const [profilePhoto, setProfilePhoto] = useState<string>('');
   const [backgroundPhoto, setBackgroundPhoto] = useState<string>('');
@@ -389,7 +392,7 @@ export const ProfileEditPage: React.FC = () => {
   const formatLockDate = (iso: string | null) =>
     iso ? new Date(iso).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : '';
 
-  const applyMembershipStatus = (status: { memberTier: MemberTier; isVerified: boolean; canDowngradeAt?: string | null; billingPeriod?: 'MONTHLY' | 'ANNUAL' | null }) => {
+  const applyMembershipStatus = (status: { memberTier: MemberTier; isVerified: boolean; canDowngradeAt?: string | null; billingPeriod?: 'MONTHLY' | 'ANNUAL' | null; cancelAt?: string | null }) => {
     const tierId = STATUS_TIERS.find((t) => t.code === status.memberTier)?.id || 'Basic';
     localStorage.setItem(scopedKey(MEMBER_TIER_KEY, user?.id), tierId);
     localStorage.setItem(scopedKey(VERIFIED_ADDON_KEY, user?.id), status.isVerified ? 'true' : 'false');
@@ -397,6 +400,7 @@ export const ProfileEditPage: React.FC = () => {
     setHasVerified(status.isVerified);
     setCanDowngradeAt(status.canDowngradeAt ?? null);
     setLockedBillingPeriod(status.billingPeriod ?? null);
+    setCancelAt(status.cancelAt ?? null);
     window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'member_tier', tier: tierId } }));
   };
 
@@ -473,6 +477,41 @@ export const ProfileEditPage: React.FC = () => {
     } catch {
       setError('Could not start checkout — try again.');
       setIsPurchasing(null);
+    }
+  };
+
+  const handleCancelMembership = async () => {
+    setIsCancelling(true);
+    setError('');
+    try {
+      const status = await billingService.cancelMembership();
+      applyMembershipStatus(status);
+      const message = status.effective === 'immediate'
+        ? "Your subscription has been canceled and you're now on the Basic tier. A confirmation has been sent to your email."
+        : status.effective === 'scheduled'
+          ? `Your cancellation is confirmed — you'll keep your status until ${formatLockDate(status.cancelAt)}, then automatically switch to Basic. A confirmation has been sent to your email.`
+          : 'Your annual status is one-time and already set not to renew — nothing further to cancel. A confirmation has been sent to your email.';
+      setSuccess(message);
+      setActiveModal(null);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Could not process the cancellation — try again.');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handleUndoCancellation = async () => {
+    setIsCancelling(true);
+    setError('');
+    try {
+      const status = await billingService.undoCancelMembership();
+      applyMembershipStatus(status);
+      setSuccess('Cancellation undone — your subscription will continue as normal.');
+      setActiveModal(null);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Could not undo the cancellation — try again.');
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -893,15 +932,30 @@ export const ProfileEditPage: React.FC = () => {
                   <h3>Ornave Status</h3>
                   <p>
                     You're currently on the {currentTier}{currentTier === 'Basic' ? ' tier' : ''}{hasVerified ? ' · Verified ✓' : ''}
-                    {currentTier !== 'Basic' && lockedBillingPeriod && (
+                    {currentTier !== 'Basic' && cancelAt ? (
+                      ` · Canceling — switches to Basic on ${formatLockDate(cancelAt)}`
+                    ) : currentTier !== 'Basic' && lockedBillingPeriod && (
                       lockedBillingPeriod === 'ANNUAL'
                         ? ` · Annual — valid through ${formatLockDate(canDowngradeAt)}, does not auto-renew`
                         : (canDowngradeAt ? ` · Monthly, renews automatically — min. commitment until ${formatLockDate(canDowngradeAt)}` : ' · Monthly, renews automatically, cancel anytime')
                     )}
                   </p>
-                  <button className="btn-outline" onClick={() => setActiveModal('shop')}>
-                    Browse Statuses
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button className="btn-outline" onClick={() => setActiveModal('shop')}>
+                      Browse Statuses
+                    </button>
+                    {currentTier !== 'Basic' && (
+                      cancelAt ? (
+                        <button className="btn-outline" onClick={handleUndoCancellation} disabled={isCancelling}>
+                          {isCancelling ? 'Undoing…' : 'Undo Cancellation'}
+                        </button>
+                      ) : (
+                        <button className="btn-outline" onClick={() => setActiveModal('cancel')}>
+                          Cancel Subscription
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
               </div>
                 </div>
@@ -1195,7 +1249,20 @@ export const ProfileEditPage: React.FC = () => {
                             </p>
                           )}
                           {isCurrent ? (
-                            <button className="btn-secondary" disabled>Current Status</button>
+                            <>
+                              <button className="btn-secondary" disabled>Current Status</button>
+                              {tier.code !== 'BASIC' && (
+                                cancelAt ? (
+                                  <button className="btn-secondary" style={{ marginTop: '8px' }} onClick={handleUndoCancellation} disabled={isCancelling}>
+                                    {isCancelling ? 'Undoing…' : 'Undo Cancellation'}
+                                  </button>
+                                ) : (
+                                  <button className="btn-secondary" style={{ marginTop: '8px' }} onClick={() => setActiveModal('cancel')}>
+                                    Cancel Subscription
+                                  </button>
+                                )
+                              )}
+                            </>
                           ) : (
                             <>
                               <button className="btn-primary" onClick={() => handlePurchaseTier(tier)} disabled={!!isPurchasing || isLockedBasic}>
@@ -1244,7 +1311,59 @@ export const ProfileEditPage: React.FC = () => {
                 </div>
               )}
 
-              {activeModal !== 'shop' && (
+              {activeModal === 'cancel' && (() => {
+                const currentIndex = STATUS_TIERS.findIndex((t) => t.id === currentTier);
+                const downgradeOptions = currentIndex > 1 ? STATUS_TIERS.slice(1, currentIndex) : [];
+                return (
+                  <div className="status-shop">
+                    <p className="status-shop__intro">
+                      We're sorry to see you go. You're currently on <strong>{currentTier}</strong>
+                      {lockedBillingPeriod === 'ANNUAL'
+                        ? ' — a one-time annual payment that already does not renew, so there is nothing to cancel.'
+                        : '.'}
+                    </p>
+                    {downgradeOptions.length > 0 && (
+                      <>
+                        <p className="status-shop__intro" style={{ marginTop: 0 }}>Want to keep some perks instead of leaving entirely? Switch to a lower tier:</p>
+                        <div className="status-shop__grid">
+                          {downgradeOptions.map((tier) => (
+                            <div key={tier.id} className="status-tier-card">
+                              <span className="status-tier-card__icon">{tier.icon}</span>
+                              <h3>{tier.name}</h3>
+                              <div className="status-tier-card__price">{tier.price}</div>
+                              <button
+                                className="btn-primary"
+                                onClick={() => handlePurchaseTier(tier)}
+                                disabled={!!isPurchasing}
+                              >
+                                {isPurchasing === tier.id ? 'Redirecting…' : `Switch to ${tier.name}`}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    {lockedBillingPeriod !== 'ANNUAL' && canDowngradeAt && (
+                      <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
+                        You're still inside the 3-month minimum. Canceling now is accepted immediately and takes effect on {formatLockDate(canDowngradeAt)} — you'll keep your current status until then and won't be charged again after.
+                      </p>
+                    )}
+                    <div className="modal-actions" style={{ marginTop: '16px' }}>
+                      <button className="btn-secondary" onClick={closeModal}>Never mind, keep my status</button>
+                      <button
+                        className="btn-primary"
+                        style={{ background: 'var(--color-danger, #a2504b)' }}
+                        onClick={handleCancelMembership}
+                        disabled={isCancelling}
+                      >
+                        {isCancelling ? 'Canceling…' : lockedBillingPeriod === 'ANNUAL' ? 'Confirm — nothing to cancel' : 'No thanks, cancel my subscription'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {activeModal !== 'shop' && activeModal !== 'cancel' && (
               <div className="modal-actions">
                 <button className="btn-secondary" onClick={closeModal}>Cancel</button>
                 <button className="btn-primary" onClick={() => {

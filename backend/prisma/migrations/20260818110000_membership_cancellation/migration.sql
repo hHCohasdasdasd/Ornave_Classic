@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "memberTierCancelAt" TIMESTAMP(3);

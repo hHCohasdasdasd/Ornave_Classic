@@ -65,6 +65,30 @@ billingRoutes.post(
 );
 
 billingRoutes.post(
+  '/membership/cancel',
+  asyncHandler(async (req: any, res: Response) => {
+    try {
+      const status = await MembershipService.requestCancellation(req.user.userId);
+      return ApiResponseHandler.success(res, status, 'Cancellation confirmed', 200);
+    } catch (err: any) {
+      return ApiResponseHandler.error(res, err.message || 'Could not process cancellation', undefined, err.statusCode || 400);
+    }
+  })
+);
+
+billingRoutes.post(
+  '/membership/cancel/undo',
+  asyncHandler(async (req: any, res: Response) => {
+    try {
+      const status = await MembershipService.undoCancellation(req.user.userId);
+      return ApiResponseHandler.success(res, status, 'Cancellation undone', 200);
+    } catch (err: any) {
+      return ApiResponseHandler.error(res, err.message || 'Could not undo cancellation', undefined, err.statusCode || 400);
+    }
+  })
+);
+
+billingRoutes.post(
   '/membership/checkout',
   asyncHandler(async (req: any, res: Response) => {
     if (!isStripeConfigured()) return ApiResponseHandler.error(res, 'Payments are not configured', undefined, 503);

@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { stripeClient } from '../utils/stripeClient';
 import { StripeService } from './stripeService';
+import { sendEmail } from '../utils/email';
 
 const prisma = new PrismaClient();
 
@@ -77,16 +78,44 @@ function commitmentLockedError(tier: MemberTier, billingPeriod: BillingPeriod | 
   return err;
 }
 
+interface MembershipStatus {
+  memberTier: MemberTier;
+  isVerified: boolean;
+  canDowngradeAt: string | null;
+  billingPeriod: BillingPeriod | null;
+  // Set only when a monthly cancellation has been accepted but deferred to
+  // the end of the minimum-commitment window — null otherwise.
+  cancelAt: string | null;
+}
+
+function tierDisplayName(tier: MemberTier): string {
+  return TIER_PRICES[tier as Exclude<MemberTier, 'BASIC'>]?.name || tier;
+}
+
+function emailWrapper(heading: string, bodyHtml: string): string {
+  return `<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+    <h2 style="color: #14140f;">${heading}</h2>
+    ${bodyHtml}
+    <p style="color: #888; font-size: 0.85rem; margin-top: 24px;">This is an automatic confirmation from Ornave — keep it for your records.</p>
+  </div>`;
+}
+
 export class MembershipService {
-  static async getStatus(userId: string): Promise<{ memberTier: MemberTier; isVerified: boolean; canDowngradeAt: string | null; billingPeriod: BillingPeriod | null }> {
+  static async getStatus(userId: string): Promise<MembershipStatus> {
     const user = await prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: { memberTier: true, isVerified: true, memberTierStartedAt: true, memberTierBillingPeriod: true },
+      select: { memberTier: true, isVerified: true, memberTierStartedAt: true, memberTierBillingPeriod: true, memberTierCancelAt: true },
     });
     const tier = user.memberTier as MemberTier;
     const billingPeriod = user.memberTierBillingPeriod as BillingPeriod | null;
     const lockedUntil = commitmentLockedUntil(tier, user.memberTierStartedAt, billingPeriod);
-    return { memberTier: tier, isVerified: user.isVerified, canDowngradeAt: lockedUntil ? lockedUntil.toISOString() : null, billingPeriod };
+    return {
+      memberTier: tier,
+      isVerified: user.isVerified,
+      canDowngradeAt: lockedUntil ? lockedUntil.toISOString() : null,
+      billingPeriod,
+      cancelAt: user.memberTierCancelAt ? user.memberTierCancelAt.toISOString() : null,
+    };
   }
 
   /** A hosted Stripe Checkout page for subscribing to a paid tier — far
@@ -200,7 +229,7 @@ export class MembershipService {
    * authoritative path (handles renewals/cancellations/failed payments
    * that happen while nobody's looking at this page). Verifies the session
    * actually belongs to this user before trusting it. */
-  static async reconcileCheckoutSession(userId: string, sessionId: string): Promise<{ memberTier: MemberTier; isVerified: boolean; canDowngradeAt: string | null; billingPeriod: BillingPeriod | null }> {
+  static async reconcileCheckoutSession(userId: string, sessionId: string): Promise<MembershipStatus> {
     const session = await stripeClient.checkout.sessions.retrieve(sessionId);
     if (session.metadata?.ornaveUserId !== userId) {
       throw new Error('Checkout session does not belong to this user');
@@ -241,6 +270,9 @@ export class MembershipService {
       memberTierSubscriptionId: subscriptionId || null,
       memberTierStartedAt: new Date(),
       memberTierBillingPeriod: billingPeriod,
+      // A fresh purchase supersedes any cancellation scheduled against the
+      // tier being replaced.
+      memberTierCancelAt: null,
     };
     if (AUTO_VERIFIED_TIERS.includes(tier)) data.isVerified = true;
     await prisma.user.update({ where: { id: userId }, data });
@@ -257,7 +289,7 @@ export class MembershipService {
 
     const stillActive = status === 'active' || status === 'trialing';
     if (!stillActive) {
-      await prisma.user.update({ where: { id: user.id }, data: { memberTier: 'BASIC', memberTierSubscriptionId: null, memberTierBillingPeriod: null } });
+      await prisma.user.update({ where: { id: user.id }, data: { memberTier: 'BASIC', memberTierSubscriptionId: null, memberTierBillingPeriod: null, memberTierCancelAt: null } });
     }
   }
 
@@ -319,7 +351,7 @@ export class MembershipService {
    * proration/refund for the unused remainder — same as a normal Stripe
    * subscription cancellation. Blocked entirely during a commitment window
    * (3 months for monthly Silver+, the full year for an annual purchase). */
-  static async downgradeToBasic(userId: string): Promise<{ memberTier: MemberTier; isVerified: boolean; canDowngradeAt: string | null; billingPeriod: BillingPeriod | null }> {
+  static async downgradeToBasic(userId: string): Promise<MembershipStatus> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { memberTier: true, memberTierSubscriptionId: true, memberTierStartedAt: true, memberTierBillingPeriod: true },
@@ -328,12 +360,119 @@ export class MembershipService {
     const billingPeriod = user?.memberTierBillingPeriod as BillingPeriod | null;
     const lockedUntil = commitmentLockedUntil(currentTier, user?.memberTierStartedAt ?? null, billingPeriod);
     if (lockedUntil) throw commitmentLockedError(currentTier, billingPeriod, lockedUntil);
-    if (user?.memberTierSubscriptionId) {
-      await stripeClient.subscriptions.cancel(user.memberTierSubscriptionId).catch((err) => {
-        console.error(`[Membership] Failed to cancel subscription ${user.memberTierSubscriptionId} on downgrade:`, err);
+    await this.cancelImmediately(userId, user?.memberTierSubscriptionId ?? null);
+    return this.getStatus(userId);
+  }
+
+  private static async cancelImmediately(userId: string, subscriptionId: string | null): Promise<void> {
+    if (subscriptionId) {
+      await stripeClient.subscriptions.cancel(subscriptionId).catch((err) => {
+        console.error(`[Membership] Failed to cancel subscription ${subscriptionId}:`, err);
       });
     }
-    await prisma.user.update({ where: { id: userId }, data: { memberTier: 'BASIC', memberTierSubscriptionId: null, memberTierBillingPeriod: null } });
+    await prisma.user.update({
+      where: { id: userId },
+      data: { memberTier: 'BASIC', memberTierSubscriptionId: null, memberTierBillingPeriod: null, memberTierCancelAt: null },
+    });
+  }
+
+  /** The actual "Cancel my subscription" flow — reachable in one click from
+   * wherever the current status is shown. Doesn't block on the minimum
+   * commitment the way downgradeToBasic does: canceling is accepted
+   * immediately either way, it just takes effect right away if the
+   * commitment has passed, or gets scheduled for the day it ends if not
+   * (mirrored onto the real Stripe subscription via `cancel_at`, so it's
+   * still enforced/billed correctly even if this server is down when the
+   * date arrives — the webhook picks it up). A confirmation email goes out
+   * either way. Annual purchases already don't auto-renew, so there's
+   * nothing to schedule — just a confirmation that nothing further is owed. */
+  static async requestCancellation(userId: string): Promise<MembershipStatus & { effective: 'immediate' | 'scheduled' | 'none' }> {
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { email: true, memberTier: true, memberTierSubscriptionId: true, memberTierStartedAt: true, memberTierBillingPeriod: true },
+    });
+    const currentTier = user.memberTier as MemberTier;
+    if (currentTier === 'BASIC') {
+      const err: any = new Error("You're already on the free Basic tier — there's nothing to cancel.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const billingPeriod = user.memberTierBillingPeriod as BillingPeriod | null;
+    const tierName = tierDisplayName(currentTier);
+    const lockedUntil = commitmentLockedUntil(currentTier, user.memberTierStartedAt, billingPeriod);
+
+    if (billingPeriod === 'ANNUAL') {
+      const throughDate = lockedUntil?.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      await sendEmail(
+        user.email,
+        `Ornave — confirming there's nothing to cancel`,
+        emailWrapper('Nothing further to cancel', `
+          <p>Your <strong>${tierName}</strong> status was a one-time annual payment${throughDate ? `, already good through <strong>${throughDate}</strong>` : ''}.</p>
+          <p>It does not renew automatically and you will not be charged again. You'll keep your current status until then, and it'll return to Basic on its own after that — no action needed.</p>
+        `)
+      ).catch((err) => console.error('[Membership] Failed to send cancellation-confirmation email:', err));
+      const status = await this.getStatus(userId);
+      return { ...status, effective: 'none' };
+    }
+
+    if (!lockedUntil) {
+      await this.cancelImmediately(userId, user.memberTierSubscriptionId);
+      await sendEmail(
+        user.email,
+        `Your ${tierName} subscription has been canceled`,
+        emailWrapper('Cancellation confirmed', `
+          <p>Your <strong>${tierName}</strong> subscription has been canceled effective immediately. You've been switched to the free Basic tier and will not be charged again.</p>
+          <p>Changed your mind? You can resubscribe any time from your profile.</p>
+        `)
+      ).catch((err) => console.error('[Membership] Failed to send cancellation-confirmation email:', err));
+      const status = await this.getStatus(userId);
+      return { ...status, effective: 'immediate' };
+    }
+
+    // Still inside the 3-month minimum — accept the cancellation now, take
+    // effect the day the commitment ends, rather than making them come back
+    // and ask again later.
+    if (user.memberTierSubscriptionId) {
+      await stripeClient.subscriptions.update(user.memberTierSubscriptionId, {
+        cancel_at: Math.floor(lockedUntil.getTime() / 1000),
+      }).catch((err) => console.error(`[Membership] Failed to schedule cancellation for subscription ${user.memberTierSubscriptionId}:`, err));
+    }
+    await prisma.user.update({ where: { id: userId }, data: { memberTierCancelAt: lockedUntil } });
+
+    const dateStr = lockedUntil.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    await sendEmail(
+      user.email,
+      `Your ${tierName} cancellation is confirmed`,
+      emailWrapper('Cancellation confirmed', `
+        <p>Your <strong>${tierName}</strong> subscription is set to cancel on <strong>${dateStr}</strong> — the end of its 3-month minimum term.</p>
+        <p>You'll keep your current status and perks until then. After that, you'll automatically move to the free Basic tier and won't be charged again.</p>
+        <p>Changed your mind? You can undo this any time before ${dateStr} from your profile.</p>
+      `)
+    ).catch((err) => console.error('[Membership] Failed to send cancellation-confirmation email:', err));
+
+    const status = await this.getStatus(userId);
+    return { ...status, effective: 'scheduled' };
+  }
+
+  /** Reverses a scheduled (not-yet-effective) cancellation — canceling
+   * should be at least as easy as this, so undoing it should be too. */
+  static async undoCancellation(userId: string): Promise<MembershipStatus> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { memberTierCancelAt: true, memberTierSubscriptionId: true },
+    });
+    if (!user?.memberTierCancelAt) {
+      const err: any = new Error('There is no pending cancellation to undo.');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (user.memberTierSubscriptionId) {
+      await stripeClient.subscriptions.update(user.memberTierSubscriptionId, { cancel_at: null }).catch((err) =>
+        console.error(`[Membership] Failed to clear scheduled cancellation for subscription ${user.memberTierSubscriptionId}:`, err)
+      );
+    }
+    await prisma.user.update({ where: { id: userId }, data: { memberTierCancelAt: null } });
     return this.getStatus(userId);
   }
 }

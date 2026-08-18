@@ -45,6 +45,9 @@ export interface MembershipStatus {
   // running — null once it's passed (or for tiers with no commitment).
   canDowngradeAt: string | null;
   billingPeriod: BillingPeriod | null;
+  // Set only when a monthly cancellation has been accepted but deferred to
+  // the end of the minimum-commitment window.
+  cancelAt: string | null;
 }
 
 class BillingService {
@@ -64,6 +67,16 @@ class BillingService {
 
   async downgradeToBasic(): Promise<MembershipStatus> {
     const response = await apiClient.post('/billing/membership/downgrade', {});
+    return response.data.data;
+  }
+
+  async cancelMembership(): Promise<MembershipStatus & { effective: 'immediate' | 'scheduled' | 'none' }> {
+    const response = await apiClient.post('/billing/membership/cancel', {});
+    return response.data.data;
+  }
+
+  async undoCancelMembership(): Promise<MembershipStatus> {
+    const response = await apiClient.post('/billing/membership/cancel/undo', {});
     return response.data.data;
   }
 

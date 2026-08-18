@@ -59,6 +59,13 @@ model User {
   // the year is up). Null for BASIC. Silver/Gold/Diamond only; Bronze is
   // monthly-only.
   memberTierBillingPeriod    String?
+  // Set when a monthly Silver+ member cancels while still inside the
+  // 3-month minimum — the cancellation is accepted and scheduled for this
+  // date (mirrored as Stripe's subscription `cancel_at`) rather than
+  // blocked outright, so canceling is never harder than subscribing was.
+  // Cleared on undo, on the scheduled date actually arriving (webhook), or
+  // if the member buys into a different tier before then.
+  memberTierCancelAt         DateTime?
   // The one-time "Verified" badge add-on — separate from memberTier since
   // Silver and above include it for free, but it can also be bought alone.
   isVerified                 Boolean                 @default(false)
