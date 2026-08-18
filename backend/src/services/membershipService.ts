@@ -23,6 +23,8 @@ const TIER_PRICES: Record<Exclude<MemberTier, 'BASIC'>, { name: string; cents: n
   DIAMOND: { name: 'Diamond Member', cents: 4999 },
 };
 
+const TIER_RANK: Record<MemberTier, number> = { BASIC: 0, BRONZE: 1, SILVER: 2, GOLD: 3, DIAMOND: 4 };
+
 const VERIFIED_ADDON_CENTS = 299;
 
 function frontendUrl(): string {
@@ -38,6 +40,14 @@ function commitmentLockedUntil(tier: MemberTier, startedAt: Date | null): Date |
   const unlockDate = new Date(startedAt);
   unlockDate.setMonth(unlockDate.getMonth() + MINIMUM_COMMITMENT_MONTHS);
   return unlockDate > new Date() ? unlockDate : null;
+}
+
+function commitmentLockedError(tier: MemberTier, lockedUntil: Date): Error {
+  const err: any = new Error(
+    `${TIER_PRICES[tier as Exclude<MemberTier, 'BASIC'>]?.name || 'This status'} has a ${MINIMUM_COMMITMENT_MONTHS}-month minimum — you can switch away starting ${lockedUntil.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`
+  );
+  err.statusCode = 400;
+  return err;
 }
 
 export class MembershipService {
@@ -56,6 +66,17 @@ export class MembershipService {
    * handles SCA, proration on upgrade/downgrade, and renewal retries). */
   static async createTierCheckoutSession(userId: string, tier: string): Promise<string> {
     if (!isPaidTier(tier)) throw new Error(`Not a purchasable tier: ${tier}`);
+
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { memberTier: true, memberTierStartedAt: true } });
+    const currentTier = (user?.memberTier as MemberTier) || 'BASIC';
+    // Moving to a lower-ranked tier while still under commitment is the same
+    // thing as canceling early wearing a different hat — block it exactly
+    // like downgradeToBasic does. Upgrading is always allowed.
+    if (TIER_RANK[tier] < TIER_RANK[currentTier]) {
+      const lockedUntil = commitmentLockedUntil(currentTier, user?.memberTierStartedAt ?? null);
+      if (lockedUntil) throw commitmentLockedError(currentTier, lockedUntil);
+    }
+
     const customerId = await StripeService.getOrCreateCustomer(userId);
     const { name, cents } = TIER_PRICES[tier];
 
@@ -143,6 +164,17 @@ export class MembershipService {
 
   private static async applyTier(userId: string, tier: string, subscriptionId?: string): Promise<void> {
     if (!isPaidTier(tier)) return;
+
+    // Switching directly from one paid tier to another (rather than via
+    // downgradeToBasic first) creates a brand-new Stripe subscription —
+    // without this, the old one would keep billing alongside the new one.
+    const existing = await prisma.user.findUnique({ where: { id: userId }, select: { memberTierSubscriptionId: true } });
+    if (existing?.memberTierSubscriptionId && existing.memberTierSubscriptionId !== subscriptionId) {
+      await stripeClient.subscriptions.cancel(existing.memberTierSubscriptionId).catch((err) => {
+        console.error(`[Membership] Failed to cancel previous subscription ${existing.memberTierSubscriptionId} when switching tiers:`, err);
+      });
+    }
+
     const data: any = { memberTier: tier, memberTierSubscriptionId: subscriptionId || null, memberTierStartedAt: new Date() };
     if (AUTO_VERIFIED_TIERS.includes(tier)) data.isVerified = true;
     await prisma.user.update({ where: { id: userId }, data });
@@ -200,14 +232,9 @@ export class MembershipService {
       where: { id: userId },
       select: { memberTier: true, memberTierSubscriptionId: true, memberTierStartedAt: true },
     });
-    const lockedUntil = commitmentLockedUntil((user?.memberTier as MemberTier) || 'BASIC', user?.memberTierStartedAt ?? null);
-    if (lockedUntil) {
-      const err: any = new Error(
-        `${TIER_PRICES[user!.memberTier as Exclude<MemberTier, 'BASIC'>]?.name || 'This status'} has a ${MINIMUM_COMMITMENT_MONTHS}-month minimum — you can switch to Basic starting ${lockedUntil.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`
-      );
-      err.statusCode = 400;
-      throw err;
-    }
+    const currentTier = (user?.memberTier as MemberTier) || 'BASIC';
+    const lockedUntil = commitmentLockedUntil(currentTier, user?.memberTierStartedAt ?? null);
+    if (lockedUntil) throw commitmentLockedError(currentTier, lockedUntil);
     if (user?.memberTierSubscriptionId) {
       await stripeClient.subscriptions.cancel(user.memberTierSubscriptionId).catch((err) => {
         console.error(`[Membership] Failed to cancel subscription ${user.memberTierSubscriptionId} on downgrade:`, err);
