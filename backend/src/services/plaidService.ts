@@ -20,6 +20,27 @@ const CONNECTION_SELECT = {
   accounts: true,
 } as const;
 
+/** Balances are encrypted at rest (see comment on BankAccount in
+ * schema.prisma) — decrypt them back to numbers for API responses. Plaid
+ * omits current/available balance for some account types (e.g. certain
+ * credit products), so a null encrypted value must stay null, not "0". */
+function decryptBalance(value: string | null): number | null {
+  if (value === null) return null;
+  return parseFloat(decrypt(value));
+}
+
+function decryptAccountBalances<T extends { currentBalance: string | null; availableBalance: string | null }>(
+  account: T
+): Omit<T, 'currentBalance' | 'availableBalance'> & { currentBalance: number | null; availableBalance: number | null } {
+  return { ...account, currentBalance: decryptBalance(account.currentBalance), availableBalance: decryptBalance(account.availableBalance) };
+}
+
+function decryptConnectionBalances<T extends { accounts: { currentBalance: string | null; availableBalance: string | null }[] }>(
+  connection: T
+) {
+  return { ...connection, accounts: connection.accounts.map(decryptAccountBalances) };
+}
+
 // European coverage — most institutions here require PSD2 Open Banking,
 // which means an OAuth redirect leg (see PLAID_REDIRECT_URI and
 // PlaidOAuthRedirectPage on the frontend) rather than the plain
@@ -88,13 +109,14 @@ export class PlaidService {
           mask: acc.mask || undefined,
           type: acc.type,
           subtype: acc.subtype || undefined,
-          currentBalance: acc.balances.current ?? undefined,
-          availableBalance: acc.balances.available ?? undefined,
+          currentBalance: acc.balances.current != null ? encrypt(String(acc.balances.current)) : undefined,
+          availableBalance: acc.balances.available != null ? encrypt(String(acc.balances.available)) : undefined,
           currency: acc.balances.iso_currency_code || undefined,
         })),
       });
 
-      return prisma.bankConnection.findUniqueOrThrow({ where: { id: connection.id }, select: CONNECTION_SELECT });
+      const created = await prisma.bankConnection.findUniqueOrThrow({ where: { id: connection.id }, select: CONNECTION_SELECT });
+      return decryptConnectionBalances(created);
     } catch (err) {
       // Best-effort cleanup if account fetch fails after the item was
       // already exchanged — otherwise it's an orphaned, permanently-broken
@@ -121,8 +143,8 @@ export class PlaidService {
           await prisma.bankAccount.updateMany({
             where: { plaidAccountId: acc.account_id },
             data: {
-              currentBalance: acc.balances.current ?? undefined,
-              availableBalance: acc.balances.available ?? undefined,
+              currentBalance: acc.balances.current != null ? encrypt(String(acc.balances.current)) : null,
+              availableBalance: acc.balances.available != null ? encrypt(String(acc.balances.available)) : null,
             },
           });
         }
@@ -131,11 +153,12 @@ export class PlaidService {
       }
     }
 
-    return prisma.bankConnection.findMany({
+    const refreshed = await prisma.bankConnection.findMany({
       where: { userId },
       select: CONNECTION_SELECT,
       orderBy: { createdAt: 'desc' },
     });
+    return refreshed.map(decryptConnectionBalances);
   }
 
   /** Transactions from the last `days` days across every connected account,

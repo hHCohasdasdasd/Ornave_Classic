@@ -1134,8 +1134,11 @@ model BankAccount {
   mask             String?
   type             String
   subtype          String?
-  currentBalance   Float?
-  availableBalance Float?
+  // AES-256-GCM encrypted (backend/src/utils/encryption.ts) — balances are
+  // as sensitive as the Plaid accessToken itself and shouldn't be readable
+  // by anyone with raw table access (e.g. the Supabase dashboard).
+  currentBalance   String?
+  availableBalance String?
   currency         String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
