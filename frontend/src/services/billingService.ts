@@ -39,6 +39,9 @@ export type MemberTier = 'BASIC' | 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND';
 export interface MembershipStatus {
   memberTier: MemberTier;
   isVerified: boolean;
+  // Set only while a Silver/Gold/Diamond minimum-commitment window is still
+  // running — null once it's passed (or for tiers with no commitment).
+  canDowngradeAt: string | null;
 }
 
 class BillingService {

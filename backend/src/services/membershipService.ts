@@ -10,6 +10,12 @@ export type MemberTier = 'BASIC' | 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND';
 // AUTO_VERIFIED_TIERS list on the frontend's status shop.
 const AUTO_VERIFIED_TIERS: MemberTier[] = ['SILVER', 'GOLD', 'DIAMOND'];
 
+// Bronze is pay-monthly, cancel anytime. Silver and above require staying
+// subscribed for a minimum stretch before switching back to Basic — Ornave
+// Status above the entry tier is a real commitment, not a monthly toggle.
+const MINIMUM_COMMITMENT_TIERS: MemberTier[] = ['SILVER', 'GOLD', 'DIAMOND'];
+const MINIMUM_COMMITMENT_MONTHS = 3;
+
 const TIER_PRICES: Record<Exclude<MemberTier, 'BASIC'>, { name: string; cents: number }> = {
   BRONZE: { name: 'Bronze Member', cents: 499 },
   SILVER: { name: 'Silver Member', cents: 999 },
@@ -27,10 +33,22 @@ function isPaidTier(tier: string): tier is Exclude<MemberTier, 'BASIC'> {
   return tier in TIER_PRICES;
 }
 
+function commitmentLockedUntil(tier: MemberTier, startedAt: Date | null): Date | null {
+  if (!startedAt || !MINIMUM_COMMITMENT_TIERS.includes(tier)) return null;
+  const unlockDate = new Date(startedAt);
+  unlockDate.setMonth(unlockDate.getMonth() + MINIMUM_COMMITMENT_MONTHS);
+  return unlockDate > new Date() ? unlockDate : null;
+}
+
 export class MembershipService {
-  static async getStatus(userId: string): Promise<{ memberTier: MemberTier; isVerified: boolean }> {
-    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { memberTier: true, isVerified: true } });
-    return { memberTier: user.memberTier as MemberTier, isVerified: user.isVerified };
+  static async getStatus(userId: string): Promise<{ memberTier: MemberTier; isVerified: boolean; canDowngradeAt: string | null }> {
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { memberTier: true, isVerified: true, memberTierStartedAt: true },
+    });
+    const tier = user.memberTier as MemberTier;
+    const lockedUntil = commitmentLockedUntil(tier, user.memberTierStartedAt);
+    return { memberTier: tier, isVerified: user.isVerified, canDowngradeAt: lockedUntil ? lockedUntil.toISOString() : null };
   }
 
   /** A hosted Stripe Checkout page for subscribing to a paid tier — far
@@ -105,7 +123,7 @@ export class MembershipService {
    * authoritative path (handles renewals/cancellations/failed payments
    * that happen while nobody's looking at this page). Verifies the session
    * actually belongs to this user before trusting it. */
-  static async reconcileCheckoutSession(userId: string, sessionId: string): Promise<{ memberTier: MemberTier; isVerified: boolean }> {
+  static async reconcileCheckoutSession(userId: string, sessionId: string): Promise<{ memberTier: MemberTier; isVerified: boolean; canDowngradeAt: string | null }> {
     const session = await stripeClient.checkout.sessions.retrieve(sessionId);
     if (session.metadata?.ornaveUserId !== userId) {
       throw new Error('Checkout session does not belong to this user');
@@ -125,7 +143,7 @@ export class MembershipService {
 
   private static async applyTier(userId: string, tier: string, subscriptionId?: string): Promise<void> {
     if (!isPaidTier(tier)) return;
-    const data: any = { memberTier: tier, memberTierSubscriptionId: subscriptionId || null };
+    const data: any = { memberTier: tier, memberTierSubscriptionId: subscriptionId || null, memberTierStartedAt: new Date() };
     if (AUTO_VERIFIED_TIERS.includes(tier)) data.isVerified = true;
     await prisma.user.update({ where: { id: userId }, data });
   }
@@ -177,8 +195,19 @@ export class MembershipService {
    * matching how every other tier change in this shop already works. No
    * proration/refund for the unused remainder — same as a normal Stripe
    * subscription cancellation. */
-  static async downgradeToBasic(userId: string): Promise<{ memberTier: MemberTier; isVerified: boolean }> {
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { memberTierSubscriptionId: true } });
+  static async downgradeToBasic(userId: string): Promise<{ memberTier: MemberTier; isVerified: boolean; canDowngradeAt: string | null }> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { memberTier: true, memberTierSubscriptionId: true, memberTierStartedAt: true },
+    });
+    const lockedUntil = commitmentLockedUntil((user?.memberTier as MemberTier) || 'BASIC', user?.memberTierStartedAt ?? null);
+    if (lockedUntil) {
+      const err: any = new Error(
+        `${TIER_PRICES[user!.memberTier as Exclude<MemberTier, 'BASIC'>]?.name || 'This status'} has a ${MINIMUM_COMMITMENT_MONTHS}-month minimum — you can switch to Basic starting ${lockedUntil.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`
+      );
+      err.statusCode = 400;
+      throw err;
+    }
     if (user?.memberTierSubscriptionId) {
       await stripeClient.subscriptions.cancel(user.memberTierSubscriptionId).catch((err) => {
         console.error(`[Membership] Failed to cancel subscription ${user.memberTierSubscriptionId} on downgrade:`, err);

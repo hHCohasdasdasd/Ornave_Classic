@@ -164,6 +164,7 @@ export const ProfileEditPage: React.FC = () => {
   const [currentTier, setCurrentTier] = useState<string>(() => localStorage.getItem(scopedKey(MEMBER_TIER_KEY, user?.id)) || 'Basic');
   const [hasVerified, setHasVerified] = useState<boolean>(() => localStorage.getItem(scopedKey(VERIFIED_ADDON_KEY, user?.id)) === 'true');
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
+  const [canDowngradeAt, setCanDowngradeAt] = useState<string | null>(null);
   // Photo states
   const [profilePhoto, setProfilePhoto] = useState<string>('');
   const [backgroundPhoto, setBackgroundPhoto] = useState<string>('');
@@ -378,12 +379,13 @@ export const ProfileEditPage: React.FC = () => {
   // still need to buy the Verified add-on separately.
   const AUTO_VERIFIED_TIERS = ['Silver Member', 'Gold Member', 'Diamond Member'];
 
-  const applyMembershipStatus = (status: { memberTier: MemberTier; isVerified: boolean }) => {
+  const applyMembershipStatus = (status: { memberTier: MemberTier; isVerified: boolean; canDowngradeAt?: string | null }) => {
     const tierId = STATUS_TIERS.find((t) => t.code === status.memberTier)?.id || 'Basic';
     localStorage.setItem(scopedKey(MEMBER_TIER_KEY, user?.id), tierId);
     localStorage.setItem(scopedKey(VERIFIED_ADDON_KEY, user?.id), status.isVerified ? 'true' : 'false');
     setCurrentTier(tierId);
     setHasVerified(status.isVerified);
+    setCanDowngradeAt(status.canDowngradeAt ?? null);
     window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'member_tier', tier: tierId } }));
   };
 
@@ -437,10 +439,11 @@ export const ProfileEditPage: React.FC = () => {
       }
       const url = await billingService.createTierCheckout(tier.code as Exclude<MemberTier, 'BASIC'>);
       window.location.href = url;
-    } catch {
-      setError(tier.code === 'BASIC'
+    } catch (err: any) {
+      const serverMessage = err?.response?.data?.message;
+      setError(serverMessage || (tier.code === 'BASIC'
         ? 'Could not switch to Basic — try again.'
-        : 'Could not start checkout — try again.');
+        : 'Could not start checkout — try again.'));
       setIsPurchasing(null);
     }
   };
@@ -1135,6 +1138,7 @@ export const ProfileEditPage: React.FC = () => {
                   <div className="status-shop__grid">
                     {STATUS_TIERS.map((tier) => {
                       const isCurrent = currentTier === tier.id;
+                      const isLockedBasic = tier.code === 'BASIC' && !isCurrent && !!canDowngradeAt;
                       return (
                         <div key={tier.id} className={`status-tier-card ${tier.id === 'Diamond Member' ? 'status-tier-card--diamond' : ''} ${isCurrent ? 'status-tier-card--current' : ''}`}>
                           <span className="status-tier-card__icon">{tier.icon}</span>
@@ -1144,10 +1148,15 @@ export const ProfileEditPage: React.FC = () => {
                           <ul className="status-tier-card__perks">
                             {tier.perks.map((perk) => <li key={perk}>{perk}</li>)}
                           </ul>
+                          {isLockedBasic && (
+                            <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
+                              Available {new Date(canDowngradeAt!).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })} — Silver and above have a 3-month minimum.
+                            </p>
+                          )}
                           {isCurrent ? (
                             <button className="btn-secondary" disabled>Current Status</button>
                           ) : (
-                            <button className="btn-primary" onClick={() => handlePurchaseTier(tier)} disabled={!!isPurchasing}>
+                            <button className="btn-primary" onClick={() => handlePurchaseTier(tier)} disabled={!!isPurchasing || isLockedBasic}>
                               {isPurchasing === tier.id
                                 ? (tier.price === 'Free' ? 'Switching…' : 'Redirecting…')
                                 : tier.price === 'Free' ? 'Switch to This' : 'Choose This Status'}

@@ -50,6 +50,10 @@ model User {
   // recurring Stripe subscription (see MembershipService).
   memberTier                 String                  @default("BASIC")
   memberTierSubscriptionId   String?                 @unique
+  // When the current paid subscription started — anchors the 3-month
+  // minimum commitment on Silver/Gold/Diamond (Bronze has none). Reset
+  // every time a new paid checkout completes.
+  memberTierStartedAt        DateTime?
   // The one-time "Verified" badge add-on — separate from memberTier since
   // Silver and above include it for free, but it can also be bought alone.
   isVerified                 Boolean                 @default(false)
