@@ -7,6 +7,8 @@ import { TokenManager } from '../utils/tokenManager';
 import { ERROR_MESSAGES } from '../constants';
 import { sendEmail } from '../utils/email';
 import { PlaidService } from './plaidService';
+import { StripeService } from './stripeService';
+import { MembershipService } from './membershipService';
 
 const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 const PASSWORD_RESET_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
@@ -976,6 +978,20 @@ export class AuthService {
         console.error(`[AuthService] Failed to revoke bank connection ${conn.id} on account deletion:`, err)
       );
     }
+
+    // Same reasoning — a saved card or linked bank account is a live
+    // charge-capable credential, revoked immediately rather than waiting
+    // for the 30-day purge.
+    await StripeService.detachAllPaymentMethods(userId).catch((err) =>
+      console.error(`[AuthService] Failed to detach Stripe payment methods on account deletion:`, err)
+    );
+
+    // A deleted account shouldn't keep being billed a monthly membership —
+    // cancel immediately rather than leaving it running until the 30-day
+    // purge (or forever, if the account never gets purged).
+    await MembershipService.cancelSubscriptionForDeletion(userId).catch((err) =>
+      console.error(`[AuthService] Failed to cancel membership subscription on account deletion:`, err)
+    );
 
     const originalEmail = user.email;
     await prisma.user.update({

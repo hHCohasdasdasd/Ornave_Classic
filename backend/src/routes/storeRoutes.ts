@@ -83,7 +83,10 @@ storeRoutes.post(
   '/orders',
   authMiddleware,
   asyncHandler(async (req: any, res: Response) => {
-    const { companyId, items, billingAddress, deliveryAddress, payment } = req.body;
+    const { companyId, items, billingAddress, deliveryAddress, paymentMethodId } = req.body;
+    if (!paymentMethodId) {
+      return ApiResponseHandler.error(res, 'paymentMethodId is required', undefined, 400);
+    }
 
     const order = await StoreService.createOrder({
       userId: req.user.userId,
@@ -91,7 +94,7 @@ storeRoutes.post(
       items,
       billingAddress,
       deliveryAddress,
-      payment,
+      paymentMethodId,
     });
 
     return ApiResponseHandler.success(res, order, 'Order created successfully', 201);

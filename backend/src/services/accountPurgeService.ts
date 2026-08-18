@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { supabaseAdmin, FILES_BUCKET } from '../utils/supabaseStorage';
 import { PlaidService } from './plaidService';
+import { StripeService } from './stripeService';
+import { MembershipService } from './membershipService';
 
 const prisma = new PrismaClient();
 
@@ -73,6 +75,15 @@ export class AccountPurgeService {
       );
     }
 
+    // Same reasoning as the Plaid revocation above — normally already a
+    // no-op by purge time, since deleteAccount detaches immediately.
+    await StripeService.detachAllPaymentMethods(userId).catch((err) =>
+      console.error(`[AccountPurge] Failed to detach Stripe payment methods for user ${userId}:`, err)
+    );
+    await MembershipService.cancelSubscriptionForDeletion(userId).catch((err) =>
+      console.error(`[AccountPurge] Failed to cancel membership subscription for user ${userId}:`, err)
+    );
+
     await prisma.$transaction([
       prisma.post.deleteMany({ where: { authorId: userId } }),
       prisma.comment.deleteMany({ where: { authorId: userId } }),
@@ -94,6 +105,7 @@ export class AccountPurgeService {
       prisma.userFolder.deleteMany({ where: { userId } }),
       prisma.notification.deleteMany({ where: { userId } }),
       prisma.savedCard.deleteMany({ where: { userId } }),
+      prisma.savedBankAccount.deleteMany({ where: { userId } }),
       prisma.savedAddress.deleteMany({ where: { userId } }),
       prisma.userConnection.deleteMany({ where: { OR: [{ requesterId: userId }, { addresseeId: userId }] } }),
       prisma.groupMember.deleteMany({ where: { userId } }),

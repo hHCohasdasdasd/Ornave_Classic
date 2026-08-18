@@ -67,6 +67,7 @@ export interface Order {
   deliveryCountry?: string | null;
   paymentBrand?: string | null;
   paymentLast4?: string | null;
+  paymentStatus?: string;
   createdAt: string;
 }
 
@@ -233,9 +234,10 @@ class StoreService {
   async createOrder(
     companyId: string,
     items: { productId: string; quantity: number }[],
-    extra?: { billingAddress?: OrderAddress; deliveryAddress?: OrderAddress; payment?: { brand?: string; last4?: string } }
+    paymentMethodId: string,
+    extra?: { billingAddress?: OrderAddress; deliveryAddress?: OrderAddress }
   ): Promise<Order> {
-    const response = await apiClient.post('/store/orders', { companyId, items, ...extra });
+    const response = await apiClient.post('/store/orders', { companyId, items, paymentMethodId, ...extra });
     return response.data.data || response.data;
   }
 

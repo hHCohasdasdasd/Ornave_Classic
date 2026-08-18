@@ -42,6 +42,17 @@ model User {
   // active here rather than deleting a paying member's data out from under
   // them. Nothing sets this true yet.
   subscriptionActive         Boolean                 @default(false)
+  // The Stripe Customer this user's saved payment methods (cards, linked
+  // bank accounts) live under. Created lazily on first "Add payment method".
+  stripeCustomerId           String?                 @unique
+  // Purchasable profile status — 'BASIC' | 'BRONZE' | 'SILVER' | 'GOLD' |
+  // 'DIAMOND'. BASIC is free/default; everything above it is a real
+  // recurring Stripe subscription (see MembershipService).
+  memberTier                 String                  @default("BASIC")
+  memberTierSubscriptionId   String?                 @unique
+  // The one-time "Verified" badge add-on — separate from memberTier since
+  // Silver and above include it for free, but it can also be bought alone.
+  isVerified                 Boolean                 @default(false)
   twoFactorEnabled           Boolean                 @default(false)
   twoFactorSecret            String?
   twoFactorBackupCodesHash   String?
@@ -65,6 +76,7 @@ model User {
   eventRsvps                 EventRsvp[]
   eventSaves                 EventSave[]
   savedCards                 SavedCard[]
+  savedBankAccounts          SavedBankAccount[]
   savedAddresses             SavedAddress[]
   projects                   Project[]
   tasks                      Task[]
@@ -692,7 +704,13 @@ model Order {
   deliveryCountry    String?
   paymentBrand       String?
   paymentLast4       String?
-  createdAt          DateTime        @default(now())
+  // Real charge-capture state, distinct from `status` above (which is
+  // fulfillment/shipping). 'PENDING' | 'PAID' | 'PROCESSING' (ACH, settles in
+  // days) | 'FAILED'. stripePaymentIntentId lets the webhook find this order
+  // when Stripe confirms or fails the charge asynchronously.
+  paymentStatus          String          @default("PENDING")
+  stripePaymentIntentId  String?         @unique
+  createdAt              DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   company            Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -750,16 +768,40 @@ model OrderItem {
   @@index([productId])
 }
 
+// A card saved for checkout — backed by a real Stripe PaymentMethod (created
+// client-side via Stripe Elements, which never lets the raw card number
+// touch our server). brand/last4/expiry are display metadata fetched back
+// from Stripe after the PaymentMethod is created, not derived locally.
 model SavedCard {
-  id             String   @id @default(cuid())
-  userId         String
-  cardholderName String
-  brand          String
-  last4          String
-  expiry         String
-  isDefault      Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String   @id @default(cuid())
+  userId                String
+  stripePaymentMethodId String   @unique
+  cardholderName        String
+  brand                 String
+  last4                 String
+  expiry                String
+  isDefault             Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// A bank account saved for checkout via ACH — backed by a real Stripe
+// PaymentMethod (type "us_bank_account"), linked through Stripe Financial
+// Connections. Distinct from BankConnection/BankAccount (the read-only
+// Plaid data on the Finance page); this is specifically a payment method
+// Stripe can actually debit.
+model SavedBankAccount {
+  id                    String   @id @default(cuid())
+  userId                String
+  stripePaymentMethodId String   @unique
+  bankName              String?
+  accountType           String? // 'checking' | 'savings'
+  last4                 String
+  isDefault             Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

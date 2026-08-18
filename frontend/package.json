@@ -13,6 +13,8 @@
     "type-check:strict": "tsc --noEmit --pretty false"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^6.8.1",
+    "@stripe/stripe-js": "^9.13.0",
     "@tiptap/extension-placeholder": "^3.30.0",
     "@tiptap/extension-underline": "^3.30.0",
     "@tiptap/react": "^3.30.0",

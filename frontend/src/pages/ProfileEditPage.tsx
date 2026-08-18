@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Navbar } from '@/components/ui/Navbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiClient } from '@/services/api';
+import { billingService, MemberTier } from '@/services/billingService';
 import { TokenStorage, scopedKey } from '@/utils/storage';
 import './ProfileEditPage.css';
 
@@ -75,6 +76,7 @@ const VERIFIED_ADDON_KEY = 'ornave_verified_addon';
 
 interface StatusTier {
   id: string;
+  code?: MemberTier;
   name: string;
   price: string;
   tagline: string;
@@ -82,9 +84,12 @@ interface StatusTier {
   icon: string;
 }
 
+// code is what the backend/Stripe actually know about; id/name stay the
+// display strings already used everywhere else (localStorage cache, sidebar).
 const STATUS_TIERS: StatusTier[] = [
   {
     id: 'Basic',
+    code: 'BASIC',
     name: 'Basic',
     price: 'Free',
     tagline: 'The essentials, on us',
@@ -93,6 +98,7 @@ const STATUS_TIERS: StatusTier[] = [
   },
   {
     id: 'Bronze Member',
+    code: 'BRONZE',
     name: 'Bronze Member',
     price: '$4.99/mo',
     tagline: 'A little extra shine',
@@ -101,6 +107,7 @@ const STATUS_TIERS: StatusTier[] = [
   },
   {
     id: 'Silver Member',
+    code: 'SILVER',
     name: 'Silver Member',
     price: '$9.99/mo',
     tagline: 'Stand out in Discover and search',
@@ -109,6 +116,7 @@ const STATUS_TIERS: StatusTier[] = [
   },
   {
     id: 'Gold Member',
+    code: 'GOLD',
     name: 'Gold Member',
     price: '$19.99/mo',
     tagline: 'For power networkers and dealmakers',
@@ -117,6 +125,7 @@ const STATUS_TIERS: StatusTier[] = [
   },
   {
     id: 'Diamond Member',
+    code: 'DIAMOND',
     name: 'Diamond Member',
     price: '$49.99/mo',
     tagline: 'The absolute top — gold, with flare',
@@ -137,7 +146,7 @@ const VERIFIED_ADDON: StatusTier = {
 export const ProfileEditPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const section = searchParams.get('section');
   const tab = searchParams.get('tab');
   // Scoped by user id — these are client-side-only fields with no backend
@@ -154,6 +163,7 @@ export const ProfileEditPage: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [currentTier, setCurrentTier] = useState<string>(() => localStorage.getItem(scopedKey(MEMBER_TIER_KEY, user?.id)) || 'Basic');
   const [hasVerified, setHasVerified] = useState<boolean>(() => localStorage.getItem(scopedKey(VERIFIED_ADDON_KEY, user?.id)) === 'true');
+  const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
   // Photo states
   const [profilePhoto, setProfilePhoto] = useState<string>('');
   const [backgroundPhoto, setBackgroundPhoto] = useState<string>('');
@@ -368,29 +378,74 @@ export const ProfileEditPage: React.FC = () => {
   // still need to buy the Verified add-on separately.
   const AUTO_VERIFIED_TIERS = ['Silver Member', 'Gold Member', 'Diamond Member'];
 
-  const handlePurchaseTier = (tier: StatusTier) => {
-    localStorage.setItem(scopedKey(MEMBER_TIER_KEY, user?.id), tier.id);
-    setCurrentTier(tier.id);
-
-    let nowVerified = hasVerified;
-    if (AUTO_VERIFIED_TIERS.includes(tier.id) && !hasVerified) {
-      localStorage.setItem(scopedKey(VERIFIED_ADDON_KEY, user?.id), 'true');
-      setHasVerified(true);
-      nowVerified = true;
-    }
-
-    window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'member_tier', tier: tier.id } }));
-    const tierMessage = tier.id === 'Basic' ? "You're now on the Basic tier!" : `You're now a ${tier.name}!`;
-    setSuccess(nowVerified && !hasVerified ? `${tierMessage} You're also now Verified.` : tierMessage);
-    setActiveModal(null);
+  const applyMembershipStatus = (status: { memberTier: MemberTier; isVerified: boolean }) => {
+    const tierId = STATUS_TIERS.find((t) => t.code === status.memberTier)?.id || 'Basic';
+    localStorage.setItem(scopedKey(MEMBER_TIER_KEY, user?.id), tierId);
+    localStorage.setItem(scopedKey(VERIFIED_ADDON_KEY, user?.id), status.isVerified ? 'true' : 'false');
+    setCurrentTier(tierId);
+    setHasVerified(status.isVerified);
+    window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'member_tier', tier: tierId } }));
   };
 
-  const handlePurchaseVerified = () => {
-    localStorage.setItem(scopedKey(VERIFIED_ADDON_KEY, user?.id), 'true');
-    setHasVerified(true);
-    window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'verified_addon' } }));
-    setSuccess("You're now Verified!");
-    setActiveModal(null);
+  // Real purchases now happen on Stripe's hosted Checkout page (subscriptions
+  // need proper SCA/proration/renewal handling we don't want to reimplement).
+  // Landing back here from a successful checkout is handled below, on mount.
+  useEffect(() => {
+    if (!user || user.id === 'guest') return;
+    const membershipResult = searchParams.get('membership');
+    const sessionId = searchParams.get('session_id');
+
+    const sync = async () => {
+      if (membershipResult === 'success' && sessionId) {
+        try {
+          const status = await billingService.reconcileMembershipCheckout(sessionId);
+          applyMembershipStatus(status);
+          setSuccess("You're all set — your new status is active!");
+        } catch {
+          setError('We received your payment but could not confirm your new status yet — refresh in a moment.');
+        }
+      } else {
+        // Not returning from checkout — still worth a background refresh in
+        // case a renewal/cancellation happened via the Stripe portal or a
+        // webhook since the last time this page loaded.
+        billingService.getMembershipStatus().then(applyMembershipStatus).catch(() => {});
+      }
+      if (membershipResult) {
+        searchParams.delete('membership');
+        searchParams.delete('session_id');
+        setSearchParams(searchParams, { replace: true });
+      }
+    };
+    sync();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  const handlePurchaseTier = async (tier: StatusTier) => {
+    setIsPurchasing(tier.id);
+    setError('');
+    try {
+      const url = tier.code === 'BASIC'
+        ? await billingService.createMembershipPortal()
+        : await billingService.createTierCheckout(tier.code as Exclude<MemberTier, 'BASIC'>);
+      window.location.href = url;
+    } catch {
+      setError(tier.code === 'BASIC'
+        ? 'Could not open subscription management — try again.'
+        : 'Could not start checkout — try again.');
+      setIsPurchasing(null);
+    }
+  };
+
+  const handlePurchaseVerified = async () => {
+    setIsPurchasing('Verified');
+    setError('');
+    try {
+      const url = await billingService.createVerifiedCheckout();
+      window.location.href = url;
+    } catch {
+      setError('Could not start checkout — try again.');
+      setIsPurchasing(null);
+    }
   };
 
   const closeModal = () => {
@@ -1083,8 +1138,8 @@ export const ProfileEditPage: React.FC = () => {
                           {isCurrent ? (
                             <button className="btn-secondary" disabled>Current Status</button>
                           ) : (
-                            <button className="btn-primary" onClick={() => handlePurchaseTier(tier)}>
-                              {tier.price === 'Free' ? 'Switch to This' : 'Choose This Status'}
+                            <button className="btn-primary" onClick={() => handlePurchaseTier(tier)} disabled={!!isPurchasing}>
+                              {isPurchasing === tier.id ? 'Redirecting…' : tier.price === 'Free' ? 'Manage Subscription' : 'Choose This Status'}
                             </button>
                           )}
                         </div>
@@ -1108,7 +1163,9 @@ export const ProfileEditPage: React.FC = () => {
                     {hasVerified ? (
                       <button className="btn-secondary" disabled>Owned</button>
                     ) : (
-                      <button className="btn-primary" onClick={handlePurchaseVerified}>Add Verified</button>
+                      <button className="btn-primary" onClick={handlePurchaseVerified} disabled={!!isPurchasing}>
+                        {isPurchasing === 'Verified' ? 'Redirecting…' : 'Add Verified'}
+                      </button>
                     )}
                   </div>
                 </div>

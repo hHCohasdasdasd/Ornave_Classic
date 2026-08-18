@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { storeService } from '@/services/storeService';
 import { apiClient } from '@/services/api';
-import { billingService, SavedCard, SavedAddress } from '@/services/billingService';
+import { billingService, SavedCard, SavedBankAccount, SavedAddress } from '@/services/billingService';
+import { stripePromise } from '@/utils/stripe';
 import { Navbar } from '@/components/ui/Navbar';
 import { IconCart, IconCheck, IconUser } from '@/components/ui/Icons';
 import './CheckoutPage.css';
@@ -15,15 +17,6 @@ const formatPrice = (price: number, currency: string): string => {
 };
 
 const NEW = '__new__';
-
-const detectCardBrand = (cardNumber: string): string => {
-  const digits = cardNumber.replace(/\s/g, '');
-  if (/^4/.test(digits)) return 'Visa';
-  if (/^5[1-5]/.test(digits)) return 'Mastercard';
-  if (/^3[47]/.test(digits)) return 'Amex';
-  if (/^6(?:011|5)/.test(digits)) return 'Discover';
-  return 'Card';
-};
 
 interface CheckoutFormState {
   fullName: string;
@@ -43,16 +36,13 @@ interface CheckoutFormState {
   deliveryCountry: string;
   saveDeliveryAddress: boolean;
   deliveryAddressLabel: string;
-  cardholderName: string;
-  cardNumber: string;
-  expiry: string;
-  cvv: string;
-  saveCard: boolean;
 }
 
-export const CheckoutPage: React.FC = () => {
+const CheckoutForm: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const stripe = useStripe();
+  const elements = useElements();
   const { cart, cartTotal, cartCurrency, updateQuantity, removeFromCart, clearCart } = useCart();
   const [form, setForm] = useState<CheckoutFormState>({
     fullName: user && user.id !== 'guest' ? `${user.firstName} ${user.lastName}` : '',
@@ -72,17 +62,13 @@ export const CheckoutPage: React.FC = () => {
     deliveryCountry: '',
     saveDeliveryAddress: false,
     deliveryAddressLabel: '',
-    cardholderName: user && user.id !== 'guest' ? `${user.firstName} ${user.lastName}` : '',
-    cardNumber: '',
-    expiry: '',
-    cvv: '',
-    saveCard: false,
   });
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+  const [savedBankAccounts, setSavedBankAccounts] = useState<SavedBankAccount[]>([]);
   const [selectedBillingAddressId, setSelectedBillingAddressId] = useState<string>(NEW);
   const [selectedDeliveryAddressId, setSelectedDeliveryAddressId] = useState<string>(NEW);
-  const [selectedCardId, setSelectedCardId] = useState<string>(NEW);
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string>(NEW);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [isAutofilling, setIsAutofilling] = useState(false);
   const [autofillError, setAutofillError] = useState<string | null>(null);
@@ -99,10 +85,13 @@ export const CheckoutPage: React.FC = () => {
         setSelectedBillingAddressId(defaultAddress.id);
       }
     });
-    billingService.getSavedCards().then((cards) => {
+    Promise.all([billingService.getSavedCards(), billingService.getSavedBankAccounts()]).then(([cards, bankAccounts]) => {
       setSavedCards(cards);
+      setSavedBankAccounts(bankAccounts);
       const defaultCard = cards.find((c) => c.isDefault);
-      if (defaultCard) setSelectedCardId(defaultCard.id);
+      const defaultBank = bankAccounts.find((b) => b.isDefault);
+      if (defaultCard) setSelectedPaymentMethodId(defaultCard.stripePaymentMethodId);
+      else if (defaultBank) setSelectedPaymentMethodId(defaultBank.stripePaymentMethodId);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -169,84 +158,93 @@ export const CheckoutPage: React.FC = () => {
     }
   };
 
-  const usingNewCard = selectedCardId === NEW;
+  const hasSavedPaymentMethods = savedCards.length > 0 || savedBankAccounts.length > 0;
+  const usingNewPaymentMethod = selectedPaymentMethodId === NEW;
   const usingNewDeliveryAddress = form.deliverySameAsBilling ? false : selectedDeliveryAddressId === NEW;
 
   const canSubmit = cart.length > 0
     && form.fullName.trim().length > 0
     && form.email.trim().length > 0
-    && form.cvv.trim().length >= 3
-    && (!usingNewCard || (form.cardholderName.trim().length > 0 && form.cardNumber.replace(/\s/g, '').length >= 12 && form.expiry.trim().length > 0))
+    && (!usingNewPaymentMethod || (!!stripe && !!elements))
     && (form.deliverySameAsBilling || !usingNewDeliveryAddress || form.deliveryAddress.trim().length > 0);
 
-  const handlePlaceOrder = async () => {
-    if (!canSubmit || cart.length === 0) return;
-    try {
-      setIsPlacingOrder(true);
-      setError(null);
-      const companyId = cart[0].product.companyId;
-      const billingAddress = {
-        address: form.billingAddress,
+  const saveSelectedAddresses = () => {
+    // Persist any "save for next time" selections — best-effort, doesn't block the order.
+    if (selectedBillingAddressId === NEW && form.saveBillingAddress && form.billingAddress.trim()) {
+      billingService.addSavedAddress({
+        label: form.billingAddressLabel || undefined,
+        fullName: form.fullName,
+        streetAddress: form.billingAddress,
         city: form.city,
         state: form.state,
         postalCode: form.postalCode,
         country: form.country,
-      };
-      const deliveryAddress = form.deliverySameAsBilling
-        ? billingAddress
-        : {
-            address: form.deliveryAddress,
-            city: form.deliveryCity,
-            state: form.deliveryState,
-            postalCode: form.deliveryPostalCode,
-            country: form.deliveryCountry,
-          };
-      const payment = usingNewCard
-        ? { brand: detectCardBrand(form.cardNumber), last4: form.cardNumber.replace(/\s/g, '').slice(-4) }
-        : (() => {
-            const savedCard = savedCards.find((c) => c.id === selectedCardId);
-            return savedCard ? { brand: savedCard.brand, last4: savedCard.last4 } : undefined;
-          })();
+      }).catch((err) => console.error('Failed to save address:', err));
+    }
+    if (!form.deliverySameAsBilling && selectedDeliveryAddressId === NEW && form.saveDeliveryAddress && form.deliveryAddress.trim()) {
+      billingService.addSavedAddress({
+        label: form.deliveryAddressLabel || undefined,
+        fullName: form.fullName,
+        streetAddress: form.deliveryAddress,
+        city: form.deliveryCity,
+        state: form.deliveryState,
+        postalCode: form.deliveryPostalCode,
+        country: form.deliveryCountry,
+      }).catch((err) => console.error('Failed to save address:', err));
+    }
+  };
 
-      const order = await storeService.createOrder(
-        companyId,
-        cart.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
-        { billingAddress, deliveryAddress, payment }
-      );
-
-      // Persist any "save for next time" selections — best-effort, doesn't block the order.
-      if (selectedBillingAddressId === NEW && form.saveBillingAddress && form.billingAddress.trim()) {
-        billingService.addSavedAddress({
-          label: form.billingAddressLabel || undefined,
-          fullName: form.fullName,
-          streetAddress: form.billingAddress,
-          city: form.city,
-          state: form.state,
-          postalCode: form.postalCode,
-          country: form.country,
-        }).catch((err) => console.error('Failed to save address:', err));
-      }
-      if (!form.deliverySameAsBilling && selectedDeliveryAddressId === NEW && form.saveDeliveryAddress && form.deliveryAddress.trim()) {
-        billingService.addSavedAddress({
-          label: form.deliveryAddressLabel || undefined,
-          fullName: form.fullName,
-          streetAddress: form.deliveryAddress,
+  const placeOrder = async (paymentMethodId: string) => {
+    const companyId = cart[0].product.companyId;
+    const billingAddress = {
+      address: form.billingAddress,
+      city: form.city,
+      state: form.state,
+      postalCode: form.postalCode,
+      country: form.country,
+    };
+    const deliveryAddress = form.deliverySameAsBilling
+      ? billingAddress
+      : {
+          address: form.deliveryAddress,
           city: form.deliveryCity,
           state: form.deliveryState,
           postalCode: form.deliveryPostalCode,
           country: form.deliveryCountry,
-        }).catch((err) => console.error('Failed to save address:', err));
-      }
-      if (usingNewCard && form.saveCard && form.cardNumber.trim()) {
-        billingService.addSavedCard({
-          cardholderName: form.cardholderName,
-          cardNumber: form.cardNumber,
-          expiry: form.expiry,
-        }).catch((err) => console.error('Failed to save card:', err));
-      }
+        };
 
-      setPlacedOrderId(order.id);
-      clearCart();
+    const order = await storeService.createOrder(
+      companyId,
+      cart.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
+      paymentMethodId,
+      { billingAddress, deliveryAddress }
+    );
+
+    saveSelectedAddresses();
+    setPlacedOrderId(order.id);
+    clearCart();
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!canSubmit || cart.length === 0) return;
+    setIsPlacingOrder(true);
+    setError(null);
+    try {
+      if (usingNewPaymentMethod) {
+        if (!stripe || !elements) return;
+        const { error: confirmError, setupIntent } = await stripe.confirmSetup({ elements, redirect: 'if_required' });
+        if (confirmError || !setupIntent?.payment_method) {
+          setError(confirmError?.message || 'Could not confirm that payment method — try again.');
+          return;
+        }
+        const paymentMethodId = typeof setupIntent.payment_method === 'string'
+          ? setupIntent.payment_method
+          : setupIntent.payment_method.id;
+        await billingService.savePaymentMethod(paymentMethodId, !hasSavedPaymentMethods);
+        await placeOrder(paymentMethodId);
+      } else {
+        await placeOrder(selectedPaymentMethodId);
+      }
     } catch (err) {
       console.error('Failed to place order:', err);
       setError('Something went wrong placing your order. Please try again.');
@@ -563,15 +561,15 @@ export const CheckoutPage: React.FC = () => {
             <section className="checkout-section">
               <h2 className="checkout-section__title">Payment</h2>
 
-              {savedCards.length > 0 && (
+              {hasSavedPaymentMethods && (
                 <div className="checkout-address-list">
                   {savedCards.map((card) => (
-                    <label key={card.id} className={`checkout-address-card ${selectedCardId === card.id ? 'selected' : ''}`}>
+                    <label key={card.id} className={`checkout-address-card ${selectedPaymentMethodId === card.stripePaymentMethodId ? 'selected' : ''}`}>
                       <input
                         type="radio"
-                        name="payment-card"
-                        checked={selectedCardId === card.id}
-                        onChange={() => setSelectedCardId(card.id)}
+                        name="payment-method"
+                        checked={selectedPaymentMethodId === card.stripePaymentMethodId}
+                        onChange={() => setSelectedPaymentMethodId(card.stripePaymentMethodId)}
                       />
                       <div className="checkout-address-card__body">
                         <div className="checkout-address-card__top">
@@ -582,87 +580,42 @@ export const CheckoutPage: React.FC = () => {
                       </div>
                     </label>
                   ))}
-                  <label className={`checkout-address-card ${selectedCardId === NEW ? 'selected' : ''}`}>
+                  {savedBankAccounts.map((account) => (
+                    <label key={account.id} className={`checkout-address-card ${selectedPaymentMethodId === account.stripePaymentMethodId ? 'selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="payment-method"
+                        checked={selectedPaymentMethodId === account.stripePaymentMethodId}
+                        onChange={() => setSelectedPaymentMethodId(account.stripePaymentMethodId)}
+                      />
+                      <div className="checkout-address-card__body">
+                        <div className="checkout-address-card__top">
+                          <span className="checkout-address-card__label">{account.bankName || 'Bank account'} •••• {account.last4}</span>
+                          {account.isDefault && <span className="checkout-address-card__default">Default</span>}
+                        </div>
+                        <span className="checkout-address-card__text">Bank transfer (ACH) · {account.accountType || 'checking'}</span>
+                      </div>
+                    </label>
+                  ))}
+                  <label className={`checkout-address-card ${usingNewPaymentMethod ? 'selected' : ''}`}>
                     <input
                       type="radio"
-                      name="payment-card"
-                      checked={selectedCardId === NEW}
-                      onChange={() => setSelectedCardId(NEW)}
+                      name="payment-method"
+                      checked={usingNewPaymentMethod}
+                      onChange={() => setSelectedPaymentMethodId(NEW)}
                     />
                     <div className="checkout-address-card__body">
-                      <span className="checkout-address-card__label">+ Add a new card</span>
+                      <span className="checkout-address-card__label">+ Add a new payment method</span>
                     </div>
                   </label>
                 </div>
               )}
 
-              {usingNewCard ? (
-                <>
-                  <div className="checkout-field">
-                    <label className="checkout-field__label">Cardholder name</label>
-                    <input
-                      className="checkout-field__input"
-                      type="text"
-                      value={form.cardholderName}
-                      onChange={(e) => setForm({ ...form, cardholderName: e.target.value })}
-                    />
-                  </div>
-                  <div className="checkout-field">
-                    <label className="checkout-field__label">Card number</label>
-                    <input
-                      className="checkout-field__input"
-                      type="text"
-                      placeholder="1234 5678 9012 3456"
-                      value={form.cardNumber}
-                      onChange={(e) => setForm({ ...form, cardNumber: e.target.value })}
-                    />
-                  </div>
-                  <div className="checkout-section__row">
-                    <div className="checkout-field">
-                      <label className="checkout-field__label">Expiry</label>
-                      <input
-                        className="checkout-field__input"
-                        type="text"
-                        placeholder="MM/YY"
-                        value={form.expiry}
-                        onChange={(e) => setForm({ ...form, expiry: e.target.value })}
-                      />
-                    </div>
-                    <div className="checkout-field">
-                      <label className="checkout-field__label">CVV</label>
-                      <input
-                        className="checkout-field__input"
-                        type="text"
-                        placeholder="123"
-                        value={form.cvv}
-                        onChange={(e) => setForm({ ...form, cvv: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  {user && user.id !== 'guest' && (
-                    <label className="checkout-checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={form.saveCard}
-                        onChange={(e) => setForm({ ...form, saveCard: e.target.checked })}
-                      />
-                      Save this card for next time
-                    </label>
-                  )}
-                </>
-              ) : (
-                <div className="checkout-field checkout-field--narrow">
-                  <label className="checkout-field__label">CVV</label>
-                  <input
-                    className="checkout-field__input"
-                    type="text"
-                    placeholder="123"
-                    value={form.cvv}
-                    onChange={(e) => setForm({ ...form, cvv: e.target.value })}
-                  />
-                </div>
-              )}
-              <p className="checkout-page__payment-note">This is a demo checkout — no real payment is processed. Card numbers are never stored, only the last 4 digits.</p>
+              {usingNewPaymentMethod && <PaymentElement />}
+
+              <p className="checkout-page__payment-note">
+                Payments are processed securely by Stripe — card and bank details never touch our servers.
+              </p>
             </section>
           </div>
 
@@ -709,5 +662,76 @@ export const CheckoutPage: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+export const CheckoutPage: React.FC = () => {
+  const { user } = useAuth();
+  const { cart } = useCart();
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user || user.id === 'guest') return;
+    billingService.createSetupIntent().then((r) => setClientSecret(r.clientSecret)).catch(() => {});
+  }, [user]);
+
+  if (!user || user.id === 'guest') {
+    return (
+      <div className="checkout-page">
+        <Navbar />
+        <div className="checkout-page__container">
+          <div className="checkout-empty">
+            <div className="checkout-empty__icon"><IconUser size={32} /></div>
+            <h1 className="checkout-empty__title">Sign in to check out</h1>
+            <p className="checkout-empty__text">Placing an order requires an Ornave account.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (cart.length === 0 || !clientSecret) {
+    // Cart-empty and payment-setup-not-ready both render CheckoutForm's own
+    // loading/empty states once mounted — but PaymentElement needs a
+    // clientSecret up front, so hold off mounting Elements until it's ready.
+    return (
+      <div className="checkout-page">
+        <Navbar />
+        <div className="checkout-page__container">
+          {cart.length === 0 ? (
+            <div className="checkout-empty">
+              <div className="checkout-empty__icon"><IconCart size={32} /></div>
+              <h1 className="checkout-empty__title">Your cart is empty</h1>
+              <p className="checkout-empty__text">Add items from the marketplace before checking out.</p>
+            </div>
+          ) : (
+            <div className="checkout-empty">
+              <p className="checkout-empty__text">Loading checkout…</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Elements
+      stripe={stripePromise}
+      options={{
+        clientSecret,
+        appearance: {
+          theme: 'night',
+          variables: {
+            colorPrimary: '#c6a15b',
+            colorBackground: '#161616',
+            colorText: '#f6f3ed',
+            colorDanger: '#a2504b',
+            borderRadius: '8px',
+          },
+        },
+      }}
+    >
+      <CheckoutForm />
+    </Elements>
   );
 };

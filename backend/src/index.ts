@@ -24,6 +24,7 @@ import publicationRoutes from './routes/publicationRoutes';
 import jobRoutes from './routes/jobRoutes';
 import eventRoutes from './routes/eventRoutes';
 import billingRoutes from './routes/billingRoutes';
+import stripeWebhookRoutes from './routes/stripeWebhookRoutes';
 import workSuiteRoutes from './routes/workSuiteRoutes';
 import salesRoutes from './routes/salesRoutes';
 import leadsRoutes from './routes/leadsRoutes';
@@ -85,6 +86,11 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
   crossOriginOpenerPolicy: { policy: "unsafe-none" }
 }));
+
+// Stripe webhook — needs the raw request body for signature verification,
+// so it's registered ahead of the JSON body parser below and outside the
+// /api prefix (Stripe's requests carry no CSRF token or app auth).
+app.use('/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhookRoutes);
 
 // Body parser middleware
 app.use(express.json({ limit: '10mb' }));

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { StripeService } from './stripeService';
 
 const prisma = new PrismaClient();
 
@@ -53,7 +54,9 @@ export interface CreateOrderRequest {
   }[];
   billingAddress?: OrderAddress;
   deliveryAddress?: OrderAddress;
-  payment?: { brand?: string; last4?: string };
+  /** A saved card's or bank account's Stripe PaymentMethod id — required to
+   * actually charge the order. */
+  paymentMethodId: string;
 }
 
 export class StoreService {
@@ -162,15 +165,15 @@ export class StoreService {
     });
 
     const productMap = new Map(products.map(p => [p.id, p]));
-    
+
     let totalAmount = 0;
     const orderItemsData = request.items.map(item => {
       const product = productMap.get(item.productId);
       if (!product) throw new Error(`Product ${item.productId} not found`);
-      
+
       const price = product.price;
       totalAmount += price * item.quantity;
-      
+
       return {
         productId: item.productId,
         quantity: item.quantity,
@@ -178,15 +181,28 @@ export class StoreService {
       };
     });
 
-    // 2. Create order and items in a transaction
-    return await prisma.$transaction(async (tx) => {
-      const order = await tx.order.create({
+    const currency = products[0]?.currency || 'USD';
+
+    // 2. Look up the saved payment method's display details (brand/last4)
+    // and confirm it actually belongs to this user before charging anything.
+    const [card, bankAccount] = await Promise.all([
+      prisma.savedCard.findFirst({ where: { stripePaymentMethodId: request.paymentMethodId, userId: request.userId } }),
+      prisma.savedBankAccount.findFirst({ where: { stripePaymentMethodId: request.paymentMethodId, userId: request.userId } }),
+    ]);
+    if (!card && !bankAccount) {
+      throw new Error('Payment method not found');
+    }
+
+    // 3. Create order and items, decrement stock, in a transaction
+    const order = await prisma.$transaction(async (tx) => {
+      const created = await tx.order.create({
         data: {
           userId: request.userId,
           companyId: request.companyId,
           totalAmount,
-          currency: products[0]?.currency || 'USD',
+          currency,
           status: 'PENDING',
+          paymentStatus: 'PENDING',
           billingAddress: request.billingAddress?.address,
           billingCity: request.billingAddress?.city,
           billingState: request.billingAddress?.state,
@@ -197,8 +213,8 @@ export class StoreService {
           deliveryState: request.deliveryAddress?.state,
           deliveryPostalCode: request.deliveryAddress?.postalCode,
           deliveryCountry: request.deliveryAddress?.country,
-          paymentBrand: request.payment?.brand,
-          paymentLast4: request.payment?.last4,
+          paymentBrand: card?.brand,
+          paymentLast4: card?.last4 || bankAccount?.last4,
           items: {
             create: orderItemsData,
           },
@@ -212,7 +228,6 @@ export class StoreService {
         },
       });
 
-      // 3. Update stock
       for (const item of request.items) {
         await tx.product.update({
           where: { id: item.productId },
@@ -224,7 +239,24 @@ export class StoreService {
         });
       }
 
-      return order;
+      return created;
+    });
+
+    // 4. Actually charge it. A card typically resolves immediately; ACH
+    // stays 'processing' for days and only the webhook learns the outcome.
+    const charge = await StripeService.chargeOrder({
+      userId: request.userId,
+      orderId: order.id,
+      amount: totalAmount,
+      currency,
+      paymentMethodId: request.paymentMethodId,
+    });
+
+    const paymentStatus = charge.status === 'succeeded' ? 'PAID' : charge.status === 'processing' ? 'PROCESSING' : 'FAILED';
+    return prisma.order.update({
+      where: { id: order.id },
+      data: { paymentStatus, stripePaymentIntentId: charge.paymentIntentId },
+      include: { items: { include: { product: true } } },
     });
   }
 
