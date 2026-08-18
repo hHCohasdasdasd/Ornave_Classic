@@ -386,6 +386,9 @@ export const ProfileEditPage: React.FC = () => {
   // still need to buy the Verified add-on separately.
   const AUTO_VERIFIED_TIERS = ['Silver Member', 'Gold Member', 'Diamond Member'];
 
+  const formatLockDate = (iso: string | null) =>
+    iso ? new Date(iso).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+
   const applyMembershipStatus = (status: { memberTier: MemberTier; isVerified: boolean; canDowngradeAt?: string | null; billingPeriod?: 'MONTHLY' | 'ANNUAL' | null }) => {
     const tierId = STATUS_TIERS.find((t) => t.code === status.memberTier)?.id || 'Basic';
     localStorage.setItem(scopedKey(MEMBER_TIER_KEY, user?.id), tierId);
@@ -410,7 +413,12 @@ export const ProfileEditPage: React.FC = () => {
         try {
           const status = await billingService.reconcileMembershipCheckout(sessionId);
           applyMembershipStatus(status);
-          setSuccess("You're all set — your new status is active!");
+          const terms = status.billingPeriod === 'ANNUAL'
+            ? ` Valid through ${formatLockDate(status.canDowngradeAt)} — this is a one-time payment and won't auto-renew, so mark your calendar if you want to keep it.`
+            : status.billingPeriod === 'MONTHLY' && status.canDowngradeAt
+              ? ` It renews monthly and has a minimum commitment until ${formatLockDate(status.canDowngradeAt)}.`
+              : '';
+          setSuccess(`You're all set — your new status is active!${terms}`);
         } catch {
           setError('We received your payment but could not confirm your new status yet — refresh in a moment.');
         }
@@ -883,7 +891,14 @@ export const ProfileEditPage: React.FC = () => {
                 <div className="enhancement-card">
                   <span className="enhancement-icon">👑</span>
                   <h3>Ornave Status</h3>
-                  <p>You're currently on the {currentTier}{currentTier === 'Basic' ? ' tier' : ''}{hasVerified ? ' · Verified ✓' : ''}</p>
+                  <p>
+                    You're currently on the {currentTier}{currentTier === 'Basic' ? ' tier' : ''}{hasVerified ? ' · Verified ✓' : ''}
+                    {currentTier !== 'Basic' && lockedBillingPeriod && (
+                      lockedBillingPeriod === 'ANNUAL'
+                        ? ` · Annual — valid through ${formatLockDate(canDowngradeAt)}, does not auto-renew`
+                        : (canDowngradeAt ? ` · Monthly, renews automatically — min. commitment until ${formatLockDate(canDowngradeAt)}` : ' · Monthly, renews automatically, cancel anytime')
+                    )}
+                  </p>
                   <button className="btn-outline" onClick={() => setActiveModal('shop')}>
                     Browse Statuses
                   </button>
@@ -1142,11 +1157,15 @@ export const ProfileEditPage: React.FC = () => {
 
               {activeModal === 'shop' && (
                 <div className="status-shop">
-                  <p className="status-shop__intro">Unlock a new status to stand out across Ornave. Statuses apply instantly and update everywhere your profile appears.</p>
+                  <p className="status-shop__intro">
+                    Unlock a new status to stand out across Ornave. Statuses apply instantly and update everywhere your profile appears.
+                    Silver and above require staying subscribed at least 3 months before switching away; paying annually locks in the full year instead, with no auto-renewal.
+                  </p>
                   <div className="status-shop__grid">
                     {STATUS_TIERS.map((tier) => {
                       const isCurrent = currentTier === tier.id;
                       const isLockedBasic = tier.code === 'BASIC' && !isCurrent && !!canDowngradeAt;
+                      const hasCommitment = tier.code && ['SILVER', 'GOLD', 'DIAMOND'].includes(tier.code);
                       return (
                         <div key={tier.id} className={`status-tier-card ${tier.id === 'Diamond Member' ? 'status-tier-card--diamond' : ''} ${isCurrent ? 'status-tier-card--current' : ''}`}>
                           <span className="status-tier-card__icon">{tier.icon}</span>
@@ -1156,9 +1175,23 @@ export const ProfileEditPage: React.FC = () => {
                           <ul className="status-tier-card__perks">
                             {tier.perks.map((perk) => <li key={perk}>{perk}</li>)}
                           </ul>
+                          {isCurrent && currentTier !== 'Basic' && lockedBillingPeriod && (
+                            <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
+                              {lockedBillingPeriod === 'ANNUAL'
+                                ? `Valid through ${formatLockDate(canDowngradeAt)} — one-time payment, does not auto-renew.`
+                                : canDowngradeAt
+                                  ? `Renews monthly — minimum commitment until ${formatLockDate(canDowngradeAt)}.`
+                                  : 'Renews monthly — cancel anytime.'}
+                            </p>
+                          )}
+                          {!isCurrent && hasCommitment && (
+                            <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
+                              Monthly plan has a 3-month minimum before you can switch away.
+                            </p>
+                          )}
                           {isLockedBasic && (
                             <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
-                              Available {new Date(canDowngradeAt!).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })} — {lockedBillingPeriod === 'ANNUAL' ? 'your annual status runs a full year' : 'Silver and above have a 3-month minimum'}.
+                              Available {formatLockDate(canDowngradeAt)} — {lockedBillingPeriod === 'ANNUAL' ? 'your annual status runs a full year' : 'Silver and above have a 3-month minimum'}.
                             </p>
                           )}
                           {isCurrent ? (
