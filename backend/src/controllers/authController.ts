@@ -34,6 +34,9 @@ const RegisterSchema = z.object({
   companyId: z.string().min(1, 'Company ID required').optional(),
   companyName: z.string().min(1, 'Company name required').optional(),
   userType: z.enum(['USER', 'COMPANY_USER']).optional(),
+  // The layout template (restaurant, real estate, ...) a new company gets
+  // is derived from this — see frontend/src/utils/businessType.ts.
+  businessType: z.string().optional(),
 });
 
 const ChangePasswordSchema = z.object({

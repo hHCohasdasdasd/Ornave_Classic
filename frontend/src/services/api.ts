@@ -97,7 +97,8 @@ class ApiClient {
     firstName: string,
     lastName: string,
     companyName?: string,
-    userType: 'USER' | 'COMPANY_USER' = 'COMPANY_USER'
+    userType: 'USER' | 'COMPANY_USER' = 'COMPANY_USER',
+    businessType?: string
   ) {
     try {
       const response = await this.client.post<ApiResponse<any>>('/auth/register', {
@@ -107,6 +108,7 @@ class ApiClient {
         lastName,
         companyName,
         userType,
+        businessType,
       });
       return response.data;
     } catch (error) {
@@ -200,9 +202,18 @@ class ApiClient {
     }
   }
 
+  async updateCompanyLogo(companyId: string, logo: string | null) {
+    try {
+      const response = await this.client.put<ApiResponse<any>>(`/companies/${companyId}/logo`, { logo });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
   async updateCompanySettings(companyId: string, settings: any) {
     try {
-      const response = await this.client.patch<ApiResponse<any>>(
+      const response = await this.client.put<ApiResponse<any>>(
         `/companies/${companyId}/settings`,
         settings
       );

@@ -1,15 +1,7 @@
 import { apiClient } from './api';
-import { FirmProfileData } from '@/types/firm';
+import { FirmProfileData, FirmMenuItem, FirmFloorPlan, FirmTableAvailabilitySlot, FirmMyReservation, FirmTableOrder } from '@/types/firm';
 import { getFirmLayoutTemplate } from '@/utils/businessType';
-
-const DEFAULT_MENU_ITEMS = [
-  { id: 'menu-1', name: 'House Salad', description: 'Seasonal greens, shaved parmesan, citrus vinaigrette.', price: '$12', category: 'Starters' },
-  { id: 'menu-2', name: 'Soup of the Day', description: "Ask your server what's fresh today.", price: '$9', category: 'Starters' },
-  { id: 'menu-3', name: 'Signature Pasta', description: 'Hand-rolled pasta with a slow-simmered sauce.', price: '$24', category: 'Mains' },
-  { id: 'menu-4', name: 'Grilled Catch of the Day', description: 'Market fish, seasonal vegetables, herb butter.', price: '$28', category: 'Mains' },
-  { id: 'menu-5', name: 'Wood-Fired Pizza', description: 'San Marzano tomato, fresh mozzarella, basil.', price: '$18', category: 'Mains' },
-  { id: 'menu-6', name: "Chef's Dessert", description: "Ask your server for tonight's selection.", price: '$10', category: 'Desserts' },
-];
+import { TableReservationDetail } from './workSuiteService';
 
 const DEFAULT_LISTINGS = [
   { id: 'listing-1', address: '124 Maple Street', city: 'Springfield', price: '$425,000', beds: 3, baths: 2, sqft: 1650, status: 'For Sale' as const },
@@ -30,13 +22,21 @@ class FirmService {
 
   async registerFirmGlobally(firm: any): Promise<void> {
     const firms = this.getStoredRegisteredFirms();
-    if (!firms.find(f => f.id === firm.id || f.slug === firm.slug)) {
+    const index = firms.findIndex(f => f.id === firm.id || f.slug === firm.slug);
+    if (index === -1) {
       firms.push({
         ...firm,
         id: firm.id || firm.slug,
         connectionCount: firm.connectionCount || 0,
         type: 'firm'
       });
+      localStorage.setItem(REGISTERED_FIRMS_KEY, JSON.stringify(firms));
+      window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'firm_registered', id: firm.id } }));
+    } else if (firms[index].industry !== firm.industry) {
+      // Keep this browser's cached copy in sync with the real persisted
+      // industry — otherwise a stale/missing value cached before this fix
+      // (or from a different browser) would never self-correct.
+      firms[index] = { ...firms[index], ...firm, connectionCount: firms[index].connectionCount || 0 };
       localStorage.setItem(REGISTERED_FIRMS_KEY, JSON.stringify(firms));
       window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'firm_registered', id: firm.id } }));
     }
@@ -97,6 +97,118 @@ class FirmService {
       };
     } catch {
       return null;
+    }
+  }
+
+  /** Real, company-managed menu items (Work Suite → Menu) — no auth, no
+   * verification gate, only ever what's actually marked available. */
+  async getMenuItems(companyId: string, options: { includeUnavailable?: boolean } = {}): Promise<FirmMenuItem[]> {
+    try {
+      const response = await apiClient.get(`/network/companies/${companyId}/menu`, {
+        params: options.includeUnavailable ? { includeUnavailable: 'true' } : undefined,
+      });
+      const items = response.data.data || [];
+      return items.map((i: any) => ({ id: i.id, name: i.name, description: i.description || undefined, price: i.price, category: i.category, isAvailable: i.isAvailable !== false }));
+    } catch {
+      return [];
+    }
+  }
+
+  /** The saved Work Suite floor plan (tables/chairs/walls) — no auth, same
+   * public read-only pattern as getMenuItems above. */
+  async getFloorPlan(companyId: string): Promise<FirmFloorPlan> {
+    try {
+      const response = await apiClient.get(`/network/companies/${companyId}/floor-plan`);
+      const data = response.data.data || {};
+      return { tables: data.tables || [], chairs: data.chairs || [], walls: data.walls || [] };
+    } catch {
+      return { tables: [], chairs: [], walls: [] };
+    }
+  }
+
+  /** Upcoming booked time slots for one table — public, used to grey out
+   * already-taken times while a visitor is picking a slot. */
+  async getTableAvailability(companyId: string, tableId: string): Promise<FirmTableAvailabilitySlot[]> {
+    try {
+      const response = await apiClient.get(`/network/companies/${companyId}/tables/${tableId}/reservations`);
+      return response.data.data || [];
+    } catch {
+      return [];
+    }
+  }
+
+  async getCompanyBasicInfo(companyId: string): Promise<{ id: string; name: string } | null> {
+    try {
+      const response = await apiClient.get(`/network/companies/${companyId}/basic-info`);
+      return response.data.data;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Public table-side order — null means no active reservation for this
+   * table right now (guest should ask staff for help), distinct from an
+   * empty order (active reservation, nothing ordered yet). */
+  async getTableOrder(companyId: string, tableId: string): Promise<FirmTableOrder | null> {
+    try {
+      const response = await apiClient.get(`/network/companies/${companyId}/tables/${tableId}/order`);
+      return response.data.data;
+    } catch {
+      return null;
+    }
+  }
+
+  async addOrderItem(companyId: string, tableId: string, data: { menuItemId: string; quantity?: number; note?: string }): Promise<void> {
+    try {
+      await apiClient.post(`/network/companies/${companyId}/tables/${tableId}/order/items`, data);
+    } catch (err: any) {
+      throw new Error(err?.response?.data?.message || err?.message || 'Could not add that item');
+    }
+  }
+
+  async removeOrderItem(companyId: string, tableId: string, itemId: string): Promise<void> {
+    await apiClient.delete(`/network/companies/${companyId}/tables/${tableId}/order/items/${itemId}`);
+  }
+
+  /** Book a table for a date/time. Requires an authenticated personal user
+   * — throws with the server's message (e.g. a slot conflict) on failure so
+   * the caller can show it. */
+  async reserveTable(companyId: string, tableId: string, data: { reservationTime: string; partySize: number; note?: string; autoCheckIn?: boolean }): Promise<void> {
+    try {
+      await apiClient.post(`/network/companies/${companyId}/tables/${tableId}/reservations`, data);
+    } catch (err: any) {
+      throw new Error(err?.response?.data?.message || err?.message || 'Could not reserve table');
+    }
+  }
+
+  async getMyReservations(companyId: string): Promise<FirmMyReservation[]> {
+    try {
+      const response = await apiClient.get(`/network/companies/${companyId}/my-reservations`);
+      return response.data.data || [];
+    } catch {
+      return [];
+    }
+  }
+
+  async cancelReservation(id: string): Promise<void> {
+    await apiClient.delete(`/network/reservations/${id}`);
+  }
+
+  async getReservation(id: string): Promise<TableReservationDetail | null> {
+    try {
+      const response = await apiClient.get(`/network/reservations/${id}`);
+      return response.data.data;
+    } catch {
+      return null;
+    }
+  }
+
+  async setAutoCheckIn(id: string, enabled: boolean): Promise<TableReservationDetail> {
+    try {
+      const response = await apiClient.patch(`/network/reservations/${id}/auto-check-in`, { enabled });
+      return response.data.data;
+    } catch (err: any) {
+      throw new Error(err?.response?.data?.message || err?.message || 'Could not update automatic check-in');
     }
   }
 
@@ -166,7 +278,8 @@ class FirmService {
             { title: 'Takeout & Delivery', description: 'Order ahead for pickup or delivery to your door.' },
             { title: 'Private Events & Catering', description: 'Book the space or have us cater your next event.' },
           ],
-          menu: DEFAULT_MENU_ITEMS,
+          menu: await this.getMenuItems(registered.id),
+          floorPlan: await this.getFloorPlan(registered.id),
         };
       }
 

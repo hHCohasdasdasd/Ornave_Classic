@@ -92,7 +92,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1.5rem;
   font-weight: 700;
   color: #8a6d2f;
@@ -109,7 +109,7 @@
 }
 
 .profile-edit-preview__body h3 {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1.2rem;
   font-weight: 700;
   margin: 0 0 4px;
@@ -137,6 +137,19 @@
   line-height: 1.5;
 }
 
+.profile-edit-preview__tier {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 4px 12px 4px 8px;
+  border-radius: 999px;
+  background: rgba(198, 161, 91, 0.12);
+  color: #8a6d2f;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 /* ── Main column ── */
 .profile-edit-main {
   min-width: 0;
@@ -147,7 +160,7 @@
 }
 
 .profile-edit-header h1 {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 2rem;
   font-weight: 700;
   margin: 0 0 6px;
@@ -160,24 +173,35 @@
   margin: 0;
 }
 
-/* Tabs — underline style, matching the profile page's dossier tabs */
+/* Tabs — segmented pill control, so the three editing modes read as
+   destinations within one workspace rather than a document's table of
+   contents (the old underline style read more like an article's tabs). */
 .profile-edit-tabs {
-  display: flex;
-  gap: 28px;
-  border-bottom: 1px solid var(--color-border);
+  display: inline-flex;
+  gap: 4px;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 4px;
   margin-bottom: 28px;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .profile-edit-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-radius: 999px;
   color: var(--color-muted);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  padding: 0 2px 14px;
+  padding: 9px 20px;
   cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .profile-edit-tab:hover {
@@ -186,7 +210,8 @@
 
 .profile-edit-tab.active {
   color: var(--color-text);
-  border-bottom-color: var(--color-primary);
+  background: var(--color-card);
+  box-shadow: 0 2px 10px rgba(28, 24, 18, 0.1);
 }
 
 /* Content card */
@@ -199,7 +224,7 @@
 }
 
 .edit-section h2 {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1.35rem;
   font-weight: 700;
   color: var(--color-text);
@@ -214,7 +239,7 @@
 }
 
 .form-section-heading {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--color-text);
@@ -422,7 +447,7 @@
 }
 
 .photo-edit-card__banner {
-  height: 160px;
+  height: 210px;
   background: linear-gradient(135deg, #e9d4a3, #c6a15b);
   background-size: cover;
   background-position: center;
@@ -454,13 +479,15 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  padding: 0 24px 24px;
-  margin-top: -34px;
+  padding: 20px 24px 24px;
 }
 
+/* Sits entirely below the banner, not overlapping it at all, so there's
+   no seam running across the circle. */
 .photo-edit-card__avatar {
-  width: 88px;
-  height: 88px;
+  width: 100px;
+  height: 100px;
+  margin-top: 0;
   border-radius: 50%;
   border: 4px solid var(--color-card);
   background: #efe9da;
@@ -481,7 +508,6 @@
 }
 
 .photo-edit-card__meta {
-  padding-top: 34px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -494,53 +520,86 @@
   color: var(--color-muted);
 }
 
-/* Enhancements Grid */
-.enhancement-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 18px;
+/* Enhancements — full-width list rows rather than a sparse card grid, so
+   this reads the same as the Add Sections list below it instead of like a
+   different, smaller-scale component bolted onto the same tab. */
+.enhancement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.enhancement-card {
+.enhancement-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 22px;
   background: var(--color-bg-alt);
   border: 1px solid var(--color-border);
   border-radius: 14px;
-  padding: 26px 22px;
-  text-align: center;
   transition: all 0.2s ease;
 }
 
-.enhancement-card:hover {
+.enhancement-row:hover {
   border-color: var(--color-primary);
-  box-shadow: 0 8px 20px rgba(198, 161, 91, 0.15);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(198, 161, 91, 0.12);
 }
 
-.enhancement-icon {
-  font-size: 2rem;
-  margin-bottom: 14px;
-  display: block;
-}
-
-.enhancement-card h3 {
-  font-family: var(--font-display);
+.enhancement-row__icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(198, 161, 91, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--color-text);
-  margin: 0 0 6px;
+  color: #8a6d2f;
 }
 
-.enhancement-card p {
-  font-size: 0.8rem;
-  color: var(--color-muted);
-  margin: 0 0 16px;
-  min-height: 18px;
+.enhancement-row__body {
+  flex: 1;
+  min-width: 0;
 }
 
-.enhancement-card__url {
-  color: var(--color-primary) !important;
+.enhancement-row__body h3 {
+  font-family: var(--font-body);
+  font-size: 1rem;
   font-weight: 700;
-  word-break: break-all;
+  color: var(--color-text);
+  margin: 0 0 4px;
+}
+
+.enhancement-row__body p {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.enhancement-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .enhancement-row {
+    flex-wrap: wrap;
+  }
+
+  .enhancement-row__actions {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 66px;
+    box-sizing: border-box;
+  }
 }
 
 /* ── Add Sections tab ── */
@@ -565,7 +624,6 @@
 }
 
 .section-icon {
-  font-size: 1.4rem;
   width: 44px;
   height: 44px;
   flex-shrink: 0;
@@ -574,6 +632,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #8a6d2f;
 }
 
 .section-info {
@@ -582,7 +644,7 @@
 }
 
 .section-info h3 {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 700;
   color: var(--color-text);
@@ -676,10 +738,6 @@
   animation: modalSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.modal-content--shop {
-  max-width: 980px;
-}
-
 /* ── Ornave Status shop ── */
 .status-shop__intro {
   color: var(--color-muted);
@@ -715,6 +773,57 @@
 .status-tier-card--current {
   border-color: var(--color-primary);
   background: rgba(198, 161, 91, 0.08);
+}
+
+/* Bronze / Silver / Gold — each gets its own metal-toned gradient card so
+   the tier ladder reads visually, not just by price; Diamond keeps the
+   extra shimmer flare below since it's the top of the ladder. */
+.status-tier-card--bronze {
+  border-color: #b87333;
+  background: linear-gradient(155deg, #f6e2ce 0%, #e0b48e 45%, #c98a55 100%);
+  box-shadow: 0 8px 22px rgba(184, 115, 51, 0.25);
+}
+
+.status-tier-card--bronze:hover {
+  border-color: #96581f;
+  box-shadow: 0 10px 26px rgba(184, 115, 51, 0.35);
+}
+
+.status-tier-card--bronze h3,
+.status-tier-card--bronze .status-tier-card__price {
+  color: #7a4318;
+}
+
+.status-tier-card--silver {
+  border-color: #9ea4ab;
+  background: linear-gradient(155deg, #f7f8f9 0%, #dde1e5 45%, #b7bec6 100%);
+  box-shadow: 0 8px 22px rgba(120, 130, 140, 0.22);
+}
+
+.status-tier-card--silver:hover {
+  border-color: #767d85;
+  box-shadow: 0 10px 26px rgba(120, 130, 140, 0.32);
+}
+
+.status-tier-card--silver h3,
+.status-tier-card--silver .status-tier-card__price {
+  color: #4a5057;
+}
+
+.status-tier-card--gold {
+  border-color: #d4af37;
+  background: linear-gradient(155deg, #fff6da 0%, #f5d980 45%, #dfb84a 100%);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.28);
+}
+
+.status-tier-card--gold:hover {
+  border-color: #a9841f;
+  box-shadow: 0 10px 28px rgba(212, 175, 55, 0.38);
+}
+
+.status-tier-card--gold h3,
+.status-tier-card--gold .status-tier-card__price {
+  color: #7a5f14;
 }
 
 /* Diamond — gold, with flare: a gold gradient card with an animated
@@ -757,13 +866,8 @@
   100% { left: 130%; }
 }
 
-.status-tier-card__icon {
-  font-size: 2rem;
-  margin-bottom: 10px;
-}
-
 .status-tier-card h3 {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--color-text);
@@ -779,7 +883,7 @@
 }
 
 .status-tier-card__price {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--color-primary);
@@ -827,19 +931,13 @@
   background: var(--color-bg-alt);
 }
 
-.status-shop__addon .status-tier-card__icon {
-  font-size: 1.6rem;
-  margin: 0;
-  flex-shrink: 0;
-}
-
 .status-shop__addon-body {
   flex: 1;
   min-width: 0;
 }
 
 .status-shop__addon-body h3 {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 700;
   color: var(--color-text);
@@ -852,7 +950,7 @@
 }
 
 .status-shop__addon-price {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 700;
   color: var(--color-primary);
@@ -872,7 +970,7 @@
 }
 
 .modal-content h2 {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--color-text);

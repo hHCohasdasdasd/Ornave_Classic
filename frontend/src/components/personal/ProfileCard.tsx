@@ -31,7 +31,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ user, stats }) => {
   };
 
   const handleEnhanceProfile = () => {
-    navigate('/profile/edit?tab=enhance');
+    navigate('/profile/edit?tab=info');
   };
 
   const handleResources = () => {

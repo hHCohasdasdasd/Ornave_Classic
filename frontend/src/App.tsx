@@ -46,7 +46,6 @@ const WorkSuiteLegacyRedirect: React.FC<{ tab?: 'board' | 'goals' }> = ({ tab })
 import { ProfileEditPage } from '@/pages/ProfileEditPage';
 import { ProfileResourcesPage } from '@/pages/ProfileResourcesPage';
 import { OpenToWorkSettingsPage } from '@/pages/OpenToWorkSettingsPage';
-import { AccountSecurityPage } from '@/pages/AccountSecurityPage';
 import { AdminPage } from '@/pages/AdminPage';
 import { NetworkPage } from '@/pages/NetworkPage';
 import { InvitesSentPage } from '@/pages/InvitesSentPage';
@@ -81,6 +80,12 @@ import { PlaidOAuthRedirectPage } from '@/pages/PlaidOAuthRedirectPage';
 import { WorkSuiteConnectionsPage } from '@/pages/WorkSuiteConnectionsPage';
 import { FirmConnectionDetailPage } from '@/pages/FirmConnectionDetailPage';
 import { WorkSuiteAchievementsPage } from '@/pages/WorkSuiteAchievementsPage';
+import { WorkSuiteMenuPage } from '@/pages/WorkSuiteMenuPage';
+import { WorkSuiteReservationsPage } from '@/pages/WorkSuiteReservationsPage';
+import { OrderPage } from '@/pages/OrderPage';
+import { WorkSuiteStationPage } from '@/pages/WorkSuiteStationPage';
+import { WorkSuiteServerOrderPage } from '@/pages/WorkSuiteServerOrderPage';
+import { WorkSuiteFloorPlanPage } from '@/pages/WorkSuiteFloorPlanPage';
 import { AuthModal } from '@/components/ui/AuthModal';
 import { CreatePostModal } from '@/components/personal/CreatePostModal';
 import { CreatePublicationModal } from '@/components/personal/CreatePublicationModal';
@@ -106,10 +111,10 @@ const SHELL_EXCLUDED_PREFIXES = [
   '/connections',
   '/transactions',
   '/messages',
-  '/company-settings',
   '/global',
   '/manage-store',
   '/firm/clients',
+  '/order',
 ];
 
 
@@ -121,7 +126,12 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const showShell = !SHELL_EXCLUDED_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
+  // ?kiosk=1 (e.g. the Reservations page's tablet/fullscreen mode) is a
+  // query-string flag rather than its own path, since it's the same page
+  // just chrome-less — so the global rail is hidden by checking the query
+  // string here too, not just the path prefix list above.
+  const isKioskMode = new URLSearchParams(location.search).get('kiosk') === '1';
+  const showShell = !isKioskMode && !SHELL_EXCLUDED_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
 
   const [memberTier, setMemberTier] = useState(() => localStorage.getItem(scopedKey(MEMBER_TIER_KEY, user?.id)) || 'Basic');
   const [verified, setVerified] = useState(() => localStorage.getItem(scopedKey(VERIFIED_ADDON_KEY, user?.id)) === 'true');
@@ -278,7 +288,6 @@ function App() {
             <Route path="/profile/edit" element={<ProfileEditPage />} />
             <Route path="/profile/resources" element={<ProfileResourcesPage />} />
             <Route path="/profile/settings/open-to" element={<OpenToWorkSettingsPage />} />
-            <Route path="/account/security" element={<AccountSecurityPage />} />
             <Route path="/admin" element={<AdminPage />} />
 
             {/* Ornave Global Routes */}
@@ -300,6 +309,13 @@ function App() {
             <Route path="/work-suite/connections" element={<WorkSuiteConnectionsPage />} />
             <Route path="/work-suite/connections/firms/:firmId" element={<FirmConnectionDetailPage />} />
             <Route path="/work-suite/achievements" element={<WorkSuiteAchievementsPage />} />
+            <Route path="/work-suite/menu" element={<WorkSuiteMenuPage />} />
+            <Route path="/work-suite/reservations" element={<WorkSuiteReservationsPage />} />
+            <Route path="/order/:companyId/:tableId" element={<OrderPage />} />
+            <Route path="/work-suite/kitchen" element={<WorkSuiteStationPage station="KITCHEN" />} />
+            <Route path="/work-suite/bar" element={<WorkSuiteStationPage station="BAR" />} />
+            <Route path="/work-suite/server-orders" element={<WorkSuiteServerOrderPage />} />
+            <Route path="/work-suite/floor-plan" element={<WorkSuiteFloorPlanPage />} />
             {/* Tasks/Goals were merged into one Planning page, Projects became Files, and
                 Clients became Connections; Invoices was removed outright. Keep old links working. */}
             <Route path="/work-suite/tasks" element={<WorkSuiteLegacyRedirect tab="board" />} />

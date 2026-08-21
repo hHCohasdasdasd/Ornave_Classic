@@ -63,7 +63,11 @@ export class PlaidService {
     const response = await plaidClient.linkTokenCreate({
       user: { client_user_id: userId },
       client_name: 'Ornave',
-      products: [Products.Transactions],
+      // Identity is used later (verifyBankAccount) to confirm the linked
+      // account's holder name actually matches this user, gating features
+      // like automatic reservation check-in on genuine ownership rather
+      // than just "some account got linked".
+      products: [Products.Transactions, Products.Identity],
       country_codes: EU_COUNTRY_CODES,
       language: 'en',
       ...(redirectUri ? { redirect_uri: redirectUri } : {}),
@@ -199,6 +203,70 @@ export class PlaidService {
 
     all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return all;
+  }
+
+  /** Normalizes to lowercase alpha-only tokens so "O'Brien-Smith, Jr." and
+   * "obrien smith" compare as equal — punctuation/casing/suffix noise, not
+   * substance, shouldn't be able to fail a legitimate match. */
+  private static nameTokens(name: string): Set<string> {
+    return new Set(
+      name
+        .toLowerCase()
+        .replace(/[^a-z\s]/g, ' ')
+        .split(/\s+/)
+        .filter((t) => t && !['jr', 'sr', 'ii', 'iii'].includes(t))
+    );
+  }
+
+  /** Real verification, not just "an account got linked" — pulls the
+   * account holder name(s) Plaid's Identity product has on file for this
+   * account and checks it against the user's registered name. Required
+   * before a bank account can gate anything (e.g. automatic check-in). */
+  static async verifyBankAccount(userId: string, accountId: string) {
+    const account = await prisma.bankAccount.findFirst({
+      where: { id: accountId, connection: { userId } },
+      include: { connection: true },
+    });
+    if (!account) throw notFound('Bank account not found');
+
+    // Prefer the legal name from CheckInProfile when the user has filled
+    // one in — that's the name they explicitly confirmed for identity
+    // checks, more trustworthy for this purpose than the account's
+    // firstName/lastName (which could be a nickname, a typo from
+    // registration, etc.).
+    const [user, checkInProfile] = await Promise.all([
+      prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { firstName: true, lastName: true } }),
+      prisma.checkInProfile.findUnique({ where: { userId } }),
+    ]);
+    const nameForMatch = checkInProfile?.legalFirstName && checkInProfile?.legalLastName
+      ? `${checkInProfile.legalFirstName} ${checkInProfile.legalLastName}`
+      : `${user.firstName} ${user.lastName}`;
+    const userTokens = this.nameTokens(nameForMatch);
+
+    let matched = false;
+    try {
+      const accessToken = decrypt(account.connection.accessToken);
+      const identity = await plaidClient.identityGet({ access_token: accessToken });
+      const plaidAccount = identity.data.accounts.find((a) => a.account_id === account.plaidAccountId);
+      const ownerNames = plaidAccount?.owners.flatMap((o) => o.names) || [];
+      matched = ownerNames.some((name) => {
+        const idTokens = this.nameTokens(name);
+        return [...userTokens].every((t) => idTokens.has(t));
+      });
+    } catch (err) {
+      console.error(`[Plaid] Identity check failed for account ${accountId}:`, err);
+      matched = false;
+    }
+
+    const updated = await prisma.bankAccount.update({
+      where: { id: accountId },
+      data: { verificationStatus: matched ? 'VERIFIED' : 'FAILED', verifiedAt: matched ? new Date() : null },
+    });
+    // currentBalance/availableBalance are encrypted at rest — every other
+    // read path (listConnections) decrypts before returning; this one has
+    // to as well, or the frontend gets raw ciphertext where it expects a
+    // number.
+    return decryptAccountBalances(updated);
   }
 
   static async removeConnection(userId: string, connectionId: string) {

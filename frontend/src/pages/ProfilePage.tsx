@@ -6,6 +6,7 @@ import { TokenStorage, scopedKey } from '@/utils/storage';
 import { networkService } from '@/services/networkService';
 import { feedService } from '@/services/feedService';
 import { firmService } from '@/services/firmService';
+import { billingService } from '@/services/billingService';
 import { FirmProfileData } from '@/types/firm';
 import { ProfileHeroCard } from '@/components/personal/ProfileHeroCard';
 import { StoryViewer } from '@/components/personal/StoryViewer';
@@ -48,6 +49,8 @@ import {
   FirmResources,
   FirmSubscriptions,
   FirmMenu,
+  FirmFloorPlan,
+  FirmReservations,
   FirmListings
 } from '@/components/firm/FirmProfileSections';
 import { getFirmLayoutTemplate } from '@/utils/businessType';
@@ -114,7 +117,7 @@ export const ProfilePage: React.FC = () => {
   const [shareCopied, setShareCopied] = useState(false);
 
   // The logged-in user's own purchased Ornave status (Basic/Bronze/Silver/
-  // Gold), set from the Enhance Profile shop — kept in sync live so a
+  // Gold), set from the Subscriptions tab's shop — kept in sync live so a
   // purchase is reflected here without needing a full page reload.
   const [ownMemberTier, setOwnMemberTier] = useState(() => localStorage.getItem(scopedKey('ornave_member_tier', user?.id)) || 'Basic');
   const [ownHasVerified, setOwnHasVerified] = useState(() => localStorage.getItem(scopedKey('ornave_verified_addon', user?.id)) === 'true');
@@ -127,6 +130,27 @@ export const ProfilePage: React.FC = () => {
     window.addEventListener('ornave_state_update', refresh);
     return () => window.removeEventListener('ornave_state_update', refresh);
   }, [user?.id]);
+
+  // The tier badge above only reads a localStorage cache, which is only
+  // ever written by the Subscriptions tab's own purchase/cancel flows — a
+  // tier changed any other way (an admin grant, a webhook that landed while
+  // this browser was closed) would silently show stale data forever. A
+  // real fetch on mount, scoped to viewing your own profile, keeps it
+  // honest without requiring a visit to the edit page first.
+  useEffect(() => {
+    if (isViewingOther || !user || user.id === 'guest') return;
+    const TIER_DISPLAY_NAME: Record<string, string> = {
+      BASIC: 'Basic', BRONZE: 'Bronze Member', SILVER: 'Silver Member', GOLD: 'Gold Member', DIAMOND: 'Diamond Member',
+    };
+    billingService.getMembershipStatus().then((status) => {
+      const tierId = TIER_DISPLAY_NAME[status.memberTier] || 'Basic';
+      localStorage.setItem(scopedKey('ornave_member_tier', user.id), tierId);
+      localStorage.setItem(scopedKey('ornave_verified_addon', user.id), status.isVerified ? 'true' : 'false');
+      setOwnMemberTier(tierId);
+      setOwnHasVerified(status.isVerified);
+      window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'member_tier', tier: tierId } }));
+    }).catch(() => {});
+  }, [isViewingOther, user?.id]);
 
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -321,11 +345,11 @@ export const ProfilePage: React.FC = () => {
       const combined = [
         ...storedConnections.map(c => ({
           id: c.id,
-          name: c.name || `${c.firstName} ${c.lastName}`,
+          name: `${c.firstName} ${c.lastName}`,
           headline: c.headline,
           type: 'user',
           location: c.location,
-          avatarUrl: `https://ui-avatars.com/api/?name=${(c.firstName || c.name || 'U')}+${(c.lastName || '')}&background=0D0D0D&color=fff`
+          avatarUrl: `https://ui-avatars.com/api/?name=${(c.firstName || 'U')}+${(c.lastName || '')}&background=0D0D0D&color=fff`
         })),
         ...storedFollows.map(f => {
           const firmName = f.name || 'Unknown Firm';
@@ -1027,6 +1051,7 @@ export const ProfilePage: React.FC = () => {
                     key: 'services',
                     label: firmLayoutTemplate === 'restaurant' ? 'Menu' : firmLayoutTemplate === 'real-estate' ? 'Listings' : 'Services',
                   },
+                  ...(firmLayoutTemplate === 'restaurant' ? [{ key: 'reservation', label: 'Reservation' }] : []),
                   { key: 'marketplace', label: 'Marketplace' },
                   { key: 'firm', label: 'Firm Details' },
                   { key: 'jobs', label: 'Jobs' },
@@ -1176,6 +1201,16 @@ export const ProfilePage: React.FC = () => {
                             companyId={isViewingOther ? (viewedUser?.id || '') : (user?.companyId || '')}
                             isOwner={!isViewingOther}
                           />
+                        )}
+                      </div>
+                    )}
+
+                    {activeTab === 'reservation' && firmLayoutTemplate === 'restaurant' && (
+                      <div className="tab-pane fade-in">
+                        {(firmData?.floorPlan && (firmData.floorPlan.tables.length > 0 || firmData.floorPlan.chairs.length > 0 || firmData.floorPlan.walls.length > 0)) ? (
+                          <FirmReservations companyId={firmData.id} floorPlan={firmData.floorPlan} />
+                        ) : (
+                          <div className="dossier-empty-state"><p>No floor plan added yet.</p></div>
                         )}
                       </div>
                     )}

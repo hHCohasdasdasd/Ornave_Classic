@@ -174,6 +174,22 @@ export const WorkSuiteFinancePage: React.FC = () => {
     }
   };
 
+  const [verifyingAccountId, setVerifyingAccountId] = useState<string | null>(null);
+  const handleVerifyBankAccount = async (accountId: string) => {
+    setVerifyingAccountId(accountId);
+    try {
+      const updated = await workSuiteService.verifyBankAccount(accountId);
+      setBankConnections((prev) =>
+        prev.map((c) => ({ ...c, accounts: c.accounts.map((a) => (a.id === accountId ? { ...a, verificationStatus: updated.verificationStatus, verifiedAt: updated.verifiedAt } : a)) }))
+      );
+    } catch {
+      // Leave the row as-is on failure — the status badge already reflects
+      // the last known state, and the button stays available to retry.
+    } finally {
+      setVerifyingAccountId(null);
+    }
+  };
+
   const toggleOrderExpanded = async (order: Order) => {
     if (expandedOrderId === order.id) {
       setExpandedOrderId(null);
@@ -619,6 +635,18 @@ export const WorkSuiteFinancePage: React.FC = () => {
                           <div className="worksuite-bank-account-row__type">{ACCOUNT_TYPE_LABELS[account.type] || account.type}{account.subtype ? ` · ${account.subtype}` : ''}</div>
                         </div>
                         <div className="worksuite-bank-account-row__balance">{formatCurrency(account.currentBalance ?? 0, account.currency)}</div>
+                        {account.verificationStatus === 'VERIFIED' ? (
+                          <span className="worksuite-bank-account-row__verified">✓ Verified</span>
+                        ) : (
+                          <button
+                            className="worksuite-bank-account-row__verify-btn"
+                            onClick={() => handleVerifyBankAccount(account.id)}
+                            disabled={verifyingAccountId === account.id}
+                            title="Confirms this account belongs to you via Plaid Identity — required for features like automatic reservation check-in"
+                          >
+                            {verifyingAccountId === account.id ? 'Verifying…' : account.verificationStatus === 'FAILED' ? 'Retry Verify' : 'Verify'}
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>

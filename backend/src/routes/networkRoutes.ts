@@ -14,6 +14,7 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { AuthenticatedRequest, authMiddleware } from '../middleware/auth';
 import { ApiResponseHandler } from '../utils/apiResponse';
 import { GlobalDirectoryService } from '../services/globalDirectoryService';
+import { MenuItemService, RestaurantTableService, FloorPlanWallService, FloorPlanChairService, TableReservationService, AutoCheckInService, TableOrderService } from '../services/workSuiteService';
 import { ConnectionService } from '../services/connectionService';
 import { GlobalTransactionService } from '../services/globalTransactionService';
 import { DataMappingService } from '../services/dataMappingService';
@@ -52,6 +53,193 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const profile = await GlobalDirectoryService.getPublicProfile(req.params.id);
     return ApiResponseHandler.success(res, profile, 'Profile retrieved', 200);
+  })
+);
+
+/**
+ * Just enough to put a name on the table-side ordering page's header — no
+ * auth, no verification gate, same reasoning as the menu route below (a
+ * restaurant that hasn't earned/bought the "Verified" badge yet still
+ * needs its own QR ordering to work).
+ */
+router.get(
+  '/companies/:companyId/basic-info',
+  asyncHandler(async (req: Request, res: Response) => {
+    const company = await TableOrderService.getCompanyBasicInfo(req.params.companyId);
+    if (!company) return ApiResponseHandler.error(res, 'Company not found', undefined, 404);
+    return ApiResponseHandler.success(res, company, 'Company retrieved', 200);
+  })
+);
+
+/**
+ * Public menu for a restaurant-layout company's profile page — no auth,
+ * no verification gate (that's a separate "trust badge" concept, not a
+ * requirement for a menu to be visible). Defaults to available items only
+ * (the public profile's Menu tab); the table-side ordering page passes
+ * ?includeUnavailable=true so it can show 86'd items as disabled/labeled
+ * rather than making them vanish, which is more useful when someone's
+ * actively trying to order than on a browsing/marketing page.
+ */
+router.get(
+  '/companies/:companyId/menu',
+  asyncHandler(async (req: Request, res: Response) => {
+    const onlyAvailable = req.query.includeUnavailable !== 'true';
+    const items = await MenuItemService.listForCompany(req.params.companyId, { onlyAvailable });
+    return ApiResponseHandler.success(res, items, 'Menu retrieved', 200);
+  })
+);
+
+/**
+ * Public, read-only floor plan for a restaurant-layout company's profile
+ * page — the saved layout built in Work Suite, shown as-is with no editing
+ * affordances. Same no-auth pattern as the menu route above.
+ */
+router.get(
+  '/companies/:companyId/floor-plan',
+  asyncHandler(async (req: Request, res: Response) => {
+    const [tables, chairs, walls] = await Promise.all([
+      RestaurantTableService.listForCompany(req.params.companyId),
+      FloorPlanChairService.listForCompany(req.params.companyId),
+      FloorPlanWallService.listForCompany(req.params.companyId),
+    ]);
+    return ApiResponseHandler.success(res, { tables, chairs, walls }, 'Floor plan retrieved', 200);
+  })
+);
+
+/**
+ * Table-side ordering — the QR code on a physical table leads here, fully
+ * public/no-login since whoever's sitting at the table may not be the
+ * account that made the reservation. Resolves to whichever reservation is
+ * active at that table right now; a table with no active reservation
+ * returns null rather than an error, so the ordering page can show a plain
+ * "ask staff for help" message instead of an error state.
+ */
+router.get(
+  '/companies/:companyId/tables/:tableId/order',
+  asyncHandler(async (req: Request, res: Response) => {
+    const order = await TableOrderService.getOrderForTable(req.params.companyId, req.params.tableId);
+    return ApiResponseHandler.success(res, order, 'Order retrieved', 200);
+  })
+);
+
+router.post(
+  '/companies/:companyId/tables/:tableId/order/items',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { menuItemId, quantity, note } = req.body;
+    if (!menuItemId) return ApiResponseHandler.error(res, 'menuItemId is required', undefined, 400);
+    try {
+      const item = await TableOrderService.addItem(req.params.companyId, req.params.tableId, { menuItemId, quantity, note });
+      return ApiResponseHandler.success(res, item, 'Item added', 201);
+    } catch (err: any) {
+      return ApiResponseHandler.error(res, err.message || 'Could not add that item', undefined, err.statusCode || 400);
+    }
+  })
+);
+
+router.delete(
+  '/companies/:companyId/tables/:tableId/order/items/:itemId',
+  asyncHandler(async (req: Request, res: Response) => {
+    try {
+      await TableOrderService.removeItem(req.params.companyId, req.params.tableId, req.params.itemId);
+      return ApiResponseHandler.success(res, {}, 'Item removed', 200);
+    } catch (err: any) {
+      return ApiResponseHandler.error(res, err.message || 'Could not remove that item', undefined, err.statusCode || 400);
+    }
+  })
+);
+
+/**
+ * Upcoming, confirmed bookings for one table — public, no auth, so any
+ * visitor picking a time slot can see what's already taken. Only exposes
+ * time + party size, never who booked it.
+ */
+router.get(
+  '/companies/:companyId/tables/:tableId/reservations',
+  asyncHandler(async (req: Request, res: Response) => {
+    const reservations = await TableReservationService.listUpcomingForTable(req.params.tableId, req.params.companyId);
+    return ApiResponseHandler.success(res, reservations, 'Reservations retrieved', 200);
+  })
+);
+
+/** Book a table for a date/time — requires a logged-in user, personal or
+ * company (a company can book a table at another restaurant, just not its
+ * own). */
+router.post(
+  '/companies/:companyId/tables/:tableId/reservations',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    try {
+      const { reservationTime, partySize, note, autoCheckIn } = req.body;
+      const reservation = await TableReservationService.create(
+        req.user.userId, req.params.companyId, req.params.tableId,
+        { reservationTime, partySize, note, autoCheckIn },
+        req.user.companyId,
+      );
+      return ApiResponseHandler.success(res, reservation, 'Table reserved', 201);
+    } catch (err: any) {
+      return ApiResponseHandler.error(res, err.message || 'Could not create reservation', undefined, err.statusCode || 400);
+    }
+  })
+);
+
+/** The logged-in user's own upcoming reservations at this company — powers
+ * the "My Reservations" list on the Reservation tab. */
+router.get(
+  '/companies/:companyId/my-reservations',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    const reservations = await TableReservationService.listUpcomingForUser(req.user.userId, req.params.companyId);
+    return ApiResponseHandler.success(res, reservations, 'Reservations retrieved', 200);
+  })
+);
+
+/** Cancel one of the logged-in user's own reservations. */
+router.delete(
+  '/reservations/:id',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    try {
+      await TableReservationService.cancel(req.user.userId, req.params.id);
+      return ApiResponseHandler.success(res, {}, 'Reservation cancelled', 200);
+    } catch (err: any) {
+      return ApiResponseHandler.error(res, err.message || 'Could not cancel reservation', undefined, err.statusCode || 400);
+    }
+  })
+);
+
+/** One of the logged-in user's own reservations, with table/company info —
+ * powers the "Automatic Check-In" panel in the calendar event modal. */
+router.get(
+  '/reservations/:id',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    try {
+      const reservation = await TableReservationService.getForUser(req.user.userId, req.params.id);
+      return ApiResponseHandler.success(res, reservation, 'Reservation retrieved', 200);
+    } catch (err: any) {
+      return ApiResponseHandler.error(res, err.message || 'Could not retrieve reservation', undefined, err.statusCode || 400);
+    }
+  })
+);
+
+/** Toggle automatic check-in on one of the logged-in user's own
+ * reservations — enabling it is rejected server-side (409) if they don't
+ * meet the eligibility bar, regardless of what the client thinks. */
+router.patch(
+  '/reservations/:id/auto-check-in',
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) return ApiResponseHandler.error(res, 'Unauthorized', undefined, 401);
+    try {
+      const reservation = await AutoCheckInService.setEnabled(req.user.userId, req.params.id, !!req.body.enabled);
+      return ApiResponseHandler.success(res, reservation, 'Automatic check-in updated', 200);
+    } catch (err: any) {
+      return ApiResponseHandler.error(res, err.message || 'Could not update automatic check-in', undefined, err.statusCode || 400);
+    }
   })
 );
 

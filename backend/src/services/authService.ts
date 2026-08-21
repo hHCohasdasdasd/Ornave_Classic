@@ -121,6 +121,7 @@ export interface RegisterData extends LoginCredentials {
   companyId?: string;
   companyName?: string;
   userType?: keyof typeof UserType;
+  businessType?: string;
 }
 
 export interface AuthResponse {
@@ -140,6 +141,7 @@ export interface AuthResponse {
     name: string;
     slug: string;
     description: string | null;
+    industry: string | null;
     createdAt: Date;
   } | null;
 }
@@ -173,6 +175,7 @@ export class AuthService {
             name: data.companyName,
             slug: `${slug}-${Date.now()}`, // Make slug unique
             description: `Company created for ${data.firstName} ${data.lastName}`,
+            industry: data.businessType || undefined,
           },
         });
 
@@ -269,6 +272,7 @@ export class AuthService {
         name: user.company.name,
         slug: user.company.slug,
         description: user.company.description,
+        industry: user.company.industry,
         createdAt: user.company.createdAt,
       } : null,
     };
@@ -431,6 +435,7 @@ export class AuthService {
         name: user.company.name,
         slug: user.company.slug,
         description: user.company.description,
+        industry: user.company.industry,
         createdAt: user.company.createdAt,
       } : null,
     };
@@ -931,6 +936,7 @@ export class AuthService {
         name: user.company.name,
         slug: user.company.slug,
         description: user.company.description,
+        industry: user.company.industry,
         createdAt: user.company.createdAt,
       } : null,
     };

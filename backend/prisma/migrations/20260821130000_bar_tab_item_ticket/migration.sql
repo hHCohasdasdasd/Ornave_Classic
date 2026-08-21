@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "BarTabItem" ADD COLUMN "printedAt" TIMESTAMP(3);
+ALTER TABLE "BarTabItem" ALTER COLUMN "status" SET DEFAULT 'NEW';

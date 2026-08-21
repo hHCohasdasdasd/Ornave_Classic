@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import { errorHandler } from './middleware/errorHandler';
 import { AccountPurgeService } from './services/accountPurgeService';
 import { MembershipService } from './services/membershipService';
+import { AutoCheckInService } from './services/workSuiteService';
 import { csrfProtection } from './middleware/csrf';
 import authRoutes from './routes/authRoutes';
 import companyRoutes from './routes/companyRoutes';
@@ -234,6 +235,7 @@ const isMain =
 console.log(`[STARTUP] Entry point: ${entryPath}, isMain: ${isMain}, Env: ${process.env.NODE_ENV}`);
 
 const PURGE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // once a day is plenty for a 30-day window
+const AUTO_CHECK_IN_INTERVAL_MS = 2 * 60 * 1000; // reservation times are precise to the minute, so this needs to be frequent
 
 if (isMain) {
   console.log(`[STARTUP] Starting server on port ${PORT}...`);
@@ -252,4 +254,11 @@ if (isMain) {
   // them to Basic once it passes.
   setTimeout(() => MembershipService.expireAnnualMemberships().catch((err) => console.error('[Membership] Expiry run failed:', err)), 90_000);
   setInterval(() => MembershipService.expireAnnualMemberships().catch((err) => console.error('[Membership] Expiry run failed:', err)), PURGE_CHECK_INTERVAL_MS);
+
+  // Sweeps for reservations with automatic check-in enabled whose time has
+  // arrived — flips them to checked-in, marks the table occupied, notifies
+  // the user. No cron dependency, same setTimeout+setInterval pattern as
+  // the jobs above.
+  setTimeout(() => AutoCheckInService.processDueCheckIns().catch((err) => console.error('[AutoCheckIn] Run failed:', err)), 30_000);
+  setInterval(() => AutoCheckInService.processDueCheckIns().catch((err) => console.error('[AutoCheckIn] Run failed:', err)), AUTO_CHECK_IN_INTERVAL_MS);
 }

@@ -37,7 +37,7 @@ const ANNUAL_TIER_PRICES: Record<'SILVER' | 'GOLD' | 'DIAMOND', { name: string; 
   DIAMOND: { name: 'Diamond Member', cents: 49999 },
 };
 
-const TIER_RANK: Record<MemberTier, number> = { BASIC: 0, BRONZE: 1, SILVER: 2, GOLD: 3, DIAMOND: 4 };
+export const TIER_RANK: Record<MemberTier, number> = { BASIC: 0, BRONZE: 1, SILVER: 2, GOLD: 3, DIAMOND: 4 };
 
 const VERIFIED_ADDON_CENTS = 299;
 

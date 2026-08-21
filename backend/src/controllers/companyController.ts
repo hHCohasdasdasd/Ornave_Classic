@@ -19,6 +19,11 @@ const CreateCompanySchema = z.object({
 });
 
 const UpdateSettingsSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  slug: z.string().regex(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/, 'Invalid slug format').optional(),
+  website: z.string().url().max(500).or(z.literal('')).optional(),
+  description: z.string().max(2000).or(z.literal('')).optional(),
+  industry: z.string().max(100).or(z.literal('')).optional(),
   customConfig: z.object({}).passthrough().optional(),
   theme: z.enum(['light', 'dark']).optional(),
 });
@@ -109,6 +114,9 @@ export class CompanyController {
         200
       );
     } catch (error: any) {
+      if (error.code === 'P2002') {
+        return ApiResponseHandler.error(res, 'That slug is already taken — try a different one', undefined, 409);
+      }
       return ApiResponseHandler.error(res, error.message, undefined, 400);
     }
   });

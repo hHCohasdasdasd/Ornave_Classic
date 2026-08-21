@@ -80,6 +80,10 @@
   max-width: 1600px;
 }
 
+.worksuite-page__container--full {
+  max-width: none;
+}
+
 /* Assistant briefing card */
 .worksuite-assistant {
   background: linear-gradient(160deg, rgba(198, 161, 91, 0.08), rgba(198, 161, 91, 0.02) 60%), var(--tech-card-bg);
@@ -427,6 +431,171 @@
 .worksuite-card:hover {
   border-color: var(--color-border-dark);
   transform: translateY(-2px);
+}
+
+/* Settings-style pages (Company Settings) — a stack of static sections,
+   same visual language as .worksuite-card but without the hover-lift
+   (these aren't clickable tiles). */
+.worksuite-settings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.worksuite-settings-section {
+  background: var(--tech-card-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.worksuite-settings-section__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.worksuite-settings-section__subtitle {
+  font-size: 0.8rem;
+  color: var(--tech-text-dim);
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+.worksuite-settings-section + .worksuite-settings-section__divider,
+.worksuite-settings-divider {
+  border: none;
+  border-top: 1px solid var(--tech-border);
+  margin: 20px 0;
+}
+
+.worksuite-field {
+  margin-bottom: 16px;
+}
+
+.worksuite-field:last-child {
+  margin-bottom: 0;
+}
+
+.worksuite-field label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--tech-text-dim);
+  margin-bottom: 6px;
+}
+
+.worksuite-field input,
+.worksuite-field textarea,
+.worksuite-field select {
+  width: 100%;
+  background: var(--color-input-bg);
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.worksuite-field input:focus,
+.worksuite-field textarea:focus,
+.worksuite-field select:focus {
+  outline: none;
+  border-color: var(--tech-accent-gold);
+  box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.15);
+}
+
+.worksuite-field-hint {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--tech-text-dim);
+  margin-top: 6px;
+}
+
+.worksuite-field-row {
+  display: flex;
+  gap: 12px;
+}
+
+.worksuite-field-row .worksuite-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.worksuite-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--tech-border);
+  font-size: 0.85rem;
+}
+
+.worksuite-status-row:last-child {
+  border-bottom: none;
+}
+
+.worksuite-status-row__label {
+  font-weight: 600;
+  color: var(--tech-text-dim);
+}
+
+.worksuite-status-row--ok .worksuite-status-row__value {
+  color: #4f9d5c;
+  font-weight: 700;
+}
+
+.worksuite-status-row--warn .worksuite-status-row__value {
+  color: var(--tech-accent-gold, #c6a15b);
+  font-weight: 700;
+}
+
+.worksuite-reader-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--tech-border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.worksuite-reader-row:last-child {
+  margin-bottom: 0;
+}
+
+.worksuite-reader-row__name {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.worksuite-reader-row__meta {
+  font-size: 0.75rem;
+  color: var(--tech-text-dim);
+  margin-top: 2px;
+}
+
+.worksuite-form-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.worksuite-error {
+  color: var(--color-danger);
+  font-size: 0.8rem;
+  margin: 0 0 14px;
+}
+
+.worksuite-success {
+  color: #4f9d5c;
+  font-size: 0.8rem;
+  margin: 0 0 14px;
 }
 
 /* Progress bar (Goals) */
@@ -1531,6 +1700,32 @@
   gap: 5px;
 }
 
+/* Bar module's Tickets/Order switch */
+.worksuite-mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--color-border-dark);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.worksuite-mode-toggle__btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.worksuite-mode-toggle__btn--active {
+  background: var(--tech-accent-gold, #c6a15b);
+  color: #1a1a1a;
+}
+
 .worksuite-btn:hover {
   border-color: var(--tech-accent-gold);
   color: var(--tech-accent-gold-text);
@@ -2039,6 +2234,7 @@
 @media (max-width: 640px) {
   .worksuite-grid { grid-template-columns: 1fr; }
   .worksuite-modules { grid-template-columns: 1fr; }
+  .worksuite-settings { grid-template-columns: 1fr; }
 }
 
 /* Modal (create/edit) */
@@ -2132,6 +2328,118 @@
   color: var(--color-danger);
   font-size: 0.8rem;
   margin: 14px 0 0;
+}
+
+.worksuite-auto-checkin {
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: rgba(198, 161, 91, 0.06);
+  border: 1px solid var(--tech-border);
+  border-radius: 8px;
+}
+
+.worksuite-auto-checkin__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.worksuite-auto-checkin__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--tech-text-main);
+}
+
+.worksuite-auto-checkin__hint {
+  font-size: 0.76rem;
+  color: var(--tech-text-dim);
+  margin: 8px 0 0;
+  line-height: 1.4;
+}
+
+.worksuite-auto-checkin__requirements ol {
+  list-style: decimal;
+  margin: 6px 0 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.worksuite-auto-checkin__requirements li {
+  font-size: 0.76rem;
+  color: var(--tech-text-dim);
+  opacity: 0.55;
+}
+
+.worksuite-auto-checkin__requirements li.worksuite-auto-checkin__req--met {
+  color: #4f9d5c;
+  opacity: 1;
+}
+
+.worksuite-auto-checkin__requirements li.worksuite-auto-checkin__req--active {
+  color: var(--tech-text-main);
+  font-weight: 600;
+  opacity: 1;
+}
+
+.worksuite-auto-checkin__requirements a {
+  color: var(--tech-accent-gold);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.worksuite-auto-checkin__requirements a:hover {
+  text-decoration: underline;
+}
+
+.worksuite-auto-checkin__switch {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.worksuite-auto-checkin__switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.worksuite-auto-checkin__slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--tech-border);
+  border-radius: 999px;
+  transition: background 0.15s ease;
+}
+
+.worksuite-auto-checkin__slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+}
+
+.worksuite-auto-checkin__switch input:checked + .worksuite-auto-checkin__slider {
+  background: #4f9d5c;
+}
+
+.worksuite-auto-checkin__switch input:checked + .worksuite-auto-checkin__slider::before {
+  transform: translateX(16px);
+}
+
+.worksuite-auto-checkin__switch input:disabled + .worksuite-auto-checkin__slider {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .worksuite-modal__actions {
@@ -3321,6 +3629,37 @@
   font-variant-numeric: tabular-nums;
 }
 
+.worksuite-bank-account-row__verified {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #4f9d5c;
+  margin-left: 12px;
+}
+
+.worksuite-bank-account-row__verify-btn {
+  flex-shrink: 0;
+  margin-left: 12px;
+  background: none;
+  border: 1px solid var(--tech-border-dim);
+  border-radius: 999px;
+  color: var(--tech-accent-gold);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.worksuite-bank-account-row__verify-btn:hover:not(:disabled) {
+  border-color: var(--tech-accent-gold);
+}
+
+.worksuite-bank-account-row__verify-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .worksuite-bank-txn-header {
   display: flex;
   align-items: center;
@@ -3769,8 +4108,8 @@
 }
 
 .worksuite-calendar-day {
-  aspect-ratio: 1;
-  min-height: 64px;
+  aspect-ratio: unset;
+  min-height: 96px;
   background: rgba(246, 243, 237, 0.02);
   border: 1px solid var(--tech-border);
   border-radius: 10px;
@@ -3781,6 +4120,7 @@
   justify-content: flex-start;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
+  overflow: hidden;
 }
 
 .worksuite-calendar-day:hover {
@@ -3824,6 +4164,53 @@
 .worksuite-calendar-day__more {
   font-size: 0.6rem;
   color: var(--tech-text-dim);
+}
+
+.worksuite-calendar-day__items {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.worksuite-calendar-day__chip {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--tech-text-main);
+  background: rgba(246, 243, 237, 0.06);
+  border: none;
+  border-left: 3px solid var(--tech-accent-gold);
+  border-radius: 3px;
+  padding: 2px 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.15s ease;
+}
+
+.worksuite-calendar-day__chip:hover {
+  background: rgba(198, 161, 91, 0.18);
+}
+
+.worksuite-calendar-day__more-chip {
+  font-size: 0.62rem;
+  color: var(--tech-text-dim);
+  background: none;
+  border: none;
+  padding: 1px 5px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.worksuite-calendar-day__more-chip:hover {
+  color: var(--tech-accent-gold);
 }
 
 .worksuite-calendar-sidebar {
@@ -3915,4 +4302,489 @@
 .worksuite-calendar-agenda-item__subtitle {
   font-size: 0.7rem;
   color: var(--tech-text-dim);
+}
+
+/* ── Floor Plan ── */
+.floorplan-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--tech-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.floorplan-zoom__btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--tech-text-main);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.floorplan-zoom__btn:hover:not(:disabled) {
+  background: rgba(198, 161, 91, 0.15);
+}
+
+.floorplan-zoom__btn:disabled {
+  color: var(--tech-text-dim);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.floorplan-zoom__level {
+  background: transparent;
+  border: none;
+  color: var(--tech-text-dim);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0 8px;
+  cursor: pointer;
+  min-width: 44px;
+}
+
+.floorplan-zoom__level:hover {
+  color: var(--tech-accent-gold);
+}
+
+.floorplan-legend {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+
+.floorplan-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--tech-text-dim);
+}
+
+.floorplan-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.floorplan-dot--available { background: #4f9d5c; }
+.floorplan-dot--occupied { background: #c25b52; }
+.floorplan-dot--reserved { background: var(--tech-accent-gold); }
+
+.floorplan-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.floorplan-mode-toggle {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--tech-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.floorplan-mode-btn {
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  color: var(--tech-text-dim);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.floorplan-mode-btn:hover {
+  color: var(--tech-text-main);
+}
+
+.floorplan-mode-btn.active {
+  background: var(--tech-accent-gold);
+  color: #14140f;
+}
+
+.floorplan-hint {
+  font-size: 0.78rem;
+  color: var(--tech-text-dim);
+  margin: 10px 0 16px;
+}
+
+/* The viewport is the fixed-size, scrollable window onto the canvas — the
+   canvas itself is bigger (and, via zoom, visually scaled), so panning is
+   just native scrolling instead of custom drag logic. */
+.floorplan-viewport {
+  position: relative;
+  width: 100%;
+  height: 560px;
+  overflow: hidden;
+  border: 1px solid var(--tech-border);
+  border-radius: 16px;
+  background: var(--tech-bg);
+}
+
+.floorplan-canvas {
+  position: relative;
+  transform-origin: 0 0;
+  background:
+    linear-gradient(rgba(198, 161, 91, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(198, 161, 91, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.floorplan-canvas--walls {
+  cursor: crosshair;
+}
+
+.floorplan-canvas__hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--tech-text-dim);
+  font-size: 0.85rem;
+  text-align: center;
+  pointer-events: none;
+  max-width: 260px;
+  z-index: 1;
+}
+
+.floorplan-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.floorplan-wall {
+  stroke: var(--tech-text-main);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.floorplan-wall--draft {
+  stroke: var(--tech-accent-gold);
+  stroke-dasharray: 6 5;
+}
+
+.floorplan-wall__hit {
+  stroke: transparent;
+  stroke-width: 16;
+  cursor: pointer;
+}
+
+.floorplan-wall__hit:hover {
+  stroke: rgba(194, 91, 82, 0.35);
+}
+
+.floorplan-curve-handle {
+  pointer-events: all;
+  fill: var(--tech-accent-gold);
+  stroke: var(--tech-bg);
+  stroke-width: 2;
+  cursor: grab;
+}
+
+.floorplan-curve-handle:active {
+  cursor: grabbing;
+}
+
+.floorplan-curve-handle:hover {
+  fill: #fff;
+}
+
+.floorplan-table--locked {
+  cursor: default;
+}
+
+/* Drag-and-drop shape palette — pick a table shape up and drop it
+   directly onto the canvas, rather than filling out a form first. */
+.floorplan-palette {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: 4px;
+}
+
+.floorplan-palette__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: grab;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.floorplan-palette__item:active {
+  cursor: grabbing;
+}
+
+.floorplan-palette__swatch {
+  width: 40px;
+  height: 28px;
+  background: var(--tech-card-bg);
+  border: 2px solid #4f9d5c;
+  box-sizing: border-box;
+}
+
+.floorplan-palette__swatch--round { width: 30px; height: 30px; border-radius: 50%; }
+.floorplan-palette__swatch--square { border-radius: 6px; width: 30px; height: 30px; }
+.floorplan-palette__swatch--rectangle { border-radius: 5px; }
+.floorplan-palette__swatch--half-circle { border-radius: 999px 999px 3px 3px; }
+.floorplan-palette__swatch--chair { width: 22px; height: 22px; border-radius: 6px; border-color: #7a8fb0; }
+.floorplan-palette__swatch--stool { width: 22px; height: 22px; border-radius: 50%; border-color: var(--tech-accent-gold, #c6a15b); }
+
+.floorplan-palette__label {
+  font-size: 0.62rem;
+  color: var(--tech-text-dim);
+  white-space: nowrap;
+}
+
+.floorplan-canvas--drop-target {
+  border-color: var(--tech-accent-gold);
+  box-shadow: 0 0 0 2px rgba(198, 161, 91, 0.25) inset;
+}
+
+/* Delete mode — a deliberate, separate toggle rather than folding delete
+   into whatever tool is already active, so a stray click while drawing or
+   moving something can never remove it by accident. */
+.floorplan-delete-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--tech-bg);
+  border: 1px solid var(--tech-border);
+  border-radius: 999px;
+  color: var(--tech-text-main);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.floorplan-delete-toggle:hover {
+  border-color: #c25b52;
+  color: #c25b52;
+}
+
+.floorplan-delete-toggle.active {
+  background: #c25b52;
+  border-color: #c25b52;
+  color: #fff;
+}
+
+.floorplan-viewport:has(.floorplan-canvas--delete-mode) {
+  box-shadow: 0 0 0 2px rgba(194, 91, 82, 0.4) inset;
+}
+
+.floorplan-table--deletable {
+  cursor: pointer;
+}
+
+.floorplan-table--deletable:hover {
+  border-color: #c25b52 !important;
+  box-shadow: 0 0 0 2px rgba(194, 91, 82, 0.3);
+}
+
+.floorplan-wall__hit--deletable:hover {
+  stroke: rgba(194, 91, 82, 0.55) !important;
+}
+
+.floorplan-table {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: rgba(79, 157, 92, 0.28);
+  border: 2px solid #4f9d5c;
+  box-shadow: var(--shadow-card);
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.floorplan-table:active {
+  cursor: grabbing;
+}
+
+.floorplan-table:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.floorplan-table--round { border-radius: 50%; }
+.floorplan-table--square { border-radius: 12px; }
+.floorplan-table--rectangle { border-radius: 10px; width: 130px; height: 76px; }
+.floorplan-table--half-circle { border-radius: 999px 999px 6px 6px; width: 130px; height: 65px; }
+
+.floorplan-table__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--tech-text-main);
+  text-align: center;
+  padding: 0 6px;
+}
+
+.floorplan-table__seats {
+  font-size: 0.68rem;
+  color: var(--tech-text-dim);
+}
+
+.floorplan-table__action {
+  position: absolute;
+  top: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--tech-border-dim);
+  background: var(--tech-card-bg);
+  color: var(--tech-text-dim);
+  font-size: 0.68rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.floorplan-table:hover .floorplan-table__action {
+  opacity: 1;
+}
+
+.floorplan-table__action--edit {
+  right: 20px;
+}
+
+.floorplan-table__action--edit:hover {
+  color: var(--tech-accent-gold);
+  border-color: var(--tech-accent-gold);
+}
+
+.floorplan-table__action--delete {
+  right: -8px;
+}
+
+.floorplan-table__action--delete:hover {
+  color: #c25b52;
+  border-color: #c25b52;
+}
+
+.floorplan-table__resize-handle {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--tech-border-dim);
+  background: var(--tech-card-bg);
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.floorplan-table:hover .floorplan-table__resize-handle {
+  opacity: 1;
+}
+
+.floorplan-table__resize-handle:hover {
+  border-color: var(--tech-accent-gold);
+  background: var(--tech-accent-gold);
+}
+
+.floorplan-chair {
+  position: absolute;
+  border-radius: 6px;
+  background: var(--tech-card-bg);
+  border: 2px solid #7a8fb0;
+  box-shadow: var(--shadow-card);
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.floorplan-chair:active {
+  cursor: grabbing;
+}
+
+.floorplan-chair:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.floorplan-chair--locked {
+  cursor: default;
+}
+
+.floorplan-chair--deletable {
+  cursor: pointer;
+}
+
+.floorplan-chair--deletable:hover {
+  border-color: #c25b52;
+  box-shadow: 0 0 0 2px rgba(194, 91, 82, 0.3);
+}
+
+/* Bar stool — round (vs. the chair's rounded square) and gold-bordered to
+   read as bar seating at a glance, distinct from dining-table chairs. */
+.floorplan-stool {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--tech-card-bg);
+  border: 2px solid var(--tech-accent-gold, #c6a15b);
+  box-shadow: var(--shadow-card);
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.floorplan-stool:active {
+  cursor: grabbing;
+}
+
+.floorplan-stool:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.floorplan-stool--locked {
+  cursor: default;
+}
+
+.floorplan-stool--deletable {
+  cursor: pointer;
+}
+
+.floorplan-stool--deletable:hover {
+  border-color: #c25b52;
+  box-shadow: 0 0 0 2px rgba(194, 91, 82, 0.3);
+}
+
+.floorplan-stool__label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 2px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--tech-text-dim);
+  white-space: nowrap;
+  pointer-events: none;
 }

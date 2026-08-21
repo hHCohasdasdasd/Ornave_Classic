@@ -140,7 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         slug: company.slug,
         name: company.name,
         description: company.description || `Welcome to ${company.name}.`,
-        industry: 'Professional Services',
+        industry: company.industry || 'Professional Services',
         location: 'Global',
         connectionCount: 0
       });
@@ -240,14 +240,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     TokenStorage.setUser(newUser);
     TokenStorage.setCompany(newCompany);
 
-    // Register company for discovery if it's a company user
+    // Register company for discovery if it's a company user — prefer the
+    // industry actually persisted on the company record (works across
+    // devices/browsers) over the just-submitted form value, which only
+    // exists on registration and would otherwise get lost on next login.
     if (newUser.userType === 'COMPANY_USER' && newCompany) {
       firmService.registerFirmGlobally({
         id: newCompany.id,
         slug: newCompany.slug,
         name: newCompany.name,
         description: newCompany.description || `Welcome to ${newCompany.name}.`,
-        industry: businessType || 'Professional Services',
+        industry: newCompany.industry || businessType || 'Professional Services',
         location: 'Global',
         connectionCount: 0
       });
@@ -301,7 +304,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // full auth response — registration doesn't require email
       // verification, only login does, so calling login() again here would
       // wrongly block brand-new accounts before they've verified.
-      const response = await apiClient.register(email, password, firstName, lastName, companyName, userType);
+      const response = await apiClient.register(email, password, firstName, lastName, companyName, userType, businessType);
       const { user: newUser, company: newCompany } = response.data;
       applyAuthenticatedSession(newUser, newCompany, businessType);
     } catch (err: any) {

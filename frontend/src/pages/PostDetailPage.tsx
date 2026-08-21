@@ -271,8 +271,8 @@ export const PostDetailPage: React.FC = () => {
                         {p.content.length > 100 ? `${p.content.substring(0, 100)}...` : p.content}
                       </div>
                       <div className="trending-post-card__engagement">
-                        <span>👍 {p.reactions.likes}</span>
-                        <span>💬 {p.reactions.comments}</span>
+                        <span>👍 {p.reactions?.likes ?? 0}</span>
+                        <span>💬 {p.reactions?.comments ?? 0}</span>
                       </div>
                     </div>
                   ))

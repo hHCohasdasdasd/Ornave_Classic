@@ -13,6 +13,9 @@ export interface User {
   createdAt: string;
   isPlatformAdmin?: boolean;
   twoFactorEnabled?: boolean;
+  headline?: string;
+  bio?: string;
+  website?: string;
 }
 
 export interface Company {
@@ -26,6 +29,9 @@ export interface Company {
   bannerUrl?: string;
   deactivated?: boolean;
   isActive?: boolean;
+  // Drives which profile layout the company gets — see
+  // frontend/src/utils/businessType.ts. Chosen at registration.
+  industry?: string | null;
   createdAt: string;
   updatedAt: string;
 }

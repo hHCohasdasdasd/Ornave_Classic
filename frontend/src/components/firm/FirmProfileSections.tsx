@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FirmService, FirmTeamMember, FirmJob, FirmLocation, FirmInsightsData, FirmPortfolioItem, FirmResource, FirmSubscription, FirmMenuItem, FirmPropertyListing } from '@/types/firm';
+import { FirmService, FirmTeamMember, FirmJob, FirmLocation, FirmInsightsData, FirmPortfolioItem, FirmResource, FirmSubscription, FirmMenuItem, FirmPropertyListing, FirmFloorPlan as FirmFloorPlanData } from '@/types/firm';
 import { storeService, Product } from '@/services/storeService';
+import { firmService } from '@/services/firmService';
+import { workSuiteService, AutoCheckInEligibility } from '@/services/workSuiteService';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/context/AuthContext';
 
@@ -997,6 +999,375 @@ export const FirmSubscriptions: React.FC<{ subscriptions: FirmSubscription[] }> 
   );
 };
 
+// Firm Floor Plan Section — the layout built and saved in Work Suite,
+// shown read-only. Matches the editor's fixed 1600x1000 logical canvas
+// (WorkSuiteFloorPlanPage.tsx) but scales it to fit the profile column via
+// a percentage-based/viewBox layout instead of the editor's zoom controls,
+// since there's nothing here to zoom or edit.
+const FLOOR_PLAN_CANVAS_WIDTH = 1600;
+const FLOOR_PLAN_CANVAS_HEIGHT = 1000;
+
+export const FirmFloorPlan: React.FC<{
+  floorPlan: FirmFloorPlanData;
+  onTableClick?: (table: FirmFloorPlanData['tables'][number]) => void;
+}> = ({ floorPlan, onTableClick }) => {
+  const { tables, chairs, walls } = floorPlan;
+  if (tables.length === 0 && chairs.length === 0 && walls.length === 0) return null;
+
+  const pct = (value: number, total: number) => `${(value / total) * 100}%`;
+
+  return (
+    <section className="profile-section">
+      <div className="profile-section__header">
+        <h2 className="profile-section__title">Floor Plan</h2>
+      </div>
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          aspectRatio: `${FLOOR_PLAN_CANVAS_WIDTH} / ${FLOOR_PLAN_CANVAS_HEIGHT}`,
+          marginTop: '16px',
+          background: 'var(--tech-bg)',
+          border: '1px solid var(--tech-border)',
+          borderRadius: '8px',
+          overflow: 'hidden',
+        }}
+      >
+        <svg
+          viewBox={`0 0 ${FLOOR_PLAN_CANVAS_WIDTH} ${FLOOR_PLAN_CANVAS_HEIGHT}`}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+        >
+          {walls.map((wall) => {
+            if (wall.shape === 'circle') {
+              return (
+                <circle
+                  key={wall.id}
+                  cx={wall.x1} cy={wall.y1} r={wall.radius || 0}
+                  fill="none" stroke="var(--tech-text-dim)" strokeWidth={4}
+                />
+              );
+            }
+            const cx = wall.curveX ?? Math.round((wall.x1 + wall.x2) / 2);
+            const cy = wall.curveY ?? Math.round((wall.y1 + wall.y2) / 2);
+            return (
+              <path
+                key={wall.id}
+                d={`M ${wall.x1} ${wall.y1} Q ${cx} ${cy} ${wall.x2} ${wall.y2}`}
+                fill="none" stroke="var(--tech-text-dim)" strokeWidth={4}
+              />
+            );
+          })}
+        </svg>
+
+        {chairs.map((chair) => (
+          <div
+            key={chair.id}
+            title="Chair"
+            style={{
+              position: 'absolute',
+              left: pct(chair.positionX, FLOOR_PLAN_CANVAS_WIDTH),
+              top: pct(chair.positionY, FLOOR_PLAN_CANVAS_HEIGHT),
+              width: pct(28, FLOOR_PLAN_CANVAS_WIDTH),
+              height: pct(28, FLOOR_PLAN_CANVAS_HEIGHT),
+              borderRadius: '6px',
+              border: '2px solid #7a8fb0',
+              background: 'var(--tech-card-bg)',
+            }}
+          />
+        ))}
+
+        {tables.map((table) => (
+          <div
+            key={table.id}
+            title={onTableClick ? `${table.label} — ${table.seats} seats — click to reserve` : `${table.label} — ${table.seats} seats`}
+            onClick={onTableClick ? () => onTableClick(table) : undefined}
+            style={{
+              position: 'absolute',
+              left: pct(table.positionX, FLOOR_PLAN_CANVAS_WIDTH),
+              top: pct(table.positionY, FLOOR_PLAN_CANVAS_HEIGHT),
+              width: pct(table.width, FLOOR_PLAN_CANVAS_WIDTH),
+              height: pct(table.height, FLOOR_PLAN_CANVAS_HEIGHT),
+              borderRadius: table.shape === 'round' ? '50%' : table.shape === 'half-circle' ? '999px 999px 6px 6px' : '10px',
+              border: '2px solid #4f9d5c',
+              background: 'rgba(79, 157, 92, 0.28)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              color: 'var(--color-text)',
+              textAlign: 'center',
+              padding: '2px',
+              overflow: 'hidden',
+              cursor: onTableClick ? 'pointer' : 'default',
+              transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
+              boxShadow: onTableClick ? 'var(--shadow-card)' : undefined,
+            }}
+            onMouseEnter={onTableClick ? (e) => { e.currentTarget.style.borderColor = 'var(--tech-accent-gold)'; } : undefined}
+            onMouseLeave={onTableClick ? (e) => { e.currentTarget.style.borderColor = '#4f9d5c'; } : undefined}
+          >
+            {table.label}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+// A reservation "occupies" its table for this long — must match the
+// backend's RESERVATION_BUFFER_MINUTES (workSuiteService.ts) so a slot the
+// UI shows as open never actually gets rejected as a conflict on submit.
+const RESERVATION_BUFFER_MINUTES = 90;
+const RESERVATION_SLOT_START_MINUTES = 11 * 60; // 11:00
+const RESERVATION_SLOT_END_MINUTES = 22 * 60; // 22:00
+const RESERVATION_SLOT_STEP_MINUTES = 30;
+
+const formatSlotLabel = (minutesFromMidnight: number) => {
+  const h24 = Math.floor(minutesFromMidnight / 60);
+  const m = minutesFromMidnight % 60;
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  const suffix = h24 < 12 ? 'AM' : 'PM';
+  return `${h12}:${String(m).padStart(2, '0')} ${suffix}`;
+};
+
+const todayIsoDate = () => new Date().toISOString().slice(0, 10);
+
+// Firm Reservations — wraps the read-only FirmFloorPlan with a booking flow
+// for logged-in personal users: click a table, pick a date/time slot (taken
+// slots for that table are greyed out), confirm. Company accounts and
+// guests just see the plain read-only floor plan, no booking UI.
+export const FirmReservations: React.FC<{ companyId: string; floorPlan: FirmFloorPlanData }> = ({ companyId, floorPlan }) => {
+  const { user } = useAuth();
+  // Personal users and other companies can both book a table — a company
+  // just can't book its own restaurant's tables.
+  const canReserve = !!user && user.id !== 'guest' && user.companyId !== companyId;
+
+  const [selectedTable, setSelectedTable] = useState<FirmFloorPlanData['tables'][number] | null>(null);
+  const [date, setDate] = useState(todayIsoDate());
+  const [time, setTime] = useState('');
+  const [partySize, setPartySize] = useState(2);
+  const [note, setNote] = useState('');
+  const [takenTimes, setTakenTimes] = useState<string[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Confirmation now lives in the booker's notifications + Work Suite
+  // calendar (not on this public profile) — this is just a brief
+  // in-the-moment acknowledgment that the booking went through.
+  const [justBookedTable, setJustBookedTable] = useState<string | null>(null);
+
+  // Automatic Check-In — offered right at booking time as well as later
+  // from the calendar entry. Eligibility doesn't depend on which table/time
+  // is picked, so it's fetched once per mount rather than per table-open.
+  const [eligibility, setEligibility] = useState<AutoCheckInEligibility | null>(null);
+  const [autoCheckIn, setAutoCheckIn] = useState(false);
+
+  useEffect(() => {
+    if (!canReserve) return;
+    workSuiteService.getAutoCheckInEligibility().then(setEligibility).catch(() => {});
+  }, [canReserve]);
+
+  const openTable = async (table: FirmFloorPlanData['tables'][number]) => {
+    if (!canReserve) return;
+    setSelectedTable(table);
+    setDate(todayIsoDate());
+    setTime('');
+    setPartySize(2);
+    setNote('');
+    setAutoCheckIn(false);
+    setError(null);
+    setIsLoadingSlots(true);
+    const slots = await firmService.getTableAvailability(companyId, table.id);
+    setTakenTimes(slots.map((s) => s.reservationTime));
+    setIsLoadingSlots(false);
+  };
+
+  const closeModal = () => setSelectedTable(null);
+
+  // Every 30-min slot from open to close, minus whichever fall within the
+  // reservation buffer of an existing booking on the selected date — a
+  // client-side mirror of the backend's own conflict window so the picker
+  // never offers a time the submit would then reject.
+  const slotOptions = React.useMemo(() => {
+    if (!date) return [];
+    const dayTakenMinutes = takenTimes
+      .map((t) => new Date(t))
+      .filter((d) => d.toISOString().slice(0, 10) === date || d.toDateString() === new Date(`${date}T00:00:00`).toDateString())
+      .map((d) => d.getHours() * 60 + d.getMinutes());
+
+    const options: { minutes: number; label: string; disabled: boolean }[] = [];
+    for (let m = RESERVATION_SLOT_START_MINUTES; m <= RESERVATION_SLOT_END_MINUTES; m += RESERVATION_SLOT_STEP_MINUTES) {
+      const disabled = dayTakenMinutes.some((taken) => Math.abs(taken - m) < RESERVATION_BUFFER_MINUTES);
+      options.push({ minutes: m, label: formatSlotLabel(m), disabled });
+    }
+    return options;
+  }, [date, takenTimes]);
+
+  const handleSubmit = async () => {
+    if (!selectedTable || !date || !time) {
+      setError('Pick a date and time.');
+      return;
+    }
+    const [hh, mm] = time.split(':').map(Number);
+    const reservationDate = new Date(`${date}T00:00:00`);
+    reservationDate.setHours(hh, mm, 0, 0);
+    if (reservationDate.getTime() < Date.now()) {
+      setError('That time has already passed — pick a later slot.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const bookedLabel = selectedTable.label;
+      await firmService.reserveTable(companyId, selectedTable.id, {
+        reservationTime: reservationDate.toISOString(),
+        partySize,
+        note: note.trim() || undefined,
+        autoCheckIn: eligibility?.eligible ? autoCheckIn : undefined,
+      });
+      closeModal();
+      setJustBookedTable(bookedLabel);
+      setTimeout(() => setJustBookedTable(null), 6000);
+      // The reservation just created a real notification for this user —
+      // tell the navbar to refresh its unread badge now instead of waiting
+      // for the next mount/navigation to pick it up.
+      window.dispatchEvent(new CustomEvent('ornave_state_update', { detail: { type: 'table_reservation' } }));
+    } catch (err: any) {
+      setError(err.message || 'Could not reserve this table.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      {justBookedTable && (
+        <div style={{ padding: '12px 16px', marginBottom: '16px', background: 'rgba(79, 157, 92, 0.15)', border: '1px solid #4f9d5c', borderRadius: '8px', color: 'var(--color-text)', fontSize: '0.85rem' }}>
+          Reserved {justBookedTable}. Check your notifications and Work Suite calendar for the confirmation.
+        </div>
+      )}
+
+      <FirmFloorPlan floorPlan={floorPlan} onTableClick={canReserve ? openTable : undefined} />
+
+      {!canReserve && (
+        <p style={{ fontSize: '0.8rem', color: 'var(--tech-text-dim)', marginTop: '10px' }}>
+          Log in with a personal account to reserve a table.
+        </p>
+      )}
+
+      {selectedTable && (
+        <div
+          onClick={closeModal}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: 'var(--tech-card-bg)', border: '1px solid var(--tech-border)', borderRadius: '10px', padding: '24px', width: '360px', maxWidth: '90vw' }}
+          >
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--color-text)' }}>Reserve {selectedTable.label}</h3>
+            <p style={{ margin: '4px 0 16px', fontSize: '0.8rem', color: 'var(--tech-text-dim)' }}>{selectedTable.seats} seats</p>
+
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--tech-text-dim)', marginBottom: '4px' }}>Date</label>
+            <input
+              type="date"
+              value={date}
+              min={todayIsoDate()}
+              onChange={async (e) => {
+                setDate(e.target.value);
+                setTime('');
+              }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', marginBottom: '14px', background: 'var(--tech-bg)', border: '1px solid var(--tech-border)', borderRadius: '6px', color: 'var(--color-text)' }}
+            />
+
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--tech-text-dim)', marginBottom: '4px' }}>Time</label>
+            <select
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              disabled={isLoadingSlots}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', marginBottom: '14px', background: 'var(--tech-bg)', border: '1px solid var(--tech-border)', borderRadius: '6px', color: 'var(--color-text)' }}
+            >
+              <option value="">{isLoadingSlots ? 'Loading availability…' : 'Select a time'}</option>
+              {slotOptions.map((opt) => (
+                <option key={opt.minutes} value={`${String(Math.floor(opt.minutes / 60)).padStart(2, '0')}:${String(opt.minutes % 60).padStart(2, '0')}`} disabled={opt.disabled}>
+                  {opt.label}{opt.disabled ? ' (booked)' : ''}
+                </option>
+              ))}
+            </select>
+
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--tech-text-dim)', marginBottom: '4px' }}>Party size</label>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={partySize}
+              onChange={(e) => setPartySize(Math.max(1, Math.min(20, Number(e.target.value) || 1)))}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', marginBottom: '14px', background: 'var(--tech-bg)', border: '1px solid var(--tech-border)', borderRadius: '6px', color: 'var(--color-text)' }}
+            />
+
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--tech-text-dim)', marginBottom: '4px' }}>Note (optional)</label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={2}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', marginBottom: '14px', background: 'var(--tech-bg)', border: '1px solid var(--tech-border)', borderRadius: '6px', color: 'var(--color-text)', resize: 'vertical' }}
+            />
+
+            <div style={{ padding: '10px 12px', marginBottom: '14px', background: 'rgba(198, 161, 91, 0.06)', border: '1px solid var(--tech-border)', borderRadius: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: eligibility?.eligible ? 'pointer' : 'default' }}>
+                <input
+                  type="checkbox"
+                  checked={autoCheckIn}
+                  disabled={!eligibility?.eligible}
+                  onChange={(e) => setAutoCheckIn(e.target.checked)}
+                  style={{ width: 'auto' }}
+                />
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-text)' }}>Automatic Check-In</span>
+              </label>
+              {eligibility?.eligible ? (
+                <p style={{ margin: '6px 0 0', fontSize: '0.74rem', color: 'var(--tech-text-dim)', lineHeight: 1.4 }}>
+                  You'll be checked in automatically once your reservation time arrives — no action needed.
+                </p>
+              ) : eligibility ? (
+                <div style={{ marginTop: '6px' }}>
+                  <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--tech-text-dim)' }}>Not available yet — three requirements gate this, checked in order:</p>
+                  <ol style={{ margin: '4px 0 0', paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <li style={{ fontSize: '0.74rem', ...(eligibility.tierOk ? { color: '#4f9d5c', opacity: 1 } : eligibility.nextStep === 'TIER' ? { color: 'var(--color-text)', fontWeight: 700, opacity: 1 } : { color: 'var(--tech-text-dim)', opacity: 0.55 }) }}>
+                      Silver membership or above {eligibility.tierOk ? '✓' : eligibility.nextStep === 'TIER' ? <a href="/profile/edit" style={{ color: 'var(--tech-accent-gold)' }}>— upgrade</a> : null}
+                    </li>
+                    <li style={{ fontSize: '0.74rem', ...(eligibility.profileComplete ? { color: '#4f9d5c', opacity: 1 } : eligibility.nextStep === 'PROFILE' ? { color: 'var(--color-text)', fontWeight: 700, opacity: 1 } : { color: 'var(--tech-text-dim)', opacity: 0.55 }) }}>
+                      Check-In Profile completed {eligibility.profileComplete ? '✓' : eligibility.nextStep === 'PROFILE' ? <a href="/profile/edit" style={{ color: 'var(--tech-accent-gold)' }}>— finish it</a> : null}
+                    </li>
+                    <li style={{ fontSize: '0.74rem', ...(eligibility.bankVerified ? { color: '#4f9d5c', opacity: 1 } : eligibility.nextStep === 'BANK' ? { color: 'var(--color-text)', fontWeight: 700, opacity: 1 } : { color: 'var(--tech-text-dim)', opacity: 0.55 }) }}>
+                      A verified bank account {eligibility.bankVerified ? '✓' : eligibility.nextStep === 'BANK' ? <a href="/work-suite/finance" style={{ color: 'var(--tech-accent-gold)' }}>— link & verify one</a> : null}
+                    </li>
+                  </ol>
+                </div>
+              ) : null}
+            </div>
+
+            {error && <p style={{ color: '#c25b52', fontSize: '0.8rem', marginBottom: '12px' }}>{error}</p>}
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button onClick={closeModal} style={{ background: 'none', border: '1px solid var(--tech-border-dim)', borderRadius: '6px', color: 'var(--tech-text-dim)', padding: '8px 16px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting || !time}
+                style={{ background: 'var(--tech-accent-gold)', border: 'none', borderRadius: '6px', color: '#1a1a1a', fontWeight: 700, padding: '8px 16px', cursor: isSubmitting || !time ? 'not-allowed' : 'pointer', opacity: isSubmitting || !time ? 0.6 : 1, fontSize: '0.85rem' }}
+              >
+                {isSubmitting ? 'Reserving…' : 'Confirm Reservation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
 // Firm Menu Section — restaurants/cafes get this instead of Services.
 export const FirmMenu: React.FC<{ items: FirmMenuItem[] }> = ({ items }) => {
   if (!items || items.length === 0) return null;
@@ -1015,8 +1386,11 @@ export const FirmMenu: React.FC<{ items: FirmMenuItem[] }> = ({ items }) => {
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {items.filter((item) => item.category === category).map((item) => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', paddingBottom: '14px', borderBottom: '1px solid var(--tech-border-dim)' }}>
-                <div style={{ minWidth: 0 }}>
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', paddingBottom: '14px', borderBottom: '1px solid var(--tech-border-dim)' }}>
+                {item.imageUrl && (
+                  <img src={item.imageUrl} alt={item.name} style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} />
+                )}
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontWeight: 700, color: 'var(--color-text)', fontSize: '0.95rem' }}>{item.name}</div>
                   {item.description && (
                     <div style={{ fontSize: '0.85rem', color: 'var(--tech-text-dim)', marginTop: '2px' }}>{item.description}</div>

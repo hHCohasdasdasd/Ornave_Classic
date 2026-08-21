@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/ui/Navbar';
 import { ProtectedPageOverlay } from '@/components/ui/ProtectedPageOverlay';
 import { ThemedDatePicker } from '@/components/ui/ThemedDatePicker';
-import { workSuiteService, Task, Goal, JobApplication, CalendarEvent } from '@/services/workSuiteService';
+import { workSuiteService, Task, Goal, JobApplication, CalendarEvent, AutoCheckInEligibility, TableReservationDetail } from '@/services/workSuiteService';
+import { firmService } from '@/services/firmService';
 import { IconChevronDown } from '@/components/ui/Icons';
 import './WorkSuite.css';
 
@@ -43,6 +44,19 @@ function toDateKey(d: Date): string {
 function isoToDateKey(iso?: string): string | null {
   if (!iso) return null;
   return iso.slice(0, 10);
+}
+
+// CalendarEvent.startDate/endDate is a real instant (e.g. a 7:30 PM
+// reservation is stored as its UTC timestamp), not a bare calendar date like
+// task/goal/job due dates. Slicing that ISO string's date portion (as
+// isoToDateKey does) reads the UTC calendar day, which can be a day off from
+// the viewer's local calendar day — landing a timed event on the wrong cell,
+// or outside the visible month grid entirely, depending on timezone. All-day
+// events have no real time-of-day, so UTC midnight sliced is already the
+// intended date and needs no correction.
+function eventDateKey(ev: CalendarEvent): string | null {
+  if (ev.allDay) return isoToDateKey(ev.startDate);
+  return toDateKey(new Date(ev.startDate));
 }
 
 function formatTimeLabel(time?: string): string {
@@ -86,6 +100,7 @@ function buildMonthGrid(monthDate: Date): Date[] {
 
 export const WorkSuiteCalendarPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const isGuest = !user || user.id === 'guest';
 
@@ -112,6 +127,45 @@ export const WorkSuiteCalendarPage: React.FC = () => {
   const [eventEndTime, setEventEndTime] = useState('');
   const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [eventError, setEventError] = useState<string | null>(null);
+
+  // Automatic Check-In — only relevant when the event being edited was
+  // created from a table reservation (editingEvent.tableReservationId).
+  const [reservation, setReservation] = useState<TableReservationDetail | null>(null);
+  const [eligibility, setEligibility] = useState<AutoCheckInEligibility | null>(null);
+  const [isLoadingCheckIn, setIsLoadingCheckIn] = useState(false);
+  const [isTogglingCheckIn, setIsTogglingCheckIn] = useState(false);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const reservationId = editingEvent?.tableReservationId;
+    if (!reservationId) {
+      setReservation(null);
+      setEligibility(null);
+      return;
+    }
+    setIsLoadingCheckIn(true);
+    setCheckInError(null);
+    Promise.all([firmService.getReservation(reservationId), workSuiteService.getAutoCheckInEligibility()])
+      .then(([res, elig]) => {
+        setReservation(res);
+        setEligibility(elig);
+      })
+      .finally(() => setIsLoadingCheckIn(false));
+  }, [editingEvent]);
+
+  const handleToggleAutoCheckIn = async () => {
+    if (!reservation) return;
+    setIsTogglingCheckIn(true);
+    setCheckInError(null);
+    try {
+      const updated = await firmService.setAutoCheckIn(reservation.id, !reservation.autoCheckInEnabled);
+      setReservation(updated);
+    } catch (err: any) {
+      setCheckInError(err.message || 'Could not update automatic check-in.');
+    } finally {
+      setIsTogglingCheckIn(false);
+    }
+  };
 
   const load = async () => {
     setIsLoading(true);
@@ -174,9 +228,9 @@ export const WorkSuiteCalendarPage: React.FC = () => {
       });
     }
     for (const ev of calendarEvents) {
-      const startKey = isoToDateKey(ev.startDate);
+      const startKey = eventDateKey(ev);
       if (!startKey) continue;
-      const endKey = isoToDateKey(ev.endDate) || startKey;
+      const endKey = (ev.endDate ? eventDateKey({ ...ev, startDate: ev.endDate }) : null) || startKey;
       const span = dateKeysInRange(startKey, endKey);
       const subtitle = !ev.allDay && ev.startTime
         ? `${formatTimeLabel(ev.startTime)}${ev.endTime ? ' – ' + formatTimeLabel(ev.endTime) : ''}`
@@ -245,8 +299,8 @@ export const WorkSuiteCalendarPage: React.FC = () => {
   };
 
   const openEditEvent = (ev: CalendarEvent) => {
-    const startKey = isoToDateKey(ev.startDate) || '';
-    const endKey = isoToDateKey(ev.endDate);
+    const startKey = eventDateKey(ev) || '';
+    const endKey = ev.endDate ? eventDateKey({ ...ev, startDate: ev.endDate }) : null;
     setEditingEvent(ev);
     setEventTitle(ev.title);
     setEventDescription(ev.description || '');
@@ -259,6 +313,30 @@ export const WorkSuiteCalendarPage: React.FC = () => {
     setEventError(null);
     setShowEventModal(true);
   };
+
+  // Deep-link support — a notification (e.g. "Reservation confirmed at X")
+  // links here as /work-suite/calendar?event=<id>. Once events are loaded,
+  // jump the grid to that event's month and open it directly instead of
+  // making the user hunt for it on the grid themselves.
+  useEffect(() => {
+    const eventId = searchParams.get('event');
+    if (!eventId || calendarEvents.length === 0) return;
+    const match = calendarEvents.find((e) => e.id === eventId);
+    if (!match) return;
+    const key = eventDateKey(match);
+    if (key) {
+      const [y, m] = key.split('-').map(Number);
+      setVisibleMonth(new Date(y, m - 1, 1));
+      setSelectedDateKey(key);
+    }
+    openEditEvent(match);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('event');
+      return next;
+    }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calendarEvents]);
 
   const handleSaveEvent = async () => {
     if (!eventTitle.trim() || !eventStartDate) return;
@@ -338,7 +416,7 @@ export const WorkSuiteCalendarPage: React.FC = () => {
             <span className="worksuite-calendar-legend__item"><span className="worksuite-calendar-dot" style={{ background: TYPE_COLOR.job }} /> Applications</span>
             <span className="worksuite-calendar-legend__item"><span className="worksuite-calendar-dot" style={{ background: TYPE_COLOR.event }} /> Events</span>
           </div>
-          <p className="worksuite-calendar-hint">Double-click a day to add an event · click a dot to open it</p>
+          <p className="worksuite-calendar-hint">Double-click a day to add an event · click an entry to open it</p>
 
           {isLoading ? (
             <div className="worksuite-empty">Loading calendar…</div>
@@ -364,17 +442,19 @@ export const WorkSuiteCalendarPage: React.FC = () => {
                     >
                       <span className="worksuite-calendar-day__number">{day.getDate()}</span>
                       {dayItems.length > 0 && (
-                        <span className="worksuite-calendar-day__dots">
+                        <span className="worksuite-calendar-day__items">
                           {dayItems.slice(0, 3).map((item) => (
                             <button
                               key={item.id}
-                              className="worksuite-calendar-dot worksuite-calendar-dot--btn"
-                              style={{ background: TYPE_COLOR[item.type] }}
+                              className="worksuite-calendar-day__chip"
+                              style={{ borderLeftColor: TYPE_COLOR[item.type] }}
                               title={`${item.title} — ${TYPE_LABEL[item.type]}`}
                               onClick={(e) => { e.stopPropagation(); handleItemClick(item); }}
-                            />
+                            >
+                              {item.title}
+                            </button>
                           ))}
-                          {dayItems.length > 3 && <span className="worksuite-calendar-day__more">+{dayItems.length - 3}</span>}
+                          {dayItems.length > 3 && <span className="worksuite-calendar-day__more-chip">+{dayItems.length - 3} more</span>}
                         </span>
                       )}
                     </div>
@@ -426,6 +506,53 @@ export const WorkSuiteCalendarPage: React.FC = () => {
                   <label>End Time</label>
                   <input type="time" value={eventEndTime} onChange={(e) => setEventEndTime(e.target.value)} />
                 </div>
+              </div>
+            )}
+
+            {editingEvent?.tableReservationId && (
+              <div className="worksuite-auto-checkin">
+                <div className="worksuite-auto-checkin__header">
+                  <span className="worksuite-auto-checkin__title">Automatic Check-In</span>
+                  {reservation && !isLoadingCheckIn && (
+                    <label className="worksuite-auto-checkin__switch">
+                      <input
+                        type="checkbox"
+                        checked={reservation.autoCheckInEnabled}
+                        disabled={isTogglingCheckIn || (!reservation.autoCheckInEnabled && !eligibility?.eligible)}
+                        onChange={handleToggleAutoCheckIn}
+                      />
+                      <span className="worksuite-auto-checkin__slider" />
+                    </label>
+                  )}
+                </div>
+
+                {isLoadingCheckIn ? (
+                  <p className="worksuite-auto-checkin__hint">Checking eligibility…</p>
+                ) : reservation?.checkedInAt ? (
+                  <p className="worksuite-auto-checkin__hint">Checked in automatically at {new Date(reservation.checkedInAt).toLocaleString(undefined, { hour: 'numeric', minute: '2-digit', month: 'short', day: 'numeric' })}.</p>
+                ) : reservation?.autoCheckInEnabled ? (
+                  <p className="worksuite-auto-checkin__hint">You'll be checked in automatically once your reservation time arrives — no action needed.</p>
+                ) : eligibility?.eligible ? (
+                  <p className="worksuite-auto-checkin__hint">Turn this on to be checked in automatically, without staff or you doing anything.</p>
+                ) : (
+                  <div className="worksuite-auto-checkin__requirements">
+                    <p className="worksuite-auto-checkin__hint">
+                      Not available yet — three requirements gate this, checked in order:
+                    </p>
+                    <ol>
+                      <li className={eligibility?.tierOk ? 'worksuite-auto-checkin__req--met' : eligibility?.nextStep === 'TIER' ? 'worksuite-auto-checkin__req--active' : ''}>
+                        Silver membership or above {eligibility?.tierOk ? '✓' : eligibility?.nextStep === 'TIER' ? <a href="/profile/edit">— upgrade</a> : null}
+                      </li>
+                      <li className={eligibility?.profileComplete ? 'worksuite-auto-checkin__req--met' : eligibility?.nextStep === 'PROFILE' ? 'worksuite-auto-checkin__req--active' : ''}>
+                        Check-In Profile completed {eligibility?.profileComplete ? '✓' : eligibility?.nextStep === 'PROFILE' ? <a href="/profile/edit">— finish it</a> : null}
+                      </li>
+                      <li className={eligibility?.bankVerified ? 'worksuite-auto-checkin__req--met' : eligibility?.nextStep === 'BANK' ? 'worksuite-auto-checkin__req--active' : ''}>
+                        A verified bank account {eligibility?.bankVerified ? '✓' : eligibility?.nextStep === 'BANK' ? <a href="/work-suite/finance">— link & verify one</a> : null}
+                      </li>
+                    </ol>
+                  </div>
+                )}
+                {checkInError && <p className="worksuite-modal__error">{checkInError}</p>}
               </div>
             )}
 

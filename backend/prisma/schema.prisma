@@ -113,6 +113,8 @@ model User {
   sentDirectMessages         DirectMessage[]         @relation("sentDirectMessages")
   receivedDirectMessages     DirectMessage[]         @relation("receivedDirectMessages")
   notifications              Notification[]
+  tableReservations          TableReservation[]
+  checkInProfile             CheckInProfile?
 
   @@index([companyId])
   @@index([email])
@@ -183,6 +185,26 @@ model Company {
   courses               Course[]
   candidates            Candidate[]
   companyInvoices       CompanyInvoice[]
+  menuItems             MenuItem[]
+  restaurantTables      RestaurantTable[]
+  floorPlanWalls        FloorPlanWall[]
+  floorPlanChairs       FloorPlanChair[]
+  tableReservations     TableReservation[]
+  barTabs               BarTab[]
+  barStools             BarStool[]
+  terminalReaders       TerminalReader[]
+
+  // Stripe Connect — lets the company take real card payments (Terminal
+  // card-reader charges, and eventually online payments) with the money
+  // settling to their own bank account rather than ours. Express accounts,
+  // same onboarding flow used across the industry for platforms like this.
+  stripeConnectAccountId        String?  @unique
+  stripeConnectDetailsSubmitted Boolean  @default(false)
+  stripeConnectChargesEnabled   Boolean  @default(false)
+  stripeConnectPayoutsEnabled   Boolean  @default(false)
+  // One Terminal Location per company — required by Stripe before any
+  // reader can be registered to it. Created lazily on first reader setup.
+  terminalLocationId            String?
 
   @@index([slug])
   @@index([companyToken])
@@ -208,6 +230,445 @@ model CompanyProfile {
   @@index([industry])
   @@index([country])
   @@index([verificationStatus])
+}
+
+// Restaurant-layout companies manage these from Work Suite; they're what
+// actually populates the "Menu" tab on the company's public profile,
+// replacing what used to be identical placeholder items for every
+// restaurant. Price is a display string (e.g. "$12") rather than a number
+// since menus commonly show non-numeric prices ("Market Price", "MP").
+model MenuItem {
+  id          String   @id @default(cuid())
+  companyId   String
+  name        String
+  description String?
+  price       String
+  category    String   @default("Mains")
+  isAvailable Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  // 'KITCHEN' | 'BAR' — which display an order for this dish/drink shows up
+  // on. Explicit rather than inferred from category (a free-text field a
+  // restaurant might use inconsistently) so the split is always correct.
+  station     String   @default("KITCHEN")
+  // Optional — a dish/drink photo shown on the public menu, the QR
+  // ordering page, and Server Orders. Signed URLs are minted fresh from
+  // this key wherever the item is listed, same pattern as every other
+  // private file in this app.
+  imageStorageKey String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orderItems  TableOrderItem[]
+  barTabItems BarTabItem[]
+
+  @@index([companyId])
+}
+
+// A bar tab — deliberately not tied to a floor-plan table/seat, unlike
+// TableReservation. Some restaurants' bars run as a walk-up counter where a
+// bartender starts a tab under a name and closes it out whenever the
+// customer's done, with no seating assignment at all. Mirrors
+// TableReservation's billing fields (discount/service charge/payment) and
+// TableOrderItem/TableOrderCheck's split-check shape, just without the
+// table/reservation-time/party-size concepts that don't apply here.
+model BarTab {
+  id                 String    @id @default(cuid())
+  companyId          String
+  // Set when a tab is started from clicking a stool on the seating chart
+  // rather than the name-only "+ New Tab" flow — lets the Bar module show
+  // that stool as occupied and jump straight back into this tab. Null for
+  // a walk-up tab that was never tied to a specific seat.
+  stoolId            String?
+  label              String
+  // 'OPEN' | 'CLOSED' | 'CANCELLED'
+  status             String    @default("OPEN")
+  discountType       String?
+  discountValue      Float?
+  discountLabel      String?
+  serviceChargeType  String?
+  serviceChargeValue Float?
+  paymentStatus      String    @default("UNPAID")
+  paymentMethod      String?
+  paidAt             DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  company            Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  stool              BarStool? @relation(fields: [stoolId], references: [id], onDelete: SetNull)
+  items              BarTabItem[]
+  checks             BarTabCheck[]
+
+  @@index([companyId])
+  @@index([stoolId])
+}
+
+// A sub-bill within one tab, created only when staff use Split Check — same
+// reasoning as TableOrderCheck.
+model BarTabCheck {
+  id                 String   @id @default(cuid())
+  tabId              String
+  label              String   @default("Check")
+  discountType       String?
+  discountValue      Float?
+  discountLabel      String?
+  serviceChargeType  String?
+  serviceChargeValue Float?
+  paymentStatus      String   @default("UNPAID")
+  paymentMethod      String?
+  paidAt             DateTime?
+  createdAt          DateTime @default(now())
+  tab                BarTab   @relation(fields: [tabId], references: [id], onDelete: Cascade)
+  items              BarTabItem[]
+
+  @@index([tabId])
+}
+
+// One ordered drink — name/price snapshotted at order time, same reasoning
+// as TableOrderItem.
+model BarTabItem {
+  id         String    @id @default(cuid())
+  tabId      String
+  checkId    String?
+  menuItemId String?
+  name       String
+  price      String
+  quantity   Int       @default(1)
+  note       String?
+  // 'NEW' -> 'PREPARING' -> 'READY' -> 'SERVED', same lifecycle as
+  // TableOrderItem — a tab's items show up on the shared Bar ticket board
+  // (KitchenService.listForStation) right alongside table/QR orders so
+  // they actually get made, not just billed. 'VOID' is the separate
+  // terminal state for a wrong pour or sent-back drink.
+  status     String    @default("NEW")
+  voidReason String?
+  voidedAt   DateTime?
+  // Set the first time this ticket is printed, same purpose as
+  // TableOrderItem.printedAt (Auto-Print skip + "printed" mark on the
+  // ticket board) — unrelated to the guest-facing receipt print in Bar
+  // Orders itself.
+  printedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  tab        BarTab      @relation(fields: [tabId], references: [id], onDelete: Cascade)
+  check      BarTabCheck? @relation(fields: [checkId], references: [id], onDelete: SetNull)
+  menuItem   MenuItem?    @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+
+  @@index([tabId])
+  @@index([checkId])
+}
+
+// One ordered dish/drink, placed by a guest from the public table-side
+// ordering page (reached via the QR code on their table) and tied to
+// whichever reservation is currently active at that table. Deliberately no
+// separate "TableOrder" header/open-close state — a reservation's order is
+// just "all the TableOrderItem rows under it", so a guest can keep adding
+// items across multiple rounds without anything needing to track when a
+// round starts or ends. name/price are snapshotted at order time so a menu
+// price change later doesn't retroactively alter a bill already run.
+model TableOrderItem {
+  id            String   @id @default(cuid())
+  reservationId String
+  menuItemId    String?
+  name          String
+  price         String
+  quantity      Int      @default(1)
+  note          String?
+  // Snapshotted from MenuItem.station at order time, same reasoning as
+  // name/price — a dish moved from Kitchen to Bar later shouldn't
+  // retroactively reclassify an order already in someone's queue.
+  station       String   @default("KITCHEN")
+  // 'NEW' -> 'PREPARING' -> 'READY' -> 'SERVED', advanced by kitchen/bar
+  // staff on the station display; 'VOID' is a separate terminal state set
+  // by Check Functions, not part of that progression — voided items are
+  // kept (not deleted) with a reason, but drop out of Kitchen/Bar and the
+  // bill total.
+  status        String   @default("NEW")
+  voidReason    String?
+  voidedAt      DateTime?
+  // Set once the order has been split into separate checks (Check
+  // Functions -> Split Check) — which check this item belongs to. Null
+  // means "the whole/unsplit order," the common case.
+  checkId       String?
+  // Set the first time this ticket is printed — lets Auto-Print skip
+  // anything already sent to the printer instead of reprinting it on every
+  // poll refresh, and lets the UI show a "Printed" mark either way.
+  printedAt     DateTime?
+  createdAt     DateTime @default(now())
+  reservation   TableReservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  menuItem      MenuItem?        @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  check         TableOrderCheck? @relation(fields: [checkId], references: [id], onDelete: SetNull)
+
+  @@index([reservationId])
+  @@index([checkId])
+}
+
+// A sub-bill within one table's order, created only when staff actually use
+// "Split Check" — most tables never have one of these, and pay/discount/
+// service-charge at the TableReservation level instead (see there). Each
+// check tracks its own discount/service charge/payment so splitting a table
+// two ways lets each party pay separately.
+model TableOrderCheck {
+  id                 String   @id @default(cuid())
+  reservationId      String
+  label              String   @default("Check")
+  discountType       String?
+  discountValue      Float?
+  discountLabel      String?
+  serviceChargeType  String?
+  serviceChargeValue Float?
+  paymentStatus      String   @default("UNPAID")
+  paymentMethod      String?
+  paidAt             DateTime?
+  createdAt          DateTime @default(now())
+  reservation        TableReservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  items              TableOrderItem[]
+
+  @@index([reservationId])
+}
+
+// One row per company+station — lets each of Kitchen/Bar/Reservations pick
+// its own print method and (Kitchen/Bar only) whether tickets print
+// automatically as orders arrive, independent of the others (a place with
+// only one printer might want Kitchen on auto-print and Bar left manual).
+model StationPrinterSettings {
+  id          String   @id @default(cuid())
+  companyId   String
+  // 'KITCHEN' | 'BAR' | 'RESERVATIONS'
+  station     String
+  // 'USB' (direct ESC/POS thermal printer via WebUSB) | 'BROWSER' (the
+  // browser's own print dialog, receipt-width layout).
+  printMethod String   @default("BROWSER")
+  // Only meaningful for KITCHEN/BAR — Reservations printing is always a
+  // manual "Print Receipt" action, never automatic.
+  autoPrint   Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, station])
+}
+
+// One row per company — where the Server Orders screen's function buttons
+// (Check Functions, Discounts, Service Charges, Payments, Print, Send) are
+// freely positioned, set up via that page's "Edit Page" layout editor.
+// Stored as a JSON string (positions keyed by button id) rather than a
+// dedicated column per button, same reasoning as MenuItem.price being
+// free-text — the button set itself could grow later without a migration.
+model PosLayoutSettings {
+  id        String   @id @default(cuid())
+  companyId String   @unique
+  layout    String
+  updatedAt DateTime @updatedAt
+}
+
+// One row per company — custom lines a company wants printed on every
+// receipt/ticket (address, phone, a thank-you note, return policy, etc.),
+// on top of whatever page-specific content (table name, items, totals)
+// usePrinter's print() already builds. Free text, one line per newline,
+// same reasoning as MenuItem.price being free-text rather than structured.
+model ReceiptSettings {
+  id         String   @id @default(cuid())
+  companyId  String   @unique
+  headerText String   @default("")
+  footerText String   @default("")
+  updatedAt  DateTime @updatedAt
+}
+
+// A physical Stripe Terminal card reader registered to this company's
+// Terminal Location — the counterpart to Payments' "Card Reader" option
+// when Stripe Connect is set up. Mirrors Stripe's own reader object
+// (label/status) rather than duplicating everything Stripe already tracks.
+model TerminalReader {
+  id             String   @id @default(cuid())
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  stripeReaderId String   @unique
+  label          String
+  deviceType     String
+  status         String   @default("offline")
+  createdAt      DateTime @default(now())
+
+  @@index([companyId])
+}
+
+// A restaurant-layout company's floor plan — tables placed on a canvas
+// (positionX/Y, in the same arbitrary pixel space the frontend canvas
+// uses) with a live status for front-of-house use. Internal-only, unlike
+// MenuItem — a floor plan isn't shown on the public profile.
+model RestaurantTable {
+  id          String   @id @default(cuid())
+  companyId   String
+  label       String
+  seats       Int      @default(2)
+  shape       String   @default("round")
+  status      String   @default("AVAILABLE")
+  positionX   Int      @default(0)
+  positionY   Int      @default(0)
+  // Drag-to-resize on the canvas — defaults match the old fixed per-shape
+  // CSS sizes, but from here on width/height are the source of truth.
+  width       Int      @default(90)
+  height      Int      @default(90)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  reservations TableReservation[]
+
+  @@index([companyId])
+}
+
+// A customer's date/time booking of a specific table, made from the public
+// profile's Reservation tab. Kept separate from RestaurantTable.status
+// (which the restaurant staff cycle by hand in the editor for walk-in/live
+// floor state) since a table can be AVAILABLE right now but still have
+// reservations booked for later.
+// A small, purpose-built profile for Automatic Check-In — deliberately
+// separate from the general UserProfile (which has marketing-oriented
+// fields like a banner photo and website that have nothing to do with
+// confirming who someone is). Completing this is one of the three hard
+// gates in AutoCheckInService.getEligibility; PlaidService.verifyBankAccount
+// also prefers these legal names over User.firstName/lastName when present,
+// since they're the ones the user explicitly confirmed for identity checks.
+model CheckInProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  legalFirstName String?
+  legalLastName  String?
+  phone          String?
+  email          String?
+  // Free-text, shown to restaurant staff when this user's reservation
+  // auto-checks-in — e.g. dietary restrictions/allergies ("peanut
+  // allergy"). Optional: unlike the other fields, nothing meaningful is
+  // being verified here, so it doesn't gate completeness.
+  notes          String?
+  // ID-style headshot, required (alongside legal name/phone/email) before
+  // Automatic Check-In counts as eligible — restaurant staff need to be
+  // able to actually recognize who they're looking for. Stored as a
+  // private-bucket storage key (see FILES_BUCKET), not a public URL; every
+  // read path mints a short-lived signed URL on demand.
+  photoStorageKey String?
+  // An opaque random token written onto a physical NFC tag/card via Web
+  // NFC (Chrome on Android only — see PROFILE_EDIT's "Write NFC Card").
+  // Tapping that tag against a compatible kiosk reads this token back and
+  // looks the guest up — a real "card read", not a QR/name search, for the
+  // devices that can actually do it. Null until the user writes a card.
+  nfcToken       String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TableReservation {
+  id              String   @id @default(cuid())
+  tableId         String
+  companyId       String
+  // Null for a walk-in a server started from the floor plan — there's no
+  // guest account to attach in that case, so walkInName/walkInPhone (jotted
+  // down by staff, optional) stand in for it instead.
+  userId          String?
+  walkInName      String?
+  walkInPhone     String?
+  partySize       Int      @default(2)
+  reservationTime DateTime
+  note            String?
+  // 'CONFIRMED' | 'CANCELLED' — cancelled rows are kept (not deleted) so a
+  // user's reservation history stays intact, and so the slot they freed up
+  // is unambiguous from the audit trail.
+  status          String   @default("CONFIRMED")
+  // Opt-in, gated behind a complete profile + SILVER-or-above tier + a
+  // verified bank account (see AutoCheckInService) — when on, a background
+  // sweep flips this reservation to checked-in on its own once
+  // reservationTime passes, no staff/user action needed.
+  autoCheckInEnabled Boolean   @default(false)
+  checkedInAt        DateTime?
+  // Billing — only meaningful when the order hasn't been split into
+  // multiple TableOrderCheck rows; once split, each check carries its own
+  // discount/service charge/payment instead. 'PERCENT' | 'FIXED'.
+  discountType       String?
+  discountValue      Float?
+  discountLabel      String?
+  serviceChargeType  String?
+  serviceChargeValue Float?
+  // 'UNPAID' | 'PAID'. Recording payment (unsplit case) also flips status
+  // to 'CLOSED' below, which is what actually frees the table.
+  paymentStatus      String    @default("UNPAID")
+  paymentMethod      String?
+  paidAt             DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  table           RestaurantTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  company         Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user            User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  calendarEvent   CalendarEvent?
+  orderItems      TableOrderItem[]
+  checks          TableOrderCheck[]
+
+  @@index([tableId])
+  @@index([companyId])
+  @@index([userId])
+}
+
+// A chair placed on the floor plan — deliberately minimal (no seats/status
+// of its own, unlike RestaurantTable) since it's just a seating marker
+// around a table, not a bookable unit in itself.
+model FloorPlanChair {
+  id        String   @id @default(cuid())
+  companyId String
+  positionX Int      @default(0)
+  positionY Int      @default(0)
+  rotation  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+// Bar seating — placed freely on the floor plan (not snapped to a table,
+// unlike FloorPlanChair against dining tables) since a bar counter isn't a
+// table itself. Its own model rather than a FloorPlanChair variant because
+// the Bar module reads these directly to show a seating chart — a plain
+// chair carries no meaning there. Deliberately no seat/status of its own,
+// same reasoning as FloorPlanChair: it's a visual seating count, not
+// wired to tabs.
+model BarStool {
+  id        String   @id @default(cuid())
+  companyId String
+  // A stool is its own seat at the bar — numbered the same way a table
+  // gets a label, so staff/the seating chart can refer to "Stool 3" the
+  // same way they'd say "Table 3".
+  label     String   @default("Stool")
+  positionX Int      @default(0)
+  positionY Int      @default(0)
+  rotation  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tabs      BarTab[]
+
+  @@index([companyId])
+}
+
+// One straight line segment of a hand-sketched floor plan wall — a real
+// architect-style outline is just many of these end to end, drawn freehand
+// on the canvas rather than dropped from a fixed shape palette. Coordinates
+// are the same arbitrary pixel space RestaurantTable's positionX/Y use.
+model FloorPlanWall {
+  id        String   @id @default(cuid())
+  companyId String
+  // "line" uses x1/y1 -> x2/y2 as the two endpoints. "circle" uses x1/y1 as
+  // the center (x2/y2 just mirror the center, unused) and radius for size —
+  // a round booth, curved bar counter, or alcove sketched compass-style.
+  shape     String   @default("line")
+  x1        Int
+  y1        Int
+  x2        Int
+  y2        Int
+  radius    Int?
+  // Quadratic-bezier control point, "line" shape only — null means still a
+  // plain straight segment. Set once someone drags the curve handle away
+  // from the segment's midpoint (see the Curve tool on the floor plan).
+  curveX    Int?
+  curveY    Int?
+  createdAt DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
 }
 
 model CompanyConnection {
@@ -1052,6 +1513,11 @@ model CalendarEvent {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Set only for events created from a table reservation — lets the
+  // calendar UI know to show the "Automatic Check-In" option, which makes
+  // no sense on an ordinary personal event with nothing to check into.
+  tableReservationId String?           @unique
+  tableReservation   TableReservation? @relation(fields: [tableReservationId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([startDate])
@@ -1140,6 +1606,14 @@ model BankAccount {
   currentBalance   String?
   availableBalance String?
   currency         String?
+  // 'UNVERIFIED' (default — just linked, ownership unconfirmed beyond
+  // Plaid's own Link auth) | 'VERIFIED' (Plaid Identity's account-holder
+  // name matched this user's name) | 'FAILED' (checked, didn't match).
+  // Gates features — like automatic reservation check-in — that need real
+  // confirmation this account belongs to this person, not just that some
+  // account got linked.
+  verificationStatus String       @default("UNVERIFIED")
+  verifiedAt         DateTime?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   connection       BankConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)

@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { usePlaidLink } from 'react-plaid-link';
 import { Navbar } from '@/components/ui/Navbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiClient } from '@/services/api';
 import { billingService, MemberTier } from '@/services/billingService';
+import { workSuiteService, CheckInProfile, BankConnection } from '@/services/workSuiteService';
+import { IconClose, IconCard } from '@/components/ui/Icons';
 import { TokenStorage, scopedKey } from '@/utils/storage';
 import './ProfileEditPage.css';
+// Reused here for the bank connection/verification section's styling
+// (.worksuite-bank-*) rather than duplicating it — same classes the Work
+// Suite Finance page uses for the identical UI.
+import '@/pages/WorkSuite.css';
 
 interface Experience {
   id: string;
@@ -68,7 +75,6 @@ const MODAL_TITLES: Record<string, string> = {
   languages: 'Add Language',
   projects: 'Add Project',
   featured: 'Featured Section',
-  shop: 'Ornave Status',
   cancel: 'Cancel Ornave Status',
 };
 
@@ -85,7 +91,6 @@ interface StatusTier {
   annualPrice?: string;
   tagline: string;
   perks: string[];
-  icon: string;
 }
 
 // code is what the backend/Stripe actually know about; id/name stay the
@@ -98,7 +103,6 @@ const STATUS_TIERS: StatusTier[] = [
     price: 'Free',
     tagline: 'The essentials, on us',
     perks: ['Full profile visibility', 'Standard support', 'Standard placement in Discover'],
-    icon: '⚪',
   },
   {
     id: 'Bronze Member',
@@ -107,7 +111,6 @@ const STATUS_TIERS: StatusTier[] = [
     price: '$4.99/mo',
     tagline: 'A little extra shine',
     perks: ['Bronze member badge everywhere you appear', 'Slightly boosted placement in Discover', 'Basic profile analytics'],
-    icon: '🥉',
   },
   {
     id: 'Silver Member',
@@ -117,7 +120,6 @@ const STATUS_TIERS: StatusTier[] = [
     annualPrice: '$99.99/yr',
     tagline: 'Stand out in Discover and search',
     perks: ['Everything in Bronze', 'Silver member badge everywhere you appear', 'Priority placement in Discover', 'Advanced profile analytics'],
-    icon: '🥈',
   },
   {
     id: 'Gold Member',
@@ -127,7 +129,6 @@ const STATUS_TIERS: StatusTier[] = [
     annualPrice: '$199.99/yr',
     tagline: 'For power networkers and dealmakers',
     perks: ['Everything in Silver', 'Gold member badge everywhere you appear', 'Top placement in Discover', 'Unlimited saved searches', 'Direct-message any member'],
-    icon: '🥇',
   },
   {
     id: 'Diamond Member',
@@ -137,7 +138,6 @@ const STATUS_TIERS: StatusTier[] = [
     annualPrice: '$499.99/yr',
     tagline: 'The absolute top — gold, with flare',
     perks: ['Everything in Gold', 'Animated shimmering Diamond badge', 'Featured placement across Ornave', 'Dedicated account concierge', 'Exclusive Diamond-only sectors'],
-    icon: '💠',
   },
 ];
 
@@ -147,7 +147,6 @@ const VERIFIED_ADDON: StatusTier = {
   price: '$2.99 one-time',
   tagline: 'A small extra — a verified checkmark next to your name',
   perks: ['Verified checkmark badge on your name', 'Stacks with any status above'],
-  icon: '✓',
 };
 
 export const ProfileEditPage: React.FC = () => {
@@ -178,6 +177,195 @@ export const ProfileEditPage: React.FC = () => {
   // Photo states
   const [profilePhoto, setProfilePhoto] = useState<string>('');
   const [backgroundPhoto, setBackgroundPhoto] = useState<string>('');
+
+  // Check-In Profile — a small, separate profile (legal name + phone) used
+  // only to gate Automatic Check-In. Its own load/save cycle since it's a
+  // different backend model from the rest of this page's formData.
+  const [checkInFirstName, setCheckInFirstName] = useState('');
+  const [checkInLastName, setCheckInLastName] = useState('');
+  const [checkInPhone, setCheckInPhone] = useState('');
+  const [checkInEmail, setCheckInEmail] = useState('');
+  const [checkInNotes, setCheckInNotes] = useState('');
+  const [checkInPhotoUrl, setCheckInPhotoUrl] = useState('');
+  const [isUploadingCheckInPhoto, setIsUploadingCheckInPhoto] = useState(false);
+  const [isSavingCheckIn, setIsSavingCheckIn] = useState(false);
+  const [checkInSavedAt, setCheckInSavedAt] = useState<number | null>(null);
+
+  useEffect(() => {
+    workSuiteService.getCheckInProfile().then((profile) => {
+      if (!profile) return;
+      setCheckInFirstName(profile.legalFirstName || '');
+      setCheckInLastName(profile.legalLastName || '');
+      setCheckInPhone(profile.phone || '');
+      setCheckInEmail(profile.email || '');
+      setCheckInNotes(profile.notes || '');
+      setCheckInPhotoUrl(profile.photoUrl || '');
+    }).catch(() => {});
+  }, []);
+
+  const handleUploadCheckInPhoto = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      setIsUploadingCheckInPhoto(true);
+      try {
+        const profile = await workSuiteService.uploadCheckInPhoto(file);
+        setCheckInPhotoUrl(profile.photoUrl || '');
+      } catch {
+        setError('Could not upload that photo — try again.');
+      } finally {
+        setIsUploadingCheckInPhoto(false);
+      }
+    };
+    input.click();
+  };
+
+  // Web NFC — Chrome on Android only, nothing else. Feature-detected so
+  // every other browser just sees an explanatory note instead of a button
+  // that can't work. Writes a fresh backend-issued token onto whatever tag
+  // is tapped; the token itself carries no guest info, it's just a lookup
+  // key the kiosk reads back later.
+  const isNfcSupported = typeof window !== 'undefined' && 'NDEFReader' in window;
+  const [isWritingNfcCard, setIsWritingNfcCard] = useState(false);
+  const [nfcCardStatus, setNfcCardStatus] = useState<string | null>(null);
+
+  const handleWriteNfcCard = async () => {
+    setIsWritingNfcCard(true);
+    setNfcCardStatus('Requesting a card token…');
+    try {
+      const token = await workSuiteService.generateNfcCard();
+      setNfcCardStatus('Hold a blank NFC tag against the back of this device…');
+      const ndef = new (window as any).NDEFReader();
+      await ndef.write({ records: [{ recordType: 'text', data: token }] });
+      setNfcCardStatus('Card written — it\'s ready to tap at check-in.');
+    } catch (err: any) {
+      setNfcCardStatus(err?.name === 'NotAllowedError'
+        ? 'NFC permission was denied — try again and allow it.'
+        : 'Could not write the card — make sure a tag is held against the device and try again.');
+    } finally {
+      setIsWritingNfcCard(false);
+    }
+  };
+
+  const handleSaveCheckInProfile = async () => {
+    setIsSavingCheckIn(true);
+    try {
+      await workSuiteService.updateCheckInProfile({
+        legalFirstName: checkInFirstName.trim() || undefined,
+        legalLastName: checkInLastName.trim() || undefined,
+        phone: checkInPhone.trim() || undefined,
+        email: checkInEmail.trim() || undefined,
+        notes: checkInNotes.trim() || undefined,
+      });
+      setCheckInSavedAt(Date.now());
+      setTimeout(() => setCheckInSavedAt(null), 4000);
+    } finally {
+      setIsSavingCheckIn(false);
+    }
+  };
+
+  // Bank Account — connect + verify, right alongside the Check-In Profile
+  // since together with membership tier they're the three Automatic
+  // Check-In requirements. Same Plaid Link flow as Work Suite → Finance
+  // (which remains the place to view balances/transactions); this is just
+  // the connect/verify actions surfaced where the rest of check-in setup
+  // already lives, so nothing sends the user hunting across pages.
+  const [bankConnections, setBankConnections] = useState<BankConnection[]>([]);
+  const [isLoadingBank, setIsLoadingBank] = useState(true);
+  const [plaidConfigured, setPlaidConfigured] = useState(false);
+  const [linkToken, setLinkToken] = useState<string | null>(null);
+  const [isConnectingBank, setIsConnectingBank] = useState(false);
+  const [bankError, setBankError] = useState<string | null>(null);
+  const [verifyingAccountId, setVerifyingAccountId] = useState<string | null>(null);
+
+  const loadBank = async () => {
+    setIsLoadingBank(true);
+    try {
+      const [connections, status] = await Promise.all([
+        workSuiteService.listBankConnections(),
+        workSuiteService.getPlaidStatus(),
+      ]);
+      setBankConnections(connections);
+      setPlaidConfigured(status.configured);
+    } finally {
+      setIsLoadingBank(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBank();
+  }, []);
+
+  const onPlaidSuccess = useCallback(async (publicToken: string | null) => {
+    if (!publicToken) return;
+    setIsConnectingBank(true);
+    setBankError(null);
+    try {
+      await workSuiteService.exchangePlaidPublicToken(publicToken);
+      localStorage.removeItem('plaid_oauth_link_token');
+      setLinkToken(null);
+      await loadBank();
+    } catch {
+      setBankError('Could not link that account — try again.');
+    } finally {
+      setIsConnectingBank(false);
+    }
+  }, []);
+
+  const { open: openPlaidLink, ready: plaidLinkReady } = usePlaidLink({
+    token: linkToken || '',
+    onSuccess: onPlaidSuccess,
+    onExit: () => {
+      localStorage.removeItem('plaid_oauth_link_token');
+      setLinkToken(null);
+    },
+  });
+
+  useEffect(() => {
+    if (linkToken && plaidLinkReady) {
+      openPlaidLink();
+    }
+  }, [linkToken, plaidLinkReady, openPlaidLink]);
+
+  const handleConnectBank = async () => {
+    setBankError(null);
+    setIsConnectingBank(true);
+    try {
+      const token = await workSuiteService.createPlaidLinkToken();
+      localStorage.setItem('plaid_oauth_link_token', token);
+      setLinkToken(token);
+    } catch {
+      setBankError('Could not start bank connection — try again later.');
+      setIsConnectingBank(false);
+    }
+  };
+
+  const handleDisconnectBank = async (connection: BankConnection) => {
+    setBankConnections((prev) => prev.filter((c) => c.id !== connection.id));
+    try {
+      await workSuiteService.removeBankConnection(connection.id);
+    } catch {
+      await loadBank();
+    }
+  };
+
+  const handleVerifyBankAccount = async (accountId: string) => {
+    setVerifyingAccountId(accountId);
+    try {
+      const updated = await workSuiteService.verifyBankAccount(accountId);
+      setBankConnections((prev) =>
+        prev.map((c) => ({ ...c, accounts: c.accounts.map((a) => (a.id === accountId ? { ...a, verificationStatus: updated.verificationStatus, verifiedAt: updated.verifiedAt } : a)) }))
+      );
+    } catch {
+      // Leave the row as-is — the badge already reflects the last known
+      // state, and the button stays available to retry.
+    } finally {
+      setVerifyingAccountId(null);
+    }
+  };
 
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -215,8 +403,8 @@ export const ProfileEditPage: React.FC = () => {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    if (tab === 'enhance') {
-      setActiveTab('enhance');
+    if (tab === 'enhance' || tab === 'info' || tab === 'sections') {
+      setActiveTab(tab);
     } else if (section === 'add') {
       setActiveTab('sections');
     }
@@ -391,6 +579,18 @@ export const ProfileEditPage: React.FC = () => {
 
   const formatLockDate = (iso: string | null) =>
     iso ? new Date(iso).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+
+  // Each paid tier gets its own metal-toned card treatment so the ladder
+  // reads visually rather than just by price.
+  const tierCardClass = (tierId: string): string => {
+    switch (tierId) {
+      case 'Bronze Member': return 'status-tier-card--bronze';
+      case 'Silver Member': return 'status-tier-card--silver';
+      case 'Gold Member': return 'status-tier-card--gold';
+      case 'Diamond Member': return 'status-tier-card--diamond';
+      default: return '';
+    }
+  };
 
   const applyMembershipStatus = (status: { memberTier: MemberTier; isVerified: boolean; canDowngradeAt?: string | null; billingPeriod?: 'MONTHLY' | 'ANNUAL' | null; cancelAt?: string | null }) => {
     const tierId = STATUS_TIERS.find((t) => t.code === status.memberTier)?.id || 'Basic';
@@ -664,12 +864,12 @@ export const ProfileEditPage: React.FC = () => {
   };
 
   const sections = [
-    { id: 'experience', title: 'Experience', icon: '💼', description: 'Add your work history' },
-    { id: 'education', title: 'Education', icon: '🎓', description: 'Add your education background' },
-    { id: 'skills', title: 'Skills', icon: '⚡', description: 'Highlight your key skills' },
-    { id: 'certifications', title: 'Certifications', icon: '📜', description: 'Add professional certifications' },
-    { id: 'languages', title: 'Languages', icon: '🌐', description: 'Add languages you speak' },
-    { id: 'projects', title: 'Projects', icon: '🚀', description: 'Showcase your projects' },
+    { id: 'experience', title: 'Experience', description: 'Add your work history' },
+    { id: 'education', title: 'Education', description: 'Add your education background' },
+    { id: 'skills', title: 'Skills', description: 'Highlight your key skills' },
+    { id: 'certifications', title: 'Certifications', description: 'Add professional certifications' },
+    { id: 'languages', title: 'Languages', description: 'Add languages you speak' },
+    { id: 'projects', title: 'Projects', description: 'Showcase your projects' },
   ];
 
   const initials = `${formData.firstName?.[0] || ''}${formData.lastName?.[0] || ''}`.toUpperCase();
@@ -690,13 +890,16 @@ export const ProfileEditPage: React.FC = () => {
               style={backgroundPhoto ? { backgroundImage: `url(${backgroundPhoto})` } : undefined}
             >
               <div className="profile-edit-preview__avatar">
-                {profilePhoto ? <img src={profilePhoto} alt="Profile" /> : (initials || '👤')}
+                {profilePhoto ? <img src={profilePhoto} alt="Profile" /> : initials}
               </div>
             </div>
             <div className="profile-edit-preview__body">
               <h3>{formData.firstName || formData.lastName ? `${formData.firstName} ${formData.lastName}`.trim() : 'Your Name'}</h3>
               <p className="profile-edit-preview__headline">{formData.headline || 'Add a headline to introduce yourself'}</p>
-              {formData.location && <p className="profile-edit-preview__location">📍 {formData.location}</p>}
+              {formData.location && <p className="profile-edit-preview__location">{formData.location}</p>}
+              <span className="profile-edit-preview__tier">
+                {currentTier}{currentTier === 'Basic' ? ' tier' : ''}{hasVerified ? ' · Verified' : ''}
+              </span>
             </div>
             <div className="profile-edit-preview__note">This is a live preview of how your profile card will appear to others.</div>
           </aside>
@@ -718,7 +921,7 @@ export const ProfileEditPage: React.FC = () => {
                 className={`profile-edit-tab ${activeTab === 'enhance' ? 'active' : ''}`}
                 onClick={() => setActiveTab('enhance')}
               >
-                Enhance Profile
+                Subscriptions
               </button>
               <button
                 className={`profile-edit-tab ${activeTab === 'sections' ? 'active' : ''}`}
@@ -734,8 +937,30 @@ export const ProfileEditPage: React.FC = () => {
               {activeTab === 'info' && (
                 <div className="edit-section">
                   <h2>Basic Information</h2>
-                  <p className="section-description">Update your primary identity data and contact details</p>
-              
+                  <p className="section-description">Update your photo, banner, primary identity data, and contact details</p>
+
+              <div className="photo-edit-card">
+                <div
+                  className="photo-edit-card__banner"
+                  style={backgroundPhoto ? { backgroundImage: `url(${backgroundPhoto})` } : undefined}
+                >
+                  <button className="photo-edit-card__banner-btn" onClick={() => handlePhotoUpload('background')}>
+                    {backgroundPhoto ? 'Change Banner' : 'Upload Banner'}
+                  </button>
+                </div>
+                <div className="photo-edit-card__body">
+                  <div className="photo-edit-card__avatar">
+                    {profilePhoto ? <img src={profilePhoto} alt="Profile" /> : initials}
+                  </div>
+                  <div className="photo-edit-card__meta">
+                    <button className="btn-add" onClick={() => handlePhotoUpload('profile')}>
+                      {profilePhoto ? 'Update Photo' : 'Upload Photo'}
+                    </button>
+                    <p>Square images work best, at least 400×400px.</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="form-row">
                 <div className="form-group">
                   <label>First Name *</label>
@@ -885,65 +1110,211 @@ export const ProfileEditPage: React.FC = () => {
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
+
+              <h3 className="form-section-heading" style={{ marginTop: '32px' }}>Automatic Check-In Profile</h3>
+              <p className="form-section-hint">
+                A small, separate profile used only to confirm your identity for Automatic Check-In at reservations — not part of your public profile, and doesn't affect it.
+              </p>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Legal first name</label>
+                  <input
+                    type="text"
+                    value={checkInFirstName}
+                    onChange={(e) => setCheckInFirstName(e.target.value)}
+                    placeholder="As it appears on your bank account"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Legal last name</label>
+                  <input
+                    type="text"
+                    value={checkInLastName}
+                    onChange={(e) => setCheckInLastName(e.target.value)}
+                    placeholder="As it appears on your bank account"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Phone</label>
+                  <input
+                    type="tel"
+                    value={checkInPhone}
+                    onChange={(e) => setCheckInPhone(e.target.value)}
+                    placeholder="+49 (170) 987-6543"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    value={checkInEmail}
+                    onChange={(e) => setCheckInEmail(e.target.value)}
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>ID-style photo</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  {checkInPhotoUrl ? (
+                    <img
+                      src={checkInPhotoUrl}
+                      alt="Check-in photo"
+                      style={{ width: '72px', height: '72px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--tech-border, #2a2a22)' }}
+                    />
+                  ) : (
+                    <div style={{ width: '72px', height: '72px', borderRadius: '8px', border: '1px dashed var(--tech-border, #2a2a22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', color: 'var(--color-muted, #a79e8c)', textAlign: 'center' }}>
+                      No photo
+                    </div>
+                  )}
+                  <button type="button" className="btn-secondary" onClick={handleUploadCheckInPhoto} disabled={isUploadingCheckInPhoto}>
+                    {isUploadingCheckInPhoto ? 'Uploading...' : checkInPhotoUrl ? 'Replace Photo' : 'Upload Photo'}
+                  </button>
+                </div>
+                <p className="form-section-hint" style={{ marginTop: '6px' }}>
+                  A clear headshot — required for Automatic Check-In so restaurant staff can recognize you. Uploads immediately, separately from the fields below.
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label>NFC card (optional)</label>
+                {isNfcSupported ? (
+                  <>
+                    <button type="button" className="btn-secondary" onClick={handleWriteNfcCard} disabled={isWritingNfcCard}>
+                      {isWritingNfcCard ? 'Writing…' : 'Write NFC Card'}
+                    </button>
+                    {nfcCardStatus && <p className="form-section-hint" style={{ marginTop: '6px' }}>{nfcCardStatus}</p>}
+                    <p className="form-section-hint" style={{ marginTop: '6px' }}>
+                      Tap a blank writable NFC tag/card against this device to link it to your reservations — a restaurant kiosk can then read it to check you in. Not required; the kiosk can also look you up by phone number.
+                    </p>
+                  </>
+                ) : (
+                  <p className="form-section-hint">
+                    NFC card setup needs Chrome on Android — this device/browser can't write one. Restaurants can still check you in by looking up your phone number.
+                  </p>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label>Notes for restaurant staff (optional)</label>
+                <textarea
+                  value={checkInNotes}
+                  onChange={(e) => setCheckInNotes(e.target.value)}
+                  rows={2}
+                  maxLength={300}
+                  placeholder="e.g. peanut allergy, wheelchair access needed"
+                />
+                <p className="form-section-hint" style={{ marginTop: '4px' }}>
+                  Shown to restaurant staff only when you're automatically checked in — not part of your public profile.
+                </p>
+              </div>
+
+              <div className="form-actions">
+                {checkInSavedAt && <span style={{ color: 'var(--color-success, #4f9d5c)', fontSize: '0.85rem', alignSelf: 'center', marginRight: 'auto' }}>Saved</span>}
+                <button className="btn-primary" onClick={handleSaveCheckInProfile} disabled={isSavingCheckIn}>
+                  {isSavingCheckIn ? 'Saving...' : 'Save Check-In Profile'}
+                </button>
+              </div>
+
+              <h3 className="form-section-heading" style={{ marginTop: '32px' }}>Bank Account</h3>
+              <p className="form-section-hint">
+                Connect and verify a bank account — the third Automatic Check-In requirement. Verifying confirms via Plaid Identity that the account belongs to you.
+              </p>
+
+              {bankError && <p style={{ color: 'var(--color-danger)', fontSize: '0.8rem', margin: '0 0 12px' }}>{bankError}</p>}
+
+              {isLoadingBank ? (
+                <div className="worksuite-empty">Loading bank accounts…</div>
+              ) : bankConnections.length === 0 ? (
+                plaidConfigured ? (
+                  <div className="worksuite-empty worksuite-empty--goals">
+                    <p>No bank accounts connected yet.</p>
+                    <button className="worksuite-create-btn" onClick={handleConnectBank} disabled={isConnectingBank}>
+                      {isConnectingBank ? 'Connecting…' : '+ Connect Bank'}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="form-section-hint">Bank connections aren't configured on this environment yet.</p>
+                )
+              ) : (
+                <>
+                  {bankConnections.map((connection) => (
+                    <div key={connection.id} className="worksuite-bank-card">
+                      <div className="worksuite-bank-card__header">
+                        <div>
+                          <h3 className="worksuite-bank-card__title">{connection.institutionName || 'Connected bank'}</h3>
+                          <span className="worksuite-bank-card__count">{connection.accounts.length} account{connection.accounts.length === 1 ? '' : 's'}</span>
+                        </div>
+                        <button className="worksuite-bank-card__disconnect" onClick={() => handleDisconnectBank(connection)}>
+                          <IconClose size={12} /> Disconnect
+                        </button>
+                      </div>
+
+                      <div className="worksuite-bank-account-list">
+                        {connection.accounts.map((account) => (
+                          <div key={account.id} className="worksuite-bank-account-row">
+                            <div className="worksuite-bank-account-row__icon"><IconCard size={15} /></div>
+                            <div className="worksuite-bank-account-row__info">
+                              <div className="worksuite-bank-account-row__name">
+                                {account.name}
+                                {account.mask && <span className="worksuite-bank-account-row__mask">••••{account.mask}</span>}
+                              </div>
+                              <div className="worksuite-bank-account-row__type">{account.type}{account.subtype ? ` · ${account.subtype}` : ''}</div>
+                            </div>
+                            {account.verificationStatus === 'VERIFIED' ? (
+                              <span className="worksuite-bank-account-row__verified">✓ Verified</span>
+                            ) : (
+                              <button
+                                className="worksuite-bank-account-row__verify-btn"
+                                onClick={() => handleVerifyBankAccount(account.id)}
+                                disabled={verifyingAccountId === account.id}
+                                title="Confirms this account belongs to you via Plaid Identity — required for Automatic Check-In"
+                              >
+                                {verifyingAccountId === account.id ? 'Verifying…' : account.verificationStatus === 'FAILED' ? 'Retry Verify' : 'Verify'}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  <button className="btn-secondary" onClick={handleConnectBank} disabled={isConnectingBank} style={{ marginTop: '8px' }}>
+                    {isConnectingBank ? 'Connecting…' : '+ Connect Another Bank'}
+                  </button>
+                </>
+              )}
                 </div>
               )}
 
               {activeTab === 'enhance' && (
                 <div className="edit-section">
-                  <h2>Enhance Profile</h2>
+                  <h2>Subscriptions &amp; Tiers</h2>
                   <p className="section-description">
-                Optimize your digital presence with high-quality media and custom identifiers
-              </p>
-
-              <div className="photo-edit-card">
-                <div
-                  className="photo-edit-card__banner"
-                  style={backgroundPhoto ? { backgroundImage: `url(${backgroundPhoto})` } : undefined}
-                >
-                  <button className="photo-edit-card__banner-btn" onClick={() => handlePhotoUpload('background')}>
-                    {backgroundPhoto ? 'Change Banner' : 'Upload Banner'}
-                  </button>
-                </div>
-                <div className="photo-edit-card__body">
-                  <div className="photo-edit-card__avatar">
-                    {profilePhoto ? <img src={profilePhoto} alt="Profile" /> : (initials || '👤')}
-                  </div>
-                  <div className="photo-edit-card__meta">
-                    <button className="btn-add" onClick={() => handlePhotoUpload('profile')}>
-                      {profilePhoto ? 'Update Photo' : 'Upload Photo'}
-                    </button>
-                    <p>Square images work best, at least 400×400px.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="enhancement-cards">
-                <div className="enhancement-card">
-                  <span className="enhancement-icon">🎯</span>
-                  <h3>Availability Status</h3>
-                  <p>Configure availability preferences</p>
-                  <button className="btn-outline" onClick={() => navigate('/profile/settings/open-to')}>
-                    Set Status
-                  </button>
-                </div>
-
-                <div className="enhancement-card">
-                  <span className="enhancement-icon">👑</span>
-                  <h3>Ornave Status</h3>
-                  <p>
-                    You're currently on the {currentTier}{currentTier === 'Basic' ? ' tier' : ''}{hasVerified ? ' · Verified ✓' : ''}
-                    {currentTier !== 'Basic' && cancelAt ? (
-                      ` · Canceling — switches to Basic on ${formatLockDate(cancelAt)}`
-                    ) : currentTier !== 'Basic' && lockedBillingPeriod && (
-                      lockedBillingPeriod === 'ANNUAL'
-                        ? ` · Annual — valid through ${formatLockDate(canDowngradeAt)}, does not auto-renew`
-                        : (canDowngradeAt ? ` · Monthly, renews automatically — min. commitment until ${formatLockDate(canDowngradeAt)}` : ' · Monthly, renews automatically, cancel anytime')
-                    )}
+                    Buy or manage your Ornave Status — subscribe monthly, pay for a full year up front, or downgrade and cancel any time
                   </p>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button className="btn-outline" onClick={() => setActiveModal('shop')}>
-                      Browse Statuses
-                    </button>
+
+              <div className="enhancement-list">
+                <div className="enhancement-row">
+                  <span className="enhancement-row__icon">O</span>
+                  <div className="enhancement-row__body">
+                    <h3>Ornave Status</h3>
+                    <p>
+                      You're currently on the {currentTier}{currentTier === 'Basic' ? ' tier' : ''}{hasVerified ? ' · Verified ✓' : ''}
+                      {currentTier !== 'Basic' && cancelAt ? (
+                        ` · Canceling — switches to Basic on ${formatLockDate(cancelAt)}`
+                      ) : currentTier !== 'Basic' && lockedBillingPeriod && (
+                        lockedBillingPeriod === 'ANNUAL'
+                          ? ` · Annual — valid through ${formatLockDate(canDowngradeAt)}, does not auto-renew`
+                          : (canDowngradeAt ? ` · Monthly, renews automatically — min. commitment until ${formatLockDate(canDowngradeAt)}` : ' · Monthly, renews automatically, cancel anytime')
+                      )}
+                    </p>
+                  </div>
+                  <div className="enhancement-row__actions">
                     {currentTier !== 'Basic' && (
                       cancelAt ? (
                         <button className="btn-outline" onClick={handleUndoCancellation} disabled={isCancelling}>
@@ -958,6 +1329,104 @@ export const ProfileEditPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              <div className="status-shop">
+                <p className="status-shop__intro">
+                  Unlock a new status to stand out across Ornave. Statuses apply instantly and update everywhere your profile appears.
+                  Silver and above require staying subscribed at least 3 months before switching away; paying annually locks in the full year instead, with no auto-renewal.
+                </p>
+                <div className="status-shop__grid">
+                  {STATUS_TIERS.map((tier) => {
+                    const isCurrent = currentTier === tier.id;
+                    const isLockedBasic = tier.code === 'BASIC' && !isCurrent && !!canDowngradeAt;
+                    const hasCommitment = tier.code && ['SILVER', 'GOLD', 'DIAMOND'].includes(tier.code);
+                    return (
+                      <div key={tier.id} className={`status-tier-card ${tierCardClass(tier.id)} ${isCurrent ? 'status-tier-card--current' : ''}`}>
+                        <h3>{tier.name}</h3>
+                        <p className="status-tier-card__tagline">{tier.tagline}</p>
+                        <div className="status-tier-card__price">{tier.price}</div>
+                        <ul className="status-tier-card__perks">
+                          {tier.perks.map((perk) => <li key={perk}>{perk}</li>)}
+                        </ul>
+                        {isCurrent && currentTier !== 'Basic' && lockedBillingPeriod && (
+                          <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
+                            {lockedBillingPeriod === 'ANNUAL'
+                              ? `Valid through ${formatLockDate(canDowngradeAt)} — one-time payment, does not auto-renew.`
+                              : canDowngradeAt
+                                ? `Renews monthly — minimum commitment until ${formatLockDate(canDowngradeAt)}.`
+                                : 'Renews monthly — cancel anytime.'}
+                          </p>
+                        )}
+                        {!isCurrent && hasCommitment && (
+                          <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
+                            Monthly plan has a 3-month minimum before you can switch away.
+                          </p>
+                        )}
+                        {isLockedBasic && (
+                          <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
+                            Available {formatLockDate(canDowngradeAt)} — {lockedBillingPeriod === 'ANNUAL' ? 'your annual status runs a full year' : 'Silver and above have a 3-month minimum'}.
+                          </p>
+                        )}
+                        {isCurrent ? (
+                          <>
+                            <button className="btn-secondary" disabled>Current Status</button>
+                            {tier.code !== 'BASIC' && (
+                              cancelAt ? (
+                                <button className="btn-secondary" style={{ marginTop: '8px' }} onClick={handleUndoCancellation} disabled={isCancelling}>
+                                  {isCancelling ? 'Undoing…' : 'Undo Cancellation'}
+                                </button>
+                              ) : (
+                                <button className="btn-secondary" style={{ marginTop: '8px' }} onClick={() => setActiveModal('cancel')}>
+                                  Cancel Subscription
+                                </button>
+                              )
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <button className="btn-primary" onClick={() => handlePurchaseTier(tier)} disabled={!!isPurchasing || isLockedBasic}>
+                              {isPurchasing === tier.id
+                                ? (tier.price === 'Free' ? 'Switching…' : 'Redirecting…')
+                                : tier.price === 'Free' ? 'Switch to This' : 'Choose This Status'}
+                            </button>
+                            {tier.annualPrice && (
+                              <button
+                                className="btn-secondary"
+                                style={{ marginTop: '8px' }}
+                                onClick={() => handlePurchaseTier(tier, 'ANNUAL')}
+                                disabled={!!isPurchasing}
+                              >
+                                {isPurchasing === `${tier.id}-annual` ? 'Redirecting…' : `or ${tier.annualPrice} (1 year, no auto-renew)`}
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="status-shop__addon">
+                  <div className="status-shop__addon-body">
+                    <h3>{VERIFIED_ADDON.name}</h3>
+                    <p className="status-tier-card__tagline">
+                      {AUTO_VERIFIED_TIERS.includes(currentTier)
+                        ? 'Included free with Silver, Gold, and Diamond status'
+                        : VERIFIED_ADDON.tagline}
+                    </p>
+                  </div>
+                  <div className="status-shop__addon-price">
+                    {hasVerified ? 'Included' : VERIFIED_ADDON.price}
+                  </div>
+                  {hasVerified ? (
+                    <button className="btn-secondary" disabled>Owned</button>
+                  ) : (
+                    <button className="btn-primary" onClick={handlePurchaseVerified} disabled={!!isPurchasing}>
+                      {isPurchasing === 'Verified' ? 'Redirecting…' : 'Add Verified'}
+                    </button>
+                  )}
+                </div>
+              </div>
                 </div>
               )}
 
@@ -965,10 +1434,21 @@ export const ProfileEditPage: React.FC = () => {
                 <div className="edit-section">
                   <h2>Profile Sections</h2>
                   <p className="section-description">
-                    Populate your professional ledger with structured experience data
+                    Configure availability and populate your professional ledger with structured experience data
                   </p>
 
               <div className="sections-grid">
+                <div className="section-block">
+                  <div className="section-card">
+                    <div className="section-icon">A</div>
+                    <div className="section-info">
+                      <h3>Availability Status</h3>
+                      <p>Configure availability preferences</p>
+                    </div>
+                    <button className="btn-add" onClick={() => navigate('/profile/settings/open-to')}>Set Status</button>
+                  </div>
+                </div>
+
                 {sections.map(sec => {
                   const entries: { id: string; title: string; subtitle: string; onEdit: () => void; onDelete: () => void }[] =
                     sec.id === 'experience' ? experiences.map(exp => ({
@@ -1053,7 +1533,7 @@ export const ProfileEditPage: React.FC = () => {
                   return (
                     <div key={sec.id} className="section-block">
                       <div className="section-card">
-                        <div className="section-icon">{sec.icon}</div>
+                        <div className="section-icon">{sec.title[0]}</div>
                         <div className="section-info">
                           <h3>{sec.title}</h3>
                           <p>{sec.description}</p>
@@ -1100,7 +1580,7 @@ export const ProfileEditPage: React.FC = () => {
       {/* Modals */}
       {activeModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className={`modal-content ${activeModal === 'shop' ? 'modal-content--shop' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>{editingId ? (MODAL_TITLES[activeModal]?.replace('Add', 'Edit') || 'Edit Entry') : (MODAL_TITLES[activeModal] || 'Add Entry')}</h2>
 
             <div className="tech-form" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1209,108 +1689,6 @@ export const ProfileEditPage: React.FC = () => {
 
               {activeModal === 'featured' && <p style={{ color: 'var(--color-muted)', fontSize: '0.88rem' }}>This feature is coming soon.</p>}
 
-              {activeModal === 'shop' && (
-                <div className="status-shop">
-                  <p className="status-shop__intro">
-                    Unlock a new status to stand out across Ornave. Statuses apply instantly and update everywhere your profile appears.
-                    Silver and above require staying subscribed at least 3 months before switching away; paying annually locks in the full year instead, with no auto-renewal.
-                  </p>
-                  <div className="status-shop__grid">
-                    {STATUS_TIERS.map((tier) => {
-                      const isCurrent = currentTier === tier.id;
-                      const isLockedBasic = tier.code === 'BASIC' && !isCurrent && !!canDowngradeAt;
-                      const hasCommitment = tier.code && ['SILVER', 'GOLD', 'DIAMOND'].includes(tier.code);
-                      return (
-                        <div key={tier.id} className={`status-tier-card ${tier.id === 'Diamond Member' ? 'status-tier-card--diamond' : ''} ${isCurrent ? 'status-tier-card--current' : ''}`}>
-                          <span className="status-tier-card__icon">{tier.icon}</span>
-                          <h3>{tier.name}</h3>
-                          <p className="status-tier-card__tagline">{tier.tagline}</p>
-                          <div className="status-tier-card__price">{tier.price}</div>
-                          <ul className="status-tier-card__perks">
-                            {tier.perks.map((perk) => <li key={perk}>{perk}</li>)}
-                          </ul>
-                          {isCurrent && currentTier !== 'Basic' && lockedBillingPeriod && (
-                            <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
-                              {lockedBillingPeriod === 'ANNUAL'
-                                ? `Valid through ${formatLockDate(canDowngradeAt)} — one-time payment, does not auto-renew.`
-                                : canDowngradeAt
-                                  ? `Renews monthly — minimum commitment until ${formatLockDate(canDowngradeAt)}.`
-                                  : 'Renews monthly — cancel anytime.'}
-                            </p>
-                          )}
-                          {!isCurrent && hasCommitment && (
-                            <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
-                              Monthly plan has a 3-month minimum before you can switch away.
-                            </p>
-                          )}
-                          {isLockedBasic && (
-                            <p className="status-tier-card__tagline" style={{ color: 'var(--color-muted)' }}>
-                              Available {formatLockDate(canDowngradeAt)} — {lockedBillingPeriod === 'ANNUAL' ? 'your annual status runs a full year' : 'Silver and above have a 3-month minimum'}.
-                            </p>
-                          )}
-                          {isCurrent ? (
-                            <>
-                              <button className="btn-secondary" disabled>Current Status</button>
-                              {tier.code !== 'BASIC' && (
-                                cancelAt ? (
-                                  <button className="btn-secondary" style={{ marginTop: '8px' }} onClick={handleUndoCancellation} disabled={isCancelling}>
-                                    {isCancelling ? 'Undoing…' : 'Undo Cancellation'}
-                                  </button>
-                                ) : (
-                                  <button className="btn-secondary" style={{ marginTop: '8px' }} onClick={() => setActiveModal('cancel')}>
-                                    Cancel Subscription
-                                  </button>
-                                )
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <button className="btn-primary" onClick={() => handlePurchaseTier(tier)} disabled={!!isPurchasing || isLockedBasic}>
-                                {isPurchasing === tier.id
-                                  ? (tier.price === 'Free' ? 'Switching…' : 'Redirecting…')
-                                  : tier.price === 'Free' ? 'Switch to This' : 'Choose This Status'}
-                              </button>
-                              {tier.annualPrice && (
-                                <button
-                                  className="btn-secondary"
-                                  style={{ marginTop: '8px' }}
-                                  onClick={() => handlePurchaseTier(tier, 'ANNUAL')}
-                                  disabled={!!isPurchasing}
-                                >
-                                  {isPurchasing === `${tier.id}-annual` ? 'Redirecting…' : `or ${tier.annualPrice} (1 year, no auto-renew)`}
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="status-shop__addon">
-                    <span className="status-tier-card__icon">{VERIFIED_ADDON.icon}</span>
-                    <div className="status-shop__addon-body">
-                      <h3>{VERIFIED_ADDON.name}</h3>
-                      <p className="status-tier-card__tagline">
-                        {AUTO_VERIFIED_TIERS.includes(currentTier)
-                          ? 'Included free with Silver, Gold, and Diamond status'
-                          : VERIFIED_ADDON.tagline}
-                      </p>
-                    </div>
-                    <div className="status-shop__addon-price">
-                      {hasVerified ? 'Included' : VERIFIED_ADDON.price}
-                    </div>
-                    {hasVerified ? (
-                      <button className="btn-secondary" disabled>Owned</button>
-                    ) : (
-                      <button className="btn-primary" onClick={handlePurchaseVerified} disabled={!!isPurchasing}>
-                        {isPurchasing === 'Verified' ? 'Redirecting…' : 'Add Verified'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {activeModal === 'cancel' && (() => {
                 const currentIndex = STATUS_TIERS.findIndex((t) => t.id === currentTier);
                 const downgradeOptions = currentIndex > 1 ? STATUS_TIERS.slice(1, currentIndex) : [];
@@ -1327,8 +1705,7 @@ export const ProfileEditPage: React.FC = () => {
                         <p className="status-shop__intro" style={{ marginTop: 0 }}>Want to keep some perks instead of leaving entirely? Switch to a lower tier:</p>
                         <div className="status-shop__grid">
                           {downgradeOptions.map((tier) => (
-                            <div key={tier.id} className="status-tier-card">
-                              <span className="status-tier-card__icon">{tier.icon}</span>
+                            <div key={tier.id} className={`status-tier-card ${tierCardClass(tier.id)}`}>
                               <h3>{tier.name}</h3>
                               <div className="status-tier-card__price">{tier.price}</div>
                               <button
@@ -1363,7 +1740,7 @@ export const ProfileEditPage: React.FC = () => {
                 );
               })()}
 
-              {activeModal !== 'shop' && activeModal !== 'cancel' && (
+              {activeModal !== 'cancel' && (
               <div className="modal-actions">
                 <button className="btn-secondary" onClick={closeModal}>Cancel</button>
                 <button className="btn-primary" onClick={() => {

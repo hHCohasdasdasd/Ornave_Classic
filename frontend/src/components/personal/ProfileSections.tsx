@@ -35,6 +35,7 @@ interface Skill {
   id: string;
   name: string;
   level?: string;
+  endorsements?: number;
 }
 
 interface Certification {

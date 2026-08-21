@@ -90,6 +90,7 @@ export class CompanyService {
       where: { id: companyId },
       include: {
         settings: true,
+        companyProfiles: true,
         _count: {
           select: {
             users: true,
@@ -104,7 +105,7 @@ export class CompanyService {
       throw new Error(ERROR_MESSAGES.COMPANY_NOT_FOUND);
     }
 
-    return company;
+    return { ...company, website: company.companyProfiles?.website || null };
   }
 
   /**
@@ -140,7 +141,9 @@ export class CompanyService {
   }
 
   /**
-   * Update company settings
+   * Update company settings — both the Company row itself (name, slug,
+   * website, description, industry) and its CompanySettings sidecar
+   * (customConfig, theme), whichever fields the caller actually sent.
    */
   static async updateCompanySettings(
     companyId: string,
@@ -151,20 +154,51 @@ export class CompanyService {
       include: { settings: true },
     });
 
-    if (!company || !company.settings) {
+    if (!company) {
       throw new Error(ERROR_MESSAGES.COMPANY_NOT_FOUND);
     }
 
-    // Update settings
-    const updatedSettings = await prisma.companySettings.update({
-      where: { companyId },
-      data: {
-        customConfig: settings.customConfig || company.settings.customConfig,
-        theme: settings.theme || company.settings.theme,
-      },
-    });
+    const companyData: Record<string, any> = {};
+    if (settings.name !== undefined) companyData.name = settings.name;
+    if (settings.slug !== undefined) companyData.slug = settings.slug;
+    if (settings.description !== undefined) companyData.description = settings.description || null;
+    if (settings.industry !== undefined) companyData.industry = settings.industry || null;
 
-    return updatedSettings;
+    // No CompanySettings row is ever created at company registration, so
+    // this has to upsert rather than assume one already exists — the
+    // previous `.update()` here 404'd for every company that had never
+    // separately triggered one into existence.
+    // `website` lives on CompanyProfile, not Company — CompanyProfile is
+    // the "public profile" sidecar (about/website/industry/country), same
+    // table the firm's public page already reads from.
+    const ops: any[] = [
+      prisma.company.update({ where: { id: companyId }, data: companyData }),
+      prisma.companySettings.upsert({
+        where: { companyId },
+        create: {
+          companyId,
+          ...(settings.customConfig !== undefined ? { customConfig: JSON.stringify(settings.customConfig) } : {}),
+          ...(settings.theme !== undefined ? { theme: settings.theme } : {}),
+        },
+        update: {
+          ...(settings.customConfig !== undefined ? { customConfig: JSON.stringify(settings.customConfig) } : {}),
+          ...(settings.theme !== undefined ? { theme: settings.theme } : {}),
+        },
+      }),
+    ];
+    if (settings.website !== undefined) {
+      ops.push(
+        prisma.companyProfile.upsert({
+          where: { companyId },
+          create: { companyId, website: settings.website || null },
+          update: { website: settings.website || null },
+        })
+      );
+    }
+
+    const [updatedCompany, updatedSettings] = await prisma.$transaction(ops);
+
+    return { ...updatedSettings, company: updatedCompany };
   }
 
   static async updateBanner(companyId: string, bannerUrl: string | null): Promise<any> {

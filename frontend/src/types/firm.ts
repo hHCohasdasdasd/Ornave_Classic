@@ -81,6 +81,78 @@ export interface FirmMenuItem {
   price: string;
   category: string;
   imageUrl?: string;
+  // Only ever false when fetched with includeUnavailable (the ordering
+  // page) — the default public-profile fetch never returns unavailable
+  // items in the first place, so this is always true there.
+  isAvailable?: boolean;
+}
+
+export interface FirmFloorPlanTable {
+  id: string;
+  label: string;
+  seats: number;
+  shape: string;
+  positionX: number;
+  positionY: number;
+  width: number;
+  height: number;
+}
+
+export interface FirmFloorPlanChair {
+  id: string;
+  positionX: number;
+  positionY: number;
+}
+
+export interface FirmFloorPlanWall {
+  id: string;
+  shape: string;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  radius?: number;
+  curveX?: number;
+  curveY?: number;
+}
+
+export interface FirmFloorPlan {
+  tables: FirmFloorPlanTable[];
+  chairs: FirmFloorPlanChair[];
+  walls: FirmFloorPlanWall[];
+}
+
+export interface FirmTableAvailabilitySlot {
+  id: string;
+  reservationTime: string;
+  partySize: number;
+}
+
+export interface FirmTableOrderItem {
+  id: string;
+  menuItemId: string | null;
+  name: string;
+  price: string;
+  quantity: number;
+  note?: string | null;
+  createdAt: string;
+}
+
+export interface FirmTableOrder {
+  reservationId: string;
+  partySize: number;
+  items: FirmTableOrderItem[];
+  total: number;
+}
+
+export interface FirmMyReservation {
+  id: string;
+  tableId: string;
+  table: { label: string };
+  reservationTime: string;
+  partySize: number;
+  note?: string | null;
+  status: string;
 }
 
 export interface FirmPropertyListing {
@@ -119,4 +191,5 @@ export interface FirmProfileData {
   partnerSlugs?: string[];
   menu?: FirmMenuItem[];
   listings?: FirmPropertyListing[];
+  floorPlan?: FirmFloorPlan;
 }

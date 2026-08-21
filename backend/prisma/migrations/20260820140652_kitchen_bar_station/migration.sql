@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "MenuItem" ADD COLUMN "station" TEXT NOT NULL DEFAULT 'KITCHEN';
+
+-- AlterTable
+ALTER TABLE "TableOrderItem" ADD COLUMN "station" TEXT NOT NULL DEFAULT 'KITCHEN';
+ALTER TABLE "TableOrderItem" ADD COLUMN "status" TEXT NOT NULL DEFAULT 'NEW';

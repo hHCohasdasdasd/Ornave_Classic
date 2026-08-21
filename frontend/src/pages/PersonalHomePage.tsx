@@ -496,8 +496,8 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                           {post.content.length > 100 ? `${post.content.substring(0, 100)}...` : post.content}
                         </div>
                         <div className="trending-post-card__engagement">
-                          <span title="Likes">👍 {post.reactions.likes}</span>
-                          <span title="Comments">💬 {post.reactions.comments}</span>
+                          <span title="Likes">👍 {post.reactions?.likes ?? 0}</span>
+                          <span title="Comments">💬 {post.reactions?.comments ?? 0}</span>
                         </div>
                       </div>
                     ))
@@ -777,7 +777,7 @@ export const PersonalHomePage: React.FC<PersonalHomePageProps> = ({ user }) => {
                     {post.content.length > 60 ? post.content.slice(0, 60) + '…' : post.content}
                   </div>
                   <div className="right-sidebar__trend-stats">
-                    ❤️ {post.reactions.likes} · 💬 {post.reactions.comments}
+                    ❤️ {post.reactions?.likes ?? 0} · 💬 {post.reactions?.comments ?? 0}
                   </div>
                 </div>
               </div>
